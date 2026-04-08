@@ -178,15 +178,78 @@ module.exports = {
           '60%':  { transform: 'scale(6)', opacity: '0.85' },
           '100%': { transform: 'scale(14)', opacity: '0' },
         },
-        // Fire flames rising — a vertical gradient that starts below the
-        // viewport and rises up to consume the screen. Used as the second
-        // phase of the fire transition.
+        // Fire flames rising — starts below the viewport, rises up to fill
+        // the screen, then STAYS there flickering. Does NOT translate off
+        // screen. Used as the main fire transition phase.
         'flame-rise': {
-          '0%':   { transform: 'translateY(100%) scaleY(0.5)', opacity: '0' },
-          '20%':  { transform: 'translateY(70%) scaleY(0.9)', opacity: '0.7' },
-          '50%':  { transform: 'translateY(20%) scaleY(1.2)', opacity: '1' },
-          '85%':  { transform: 'translateY(-10%) scaleY(1.4)', opacity: '1' },
-          '100%': { transform: 'translateY(-30%) scaleY(1.5)', opacity: '1' },
+          '0%':   { transform: 'translateY(100%) scaleY(0.4)', opacity: '0' },
+          '15%':  { transform: 'translateY(60%) scaleY(0.7)', opacity: '0.6' },
+          '40%':  { transform: 'translateY(20%) scaleY(1.0)', opacity: '0.9' },
+          '70%':  { transform: 'translateY(0%) scaleY(1.15)', opacity: '1' },
+          '100%': { transform: 'translateY(0%) scaleY(1.15)', opacity: '1' },
+        },
+        // Flame tongue — individual licking flame element. Each tongue uses
+        // this with a different delay so the flame wall feels organic.
+        'flame-tongue': {
+          '0%':   { transform: 'translateY(100%) scaleY(0.3) scaleX(0.9)', opacity: '0' },
+          '20%':  { transform: 'translateY(50%) scaleY(0.7) scaleX(1.0)', opacity: '0.7' },
+          '50%':  { transform: 'translateY(10%) scaleY(1.1) scaleX(1.05)', opacity: '0.95' },
+          '70%':  { transform: 'translateY(-5%) scaleY(1.25) scaleX(0.95)', opacity: '1' },
+          '100%': { transform: 'translateY(-5%) scaleY(1.25) scaleX(0.95)', opacity: '1' },
+        },
+        // Fire fade-out — used on the destination page to fade the fire
+        // overlay away as the new page reveals. Inverse of flame-rise.
+        'fire-fadeout': {
+          '0%':   { opacity: '1' },
+          '40%':  { opacity: '0.7' },
+          '100%': { opacity: '0' },
+        },
+        // Ember rise — small bright dots flying upward from the bottom
+        // with random horizontal drift and rotation. Used in the fire
+        // transition for particle texture.
+        'ember-rise': {
+          '0%':   { transform: 'translate(0, 0) scale(0)', opacity: '0' },
+          '8%':   { transform: 'translate(0, -5vh) scale(1)', opacity: '1' },
+          '60%':  { transform: 'translate(var(--drift, 20px), -65vh) scale(0.8)', opacity: '1' },
+          '100%': { transform: 'translate(var(--drift, 20px), -110vh) scale(0.2)', opacity: '0' },
+        },
+        // Shockwave — a ring expanding outward from a point. Used for the
+        // initial brand impact in the fire transition.
+        'shockwave': {
+          '0%':   { transform: 'scale(0)', opacity: '0', borderWidth: '12px' },
+          '5%':   { transform: 'scale(0.1)', opacity: '1', borderWidth: '12px' },
+          '60%':  { transform: 'scale(8)', opacity: '0.6', borderWidth: '4px' },
+          '100%': { transform: 'scale(20)', opacity: '0', borderWidth: '1px' },
+        },
+        // Fireball bloom — a massive central explosion that grows from
+        // a point and fills the screen with bright fire colors.
+        'fireball-bloom': {
+          '0%':   { transform: 'scale(0)', opacity: '0', filter: 'blur(4px) brightness(2)' },
+          '15%':  { transform: 'scale(0.3)', opacity: '1', filter: 'blur(2px) brightness(3)' },
+          '60%':  { transform: 'scale(4)', opacity: '0.95', filter: 'blur(8px) brightness(2)' },
+          '100%': { transform: 'scale(10)', opacity: '0.85', filter: 'blur(20px) brightness(1.5)' },
+        },
+        // White flash — full-screen blinding pulse used for impact peaks
+        'white-flash': {
+          '0%':   { opacity: '0' },
+          '20%':  { opacity: '1' },
+          '100%': { opacity: '0' },
+        },
+        // Big kanji slam — a single character that stamps into the center
+        // of the screen at the peak of the conflagration.
+        'kanji-slam': {
+          '0%':   { transform: 'scale(8) rotate(-15deg)', opacity: '0', filter: 'blur(20px)' },
+          '30%':  { transform: 'scale(1.3) rotate(-3deg)', opacity: '1', filter: 'blur(0)' },
+          '50%':  { transform: 'scale(0.92) rotate(-2deg)', opacity: '1', filter: 'blur(0)' },
+          '70%':  { transform: 'scale(1.05) rotate(-2deg)', opacity: '1', filter: 'blur(0)' },
+          '100%': { transform: 'scale(1) rotate(-2deg)', opacity: '1', filter: 'blur(0)' },
+        },
+        // Source-page consume — applied to <main> on the source page when
+        // the fire fires. Tints the page orange, zooms slightly, blurs.
+        'page-consume': {
+          '0%':   { filter: 'none', transform: 'scale(1)' },
+          '40%':  { filter: 'sepia(0.4) hue-rotate(-15deg) brightness(1.2) contrast(1.1)', transform: 'scale(1.02)' },
+          '100%': { filter: 'sepia(0.9) hue-rotate(-25deg) brightness(1.5) contrast(1.4) blur(2px)', transform: 'scale(1.08)' },
         },
         // Flame flicker — overlays the rising fire with a rapid horizontal
         // jitter to make the flames feel alive.
@@ -230,8 +293,16 @@ module.exports = {
         'brand-slot':     'brand-slot 1600ms cubic-bezier(0.3, 0, 0.4, 1) forwards',
         'ignition-flash': 'ignition-flash 1400ms cubic-bezier(0.2, 0, 0.6, 1) forwards',
         'heat-ripple':    'heat-ripple 1400ms cubic-bezier(0.2, 0.6, 0.2, 1) forwards',
-        'flame-rise':     'flame-rise 1800ms cubic-bezier(0.3, 0.5, 0.3, 1) forwards',
-        'flame-flicker':  'flame-flicker 180ms steps(4, end) infinite',
+        'flame-rise':     'flame-rise 1100ms cubic-bezier(0.3, 0.5, 0.3, 1) forwards',
+        'flame-tongue':   'flame-tongue 1000ms cubic-bezier(0.25, 0.5, 0.3, 1) forwards',
+        'fire-fadeout':   'fire-fadeout 800ms cubic-bezier(0.4, 0, 0.6, 1) forwards',
+        'ember-rise':     'ember-rise 1300ms cubic-bezier(0.4, 0, 0.2, 1) forwards',
+        'shockwave':      'shockwave 900ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards',
+        'fireball-bloom': 'fireball-bloom 900ms cubic-bezier(0.25, 0.6, 0.35, 1) forwards',
+        'white-flash':    'white-flash 220ms cubic-bezier(0.3, 0, 0.4, 1) forwards',
+        'kanji-slam':     'kanji-slam 500ms cubic-bezier(0.2, 1.4, 0.4, 1) forwards',
+        'page-consume':   'page-consume 1300ms cubic-bezier(0.4, 0, 0.6, 1) forwards',
+        'flame-flicker':  'flame-flicker 220ms steps(4, end) infinite',
         'fire-consume':   'fire-consume 1800ms cubic-bezier(0.4, 0, 0.6, 1) forwards',
         'ash-reveal':     'ash-reveal 900ms cubic-bezier(0.3, 0, 0.5, 1) forwards',
         'flicker':        'flicker 4s ease-in-out infinite',

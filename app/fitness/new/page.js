@@ -266,6 +266,35 @@ export default function NewCycleNamePage() {
     }, brandDuration)
   }
 
+  /**
+   * When the fire transition becomes active, run a continuous, violent
+   * page shake for the full duration so the source page feels like it's
+   * being torn apart by the conflagration.
+   */
+  useEffect(() => {
+    if (!isFireActive) return
+    const totalDuration = 1300
+    const shakeInterval = 130 // fire a fresh shake every 130ms
+    const intervalId = setInterval(() => {
+      if (mainRef.current) {
+        const j = (mag) => (Math.random() - 0.5) * mag * 2
+        mainRef.current.animate(
+          [
+            { transform: 'translate(0, 0)' },
+            { transform: `translate(${j(14)}px, ${j(10)}px)` },
+            { transform: `translate(${j(14)}px, ${j(10)}px)` },
+            { transform: `translate(${j(14)}px, ${j(10)}px)` },
+            { transform: `translate(${j(14)}px, ${j(10)}px)` },
+            { transform: 'translate(0, 0)' },
+          ],
+          { duration: 160, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
+        )
+      }
+    }, shakeInterval)
+    const stop = setTimeout(() => clearInterval(intervalId), totalDuration)
+    return () => { clearInterval(intervalId); clearTimeout(stop) }
+  }, [isFireActive])
+
   /** Called from FireTransition when its sequence peaks — navigate now. */
   const handleFireComplete = () => {
     router.push('/fitness/new/muscles')
@@ -310,8 +339,11 @@ export default function NewCycleNamePage() {
   return (
     <main
       ref={mainRef}
-      className="relative min-h-screen overflow-hidden bg-gtl-void"
-      style={{ willChange: 'transform' }}
+      className={`
+        relative min-h-screen overflow-hidden bg-gtl-void
+        ${isFireActive ? 'animate-page-consume' : ''}
+      `}
+      style={{ willChange: 'transform, filter' }}
     >
       {/* Background atmospherics */}
       <div className="absolute inset-0 gtl-noise" />

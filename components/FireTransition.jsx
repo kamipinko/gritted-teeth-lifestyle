@@ -1,162 +1,308 @@
 'use client'
 /*
- * FireTransition — the branded-name transition overlay.
+ * FireTransition — the source-side conflagration overlay.
  *
- * Plays after the letter-branding animation completes on the naming
- * screen. Three overlapping phases:
+ * After the brand cools, the entire screen erupts in fire. Layered phases:
  *
- *   1. Heat ripple — a white-hot shockwave expanding from the center of
- *      the screen outward, mimicking the heat shockwave from a brand
- *      being struck.
- *   2. Flame rise — layered fire gradients rising from the bottom of the
- *      viewport, flickering horizontally to feel alive, covering the
- *      screen with orange/red/yellow.
- *   3. Consume — a final full-screen saturation before navigation fires.
+ *   - 0ms:    pre-buildup heat shimmer
+ *   - 60ms:   triple shockwave rings expand from center
+ *   - 200ms:  central fireball blooms outward
+ *   - 280ms:  white flash 1
+ *   - 350ms:  flame tongues whip up from below (12 of them)
+ *   - 450ms:  embers begin flying upward (24 of them)
+ *   - 700ms:  full conflagration — everything visible
+ *   - 950ms:  kanji 火 slams into center
+ *   - 1100ms: white flash 2
+ *   - 1350ms: navigate
  *
- * Total duration ~2200ms. Sound impacts fire at the ignition moment and
- * again when the flames peak.
+ * Throughout: continuous flame flicker, noise grit, bottom core glow.
+ *
+ * The destination page mounts FireFadeIn so the cut is hidden inside the
+ * flame wall. Every millisecond is busy — there is no flat moment.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSound } from '../lib/useSound'
 
 export default function FireTransition({ active, onComplete }) {
   const { play } = useSound()
-  const [phase, setPhase] = useState('idle')
+  const [armed, setArmed] = useState(false)
+
+  // Pre-compute random ember positions / drifts so they're stable across
+  // re-renders. 24 embers spread across the bottom of the screen.
+  const embers = useMemo(
+    () =>
+      Array.from({ length: 24 }, (_, i) => ({
+        left: (i / 24) * 100 + (Math.random() - 0.5) * 8,
+        delay: 450 + i * 18 + Math.random() * 200,
+        duration: 1100 + Math.random() * 400,
+        size: 4 + Math.random() * 9,
+        drift: `${(Math.random() - 0.5) * 240}px`,
+        glow: Math.random() > 0.5
+          ? '0 0 14px rgba(255,200,60,0.95), 0 0 30px rgba(255,120,30,0.7)'
+          : '0 0 16px rgba(255,180,40,0.9),  0 0 36px rgba(212,24,31,0.6)',
+      })),
+    []
+  )
+
+  // 12 flame tongues at varied positions/widths/timings/colors
+  const tongues = useMemo(
+    () => [
+      { left: '-8%',  width: '24%', delay: 350, color: 'rgba(255,200,60,0.95)' },
+      { left: '6%',   width: '20%', delay: 410, color: 'rgba(255,150,30,0.92)' },
+      { left: '18%',  width: '22%', delay: 380, color: 'rgba(255,180,40,0.95)' },
+      { left: '30%',  width: '24%', delay: 460, color: 'rgba(255,120,30,0.9)'  },
+      { left: '40%',  width: '22%', delay: 360, color: 'rgba(255,170,50,0.95)' },
+      { left: '50%',  width: '24%', delay: 430, color: 'rgba(255,140,30,0.92)' },
+      { left: '60%',  width: '22%', delay: 400, color: 'rgba(255,190,60,0.95)' },
+      { left: '70%',  width: '24%', delay: 470, color: 'rgba(255,130,30,0.9)'  },
+      { left: '80%',  width: '22%', delay: 390, color: 'rgba(255,160,40,0.93)' },
+      { left: '88%',  width: '20%', delay: 440, color: 'rgba(255,200,60,0.95)' },
+      { left: '5%',   width: '18%', delay: 520, color: 'rgba(255,255,180,0.85)' },
+      { left: '78%',  width: '18%', delay: 490, color: 'rgba(255,255,180,0.85)' },
+    ],
+    []
+  )
 
   useEffect(() => {
     if (!active) {
-      setPhase('idle')
+      setArmed(false)
       return
     }
+    setArmed(true)
 
-    setPhase('ripple')
+    // Sound choreography
     play('brand-confirm')
-
-    // Flame rise begins shortly after the ripple starts
-    const t1 = setTimeout(() => {
-      setPhase('flames')
-      play('stamp')
-    }, 400)
-
-    // Consume phase — peak fire
-    const t2 = setTimeout(() => {
-      setPhase('consume')
-      play('mega-transition')
-    }, 1400)
+    const s1 = setTimeout(() => play('stamp'), 200)
+    const s2 = setTimeout(() => play('mega-transition'), 700)
+    const s3 = setTimeout(() => play('stamp'), 1000)
 
     // Navigate at peak
-    const t3 = setTimeout(() => {
+    const t = setTimeout(() => {
       if (onComplete) onComplete()
-    }, 2000)
+    }, 1350)
 
-    // Cleanup
-    const t4 = setTimeout(() => setPhase('idle'), 2400)
+    const cleanup = setTimeout(() => setArmed(false), 1500)
 
     return () => {
-      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4)
+      clearTimeout(s1); clearTimeout(s2); clearTimeout(s3)
+      clearTimeout(t); clearTimeout(cleanup)
     }
   }, [active, onComplete, play])
 
-  if (phase === 'idle' && !active) return null
+  if (!armed && !active) return null
 
   return (
     <div
       className="fixed inset-0 z-[9998] pointer-events-none overflow-hidden"
       aria-hidden="true"
     >
-      {/* Phase 1: Heat ripple — a radial white-hot shockwave expanding
-          outward from the center of the screen. */}
+      {/* ── Phase 1: Heat shimmer pre-buildup ─────────────────────── */}
       <div
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full"
+        className="absolute inset-0"
         style={{
           background:
-            'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,240,150,0.95) 18%, rgba(255,160,40,0.85) 40%, rgba(212,24,31,0.6) 65%, transparent 90%)',
+            'radial-gradient(ellipse at center, rgba(255,160,40,0.25) 0%, rgba(212,24,31,0.12) 30%, transparent 60%)',
           mixBlendMode: 'screen',
-          animation: phase !== 'idle' ? 'heat-ripple 1400ms cubic-bezier(0.2, 0.6, 0.2, 1) forwards' : 'none',
+          opacity: armed ? 1 : 0,
+          transition: 'opacity 200ms ease-out',
+        }}
+      />
+
+      {/* ── Phase 2: Triple shockwave rings ───────────────────────── */}
+      {[
+        { delay: 60,  borderColor: '#ffffff' },
+        { delay: 140, borderColor: '#ffe066' },
+        { delay: 220, borderColor: '#ff8c00' },
+      ].map((sw, i) => (
+        <div
+          key={`sw-${i}`}
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full border-[12px]"
+          style={{
+            borderColor: sw.borderColor,
+            boxShadow: `0 0 60px ${sw.borderColor}, 0 0 120px ${sw.borderColor}`,
+            mixBlendMode: 'screen',
+            opacity: 0,
+            animation: armed
+              ? `shockwave 900ms cubic-bezier(0.2, 0.8, 0.3, 1) ${sw.delay}ms forwards`
+              : 'none',
+            willChange: 'transform, opacity',
+          }}
+        />
+      ))}
+
+      {/* ── Phase 3: Massive central fireball bloom ───────────────── */}
+      <div
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full"
+        style={{
+          background:
+            'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,180,0.95) 12%, rgba(255,200,60,0.9) 30%, rgba(255,120,30,0.85) 55%, rgba(212,24,31,0.6) 80%, transparent 100%)',
+          mixBlendMode: 'screen',
+          opacity: 0,
+          animation: armed
+            ? 'fireball-bloom 900ms cubic-bezier(0.25, 0.6, 0.35, 1) 200ms forwards'
+            : 'none',
           willChange: 'transform, opacity',
         }}
       />
 
-      {/* Phase 2: Flame base — primary orange/red layer rising from bottom */}
+      {/* ── Phase 4: White flash 1 — at impact peak ───────────────── */}
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 bg-white"
         style={{
-          animation: phase === 'flames' || phase === 'consume'
-            ? 'flame-rise 1800ms cubic-bezier(0.3, 0.5, 0.3, 1) forwards'
+          opacity: 0,
+          mixBlendMode: 'screen',
+          animation: armed
+            ? 'white-flash 220ms cubic-bezier(0.3, 0, 0.4, 1) 280ms forwards'
             : 'none',
-          willChange: 'transform, opacity',
         }}
-      >
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              'linear-gradient(to top, rgba(255,255,200,1) 0%, rgba(255,200,60,1) 15%, rgba(255,130,30,0.98) 35%, rgba(212,24,31,0.9) 55%, rgba(122,14,20,0.7) 75%, transparent 100%)',
-            mixBlendMode: 'screen',
-            animation: phase === 'flames' || phase === 'consume'
-              ? 'flame-flicker 180ms steps(4, end) infinite'
-              : 'none',
-          }}
-        />
-      </div>
+      />
 
-      {/* Phase 2b: Flame secondary layer — hotter core, offset flicker */}
-      <div
-        className="absolute inset-0"
-        style={{
-          animation: phase === 'flames' || phase === 'consume'
-            ? 'flame-rise 1900ms cubic-bezier(0.3, 0.5, 0.3, 1) 80ms forwards'
-            : 'none',
-          willChange: 'transform, opacity',
-        }}
-      >
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              'radial-gradient(ellipse at 30% 100%, rgba(255,255,220,0.9) 0%, rgba(255,200,80,0.8) 20%, rgba(255,120,30,0.6) 45%, transparent 70%), radial-gradient(ellipse at 70% 100%, rgba(255,240,180,0.85) 0%, rgba(255,180,50,0.7) 25%, rgba(255,80,20,0.55) 50%, transparent 75%)',
-            mixBlendMode: 'screen',
-            filter: 'blur(10px)',
-            animation: phase === 'flames' || phase === 'consume'
-              ? 'flame-flicker 220ms steps(5, end) infinite reverse'
-              : 'none',
-          }}
-        />
-      </div>
-
-      {/* Phase 2c: Heat glow haze — blurred warm overlay for atmospheric depth */}
+      {/* ── Phase 5: Flame base layer — wide rising gradient ──────── */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            'radial-gradient(ellipse at center 80%, rgba(255,150,40,0.5) 0%, rgba(212,24,31,0.25) 40%, transparent 80%)',
+            'linear-gradient(to top, rgba(255,255,200,1) 0%, rgba(255,200,60,1) 12%, rgba(255,130,30,0.98) 30%, rgba(212,24,31,0.95) 50%, rgba(122,14,20,0.85) 70%, rgba(74,10,14,0.5) 88%, transparent 100%)',
+          mixBlendMode: 'screen',
+          opacity: 0,
+          animation: armed
+            ? 'flame-rise 1100ms cubic-bezier(0.3, 0.5, 0.3, 1) 350ms forwards'
+            : 'none',
+          willChange: 'transform, opacity',
+        }}
+      />
+
+      {/* ── Phase 5b: 12 flame tongues ─────────────────────────────── */}
+      {tongues.map((t, i) => (
+        <div
+          key={`tongue-${i}`}
+          className="absolute bottom-0 h-[150%]"
+          style={{
+            left: t.left,
+            width: t.width,
+            background: `radial-gradient(ellipse at center bottom, ${t.color} 0%, rgba(255,100,30,0.6) 35%, rgba(212,24,31,0.3) 65%, transparent 90%)`,
+            mixBlendMode: 'screen',
+            filter: 'blur(18px)',
+            opacity: 0,
+            transformOrigin: 'center bottom',
+            animation: armed
+              ? `flame-tongue 1100ms cubic-bezier(0.25, 0.5, 0.3, 1) ${t.delay}ms forwards`
+              : 'none',
+            willChange: 'transform, opacity',
+          }}
+        />
+      ))}
+
+      {/* ── Phase 6: 24 embers flying upward ───────────────────────── */}
+      {embers.map((e, i) => (
+        <div
+          key={`ember-${i}`}
+          className="absolute rounded-full"
+          style={{
+            bottom: '0%',
+            left: `${e.left}%`,
+            width: `${e.size}px`,
+            height: `${e.size}px`,
+            background: 'rgba(255, 230, 130, 1)',
+            boxShadow: e.glow,
+            opacity: 0,
+            mixBlendMode: 'screen',
+            // CSS vars are read by the keyframe via var(--drift)
+            ['--drift']: e.drift,
+            animation: armed
+              ? `ember-rise ${e.duration}ms cubic-bezier(0.4, 0, 0.2, 1) ${e.delay}ms forwards`
+              : 'none',
+            willChange: 'transform, opacity',
+          }}
+        />
+      ))}
+
+      {/* ── Phase 7: Bright bottom core glow ───────────────────────── */}
+      <div
+        className="absolute inset-x-0 bottom-0 h-1/2"
+        style={{
+          background:
+            'radial-gradient(ellipse at center bottom, rgba(255,255,200,0.95) 0%, rgba(255,200,80,0.7) 25%, rgba(255,140,30,0.4) 55%, transparent 80%)',
           mixBlendMode: 'screen',
           filter: 'blur(40px)',
-          opacity: phase === 'flames' || phase === 'consume' ? 1 : 0,
-          transition: 'opacity 400ms ease-out',
+          opacity: 0,
+          animation: armed
+            ? 'fade-in-late 600ms ease-out 500ms forwards'
+            : 'none',
         }}
       />
+      <style jsx>{`
+        @keyframes fade-in-late {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+      `}</style>
 
-      {/* Phase 3: Consume — final full-screen saturation */}
+      {/* ── Phase 8: Continuous flicker overlay ───────────────────── */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            'radial-gradient(circle at center, rgba(255,230,120,1) 0%, rgba(255,140,30,1) 30%, rgba(212,24,31,1) 60%, rgba(74,10,14,1) 100%)',
-          animation: phase === 'consume'
-            ? 'fire-consume 1000ms cubic-bezier(0.4, 0, 0.6, 1) forwards'
-            : 'none',
-          opacity: 0,
-          willChange: 'opacity',
+            'radial-gradient(ellipse at 25% 100%, rgba(255,255,180,0.5) 0%, transparent 50%), radial-gradient(ellipse at 75% 100%, rgba(255,200,60,0.4) 0%, transparent 55%), radial-gradient(ellipse at 50% 90%, rgba(255,255,220,0.6) 0%, transparent 40%)',
+          mixBlendMode: 'screen',
+          filter: 'blur(20px)',
+          opacity: armed ? 1 : 0,
+          transition: 'opacity 400ms ease-out 350ms',
+          animation: armed ? 'flame-flicker 220ms steps(4, end) infinite' : 'none',
         }}
       />
 
-      {/* Embers / noise overlay during flame phase for grit */}
+      {/* ── Phase 9: Big kanji 火 ("fire") slamming into the center ── */}
+      <div
+        className="absolute inset-0 flex items-center justify-center"
+        style={{ opacity: 0, animation: armed ? 'fade-kanji 200ms ease-out 950ms forwards' : 'none' }}
+      >
+        <div
+          className="relative"
+          style={{
+            animation: armed ? 'kanji-slam 500ms cubic-bezier(0.2, 1.4, 0.4, 1) 950ms forwards' : 'none',
+            transformOrigin: 'center center',
+            willChange: 'transform, opacity',
+          }}
+        >
+          <div
+            style={{
+              fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
+              fontSize: '32rem',
+              fontWeight: 900,
+              lineHeight: '0.8',
+              color: '#ffffff',
+              textShadow:
+                '0 0 40px #ffe066, 0 0 80px #ff8c00, 0 0 160px #d4181f, 0 0 240px #ff2a36',
+              mixBlendMode: 'screen',
+            }}
+          >
+            火
+          </div>
+        </div>
+      </div>
+      <style jsx>{`
+        @keyframes fade-kanji { from { opacity: 0; } to { opacity: 1; } }
+      `}</style>
+
+      {/* ── Phase 10: White flash 2 — at peak / kanji impact ──────── */}
+      <div
+        className="absolute inset-0 bg-white"
+        style={{
+          opacity: 0,
+          mixBlendMode: 'screen',
+          animation: armed
+            ? 'white-flash 240ms cubic-bezier(0.3, 0, 0.4, 1) 1100ms forwards'
+            : 'none',
+        }}
+      />
+
+      {/* ── Phase 11: Embers/noise overlay during flame phase for grit */}
       <div
         className="absolute inset-0 gtl-noise"
         style={{
-          opacity: phase === 'flames' || phase === 'consume' ? 0.6 : 0,
-          transition: 'opacity 300ms ease-out',
+          opacity: armed ? 0.65 : 0,
+          transition: 'opacity 300ms ease-out 350ms',
           mixBlendMode: 'overlay',
         }}
       />

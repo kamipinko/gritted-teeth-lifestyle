@@ -17,6 +17,7 @@ import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useSound } from '../../../../lib/useSound'
+import FireFadeIn from '../../../../components/FireFadeIn'
 
 // R3F is client-only and touches `window`; dynamic import with ssr: false
 // avoids hydration errors.
@@ -42,6 +43,14 @@ const MUSCLE_GROUPS = [
   { id: 'quads',      label: 'QUADS',      region: 'LOWER' },
   { id: 'hamstrings', label: 'HAMSTRINGS', region: 'LOWER' },
   { id: 'calves',     label: 'CALVES',     region: 'LOWER' },
+]
+
+// Available 3D models the user can switch between
+const MODEL_OPTIONS = [
+  { id: 'anatomy',  label: 'ANATOMY',   subtitle: 'REFERENCE'   },
+  { id: 'goku',     label: 'GOKU',      subtitle: 'BASE'        },
+  { id: 'gokuSSJ',  label: 'GOKU',      subtitle: 'SUPER SAIYAN' },
+  { id: 'gohan',    label: 'GOHAN',     subtitle: 'TEEN'         },
 ]
 
 function RetreatButton({ href = '/fitness/new' }) {
@@ -156,8 +165,58 @@ function MuscleRow({ group, selected, onToggle }) {
   )
 }
 
+/**
+ * ModelToggle — a row of P5-styled buttons for switching between the
+ * available 3D models. Active one is red and filled.
+ */
+function ModelToggle({ value, onChange }) {
+  const { play } = useSound()
+  return (
+    <div className="flex items-stretch gap-2">
+      {MODEL_OPTIONS.map((opt) => {
+        const isActive = value === opt.id
+        return (
+          <button
+            key={opt.id}
+            type="button"
+            onClick={() => { play('option-select'); onChange(opt.id) }}
+            onMouseEnter={() => play('button-hover')}
+            className={`
+              group relative px-4 py-2 text-left transition-all duration-200
+              border
+              ${isActive
+                ? 'bg-gtl-red border-gtl-red-bright shadow-red-glow'
+                : 'bg-gtl-ink/60 border-gtl-edge hover:border-gtl-red'
+              }
+            `}
+            style={{ clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)' }}
+          >
+            <div
+              className={`
+                font-display text-sm leading-none
+                ${isActive ? 'text-gtl-paper' : 'text-gtl-chalk'}
+              `}
+            >
+              {opt.label}
+            </div>
+            <div
+              className={`
+                font-mono text-[8px] tracking-[0.3em] uppercase mt-1
+                ${isActive ? 'text-gtl-paper/80' : 'text-gtl-ash'}
+              `}
+            >
+              {opt.subtitle}
+            </div>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function MusclesPage() {
   const [selected, setSelected] = useState(() => new Set())
+  const [modelKey, setModelKey] = useState('goku')
   const { play } = useSound()
 
   const toggle = (id) => {
@@ -241,6 +300,19 @@ export default function MusclesPage() {
 
       {/* Main content — 3D body + side panel */}
       <section className="relative z-10 px-8 pb-20 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">
+        {/* 3D body canvas column */}
+        <div className="flex flex-col gap-4">
+          {/* Model toggle */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-px w-8 bg-gtl-red" />
+              <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-red">
+                SPECIMEN
+              </span>
+            </div>
+            <ModelToggle value={modelKey} onChange={setModelKey} />
+          </div>
+
         {/* 3D body canvas */}
         <div className="relative h-[600px] bg-gtl-ink/60 border border-gtl-edge">
           {/* Corner marks */}
@@ -264,8 +336,9 @@ export default function MusclesPage() {
           </div>
 
           <Suspense fallback={<div className="w-full h-full flex items-center justify-center font-mono text-gtl-ash">LOADING…</div>}>
-            <MuscleBody selected={selected} onToggle={toggle} />
+            <MuscleBody selected={selected} onToggle={toggle} modelKey={modelKey} />
           </Suspense>
+        </div>
         </div>
 
         {/* Side panel — muscle list */}
@@ -336,6 +409,10 @@ export default function MusclesPage() {
         </div>
         <div className="h-px flex-1 bg-gtl-edge" />
       </div>
+
+      {/* Fire fade-in — picks up where FireTransition left off so the
+          source-to-destination cut feels continuous. */}
+      <FireFadeIn duration={900} />
     </main>
   )
 }
