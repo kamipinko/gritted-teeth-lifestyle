@@ -94,9 +94,11 @@ function RetreatButton({ href = '/fitness/new' }) {
 
 /**
  * A single row in the right-side muscle list.
- * Mirrors the 3D selection state — tapping here toggles the same
- * underlying set, so the user can select from either the 3D body or
- * the list.
+ *
+ * Clicking the row focuses the camera on that muscle — only one muscle
+ * can be focused at a time (handled by `handleFocus` upstream). Selection
+ * for training is a separate action via the checkbox on the left of the
+ * row; the checkbox stops propagation so it never affects focus.
  */
 function MuscleRow({ group, selected, focusedGroup, onToggle, onFocus }) {
   const { play } = useSound()
@@ -104,30 +106,50 @@ function MuscleRow({ group, selected, focusedGroup, onToggle, onFocus }) {
   const isSelected = selected.has(group.id)
   const isFocused = focusedGroup === group.id
 
-  const handleClick = () => {
+  const handleRowClick = () => {
     play('option-select')
-    onToggle(group.id)
     onFocus(group.id)
   }
 
+  const handleCheckboxClick = (e) => {
+    e.stopPropagation()
+    play('option-select')
+    onToggle(group.id)
+  }
+
   return (
-    <button
-      type="button"
-      onClick={handleClick}
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={handleRowClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          handleRowClick()
+        }
+      }}
       onMouseEnter={() => { setHovered(true); play('button-hover') }}
       onMouseLeave={() => setHovered(false)}
       className={`
-        group relative w-full flex items-center gap-3 px-3 py-2 text-left
-        transition-all duration-200 ease-out
-        ${isSelected ? 'bg-gtl-red/15' : hovered ? 'bg-gtl-surface' : 'bg-transparent'}
+        group relative w-full flex items-center gap-3 px-3 py-2 text-left cursor-pointer
+        transition-all duration-200 ease-out outline-none
+        ${isFocused
+          ? 'bg-gtl-red/25'
+          : isSelected
+          ? 'bg-gtl-red/10'
+          : hovered
+          ? 'bg-gtl-surface'
+          : 'bg-transparent'}
       `}
     >
-      {/* Left marker — a slash-shape indicator */}
+      {/* Left marker — slash-shape indicator, tracks focus state */}
       <div
         className={`
           w-1 h-8 transition-all duration-200
-          ${isSelected
+          ${isFocused
             ? 'bg-gtl-red-bright'
+            : isSelected
+            ? 'bg-gtl-red/80'
             : hovered
             ? 'bg-gtl-red/60'
             : 'bg-gtl-edge'}
@@ -135,14 +157,43 @@ function MuscleRow({ group, selected, focusedGroup, onToggle, onFocus }) {
         style={{ clipPath: 'polygon(0 10%, 100% 0, 100% 90%, 0 100%)' }}
       />
 
+      {/* P5-styled checkbox — independent of focus, toggles selection only */}
+      <div
+        role="checkbox"
+        aria-checked={isSelected}
+        aria-label={`Select ${group.label}`}
+        tabIndex={-1}
+        onClick={handleCheckboxClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            handleCheckboxClick(e)
+          }
+        }}
+        className={`
+          relative w-5 h-5 shrink-0 flex items-center justify-center border-2
+          transition-all duration-150
+          ${isSelected
+            ? 'bg-gtl-red-bright border-gtl-red-bright shadow-red-glow'
+            : 'bg-gtl-ink border-gtl-edge hover:border-gtl-red'}
+        `}
+        style={{ clipPath: 'polygon(12% 0%, 100% 0%, 88% 100%, 0% 100%)' }}
+      >
+        {isSelected && (
+          <span className="font-display text-gtl-paper text-sm leading-none -rotate-12 select-none">
+            ✕
+          </span>
+        )}
+      </div>
+
       {/* Label */}
       <div className="flex-1 min-w-0">
         <div
           className={`
             font-display text-xl leading-none transition-colors duration-200
-            ${isSelected
+            ${isFocused
               ? 'text-gtl-red-bright'
-              : hovered
+              : isSelected || hovered
               ? 'text-gtl-chalk'
               : 'text-gtl-ash'}
           `}
@@ -154,16 +205,16 @@ function MuscleRow({ group, selected, focusedGroup, onToggle, onFocus }) {
         </div>
       </div>
 
-      {/* Selected / focused indicator */}
+      {/* Focus indicator — only visible for the currently focused row */}
       <div
         className={`
           font-mono text-[10px] tracking-[0.2em] font-bold transition-opacity duration-200
-          ${isSelected ? 'opacity-100 text-gtl-red-bright' : 'opacity-30 text-gtl-ash'}
+          ${isFocused ? 'opacity-100 text-gtl-red-bright' : 'opacity-0'}
         `}
       >
-        {isFocused ? '◉ LOCKED' : isSelected ? '● MARKED' : '○'}
+        ◉ FOCUS
       </div>
-    </button>
+    </div>
   )
 }
 
@@ -233,15 +284,12 @@ export default function MusclesPage() {
     })
   }
 
-  // Camera focus — clicking a hitbox sets focus (zooms in), clicking same again clears it
+  // Camera focus — clicking a hitbox or row sets focus (zooms in); clicking
+  // the same muscle again, or clicking the background, clears focus. Only one
+  // muscle is ever focused at a time — setting a new one replaces the previous.
+  // Selection is a separate concern, handled by the checkbox in MuscleRow.
   const handleFocus = (id) => {
     setFocusedGroup((prev) => (prev === id ? null : id))
-  }
-
-  // Used by hitboxes: both toggle selection AND focus camera
-  const handleHitboxClick = (id) => {
-    toggle(id)
-    handleFocus(id)
   }
 
   const clearAll = () => {
@@ -352,8 +400,6 @@ export default function MusclesPage() {
 
           <Suspense fallback={<div className="w-full h-full flex items-center justify-center font-mono text-gtl-ash">LOADING…</div>}>
             <MuscleBody
-              selected={selected}
-              onToggle={handleHitboxClick}
               onFocus={handleFocus}
               focusedGroup={focusedGroup}
               modelKey={modelKey}
