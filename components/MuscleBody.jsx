@@ -25,7 +25,7 @@ const TARGET_HEIGHT = 4.0
 // Debug overlay — when true, renders every hitbox as a semi-transparent
 // colored wireframe so we can see where the click/glow volumes land on
 // the current model. Leave on during calibration; flip off to ship.
-const DEBUG_HITBOXES = true
+const DEBUG_HITBOXES = false
 
 const MODELS = {
   goku: {
@@ -55,7 +55,8 @@ const MODELS = {
     // Adding one muscle group at a time; debug wireframes are on.
     hitboxes: [
       // CHEST — calibrated against the anatomy GLB.
-      { group: 'chest', shape: 'box', position: [0.011, 0.677, 0.013], scale: [0.48, 0.48, 0.48] },
+      { group: 'chest', position: [-0.175, 1.072, 0.190], scale: [0.260, 0.138, 0.114] },
+      { group: 'chest', position: [ 0.169, 1.072, 0.190], scale: [0.260, 0.138, 0.114] },
     ],
   },
 }
@@ -473,12 +474,133 @@ const DEBUG_GROUP_COLORS = {
   calves:     '#ff00aa',
 }
 
-// Each debug hitbox is wrapped in a TransformControls gizmo so it can be
-// dragged in 3D. Keyboard:
+// Each debug hitbox is rendered as a draggable wireframe with its own
+// TransformControls gizmo attached directly to the mesh (not wrapping
+// it, which would move an outer group and give misleading values).
+// Keyboard:
 //   T → translate mode
 //   S → scale mode
-// On every drag, the mesh's new position+scale are logged to console so
-// you can copy them straight back into the hitbox array in this file.
+// Every drag logs the mesh's real, final position+scale to the console
+// so you can copy the values straight back into the hitbox array.
+function DebugHitbox({ hitbox, index, mode, logTransform }) {
+  // Ref callback sets state on mount so the TransformControls can be
+  // rendered on the next pass with `object={mesh}` pointing at the mesh.
+  const [mesh, setMesh] = useState(null)
+
+  return (
+    <>
+      <mesh
+        ref={setMesh}
+        position={hitbox.position}
+        scale={hitbox.scale}
+      >
+        {hitbox.shape === 'box'
+          ? <boxGeometry args={[1, 1, 1]} />
+          : <sphereGeometry args={[1, 16, 16]} />
+        }
+        <meshBasicMaterial
+          color={DEBUG_GROUP_COLORS[hitbox.group] || '#ffffff'}
+          wireframe
+          transparent
+          opacity={0.7}
+          depthTest={false}
+          toneMapped={false}
+        />
+      </mesh>
+      {mesh && (
+        <TransformControls
+          object={mesh}
+          mode={mode}
+          size={0.5}
+          onObjectChange={() => logTransform(index, hitbox.group, mesh)}
+        />
+      )}
+    </>
+  )
+}
+
+// Tandem pair: two mirror-symmetric hitboxes (left + right) controlled
+// by a single TransformControls gizmo on a shared parent group. The two
+// child meshes sit at fixed local offsets along the group's X axis. As
+// the group is dragged or scaled, the actual world position+scale of
+// each mesh is composed from the group's transform and the local offset
+// and logged in copy-paste-ready format.
+function DebugTandemPair({ hitboxes, group, indices, mode }) {
+  const [groupObj, setGroupObj] = useState(null)
+
+  // Initial center of the pair on the X axis (Y/Z taken from either)
+  const cx = (hitboxes[0].position[0] + hitboxes[1].position[0]) / 2
+  const cy = (hitboxes[0].position[1] + hitboxes[1].position[1]) / 2
+  const cz = (hitboxes[0].position[2] + hitboxes[1].position[2]) / 2
+
+  // Half-spread on X — each mesh sits at ±dx inside the group
+  const dx = Math.abs(hitboxes[0].position[0] - cx)
+
+  // Per-mesh local scale (preserved from initial layout)
+  const localScale = hitboxes[0].scale
+
+  const onChange = () => {
+    if (!groupObj) return
+    const gp = groupObj.position
+    const gs = groupObj.scale
+    const fmt = (v) => Number(v.toFixed(3))
+    const lx = gp.x - dx * gs.x
+    const rx = gp.x + dx * gs.x
+    const sx = localScale[0] * gs.x
+    const sy = localScale[1] * gs.y
+    const sz = localScale[2] * gs.z
+    // eslint-disable-next-line no-console
+    console.log(
+      `[${group} #${indices[0]}] position: [${fmt(lx)}, ${fmt(gp.y)}, ${fmt(gp.z)}] scale: [${fmt(sx)}, ${fmt(sy)}, ${fmt(sz)}]`
+    )
+    // eslint-disable-next-line no-console
+    console.log(
+      `[${group} #${indices[1]}] position: [${fmt(rx)}, ${fmt(gp.y)}, ${fmt(gp.z)}] scale: [${fmt(sx)}, ${fmt(sy)}, ${fmt(sz)}]`
+    )
+  }
+
+  const Geom = ({ shape }) => shape === 'box'
+    ? <boxGeometry args={[1, 1, 1]} />
+    : <sphereGeometry args={[1, 16, 16]} />
+
+  return (
+    <>
+      <group ref={setGroupObj} position={[cx, cy, cz]}>
+        <mesh position={[-dx, 0, 0]} scale={localScale}>
+          <Geom shape={hitboxes[0].shape} />
+          <meshBasicMaterial
+            color={DEBUG_GROUP_COLORS[group] || '#ffffff'}
+            wireframe
+            transparent
+            opacity={0.7}
+            depthTest={false}
+            toneMapped={false}
+          />
+        </mesh>
+        <mesh position={[dx, 0, 0]} scale={localScale}>
+          <Geom shape={hitboxes[1].shape} />
+          <meshBasicMaterial
+            color={DEBUG_GROUP_COLORS[group] || '#ffffff'}
+            wireframe
+            transparent
+            opacity={0.7}
+            depthTest={false}
+            toneMapped={false}
+          />
+        </mesh>
+      </group>
+      {groupObj && (
+        <TransformControls
+          object={groupObj}
+          mode={mode}
+          size={0.5}
+          onObjectChange={onChange}
+        />
+      )}
+    </>
+  )
+}
+
 function DebugHitboxes({ hitboxes }) {
   const [mode, setMode] = useState('translate')
 
@@ -504,31 +626,38 @@ function DebugHitboxes({ hitboxes }) {
     )
   }
 
+  // Group hitboxes by muscle group name; pairs of two render as a single
+  // tandem gizmo, everything else as individual gizmos.
+  const grouped = {}
+  hitboxes.forEach((h, i) => {
+    if (!grouped[h.group]) grouped[h.group] = []
+    grouped[h.group].push({ hitbox: h, index: i })
+  })
+
   return (
     <group>
-      {hitboxes.map((h, i) => (
-        <TransformControls
-          key={`dbg-${i}`}
-          mode={mode}
-          size={0.5}
-          onObjectChange={(e) => logTransform(i, h.group, e.target.object)}
-        >
-          <mesh position={h.position} scale={h.scale}>
-            {h.shape === 'box'
-              ? <boxGeometry args={[1, 1, 1]} />
-              : <sphereGeometry args={[1, 16, 16]} />
-            }
-            <meshBasicMaterial
-              color={DEBUG_GROUP_COLORS[h.group] || '#ffffff'}
-              wireframe
-              transparent
-              opacity={0.7}
-              depthTest={false}
-              toneMapped={false}
+      {Object.entries(grouped).map(([groupName, entries]) => {
+        if (entries.length === 2) {
+          return (
+            <DebugTandemPair
+              key={`tandem-${groupName}`}
+              group={groupName}
+              hitboxes={entries.map((e) => e.hitbox)}
+              indices={entries.map((e) => e.index)}
+              mode={mode}
             />
-          </mesh>
-        </TransformControls>
-      ))}
+          )
+        }
+        return entries.map(({ hitbox, index }) => (
+          <DebugHitbox
+            key={`dbg-${index}`}
+            hitbox={hitbox}
+            index={index}
+            mode={mode}
+            logTransform={logTransform}
+          />
+        ))
+      })}
     </group>
   )
 }
