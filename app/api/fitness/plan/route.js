@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import Anthropic from '@anthropic-ai/sdk'
 import { NextResponse } from 'next/server'
 
 async function getYouTubeVideoId(exerciseName) {
@@ -20,8 +20,7 @@ export async function POST(req) {
   try {
     const { goal, daysPerWeek, weeks, equipment } = await req.json()
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
     const prompt = `Create a ${weeks}-week workout program for someone whose goal is "${goal}".
 They can train ${daysPerWeek} days per week. Equipment: ${equipment || 'bodyweight only'}.
@@ -49,8 +48,12 @@ Rules:
 - Use real exercise names suitable for YouTube search
 - Return only valid JSON, no markdown`
 
-    const result = await model.generateContent(prompt)
-    const text = result.response.text()
+    const result = await client.messages.create({
+      model: 'claude-opus-4-6',
+      max_tokens: 16000,
+      messages: [{ role: 'user', content: prompt }],
+    })
+    const text = result.content[0].text
     const plan = JSON.parse(text)
 
     // Fetch YouTube IDs for each unique exercise
