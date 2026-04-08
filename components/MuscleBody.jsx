@@ -242,9 +242,10 @@ function CameraRig({ focusGroup }) {
 }
 
 // ── Hitbox — pure invisible click zone, no visual shape ────────────
-// Opacity is always 0. The red highlight comes from FocusLight below,
-// which casts actual colored light onto the 3D model geometry.
-function Hitbox({ group, position, scale, shape = 'sphere', onToggle, onFocus }) {
+// Opacity is always 0. The gold highlight comes from FocusLight below.
+// onToggle is handleHitboxClick which already calls handleFocus internally —
+// do NOT call onFocus here or it double-fires and cancels the camera animation.
+function Hitbox({ group, position, scale, shape = 'sphere', onToggle }) {
   return (
     <mesh
       position={position}
@@ -252,7 +253,6 @@ function Hitbox({ group, position, scale, shape = 'sphere', onToggle, onFocus })
       onClick={(e) => {
         e.stopPropagation()
         onToggle(group)
-        onFocus(group)
       }}
       onPointerOver={(e) => {
         e.stopPropagation()
@@ -271,17 +271,17 @@ function Hitbox({ group, position, scale, shape = 'sphere', onToggle, onFocus })
   )
 }
 
-// ── Focus Light — red point light at selected muscle centers ────────
-// Casts red light directly on the 3D model geometry. Much more
-// convincing than a transparent mesh overlay — it lights the actual
-// character's surface where the muscle is.
+// ── Focus Light — gold point light at selected muscle centers ────────
+// Casts colored light directly onto 3D model geometry. Gold (#ffcc00)
+// contrasts sharply against the red/orange Dragon Ball models.
+// Focused muscle gets a bright pulsing light; others get a dimmer steady glow.
 function FocusLight({ selected, focusedGroup }) {
   const focusedLightRef = useRef()
 
   useFrame(() => {
     if (!focusedLightRef.current) return
-    const pulse = 1 + Math.sin(Date.now() * 0.004) * 0.3
-    focusedLightRef.current.intensity = 10 * pulse
+    const pulse = 1 + Math.sin(Date.now() * 0.004) * 0.35
+    focusedLightRef.current.intensity = 28 * pulse
   })
 
   return (
@@ -290,15 +290,14 @@ function FocusLight({ selected, focusedGroup }) {
         const center = MUSCLE_CENTERS[groupId]
         if (!center) return null
         const isFocused = focusedGroup === groupId
-        // Offset light slightly toward the camera so it hits the front face
         return (
           <pointLight
             key={groupId}
             ref={isFocused ? focusedLightRef : undefined}
-            position={[center[0], center[1], center[2] + 1.0]}
-            color="#ff1a1a"
-            intensity={isFocused ? 10 : 3}
-            distance={2.8}
+            position={[center[0], center[1], center[2] + 1.2]}
+            color="#ffcc00"
+            intensity={isFocused ? 28 : 8}
+            distance={5.0}
             decay={2}
           />
         )
@@ -390,7 +389,6 @@ function SceneContent({ modelKey, selected, focusedGroup, onToggle, onFocus }) {
           scale={h.scale}
           shape={h.shape}
           onToggle={onToggle}
-          onFocus={onFocus}
         />
       ))}
 
