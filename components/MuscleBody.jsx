@@ -98,36 +98,35 @@ function buildStandardHitboxes({ bodyScale = 1.0 }) {
   ]
 }
 
-// ── Camera positions per muscle group ──────────────────────────────
-// Closer zoom than before — each pos is tuned to frame the muscle tightly.
+// ── Camera positions derived from hitbox centers ────────────────────
+// target = average world-space position of all hitboxes in the group
+// pos    = target offset by DIST along the axis facing that muscle
+//          (front muscles: +Z, back muscles: -Z)
+// This is computed from the same numbers used to place hitboxes, so
+// the camera will always look directly at the correct body part.
 const OVERVIEW_CAM = { pos: [0, 0.6, 8], target: [0, 0.6, 0] }
+const DIST = 3.0 // camera distance from the muscle center
+
 const MUSCLE_CAMERA = {
-  chest:      { pos: [0,    1.60,  2.6],  target: [0,    1.60,  0] },
-  shoulders:  { pos: [0,    1.85,  3.0],  target: [0,    1.85,  0] },
-  biceps:     { pos: [1.5,  1.40,  2.4],  target: [0.3,  1.40,  0] },
-  triceps:    { pos: [0,    1.40, -3.2],  target: [0,    1.40,  0] },
-  forearms:   { pos: [1.8,  0.50,  2.4],  target: [0.4,  0.50,  0] },
-  abs:        { pos: [0,    0.65,  2.6],  target: [0,    0.65,  0] },
-  glutes:     { pos: [0,   -0.40, -3.8],  target: [0,   -0.40,  0] },
-  quads:      { pos: [0,   -1.05,  2.8],  target: [0,   -1.05,  0] },
-  hamstrings: { pos: [0,   -1.05, -3.5],  target: [0,   -1.05,  0] },
-  calves:     { pos: [0,   -2.00,  3.0],  target: [0,   -2.00,  0] },
+  // Front-facing muscles (hitbox z > 0) → camera comes from +Z
+  chest:      { target: [0,    1.60,  0.55], pos: [0,    1.60,  0.55 + DIST] },
+  shoulders:  { target: [0,    1.85,  0.05], pos: [0,    1.85,  0.05 + DIST] },
+  biceps:     { target: [0,    1.40,  0.35], pos: [0,    1.40,  0.35 + DIST] },
+  forearms:   { target: [0,    0.45,  0.15], pos: [0,    0.45,  0.15 + DIST] },
+  abs:        { target: [0,    0.65,  0.55], pos: [0,    0.65,  0.55 + DIST] },
+  quads:      { target: [0,   -1.05,  0.40], pos: [0,   -1.05,  0.40 + DIST] },
+  // Back-facing muscles (hitbox z < 0) → camera comes from -Z
+  triceps:    { target: [0,    1.40, -0.30], pos: [0,    1.40, -0.30 - DIST] },
+  glutes:     { target: [0,   -0.40, -0.45], pos: [0,   -0.40, -0.45 - DIST] },
+  hamstrings: { target: [0,   -1.05, -0.40], pos: [0,   -1.05, -0.40 - DIST] },
+  calves:     { target: [0,   -2.55, -0.30], pos: [0,   -2.55, -0.30 - DIST] },
 }
 
-// ── World-space center of each muscle group ─────────────────────────
-// Used to position the red focus point light on the actual 3D geometry.
-const MUSCLE_CENTERS = {
-  chest:      [0,     1.60,   0.55],
-  shoulders:  [0,     1.85,   0.05],
-  biceps:     [0,     1.40,   0.35],
-  triceps:    [0,     1.40,  -0.30],
-  forearms:   [0,     0.45,   0.15],
-  abs:        [0,     0.65,   0.55],
-  glutes:     [0,    -0.40,  -0.45],
-  quads:      [0,    -1.05,   0.40],
-  hamstrings: [0,    -1.05,  -0.40],
-  calves:     [0,    -2.55,  -0.30],
-}
+// ── Muscle centers (same as MUSCLE_CAMERA targets) ──────────────────
+// Used to position the focus point light directly on the 3D geometry.
+const MUSCLE_CENTERS = Object.fromEntries(
+  Object.entries(MUSCLE_CAMERA).map(([k, v]) => [k, v.target])
+)
 
 function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
@@ -271,38 +270,57 @@ function Hitbox({ group, position, scale, shape = 'sphere', onToggle }) {
   )
 }
 
-// ── Focus Light — gold point light at selected muscle centers ────────
-// Casts colored light directly onto 3D model geometry. Gold (#ffcc00)
-// contrasts sharply against the red/orange Dragon Ball models.
-// Focused muscle gets a bright pulsing light; others get a dimmer steady glow.
-function FocusLight({ selected, focusedGroup }) {
-  const focusedLightRef = useRef()
+// ── Focus Light — temporary gold flash on zoom-in ──────────────────
+// Renders only for the focused muscle. Pulses for 1.5 s then fades
+// out over 0.5 s. Resets each time focusedGroup changes.
+// Gold (#ffcc00) contrasts against Goku's red/orange gi.
+function FocusLight({ focusedGroup }) {
+  const lightRef = useRef()
+  const focusTime = useRef(null)
+
+  useEffect(() => {
+    // Reset timer whenever a new muscle is focused
+    focusTime.current = focusedGroup ? Date.now() : null
+  }, [focusedGroup])
 
   useFrame(() => {
-    if (!focusedLightRef.current) return
-    const pulse = 1 + Math.sin(Date.now() * 0.004) * 0.35
-    focusedLightRef.current.intensity = 28 * pulse
+    if (!lightRef.current) return
+    if (!focusTime.current) {
+      lightRef.current.intensity = 0
+      return
+    }
+    const elapsed = (Date.now() - focusTime.current) / 1000
+    const TOTAL      = 2.0  // full highlight window
+    const FADE_START = 1.5  // start fade-out here
+
+    let envelope = 1.0
+    if (elapsed >= TOTAL) {
+      envelope = 0
+    } else if (elapsed >= FADE_START) {
+      envelope = 1 - (elapsed - FADE_START) / (TOTAL - FADE_START)
+    }
+
+    // Pulse only while fully lit; steady fade once fading begins
+    const pulse = elapsed < FADE_START ? (1 + Math.sin(Date.now() * 0.004) * 0.35) : 1
+    lightRef.current.intensity = 30 * envelope * pulse
   })
 
+  if (!focusedGroup) return null
+  const center = MUSCLE_CENTERS[focusedGroup]
+  if (!center) return null
+
+  // Offset toward camera so light hits the front face of the muscle
+  const zOffset = center[2] >= 0 ? 1.2 : -1.2
+
   return (
-    <>
-      {Array.from(selected).map((groupId) => {
-        const center = MUSCLE_CENTERS[groupId]
-        if (!center) return null
-        const isFocused = focusedGroup === groupId
-        return (
-          <pointLight
-            key={groupId}
-            ref={isFocused ? focusedLightRef : undefined}
-            position={[center[0], center[1], center[2] + 1.2]}
-            color="#ffcc00"
-            intensity={isFocused ? 28 : 8}
-            distance={5.0}
-            decay={2}
-          />
-        )
-      })}
-    </>
+    <pointLight
+      ref={lightRef}
+      position={[center[0], center[1], center[2] + zOffset]}
+      color="#ffcc00"
+      intensity={30}
+      distance={5.0}
+      decay={2}
+    />
   )
 }
 
@@ -370,8 +388,8 @@ function SceneContent({ modelKey, selected, focusedGroup, onToggle, onFocus }) {
       <pointLight position={[0, 5, 5]} intensity={0.8} color="#ffaa66" />
       <pointLight position={[0, -2, 4]} intensity={0.4} color="#4488ff" />
 
-      {/* Red point lights at selected muscle centers — the actual highlight */}
-      <FocusLight selected={selected} focusedGroup={focusedGroup} />
+      {/* Gold flash light on zoom-in — fades after 2 s */}
+      <FocusLight focusedGroup={focusedGroup} />
 
       {/* Background click-to-dismiss plane */}
       <BackgroundPlane onDismiss={() => onFocus(null)} />
