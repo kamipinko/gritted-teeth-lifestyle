@@ -108,18 +108,18 @@ const OVERVIEW_CAM = { pos: [0, 0.6, 8], target: [0, 0.6, 0] }
 const DIST = 3.0 // camera distance from the muscle center
 
 const MUSCLE_CAMERA = {
-  // Front-facing muscles (hitbox z > 0) → camera comes from +Z
-  chest:      { target: [0,    1.60,  0.55], pos: [0,    1.60,  0.55 + DIST] },
-  shoulders:  { target: [0,    1.85,  0.05], pos: [0,    1.85,  0.05 + DIST] },
-  biceps:     { target: [0,    1.40,  0.35], pos: [0,    1.40,  0.35 + DIST] },
-  forearms:   { target: [0,    0.45,  0.15], pos: [0,    0.45,  0.15 + DIST] },
-  abs:        { target: [0,    0.65,  0.55], pos: [0,    0.65,  0.55 + DIST] },
-  quads:      { target: [0,   -1.05,  0.40], pos: [0,   -1.05,  0.40 + DIST] },
-  // Back-facing muscles (hitbox z < 0) → camera comes from -Z
-  triceps:    { target: [0,    1.40, -0.30], pos: [0,    1.40, -0.30 - DIST] },
-  glutes:     { target: [0,   -0.40, -0.45], pos: [0,   -0.40, -0.45 - DIST] },
-  hamstrings: { target: [0,   -1.05, -0.40], pos: [0,   -1.05, -0.40 - DIST] },
-  calves:     { target: [0,   -2.55, -0.30], pos: [0,   -2.55, -0.30 - DIST] },
+  // Front-facing muscles → camera comes from +Z
+  chest:      { target: [0,    1.60,  0.55], pos: [0,    1.60,  0.55 + DIST] }, // OK
+  shoulders:  { target: [0,    1.85,  0.05], pos: [0,    1.85,  0.05 + DIST] }, // OK
+  biceps:     { target: [0,    1.40,  0.35], pos: [0,    1.40,  0.35 + DIST] }, // OK
+  forearms:   { target: [0,    0.90,  0.15], pos: [0,    0.90,  0.15 + DIST] }, // raised +0.45
+  abs:        { target: [0,    1.00,  0.55], pos: [0,    1.00,  0.55 + DIST] }, // raised +0.35
+  quads:      { target: [0,   -0.50,  0.40], pos: [0,   -0.50,  0.40 + DIST] }, // raised +0.55
+  // Back-facing muscles → camera comes from -Z
+  triceps:    { target: [0,    1.40, -0.30], pos: [0,    1.40, -0.30 - DIST] }, // OK
+  glutes:     { target: [0,    0.10, -0.45], pos: [0,    0.10, -0.45 - DIST] }, // raised +0.50
+  hamstrings: { target: [0,   -0.50, -0.40], pos: [0,   -0.50, -0.40 - DIST] }, // raised +0.55
+  calves:     { target: [0,   -1.40, -0.30], pos: [0,   -1.40, -0.30 - DIST] }, // raised +1.15
 }
 
 // ── Muscle centers (same as MUSCLE_CAMERA targets) ──────────────────
