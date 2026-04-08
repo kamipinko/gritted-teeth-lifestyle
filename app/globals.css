@@ -1,8 +1,208 @@
+/*
+ * Gritted Teeth Lifestyle — global styles
+ * P5 visual system: red/black/white/gold palette, mixed display typography,
+ * paper textures, slash overlays, noise grain.
+ */
+
+/* ----- Fonts ----- */
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Big+Shoulders+Display:wght@700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background-color: #0a0a0a;
-  color: #f1faee;
+/* ----- Base ----- */
+html, body {
+  background-color: #070708;
+  color: #f1eee5;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Selection — red because of course */
+::selection {
+  background: #d4181f;
+  color: #ffffff;
+}
+
+/* ----- Component layer: reusable visual primitives ----- */
+@layer components {
+
+  /*
+   * Paper background — used on calling cards.
+   * Aged off-white with a subtle warm gradient and faint fiber texture
+   * created entirely in CSS so we don't have to ship a paper image.
+   */
+  .gtl-paper {
+    background-color: #f4ede0;
+    background-image:
+      /* warm vignette */
+      radial-gradient(ellipse at 30% 20%, rgba(255, 240, 200, 0.6) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 80%, rgba(180, 140, 80, 0.15) 0%, transparent 60%),
+      /* fiber texture using crossed gradients */
+      repeating-linear-gradient(
+        45deg,
+        rgba(120, 80, 30, 0.025) 0px,
+        rgba(120, 80, 30, 0.025) 1px,
+        transparent 1px,
+        transparent 3px
+      ),
+      repeating-linear-gradient(
+        -45deg,
+        rgba(120, 80, 30, 0.025) 0px,
+        rgba(120, 80, 30, 0.025) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+  }
+
+  /*
+   * Subtle film-grain noise overlay — applied via the ::before pseudo on
+   * any container that wants the texture. Uses an SVG turbulence filter
+   * encoded as a data URI so no extra HTTP request.
+   */
+  .gtl-noise::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='4'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.4 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+
+  /*
+   * Heavier noise overlay for paper surfaces (calling cards) — adds the
+   * gritty old-newsprint feel.
+   */
+  .gtl-paper-noise::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.35;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.4' numOctaves='3' seed='9'/><feColorMatrix values='0 0 0 0 0.4  0 0 0 0 0.25  0 0 0 0 0.1  0 0 0 0.55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+
+  /*
+   * Diagonal red bar — used as section dividers, button backgrounds, and
+   * the slash wipe element. Skewed and overflowing on purpose.
+   */
+  .gtl-slash {
+    background: #d4181f;
+    transform: skewX(-12deg);
+  }
+
+  /*
+   * Polygonal clip paths — used for cut-paper card shapes. P5 cards are
+   * almost never rectangles. These are reusable.
+   */
+  .gtl-clip-card {
+    /* Off-rectangle with one corner cut */
+    clip-path: polygon(
+      0% 4%,
+      96% 0%,
+      100% 8%,
+      100% 96%,
+      4% 100%,
+      0% 92%
+    );
+  }
+  .gtl-clip-card-mirror {
+    clip-path: polygon(
+      4% 0%,
+      100% 4%,
+      100% 92%,
+      96% 100%,
+      0% 96%,
+      0% 8%
+    );
+  }
+  .gtl-clip-slash-button {
+    /* Parallelogram leaning right */
+    clip-path: polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%);
+  }
+  .gtl-clip-tag {
+    /* Tag/label shape with notched right side */
+    clip-path: polygon(0% 0%, 92% 0%, 100% 50%, 92% 100%, 0% 100%);
+  }
+  .gtl-clip-torn {
+    /* Roughly torn edge — irregular polygon for calling card edges */
+    clip-path: polygon(
+      0% 3%,
+      4% 0%,
+      18% 2%,
+      32% 0%,
+      48% 1%,
+      64% 0%,
+      82% 2%,
+      96% 0%,
+      100% 4%,
+      99% 18%,
+      100% 34%,
+      98% 50%,
+      100% 66%,
+      99% 82%,
+      100% 96%,
+      96% 100%,
+      82% 98%,
+      66% 100%,
+      50% 99%,
+      34% 100%,
+      18% 98%,
+      4% 100%,
+      0% 96%,
+      2% 82%,
+      0% 66%,
+      1% 50%,
+      0% 34%,
+      2% 18%,
+      0% 4%
+    );
+  }
+
+  /*
+   * Hard letter-shadow — gives display type the punchy "stamped" feel
+   * P5's headlines have. Layered offset shadows in red and white.
+   */
+  .gtl-headline-shadow {
+    text-shadow:
+      3px 3px 0 #d4181f,
+      6px 6px 0 #070708;
+  }
+  .gtl-headline-shadow-soft {
+    text-shadow:
+      2px 2px 0 #d4181f;
+  }
+
+  /*
+   * Tape strip — small decorative tape graphic for pinning calling cards.
+   */
+  .gtl-tape {
+    background:
+      repeating-linear-gradient(
+        90deg,
+        rgba(255, 240, 200, 0.35) 0px,
+        rgba(255, 240, 200, 0.35) 4px,
+        rgba(220, 200, 150, 0.4) 4px,
+        rgba(220, 200, 150, 0.4) 8px
+      ),
+      rgba(240, 220, 170, 0.7);
+  }
+}
+
+/* ----- Utilities ----- */
+@layer utilities {
+  /* Reverse mix-blend so we can put red text on red backgrounds where needed */
+  .gtl-mix-difference {
+    mix-blend-mode: difference;
+  }
+
+  /* Disable the default Next.js focus ring on calling cards — we provide our own */
+  .gtl-focus-card:focus-visible {
+    outline: 2px dashed #d4181f;
+    outline-offset: 4px;
+  }
 }

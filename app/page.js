@@ -1,44 +1,102 @@
+'use client'
+/*
+ * Home page — the hideout. Two cards on a corkboard:
+ *   1. Fitness — replaced with a Phantom Thieves calling card
+ *   2. Nutrition — Kami's original card, untouched per current scope
+ *
+ * Tapping the Fitness calling card triggers the heist transition and
+ * navigates to /fitness.
+ */
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import CallingCard from '../components/CallingCard'
+import HeistTransition from '../components/HeistTransition'
 
 export default function Home() {
+  const router = useRouter()
+  const [transitioning, setTransitioning] = useState(false)
+
+  const handleFitnessActivate = () => {
+    setTransitioning(true)
+  }
+
+  const handleTransitionComplete = () => {
+    router.push('/fitness')
+  }
+
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-6">
-      <div className="text-center mb-16">
-        <h1 className="text-5xl font-black tracking-tight mb-3">
-          GRITTED TEETH
-        </h1>
-        <p className="text-brand-muted text-lg tracking-widest uppercase">Lifestyle</p>
-      </div>
+    <>
+      <main className="relative min-h-screen bg-gtl-void overflow-hidden">
+        {/* Background atmospherics */}
+        <div className="absolute inset-0 gtl-noise" />
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              'radial-gradient(ellipse at 20% 10%, rgba(74,10,14,0.4) 0%, transparent 50%), radial-gradient(ellipse at 80% 90%, rgba(122,14,20,0.3) 0%, transparent 50%)',
+          }}
+        />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl">
-        {/* Diet Branch */}
-        <Link href="/diet">
-          <div className="group bg-brand-card border border-brand-border rounded-2xl p-8 cursor-pointer hover:border-brand-accent transition-all duration-300 hover:scale-[1.02]">
-            <div className="text-4xl mb-4">🥗</div>
-            <h2 className="text-2xl font-bold mb-2">Nutrition</h2>
-            <p className="text-brand-muted text-sm leading-relaxed">
-              Snap photos of your meals. Track macros and micronutrients. Get weekly diet advice tailored to your goals.
-            </p>
-            <div className="mt-6 text-brand-accent text-sm font-semibold group-hover:translate-x-1 transition-transform">
-              Start tracking →
+        {/* Header */}
+        <header className="relative z-10 flex items-center justify-between px-8 py-6">
+          <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-ash">
+            HIDEOUT / 01
+          </div>
+          <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
+            GRITTED TEETH LIFESTYLE
+          </div>
+        </header>
+
+        {/* Title */}
+        <section className="relative z-10 px-8 pt-8 pb-12 text-center">
+          <h1 className="font-display text-[4rem] md:text-[6rem] leading-[0.9] text-gtl-chalk tracking-tight">
+            GRITTED <span className="text-gtl-red">TEETH</span>
+          </h1>
+          <p className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-ash mt-2">
+            Lifestyle
+          </p>
+        </section>
+
+        {/* Cards / corkboard */}
+        <section className="relative z-10 px-8 pb-20 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-start">
+            {/* Fitness — calling card */}
+            <div className="md:translate-y-4">
+              <CallingCard
+                title="FITNESS"
+                subtitle="TARGET / PALACE 01"
+                body="YOUR WEAKNESS HAS BEEN NOTED. THE CLIMB BEGINS THE MOMENT YOU PICK UP THIS CARD."
+                signOff="WITH GRITTED TEETH"
+                onActivate={handleFitnessActivate}
+                rotate="-rotate-2"
+              />
+            </div>
+
+            {/* Nutrition — Kami's original card, preserved per scope */}
+            <div className="md:translate-y-12">
+              <Link href="/diet">
+                <div className="group bg-brand-card border border-brand-border rounded-2xl p-8 cursor-pointer hover:border-brand-accent transition-all duration-300 hover:scale-[1.02]">
+                  <div className="text-4xl mb-4">🥗</div>
+                  <h2 className="text-2xl font-bold mb-2">Nutrition</h2>
+                  <p className="text-brand-muted text-sm leading-relaxed">
+                    Snap photos of your meals. Track macros and micronutrients. Get weekly diet advice tailored to your goals.
+                  </p>
+                  <div className="mt-6 text-brand-accent text-sm font-semibold group-hover:translate-x-1 transition-transform">
+                    Start tracking →
+                  </div>
+                </div>
+              </Link>
             </div>
           </div>
-        </Link>
+        </section>
+      </main>
 
-        {/* Fitness Branch */}
-        <Link href="/fitness">
-          <div className="group bg-brand-card border border-brand-border rounded-2xl p-8 cursor-pointer hover:border-brand-gold transition-all duration-300 hover:scale-[1.02]">
-            <div className="text-4xl mb-4">💪</div>
-            <h2 className="text-2xl font-bold mb-2">Fitness</h2>
-            <p className="text-brand-muted text-sm leading-relaxed">
-              Tell us your schedule and goals. Get a custom workout cycle with YouTube guides for every exercise.
-            </p>
-            <div className="mt-6 text-brand-gold text-sm font-semibold group-hover:translate-x-1 transition-transform">
-              Build your plan →
-            </div>
-          </div>
-        </Link>
-      </div>
-    </main>
+      {/* Heist transition overlay — sits above everything */}
+      <HeistTransition
+        active={transitioning}
+        onComplete={handleTransitionComplete}
+      />
+    </>
   )
 }
