@@ -98,14 +98,16 @@ function RetreatButton({ href = '/fitness/new' }) {
  * underlying set, so the user can select from either the 3D body or
  * the list.
  */
-function MuscleRow({ group, selected, onToggle }) {
+function MuscleRow({ group, selected, focusedGroup, onToggle, onFocus }) {
   const { play } = useSound()
   const [hovered, setHovered] = useState(false)
   const isSelected = selected.has(group.id)
+  const isFocused = focusedGroup === group.id
 
   const handleClick = () => {
     play('option-select')
     onToggle(group.id)
+    onFocus(group.id)
   }
 
   return (
@@ -152,14 +154,14 @@ function MuscleRow({ group, selected, onToggle }) {
         </div>
       </div>
 
-      {/* Selected indicator */}
+      {/* Selected / focused indicator */}
       <div
         className={`
           font-mono text-[10px] tracking-[0.2em] font-bold transition-opacity duration-200
           ${isSelected ? 'opacity-100 text-gtl-red-bright' : 'opacity-30 text-gtl-ash'}
         `}
       >
-        {isSelected ? '● MARKED' : '○'}
+        {isFocused ? '◉ LOCKED' : isSelected ? '● MARKED' : '○'}
       </div>
     </button>
   )
@@ -216,9 +218,11 @@ function ModelToggle({ value, onChange }) {
 
 export default function MusclesPage() {
   const [selected, setSelected] = useState(() => new Set())
+  const [focusedGroup, setFocusedGroup] = useState(null)
   const [modelKey, setModelKey] = useState('goku')
   const { play } = useSound()
 
+  // Toggle selection state
   const toggle = (id) => {
     play('option-select')
     setSelected((prev) => {
@@ -227,6 +231,17 @@ export default function MusclesPage() {
       else next.add(id)
       return next
     })
+  }
+
+  // Camera focus — clicking a hitbox sets focus (zooms in), clicking same again clears it
+  const handleFocus = (id) => {
+    setFocusedGroup((prev) => (prev === id ? null : id))
+  }
+
+  // Used by hitboxes: both toggle selection AND focus camera
+  const handleHitboxClick = (id) => {
+    toggle(id)
+    handleFocus(id)
   }
 
   const clearAll = () => {
@@ -336,7 +351,13 @@ export default function MusclesPage() {
           </div>
 
           <Suspense fallback={<div className="w-full h-full flex items-center justify-center font-mono text-gtl-ash">LOADING…</div>}>
-            <MuscleBody selected={selected} onToggle={toggle} modelKey={modelKey} />
+            <MuscleBody
+              selected={selected}
+              onToggle={handleHitboxClick}
+              onFocus={handleFocus}
+              focusedGroup={focusedGroup}
+              modelKey={modelKey}
+            />
           </Suspense>
         </div>
         </div>
@@ -381,7 +402,9 @@ export default function MusclesPage() {
                 key={group.id}
                 group={group}
                 selected={selected}
+                focusedGroup={focusedGroup}
                 onToggle={toggle}
+                onFocus={handleFocus}
               />
             ))}
           </div>
