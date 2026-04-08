@@ -10,7 +10,7 @@
  *   - No bubble overlays — selected muscles glow with additive blending
  */
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { useGLTF, Center } from '@react-three/drei'
+import { useGLTF, Center, OrbitControls, TransformControls } from '@react-three/drei'
 import { Suspense, useRef, useState, useMemo, useEffect } from 'react'
 import * as THREE from 'three'
 
@@ -21,6 +21,11 @@ useGLTF.preload('/models/gohan.glb')
 useGLTF.preload('/models/muscle_body.glb')
 
 const TARGET_HEIGHT = 4.0
+
+// Debug overlay — when true, renders every hitbox as a semi-transparent
+// colored wireframe so we can see where the click/glow volumes land on
+// the current model. Leave on during calibration; flip off to ship.
+const DEBUG_HITBOXES = true
 
 const MODELS = {
   goku: {
@@ -45,7 +50,13 @@ const MODELS = {
     path: '/models/muscle_body.glb',
     rotationY: 0,
     scaleMult: 1.0,
-    hitboxes: buildStandardHitboxes({ bodyScale: 1.0 }),
+    // Calibrated from scratch against the actual anatomy GLB — do NOT
+    // use buildStandardHitboxes, its Goku proportions don't map here.
+    // Adding one muscle group at a time; debug wireframes are on.
+    hitboxes: [
+      // CHEST — calibrated against the anatomy GLB.
+      { group: 'chest', shape: 'box', position: [0.011, 0.677, 0.013], scale: [0.48, 0.48, 0.48] },
+    ],
   },
 }
 
@@ -99,27 +110,35 @@ function buildStandardHitboxes({ bodyScale = 1.0 }) {
 }
 
 // ── Camera positions derived from hitbox centers ────────────────────
-// target = average world-space position of all hitboxes in the group
-// pos    = target offset by DIST along the axis facing that muscle
-//          (front muscles: +Z, back muscles: -Z)
-// This is computed from the same numbers used to place hitboxes, so
-// the camera will always look directly at the correct body part.
+// All muscle cameras use the same cinematic framing:
+//   • 30° yaw off the straight-on axis (alternating left/right per muscle
+//     so consecutive selections never feel repetitive)
+//   • slight upward pitch so the camera looks down at the target
+//   • pulled in closer than the overview for drama
+// The overview camera (no selection) stays centered and unangled.
 const OVERVIEW_CAM = { pos: [0, 0.6, 8], target: [0, 0.6, 0] }
-const DIST = 3.0 // camera distance from the muscle center
 
+const DIST_CLOSE = 2.4                        // radial distance from target
+const YAW_OFFSET = DIST_CLOSE * Math.sin(Math.PI / 6)  // sin(30°) ≈ 1.20
+const YAW_DEPTH  = DIST_CLOSE * Math.cos(Math.PI / 6)  // cos(30°) ≈ 2.08
+const PITCH_LIFT = 0.25                       // camera sits slightly above target
+
+// Sign convention: positive yaw pushes the camera toward +X for front
+// muscles and toward +X for back muscles too (so the viewer's right stays
+// consistent across sides). The alternation happens in the table below.
 const MUSCLE_CAMERA = {
-  // Front-facing muscles → camera comes from +Z
-  chest:      { target: [0,    1.60,  0.55], pos: [0,    1.60,  0.55 + DIST] }, // OK
-  shoulders:  { target: [0,    1.85,  0.05], pos: [0,    1.85,  0.05 + DIST] }, // OK
-  biceps:     { target: [0,    1.40,  0.35], pos: [0,    1.40,  0.35 + DIST] }, // OK
-  forearms:   { target: [0,    0.90,  0.15], pos: [0,    0.90,  0.15 + DIST] }, // raised +0.45
-  abs:        { target: [0,    1.00,  0.55], pos: [0,    1.00,  0.55 + DIST] }, // raised +0.35
-  quads:      { target: [0,   -0.50,  0.40], pos: [0,   -0.50,  0.40 + DIST] }, // raised +0.55
-  // Back-facing muscles → camera comes from -Z
-  triceps:    { target: [0,    1.40, -0.30], pos: [0,    1.40, -0.30 - DIST] }, // OK
-  glutes:     { target: [0,    0.10, -0.45], pos: [0,    0.10, -0.45 - DIST] }, // raised +0.50
-  hamstrings: { target: [0,   -0.50, -0.40], pos: [0,   -0.50, -0.40 - DIST] }, // raised +0.55
-  calves:     { target: [0,   -1.40, -0.30], pos: [0,   -1.40, -0.30 - DIST] }, // raised +1.15
+  // Front-facing muscles → camera comes from +Z, alternating yaw
+  chest:      { target: [0,  1.60,  0.55], pos: [ YAW_OFFSET,  1.60 + PITCH_LIFT,  0.55 + YAW_DEPTH] },
+  shoulders:  { target: [0,  1.85,  0.05], pos: [-YAW_OFFSET,  1.85 + PITCH_LIFT,  0.05 + YAW_DEPTH] },
+  biceps:     { target: [0,  1.40,  0.35], pos: [ YAW_OFFSET,  1.40 + PITCH_LIFT,  0.35 + YAW_DEPTH] },
+  forearms:   { target: [0,  0.90,  0.15], pos: [-YAW_OFFSET,  0.90 + PITCH_LIFT,  0.15 + YAW_DEPTH] },
+  abs:        { target: [0,  1.00,  0.55], pos: [ YAW_OFFSET,  1.00 + PITCH_LIFT,  0.55 + YAW_DEPTH] },
+  quads:      { target: [0, -0.50,  0.40], pos: [-YAW_OFFSET, -0.50 + PITCH_LIFT,  0.40 + YAW_DEPTH] },
+  // Back-facing muscles → camera comes from -Z, alternating yaw
+  triceps:    { target: [0,  1.40, -0.30], pos: [ YAW_OFFSET,  1.40 + PITCH_LIFT, -0.30 - YAW_DEPTH] },
+  glutes:     { target: [0,  0.10, -0.45], pos: [-YAW_OFFSET,  0.10 + PITCH_LIFT, -0.45 - YAW_DEPTH] },
+  hamstrings: { target: [0, -0.50, -0.40], pos: [ YAW_OFFSET, -0.50 + PITCH_LIFT, -0.40 - YAW_DEPTH] },
+  calves:     { target: [0, -1.40, -0.30], pos: [-YAW_OFFSET, -1.40 + PITCH_LIFT, -0.30 - YAW_DEPTH] },
 }
 
 // ── Muscle centers (same as MUSCLE_CAMERA targets) ──────────────────
@@ -127,6 +146,21 @@ const MUSCLE_CAMERA = {
 const MUSCLE_CENTERS = Object.fromEntries(
   Object.entries(MUSCLE_CAMERA).map(([k, v]) => [k, v.target])
 )
+
+// ── Per-model glow position fixes ────────────────────────────────────
+// The click hitboxes are calibrated for Goku's proportions. For models
+// whose limbs sit in slightly different places, add a per-muscle Y
+// (or X/Z) offset here so the projected glow lines up with the actual
+// anatomy. Only the glow is offset — clickable hitboxes are untouched.
+const GLOW_OFFSETS = {
+  anatomy: {
+    quads:      [0, 0.55, 0],
+    glutes:     [0, 0.50, 0],
+    hamstrings: [0, 0.55, 0],
+    calves:     [0, 0.40, 0],
+    forearms:   [0, 0.20, 0],
+  },
+}
 
 function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
@@ -138,7 +172,7 @@ function easeInOutCubic(t) {
 //   • Zoom in on new selection
 //   • Zoom out → pan in when switching muscles
 //   • Zoom out on dismiss
-function CameraRig({ focusGroup }) {
+function CameraRig({ focusGroup, onSettled }) {
   const { camera } = useThree()
 
   // Continuously interpolated camera state (so we always know where we are mid-animation)
@@ -221,6 +255,9 @@ function CameraRig({ focusGroup }) {
           phase.current = 'idle'
           // Sync autoRotAngle so the slow rotation resumes from the right angle
           autoRotAngle.current = Math.atan2(camPos.current.x, camPos.current.z)
+          // Tell the scene the camera has landed — highlight can now fire.
+          // Only signal a settled focus group; dismiss clears via useEffect.
+          if (onSettled && focusGroup) onSettled(focusGroup)
         }
       }
     } else if (!focusGroup) {
@@ -242,16 +279,16 @@ function CameraRig({ focusGroup }) {
 
 // ── Hitbox — pure invisible click zone, no visual shape ────────────
 // Opacity is always 0. The gold highlight comes from FocusLight below.
-// onToggle is handleHitboxClick which already calls handleFocus internally —
-// do NOT call onFocus here or it double-fires and cancels the camera animation.
-function Hitbox({ group, position, scale, shape = 'sphere', onToggle }) {
+// Clicking a hitbox only focuses the camera on that muscle — selection
+// for training is handled separately via the checkbox in the side panel.
+function Hitbox({ group, position, scale, shape = 'sphere', onFocus }) {
   return (
     <mesh
       position={position}
       scale={scale}
       onClick={(e) => {
         e.stopPropagation()
-        onToggle(group)
+        onFocus(group)
       }}
       onPointerOver={(e) => {
         e.stopPropagation()
@@ -270,28 +307,47 @@ function Hitbox({ group, position, scale, shape = 'sphere', onToggle }) {
   )
 }
 
-// ── Focus Light — temporary gold flash on zoom-in ──────────────────
-// Renders only for the focused muscle. Pulses for 1.5 s then fades
-// out over 0.5 s. Resets each time focusedGroup changes.
-// Gold (#ffcc00) contrasts against Goku's red/orange gi.
-function FocusLight({ focusedGroup }) {
-  const lightRef = useRef()
+// ── Glow Flash — projects the hitbox shapes of the focused muscle onto
+// the body using an inverted-depth additive trick.
+//
+// Instead of a single sphere at the muscle's center, we render each
+// hitbox belonging to the focused group as its own volumetric glow. The
+// hitboxes already encode muscle shape and placement (chest is 2 wide
+// boxes, biceps are 2 oblong capsules, abs is a 6-pack of small cubes,
+// etc.) so this gives an anatomically accurate highlight for free.
+//
+// How the projection works:
+//   depthFunc = GreaterDepth → pass only where existing depth < our depth,
+//                               i.e. where the body is in front of the volume
+//   side      = BackSide     → render the inner wall of each volume, giving
+//                               one additive contribution per covered pixel
+//   additive + no depth write → color adds to the body, never occludes
+//
+// Result: the body's pixels get tinted gold *exactly* within the union of
+// the hitbox volumes for that muscle, and nowhere else.
+//
+// Keyed off `settledGroup` so the flash only appears after the camera has
+// landed. Pulses for 1.5 s then fades out over 0.5 s.
+function GlowFlash({ settledGroup, hitboxes, modelKey }) {
+  const groupRef = useRef()
   const focusTime = useRef(null)
 
   useEffect(() => {
-    // Reset timer whenever a new muscle is focused
-    focusTime.current = focusedGroup ? Date.now() : null
-  }, [focusedGroup])
+    focusTime.current = settledGroup ? Date.now() : null
+  }, [settledGroup])
 
   useFrame(() => {
-    if (!lightRef.current) return
+    const g = groupRef.current
+    if (!g) return
     if (!focusTime.current) {
-      lightRef.current.intensity = 0
+      g.visible = false
       return
     }
+    g.visible = true
+
     const elapsed = (Date.now() - focusTime.current) / 1000
-    const TOTAL      = 2.0  // full highlight window
-    const FADE_START = 1.5  // start fade-out here
+    const TOTAL      = 2.0
+    const FADE_START = 1.5
 
     let envelope = 1.0
     if (elapsed >= TOTAL) {
@@ -300,27 +356,66 @@ function FocusLight({ focusedGroup }) {
       envelope = 1 - (elapsed - FADE_START) / (TOTAL - FADE_START)
     }
 
-    // Pulse only while fully lit; steady fade once fading begins
-    const pulse = elapsed < FADE_START ? (1 + Math.sin(Date.now() * 0.004) * 0.35) : 1
-    lightRef.current.intensity = 30 * envelope * pulse
+    // Opacity pulses while lit, then fades cleanly. Walk the group's
+    // children so every hitbox-derived volume shares the same envelope.
+    const opPulse = elapsed < FADE_START
+      ? (0.75 + Math.sin(Date.now() * 0.009) * 0.25)
+      : 1
+    const op = 0.85 * envelope * opPulse
+    g.traverse((obj) => {
+      if (obj.material) obj.material.opacity = op
+    })
   })
 
-  if (!focusedGroup) return null
-  const center = MUSCLE_CENTERS[focusedGroup]
-  if (!center) return null
+  if (!settledGroup) return null
+  const groupBoxes = hitboxes.filter((h) => h.group === settledGroup)
+  if (groupBoxes.length === 0) return null
 
-  // Offset toward camera so light hits the front face of the muscle
-  const zOffset = center[2] >= 0 ? 1.2 : -1.2
+  // XY inflation keeps the muscle silhouette mostly honest, but we blow
+  // up Z aggressively so every glow volume definitely punches all the
+  // way through the body surface — otherwise the GreaterDepth trick has
+  // nothing to draw against and the highlight vanishes on thin models.
+  const INFLATE_XY = 1.20
+  const INFLATE_Z  = 3.0
+
+  const offsets = GLOW_OFFSETS[modelKey] || {}
+  const muscleOffset = offsets[settledGroup] || [0, 0, 0]
 
   return (
-    <pointLight
-      ref={lightRef}
-      position={[center[0], center[1], center[2] + zOffset]}
-      color="#ffcc00"
-      intensity={30}
-      distance={5.0}
-      decay={2}
-    />
+    <group ref={groupRef}>
+      {groupBoxes.map((h, i) => {
+        const scale = [h.scale[0] * INFLATE_XY, h.scale[1] * INFLATE_XY, h.scale[2] * INFLATE_Z]
+        const position = [
+          h.position[0] + muscleOffset[0],
+          h.position[1] + muscleOffset[1],
+          h.position[2] + muscleOffset[2],
+        ]
+        return (
+          <mesh
+            key={`${settledGroup}-${i}`}
+            position={position}
+            scale={scale}
+            renderOrder={999}
+          >
+            {h.shape === 'box'
+              ? <boxGeometry args={[1, 1, 1]} />
+              : <sphereGeometry args={[1, 24, 24]} />
+            }
+            <meshBasicMaterial
+              color="#ffcc00"
+              transparent
+              opacity={0.85}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              depthTest
+              depthFunc={THREE.GreaterDepth}
+              side={THREE.BackSide}
+              toneMapped={false}
+            />
+          </mesh>
+        )
+      })}
+    </group>
   )
 }
 
@@ -360,6 +455,84 @@ function ModelDisplay({ modelKey }) {
   )
 }
 
+// ── Debug Hitbox Overlay ────────────────────────────────────────────
+// Renders every hitbox for the current model as a colored wireframe so
+// calibration mismatches are visible at a glance. Each muscle group gets
+// its own color. Purely visual — click handling is still done by the
+// regular invisible Hitbox meshes.
+const DEBUG_GROUP_COLORS = {
+  chest:      '#ff3344',
+  shoulders:  '#ff8800',
+  biceps:     '#ffcc00',
+  triceps:    '#88ff00',
+  forearms:   '#00ff88',
+  abs:        '#00ffff',
+  glutes:     '#0088ff',
+  quads:      '#4400ff',
+  hamstrings: '#aa00ff',
+  calves:     '#ff00aa',
+}
+
+// Each debug hitbox is wrapped in a TransformControls gizmo so it can be
+// dragged in 3D. Keyboard:
+//   T → translate mode
+//   S → scale mode
+// On every drag, the mesh's new position+scale are logged to console so
+// you can copy them straight back into the hitbox array in this file.
+function DebugHitboxes({ hitboxes }) {
+  const [mode, setMode] = useState('translate')
+
+  useEffect(() => {
+    const onKey = (e) => {
+      const k = e.key.toLowerCase()
+      if (k === 't') setMode('translate')
+      else if (k === 's') setMode('scale')
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  const logTransform = (i, group, obj) => {
+    const p = obj.position
+    const s = obj.scale
+    const fmt = (v) => Number(v.toFixed(3))
+    // eslint-disable-next-line no-console
+    console.log(
+      `[${group} #${i}]`,
+      `position: [${fmt(p.x)}, ${fmt(p.y)}, ${fmt(p.z)}]`,
+      `scale: [${fmt(s.x)}, ${fmt(s.y)}, ${fmt(s.z)}]`
+    )
+  }
+
+  return (
+    <group>
+      {hitboxes.map((h, i) => (
+        <TransformControls
+          key={`dbg-${i}`}
+          mode={mode}
+          size={0.5}
+          onObjectChange={(e) => logTransform(i, h.group, e.target.object)}
+        >
+          <mesh position={h.position} scale={h.scale}>
+            {h.shape === 'box'
+              ? <boxGeometry args={[1, 1, 1]} />
+              : <sphereGeometry args={[1, 16, 16]} />
+            }
+            <meshBasicMaterial
+              color={DEBUG_GROUP_COLORS[h.group] || '#ffffff'}
+              wireframe
+              transparent
+              opacity={0.7}
+              depthTest={false}
+              toneMapped={false}
+            />
+          </mesh>
+        </TransformControls>
+      ))}
+    </group>
+  )
+}
+
 // ── Large background plane — click anywhere to dismiss focus ────────
 function BackgroundPlane({ onDismiss }) {
   return (
@@ -376,8 +549,20 @@ function BackgroundPlane({ onDismiss }) {
   )
 }
 
-function SceneContent({ modelKey, selected, focusedGroup, onToggle, onFocus }) {
+function SceneContent({ modelKey, focusedGroup, onFocus }) {
   const config = MODELS[modelKey] || MODELS.goku
+
+  // `settledGroup` lags `focusedGroup` by the camera animation duration —
+  // it only becomes non-null once CameraRig finishes easing into the muscle.
+  // This is what the gold highlight light keys off of, so the flash appears
+  // only after the camera has landed.
+  const [settledGroup, setSettledGroup] = useState(null)
+
+  // Any time the desired focus changes, clear the highlight immediately so
+  // it can't leak across the animation. CameraRig will re-set it on landing.
+  useEffect(() => {
+    setSettledGroup(null)
+  }, [focusedGroup])
 
   return (
     <group>
@@ -388,8 +573,12 @@ function SceneContent({ modelKey, selected, focusedGroup, onToggle, onFocus }) {
       <pointLight position={[0, 5, 5]} intensity={0.8} color="#ffaa66" />
       <pointLight position={[0, -2, 4]} intensity={0.4} color="#4488ff" />
 
-      {/* Gold flash light on zoom-in — fades after 2 s */}
-      <FocusLight focusedGroup={focusedGroup} />
+      {/* Gold additive glow — fires only after the camera settles */}
+      <GlowFlash
+        settledGroup={settledGroup}
+        hitboxes={config.hitboxes}
+        modelKey={modelKey}
+      />
 
       {/* Background click-to-dismiss plane */}
       <BackgroundPlane onDismiss={() => onFocus(null)} />
@@ -397,6 +586,9 @@ function SceneContent({ modelKey, selected, focusedGroup, onToggle, onFocus }) {
       <Suspense fallback={null}>
         <ModelDisplay key={modelKey} modelKey={modelKey} />
       </Suspense>
+
+      {/* Debug wireframe overlay for hitbox calibration */}
+      {DEBUG_HITBOXES && <DebugHitboxes hitboxes={config.hitboxes} />}
 
       {/* Hitboxes — invisible click zones only, no visual shape */}
       {config.hitboxes.map((h, i) => (
@@ -406,17 +598,21 @@ function SceneContent({ modelKey, selected, focusedGroup, onToggle, onFocus }) {
           position={h.position}
           scale={h.scale}
           shape={h.shape}
-          onToggle={onToggle}
+          onFocus={onFocus}
         />
       ))}
 
-      {/* Persona 5 camera rig — drives all camera movement */}
-      <CameraRig focusGroup={focusedGroup} />
+      {/* Debug mode: free orbit + no auto camera. Production: P5 camera rig. */}
+      {DEBUG_HITBOXES ? (
+        <OrbitControls makeDefault enableDamping={false} />
+      ) : (
+        <CameraRig focusGroup={focusedGroup} onSettled={setSettledGroup} />
+      )}
     </group>
   )
 }
 
-export default function MuscleBody({ selected, onToggle, onFocus, focusedGroup, modelKey = 'goku' }) {
+export default function MuscleBody({ onFocus, focusedGroup, modelKey = 'goku' }) {
   return (
     <Canvas
       camera={{ position: OVERVIEW_CAM.pos, fov: 45 }}
@@ -426,9 +622,7 @@ export default function MuscleBody({ selected, onToggle, onFocus, focusedGroup, 
     >
       <SceneContent
         modelKey={modelKey}
-        selected={selected}
         focusedGroup={focusedGroup}
-        onToggle={onToggle}
         onFocus={onFocus}
       />
     </Canvas>
