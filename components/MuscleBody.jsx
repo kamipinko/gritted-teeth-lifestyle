@@ -11,7 +11,7 @@
  */
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useGLTF, Center, OrbitControls, TransformControls } from '@react-three/drei'
-import { Suspense, useRef, useState, useMemo, useEffect } from 'react'
+import { Suspense, useRef, useState, useMemo, useEffect, useLayoutEffect } from 'react'
 import * as THREE from 'three'
 
 // Preload all four models so switching between them is instant
@@ -55,8 +55,20 @@ const MODELS = {
     // Adding one muscle group at a time; debug wireframes are on.
     hitboxes: [
       // CHEST — calibrated against the anatomy GLB.
-      { group: 'chest', position: [-0.175, 1.072, 0.190], scale: [0.260, 0.138, 0.114] },
-      { group: 'chest', position: [ 0.169, 1.072, 0.190], scale: [0.260, 0.138, 0.114] },
+      { group: 'chest', position: [-0.226, 1.051, 0.166], rotation: [-0.554, 0, 0], scale: [0.217, 0.138, 0.108] },
+      { group: 'chest', position: [ 0.226, 1.051, 0.166], rotation: [-0.554, 0, 0], scale: [0.217, 0.138, 0.108] },
+      // SHOULDERS — calibrated against the anatomy GLB.
+      { group: 'shoulders', position: [-0.501, 1.173, -0.171], rotation: [0.056,  0.097,  0.724], scale: [0.323, 0.091, -0.151] },
+      { group: 'shoulders', position: [ 0.539, 1.173, -0.171], rotation: [0.056, -0.097, -0.724], scale: [0.323, 0.091, -0.151] },
+      // BICEPS — calibrated against the anatomy GLB.
+      { group: 'biceps', position: [-0.582, 0.809, -0.006], rotation: [0.323, -0.137, -0.348], scale: [0.145, 0.203, 0.079] },
+      { group: 'biceps', position: [ 0.582, 0.809, -0.006], rotation: [0.323,  0.137,  0.348], scale: [0.145, 0.203, 0.079] },
+      // TRICEPS — calibrated against the anatomy GLB.
+      { group: 'triceps', position: [-0.614, 0.839, -0.334], rotation: [-0.185,  0.191, -0.399], scale: [0.099, 0.183, -0.080] },
+      { group: 'triceps', position: [ 0.614, 0.839, -0.334], rotation: [-0.185, -0.191,  0.399], scale: [0.099, 0.183, -0.080] },
+      // FOREARMS — calibrated against the anatomy GLB.
+      { group: 'forearms', position: [-0.751, 0.332, -0.045], rotation: [-0.565, -0.093, -0.105], scale: [0.120, 0.258, 0.120] },
+      { group: 'forearms', position: [ 0.751, 0.332, -0.045], rotation: [-0.565,  0.093,  0.105], scale: [0.120, 0.258, 0.120] },
     ],
   },
 }
@@ -282,10 +294,11 @@ function CameraRig({ focusGroup, onSettled }) {
 // Opacity is always 0. The gold highlight comes from FocusLight below.
 // Clicking a hitbox only focuses the camera on that muscle — selection
 // for training is handled separately via the checkbox in the side panel.
-function Hitbox({ group, position, scale, shape = 'sphere', onFocus }) {
+function Hitbox({ group, position, scale, rotation, shape = 'sphere', onFocus }) {
   return (
     <mesh
       position={position}
+      rotation={rotation || [0, 0, 0]}
       scale={scale}
       onClick={(e) => {
         e.stopPropagation()
@@ -385,35 +398,130 @@ function GlowFlash({ settledGroup, hitboxes, modelKey }) {
   return (
     <group ref={groupRef}>
       {groupBoxes.map((h, i) => {
-        const scale = [h.scale[0] * INFLATE_XY, h.scale[1] * INFLATE_XY, h.scale[2] * INFLATE_Z]
+        // Negative scale components flip the geometry's face winding,
+        // which inverts BackSide ↔ FrontSide and breaks the two-pass
+        // depth logic. Spheres and boxes are visually symmetric, so we
+        // always use the absolute magnitude for the glow volume.
+        const absX = Math.abs(h.scale[0])
+        const absY = Math.abs(h.scale[1])
+        const absZ = Math.abs(h.scale[2])
+        const scale = [absX * INFLATE_XY, absY * INFLATE_XY, absZ * INFLATE_Z]
         const position = [
           h.position[0] + muscleOffset[0],
           h.position[1] + muscleOffset[1],
           h.position[2] + muscleOffset[2],
         ]
+        // Three-pass stencil-masked projection, using 2 bits of stencil:
+        //   bit 0 = "gold already drawn at this pixel" — persists across
+        //           all volumes in the frame so overlapping volumes can't
+        //           double-brighten the same pixel.
+        //   bit 1 = "body is in front of this volume's front face" —
+        //           per-volume, cleared after Pass 3.
+        //
+        //   Pass 1 (front face, GreaterDepth, colorWrite off):
+        //     Set bit 1 where the body is closer to camera than the
+        //     volume's front face. These pixels are NOT inside the
+        //     sphere volume and must be skipped by Pass 2.
+        //
+        //   Pass 2 (back face, GreaterDepth, stencil == 0b00):
+        //     Draw gold + set bit 0 where stencil is clean (body inside
+        //     sphere AND no previous volume already drew here). The
+        //     Increment op plus writeMask=0b01 toggles bit 0 to 1 on
+        //     successful draw, leaving bit 1 alone.
+        //
+        //   Pass 3 (front face, depthTest off, writeMask=0b10):
+        //     Clear bit 1 everywhere the volume's silhouette covers so
+        //     the next volume's Pass 1 gets a fresh obstruction mask.
+        //     Bit 0 (the drawn marker) is left intact.
+        const renderGeom = () => h.shape === 'box'
+          ? <boxGeometry args={[1, 1, 1]} />
+          : <sphereGeometry args={[1, 24, 24]} />
+        const rotation = h.rotation || [0, 0, 0]
+        const baseRO = 1000 + i * 3
         return (
-          <mesh
-            key={`${settledGroup}-${i}`}
-            position={position}
-            scale={scale}
-            renderOrder={999}
-          >
-            {h.shape === 'box'
-              ? <boxGeometry args={[1, 1, 1]} />
-              : <sphereGeometry args={[1, 24, 24]} />
-            }
-            <meshBasicMaterial
-              color="#ffcc00"
-              transparent
-              opacity={0.85}
-              blending={THREE.AdditiveBlending}
-              depthWrite={false}
-              depthTest
-              depthFunc={THREE.GreaterDepth}
-              side={THREE.BackSide}
-              toneMapped={false}
-            />
-          </mesh>
+          <group key={`${settledGroup}-${i}`}>
+            {/* Pass 1 — mark bit 1 where body is in front of front face.
+                `transparent` forces this into the same render phase as
+                the gold pass so renderOrder is actually honored. */}
+            <mesh
+              position={position}
+              rotation={rotation}
+              scale={scale}
+              renderOrder={baseRO}
+            >
+              {renderGeom()}
+              <meshBasicMaterial
+                transparent
+                opacity={0}
+                colorWrite={false}
+                depthWrite={false}
+                depthTest
+                depthFunc={THREE.GreaterDepth}
+                side={THREE.FrontSide}
+                stencilWrite
+                stencilWriteMask={0b10}
+                stencilFunc={THREE.AlwaysStencilFunc}
+                stencilRef={0b10}
+                stencilFail={THREE.KeepStencilOp}
+                stencilZFail={THREE.KeepStencilOp}
+                stencilZPass={THREE.ReplaceStencilOp}
+              />
+            </mesh>
+
+            {/* Pass 2 — draw gold + set bit 0 where stencil is 0b00 */}
+            <mesh
+              position={position}
+              rotation={rotation}
+              scale={scale}
+              renderOrder={baseRO + 1}
+            >
+              {renderGeom()}
+              <meshBasicMaterial
+                color="#ffcc00"
+                transparent
+                opacity={0.85}
+                blending={THREE.AdditiveBlending}
+                depthWrite={false}
+                depthTest
+                depthFunc={THREE.GreaterDepth}
+                side={THREE.BackSide}
+                toneMapped={false}
+                stencilWrite
+                stencilWriteMask={0b01}
+                stencilFunc={THREE.EqualStencilFunc}
+                stencilRef={0b00}
+                stencilFail={THREE.KeepStencilOp}
+                stencilZFail={THREE.KeepStencilOp}
+                stencilZPass={THREE.IncrementStencilOp}
+              />
+            </mesh>
+
+            {/* Pass 3 — clear bit 1 so the next volume starts clean.
+                Also marked transparent so it renders after Pass 2. */}
+            <mesh
+              position={position}
+              rotation={rotation}
+              scale={scale}
+              renderOrder={baseRO + 2}
+            >
+              {renderGeom()}
+              <meshBasicMaterial
+                transparent
+                opacity={0}
+                colorWrite={false}
+                depthWrite={false}
+                depthTest={false}
+                side={THREE.FrontSide}
+                stencilWrite
+                stencilWriteMask={0b10}
+                stencilFunc={THREE.AlwaysStencilFunc}
+                stencilRef={0b00}
+                stencilFail={THREE.ReplaceStencilOp}
+                stencilZFail={THREE.ReplaceStencilOp}
+                stencilZPass={THREE.ReplaceStencilOp}
+              />
+            </mesh>
+          </group>
         )
       })}
     </group>
@@ -492,6 +600,7 @@ function DebugHitbox({ hitbox, index, mode, logTransform }) {
       <mesh
         ref={setMesh}
         position={hitbox.position}
+        rotation={hitbox.rotation || [0, 0, 0]}
         scale={hitbox.scale}
       >
         {hitbox.shape === 'box'
@@ -520,42 +629,106 @@ function DebugHitbox({ hitbox, index, mode, logTransform }) {
 }
 
 // Tandem pair: two mirror-symmetric hitboxes (left + right) controlled
-// by a single TransformControls gizmo on a shared parent group. The two
-// child meshes sit at fixed local offsets along the group's X axis. As
-// the group is dragged or scaled, the actual world position+scale of
-// each mesh is composed from the group's transform and the local offset
-// and logged in copy-paste-ready format.
+// by a single TransformControls gizmo attached to an invisible anchor
+// at the pair's center.
+//
+// Position + scale move both spheres together (the right one is just
+// the mirror of the left across X=0 plus the anchor's own X position).
+// Rotation is applied to each sphere INDEPENDENTLY with a YZ-mirror on
+// the right sphere so the two tilt symmetrically outward — e.g. rotating
+// around the Z axis makes the left pec lean outward to the left and the
+// right pec lean outward to the right, instead of both tilting the same
+// absolute direction. The X rotation axis is shared (it's the mirror's
+// fixed axis), while Y and Z are negated on the right sphere.
 function DebugTandemPair({ hitboxes, group, indices, mode }) {
-  const [groupObj, setGroupObj] = useState(null)
+  const anchorRef = useRef(null)
+  const [anchor, setAnchor] = useState(null)
+  const leftRef  = useRef()
+  const rightRef = useRef()
 
-  // Initial center of the pair on the X axis (Y/Z taken from either)
+  // Initial center of the pair (Y/Z taken from either, X from midpoint)
   const cx = (hitboxes[0].position[0] + hitboxes[1].position[0]) / 2
   const cy = (hitboxes[0].position[1] + hitboxes[1].position[1]) / 2
   const cz = (hitboxes[0].position[2] + hitboxes[1].position[2]) / 2
 
-  // Half-spread on X — each mesh sits at ±dx inside the group
+  // Half-spread on X — each sphere sits at ±dx * anchor.scale.x from the
+  // anchor's center after a translate + scale.
   const dx = Math.abs(hitboxes[0].position[0] - cx)
 
-  // Per-mesh local scale (preserved from initial layout)
-  const localScale = hitboxes[0].scale
+  const localScale    = hitboxes[0].scale
+  const initialRot    = hitboxes[0].rotation || [0, 0, 0]
 
-  const onChange = () => {
-    if (!groupObj) return
-    const gp = groupObj.position
-    const gs = groupObj.scale
-    const fmt = (v) => Number(v.toFixed(3))
-    const lx = gp.x - dx * gs.x
-    const rx = gp.x + dx * gs.x
+  // Set the anchor's initial transform once on mount. Doing this via an
+  // effect (rather than declarative `position`/`rotation` props) prevents
+  // React from re-applying those props on every re-render — which would
+  // otherwise snap the anchor back to its starting transform every time
+  // the user presses T/S/R to switch modes, clobbering the drag.
+  useLayoutEffect(() => {
+    if (!anchorRef.current) return
+    anchorRef.current.position.set(cx, cy, cz)
+    anchorRef.current.rotation.set(initialRot[0], initialRot[1], initialRot[2])
+    setAnchor(anchorRef.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Compute each sphere's world transform from the anchor, with mirror
+  // semantics: translate-X adjusts the spread symmetrically, translate
+  // Y/Z moves both together, scale and (Y/Z) rotation are mirrored.
+  // Shared helper so the live render and the copy-paste logger stay in
+  // sync on the formula.
+  const resolvePair = () => {
+    const gp = anchor.position
+    const gs = anchor.scale
+    const ge = anchor.rotation
+
+    // xOffsetFromCenter = how far the gizmo has been dragged away from
+    // the pair's original X midpoint. Positive = dragged right → bring
+    // spheres inward. Negative = dragged left → push outward.
+    const xOffsetFromCenter = gp.x - cx
+    const currentDx = Math.max(0, dx * gs.x - xOffsetFromCenter)
+
     const sx = localScale[0] * gs.x
     const sy = localScale[1] * gs.y
     const sz = localScale[2] * gs.z
+
+    return {
+      left: {
+        position: [cx - currentDx, gp.y, gp.z],
+        rotation: [ge.x, ge.y, ge.z],
+        scale:    [sx, sy, sz],
+      },
+      right: {
+        position: [cx + currentDx, gp.y, gp.z],
+        rotation: [ge.x, -ge.y, -ge.z],
+        scale:    [sx, sy, sz],
+      },
+    }
+  }
+
+  useFrame(() => {
+    if (!anchor || !leftRef.current || !rightRef.current) return
+    const { left, right } = resolvePair()
+    leftRef.current.position.set(...left.position)
+    leftRef.current.rotation.set(...left.rotation)
+    leftRef.current.scale.set(...left.scale)
+    rightRef.current.position.set(...right.position)
+    rightRef.current.rotation.set(...right.rotation)
+    rightRef.current.scale.set(...right.scale)
+  })
+
+  const onChange = () => {
+    if (!anchor) return
+    const { left, right } = resolvePair()
+    const fmt = (v) => Number(v.toFixed(3))
+    const fmtArr = (arr) => `[${fmt(arr[0])}, ${fmt(arr[1])}, ${fmt(arr[2])}]`
+
     // eslint-disable-next-line no-console
     console.log(
-      `[${group} #${indices[0]}] position: [${fmt(lx)}, ${fmt(gp.y)}, ${fmt(gp.z)}] scale: [${fmt(sx)}, ${fmt(sy)}, ${fmt(sz)}]`
+      `[${group} #${indices[0]}] position: ${fmtArr(left.position)} rotation: ${fmtArr(left.rotation)} scale: ${fmtArr(left.scale)}`
     )
     // eslint-disable-next-line no-console
     console.log(
-      `[${group} #${indices[1]}] position: [${fmt(rx)}, ${fmt(gp.y)}, ${fmt(gp.z)}] scale: [${fmt(sx)}, ${fmt(sy)}, ${fmt(sz)}]`
+      `[${group} #${indices[1]}] position: ${fmtArr(right.position)} rotation: ${fmtArr(right.rotation)} scale: ${fmtArr(right.scale)}`
     )
   }
 
@@ -563,35 +736,40 @@ function DebugTandemPair({ hitboxes, group, indices, mode }) {
     ? <boxGeometry args={[1, 1, 1]} />
     : <sphereGeometry args={[1, 16, 16]} />
 
+  const WireMat = () => (
+    <meshBasicMaterial
+      color={DEBUG_GROUP_COLORS[group] || '#ffffff'}
+      wireframe
+      transparent
+      opacity={0.7}
+      depthTest={false}
+      toneMapped={false}
+    />
+  )
+
   return (
     <>
-      <group ref={setGroupObj} position={[cx, cy, cz]}>
-        <mesh position={[-dx, 0, 0]} scale={localScale}>
-          <Geom shape={hitboxes[0].shape} />
-          <meshBasicMaterial
-            color={DEBUG_GROUP_COLORS[group] || '#ffffff'}
-            wireframe
-            transparent
-            opacity={0.7}
-            depthTest={false}
-            toneMapped={false}
-          />
-        </mesh>
-        <mesh position={[dx, 0, 0]} scale={localScale}>
-          <Geom shape={hitboxes[1].shape} />
-          <meshBasicMaterial
-            color={DEBUG_GROUP_COLORS[group] || '#ffffff'}
-            wireframe
-            transparent
-            opacity={0.7}
-            depthTest={false}
-            toneMapped={false}
-          />
-        </mesh>
-      </group>
-      {groupObj && (
+      {/* Invisible anchor — the TransformControls target. Its transform
+          is the "virtual parent" state; the two visible spheres derive
+          their transforms from it every frame (with mirroring on Y/Z
+          rotation for the right sphere). Position/rotation are set
+          imperatively in useLayoutEffect above, NOT as React props. */}
+      <mesh ref={anchorRef} visible={false}>
+        <boxGeometry args={[0.01, 0.01, 0.01]} />
+      </mesh>
+
+      <mesh ref={leftRef}>
+        <Geom shape={hitboxes[0].shape} />
+        <WireMat />
+      </mesh>
+      <mesh ref={rightRef}>
+        <Geom shape={hitboxes[1].shape} />
+        <WireMat />
+      </mesh>
+
+      {anchor && (
         <TransformControls
-          object={groupObj}
+          object={anchor}
           mode={mode}
           size={0.5}
           onObjectChange={onChange}
@@ -609,6 +787,7 @@ function DebugHitboxes({ hitboxes }) {
       const k = e.key.toLowerCase()
       if (k === 't') setMode('translate')
       else if (k === 's') setMode('scale')
+      else if (k === 'r') setMode('rotate')
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -616,12 +795,14 @@ function DebugHitboxes({ hitboxes }) {
 
   const logTransform = (i, group, obj) => {
     const p = obj.position
+    const r = obj.rotation
     const s = obj.scale
     const fmt = (v) => Number(v.toFixed(3))
     // eslint-disable-next-line no-console
     console.log(
       `[${group} #${i}]`,
       `position: [${fmt(p.x)}, ${fmt(p.y)}, ${fmt(p.z)}]`,
+      `rotation: [${fmt(r.x)}, ${fmt(r.y)}, ${fmt(r.z)}]`,
       `scale: [${fmt(s.x)}, ${fmt(s.y)}, ${fmt(s.z)}]`
     )
   }
@@ -725,6 +906,7 @@ function SceneContent({ modelKey, focusedGroup, onFocus }) {
           key={`${modelKey}-${h.group}-${i}`}
           group={h.group}
           position={h.position}
+          rotation={h.rotation}
           scale={h.scale}
           shape={h.shape}
           onFocus={onFocus}
@@ -747,7 +929,7 @@ export default function MuscleBody({ onFocus, focusedGroup, modelKey = 'goku' })
       camera={{ position: OVERVIEW_CAM.pos, fov: 45 }}
       shadows={false}
       dpr={[1, 2]}
-      gl={{ antialias: true, alpha: true }}
+      gl={{ antialias: true, alpha: true, stencil: true }}
     >
       <SceneContent
         modelKey={modelKey}
