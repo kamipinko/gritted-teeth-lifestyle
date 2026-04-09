@@ -22,10 +22,11 @@ useGLTF.preload('/models/muscle_body.glb')
 
 const TARGET_HEIGHT = 4.0
 
-// Debug overlay — when true, renders every hitbox as a semi-transparent
-// colored wireframe so we can see where the click/glow volumes land on
-// the current model. Leave on during calibration; flip off to ship.
-const DEBUG_HITBOXES = false
+// Debug overlay — toggled at runtime with the backtick (`) key.
+// When on: colored wireframe gizmos + OrbitControls replace the P5 camera.
+// F12 snapshots all current hitbox transforms to console (code-paste format
+// + JSON training record).
+// Default off — no source change needed to enter calibration mode.
 
 const MODELS = {
   goku: {
@@ -69,6 +70,27 @@ const MODELS = {
       // FOREARMS — calibrated against the anatomy GLB.
       { group: 'forearms', position: [-0.751, 0.332, -0.045], rotation: [-0.565, -0.093, -0.105], scale: [0.120, 0.258, 0.120] },
       { group: 'forearms', position: [ 0.751, 0.332, -0.045], rotation: [-0.565,  0.093,  0.105], scale: [0.120, 0.258, 0.120] },
+      // ABS — placeholder (visual estimate from screenshots — drag to refine)
+      // Covers the rectus abdominis column, centered slightly left/right of midline.
+      // Taller and lower than the first guess — spans ~y 0.25 to 0.65.
+      { group: 'abs', position: [-0.10, 0.45, 0.175], rotation: [0, 0, 0], scale: [0.120, 0.240, 0.080] },
+      { group: 'abs', position: [ 0.10, 0.45, 0.175], rotation: [0, 0, 0], scale: [0.120, 0.240, 0.080] },
+      // GLUTES — placeholder (visual estimate — drag to refine)
+      // Posterior hip, centered near y=-0.20, offset back.
+      { group: 'glutes', position: [-0.18, -0.20, -0.170], rotation: [0, 0, 0], scale: [0.150, 0.150, 0.110] },
+      { group: 'glutes', position: [ 0.18, -0.20, -0.170], rotation: [0, 0, 0], scale: [0.150, 0.150, 0.110] },
+      // QUADS — placeholder (visual estimate — drag to refine)
+      // Front of thigh, mid-thigh height. Z forward, wider X spread than calves.
+      { group: 'quads', position: [-0.16, -0.62, 0.120], rotation: [0, 0, 0], scale: [0.130, 0.240, 0.110] },
+      { group: 'quads', position: [ 0.16, -0.62, 0.120], rotation: [0, 0, 0], scale: [0.130, 0.240, 0.110] },
+      // HAMSTRINGS — placeholder (visual estimate — drag to refine)
+      // Back of thigh, same Y as quads but offset back. Slightly narrower.
+      { group: 'hamstrings', position: [-0.16, -0.62, -0.145], rotation: [0, 0, 0], scale: [0.120, 0.240, 0.100] },
+      { group: 'hamstrings', position: [ 0.16, -0.62, -0.145], rotation: [0, 0, 0], scale: [0.120, 0.240, 0.100] },
+      // CALVES — placeholder (visual estimate — drag to refine)
+      // Posterior lower leg. Lower Y than thighs, slight Z offset back.
+      { group: 'calves', position: [-0.13, -1.20, -0.075], rotation: [0, 0, 0], scale: [0.095, 0.220, 0.095] },
+      { group: 'calves', position: [ 0.13, -1.20, -0.075], rotation: [0, 0, 0], scale: [0.095, 0.220, 0.095] },
     ],
   },
 }
@@ -590,15 +612,35 @@ const DEBUG_GROUP_COLORS = {
 //   S → scale mode
 // Every drag logs the mesh's real, final position+scale to the console
 // so you can copy the values straight back into the hitbox array.
-function DebugHitbox({ hitbox, index, mode, logTransform }) {
+function DebugHitbox({ hitbox, index, mode, logTransform, registerReporter }) {
   // Ref callback sets state on mount so the TransformControls can be
   // rendered on the next pass with `object={mesh}` pointing at the mesh.
   const [mesh, setMesh] = useState(null)
+  const meshRef = useRef(null)
+
+  useEffect(() => {
+    if (!registerReporter) return
+    const reporter = {
+      group: hitbox.group,
+      getTransforms: () => {
+        const m = meshRef.current
+        if (!m) return []
+        const fmt = (v) => Number(v.toFixed(3))
+        return [{
+          position: [fmt(m.position.x), fmt(m.position.y), fmt(m.position.z)],
+          rotation: [fmt(m.rotation.x), fmt(m.rotation.y), fmt(m.rotation.z)],
+          scale:    [fmt(m.scale.x),    fmt(m.scale.y),    fmt(m.scale.z)],
+        }]
+      },
+    }
+    return registerReporter(reporter)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <>
       <mesh
-        ref={setMesh}
+        ref={(el) => { meshRef.current = el; setMesh(el) }}
         position={hitbox.position}
         rotation={hitbox.rotation || [0, 0, 0]}
         scale={hitbox.scale}
@@ -640,7 +682,7 @@ function DebugHitbox({ hitbox, index, mode, logTransform }) {
 // right pec lean outward to the right, instead of both tilting the same
 // absolute direction. The X rotation axis is shared (it's the mirror's
 // fixed axis), while Y and Z are negated on the right sphere.
-function DebugTandemPair({ hitboxes, group, indices, mode }) {
+function DebugTandemPair({ hitboxes, group, indices, mode, registerReporter }) {
   const anchorRef = useRef(null)
   const [anchor, setAnchor] = useState(null)
   const leftRef  = useRef()
@@ -671,11 +713,37 @@ function DebugTandemPair({ hitboxes, group, indices, mode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Store resolvePair in a ref so the reporter always reads the latest closure.
+  const resolvePairRef = useRef(null)
+
+  // Register this pair so F12 can snapshot it.
+  useEffect(() => {
+    if (!registerReporter) return
+    const reporter = {
+      group,
+      getTransforms: () => {
+        const fn = resolvePairRef.current
+        if (!fn) return []
+        const result = fn()
+        if (!result) return []
+        const fmt = (v) => Number(v.toFixed(3))
+        const fmtArr = (arr) => arr.map(fmt)
+        return [
+          { position: fmtArr(result.left.position),  rotation: fmtArr(result.left.rotation),  scale: fmtArr(result.left.scale)  },
+          { position: fmtArr(result.right.position), rotation: fmtArr(result.right.rotation), scale: fmtArr(result.right.scale) },
+        ]
+      },
+    }
+    return registerReporter(reporter)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Compute each sphere's world transform from the anchor, with mirror
   // semantics: translate-X adjusts the spread symmetrically, translate
   // Y/Z moves both together, scale and (Y/Z) rotation are mirrored.
   // Shared helper so the live render and the copy-paste logger stay in
-  // sync on the formula.
+  // sync on the formula. Assigned to resolvePairRef each render so the
+  // F12 reporter always captures the latest closure (anchor state etc).
   const resolvePair = () => {
     const gp = anchor.position
     const gs = anchor.scale
@@ -704,6 +772,10 @@ function DebugTandemPair({ hitboxes, group, indices, mode }) {
       },
     }
   }
+
+  // Keep the ref current on every render so the F12 reporter sees the
+  // latest version (closes over the current `anchor` state value).
+  resolvePairRef.current = anchor ? resolvePair : null
 
   useFrame(() => {
     if (!anchor || !leftRef.current || !rightRef.current) return
@@ -779,8 +851,18 @@ function DebugTandemPair({ hitboxes, group, indices, mode }) {
   )
 }
 
-function DebugHitboxes({ hitboxes }) {
+function DebugHitboxes({ hitboxes, modelKey }) {
   const [mode, setMode] = useState('translate')
+  const reportersRef = useRef([])
+
+  // Returns an unregister function — called by the child on unmount.
+  const registerReporter = (reporter) => {
+    reportersRef.current.push(reporter)
+    return () => {
+      const idx = reportersRef.current.indexOf(reporter)
+      if (idx >= 0) reportersRef.current.splice(idx, 1)
+    }
+  }
 
   useEffect(() => {
     const onKey = (e) => {
@@ -788,10 +870,57 @@ function DebugHitboxes({ hitboxes }) {
       if (k === 't') setMode('translate')
       else if (k === 's') setMode('scale')
       else if (k === 'r') setMode('rotate')
+      else if (e.key === 'F12') {
+        e.preventDefault()
+
+        // Collect all current transforms from every registered gizmo.
+        const byGroup = {}
+        for (const reporter of reportersRef.current) {
+          const transforms = reporter.getTransforms()
+          if (!transforms.length) continue
+          if (!byGroup[reporter.group]) byGroup[reporter.group] = []
+          byGroup[reporter.group].push(...transforms)
+        }
+
+        // ── Code-paste format ─────────────────────────────────────────
+        const fmtVal = (v) => Number(v.toFixed(3))
+        const fmtArr = (arr) => `[${arr.map(fmtVal).join(', ')}]`
+
+        // eslint-disable-next-line no-console
+        console.group(`%c[F12 Calibration Snapshot] model: ${modelKey}`, 'color:#ffcc00;font-weight:bold')
+        for (const [group, transforms] of Object.entries(byGroup)) {
+          transforms.forEach((t, idx) => {
+            // eslint-disable-next-line no-console
+            console.log(
+              `  { group: '${group}', position: ${fmtArr(t.position)}, rotation: ${fmtArr(t.rotation)}, scale: ${fmtArr(t.scale)} },`
+            )
+          })
+        }
+        // eslint-disable-next-line no-console
+        console.groupEnd()
+
+        // ── Training data JSON ────────────────────────────────────────
+        const trainingRecord = {
+          model: modelKey,
+          timestamp: new Date().toISOString(),
+          hitboxes: byGroup,
+        }
+        // eslint-disable-next-line no-console
+        console.log('%c[Training Record JSON]', 'color:#00ffcc;font-weight:bold', JSON.stringify(trainingRecord, null, 2))
+
+        // Also write to a downloadable file so we can accumulate training data.
+        const blob = new Blob([JSON.stringify(trainingRecord, null, 2)], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `calibration_${modelKey}_${Date.now()}.json`
+        a.click()
+        URL.revokeObjectURL(url)
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [])
+  }, [modelKey])
 
   const logTransform = (i, group, obj) => {
     const p = obj.position
@@ -826,6 +955,7 @@ function DebugHitboxes({ hitboxes }) {
               hitboxes={entries.map((e) => e.hitbox)}
               indices={entries.map((e) => e.index)}
               mode={mode}
+              registerReporter={registerReporter}
             />
           )
         }
@@ -836,6 +966,7 @@ function DebugHitboxes({ hitboxes }) {
             index={index}
             mode={mode}
             logTransform={logTransform}
+            registerReporter={registerReporter}
           />
         ))
       })}
@@ -859,7 +990,7 @@ function BackgroundPlane({ onDismiss }) {
   )
 }
 
-function SceneContent({ modelKey, focusedGroup, onFocus }) {
+function SceneContent({ modelKey, focusedGroup, onFocus, debugMode }) {
   const config = MODELS[modelKey] || MODELS.goku
 
   // `settledGroup` lags `focusedGroup` by the camera animation duration —
@@ -898,7 +1029,7 @@ function SceneContent({ modelKey, focusedGroup, onFocus }) {
       </Suspense>
 
       {/* Debug wireframe overlay for hitbox calibration */}
-      {DEBUG_HITBOXES && <DebugHitboxes hitboxes={config.hitboxes} />}
+      {debugMode && <DebugHitboxes hitboxes={config.hitboxes} modelKey={modelKey} />}
 
       {/* Hitboxes — invisible click zones only, no visual shape */}
       {config.hitboxes.map((h, i) => (
@@ -913,8 +1044,8 @@ function SceneContent({ modelKey, focusedGroup, onFocus }) {
         />
       ))}
 
-      {/* Debug mode: free orbit + no auto camera. Production: P5 camera rig. */}
-      {DEBUG_HITBOXES ? (
+      {/* Calibration mode: free orbit + no auto camera. Production: P5 camera rig. */}
+      {debugMode ? (
         <OrbitControls makeDefault enableDamping={false} />
       ) : (
         <CameraRig focusGroup={focusedGroup} onSettled={setSettledGroup} />
@@ -924,18 +1055,69 @@ function SceneContent({ modelKey, focusedGroup, onFocus }) {
 }
 
 export default function MuscleBody({ onFocus, focusedGroup, modelKey = 'goku' }) {
+  const [debugMode, setDebugMode] = useState(false)
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === '`') setDebugMode((v) => !v)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   return (
-    <Canvas
-      camera={{ position: OVERVIEW_CAM.pos, fov: 45 }}
-      shadows={false}
-      dpr={[1, 2]}
-      gl={{ antialias: true, alpha: true, stencil: true }}
-    >
-      <SceneContent
-        modelKey={modelKey}
-        focusedGroup={focusedGroup}
-        onFocus={onFocus}
-      />
-    </Canvas>
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <Canvas
+        camera={{ position: OVERVIEW_CAM.pos, fov: 45 }}
+        shadows={false}
+        dpr={[1, 2]}
+        gl={{ antialias: true, alpha: true, stencil: true }}
+      >
+        <SceneContent
+          modelKey={modelKey}
+          focusedGroup={focusedGroup}
+          onFocus={onFocus}
+          debugMode={debugMode}
+        />
+      </Canvas>
+
+      {/* Calibration HUD — visible when debug mode is on */}
+      {debugMode && (
+        <div style={{
+          position: 'absolute',
+          top: 12,
+          left: 12,
+          background: 'rgba(0,0,0,0.75)',
+          border: '1px solid #ffcc00',
+          color: '#ffcc00',
+          fontFamily: 'monospace',
+          fontSize: 11,
+          padding: '6px 10px',
+          borderRadius: 4,
+          pointerEvents: 'none',
+          lineHeight: 1.6,
+        }}>
+          <div style={{ fontWeight: 'bold', marginBottom: 2 }}>CALIBRATION MODE — {modelKey}</div>
+          <div>T = translate &nbsp; S = scale &nbsp; R = rotate</div>
+          <div>F12 = snapshot all hitboxes → console + JSON download</div>
+          <div style={{ color: '#aaa' }}>` (backtick) to exit</div>
+        </div>
+      )}
+
+      {/* Subtle indicator when debug mode is off */}
+      {!debugMode && (
+        <div style={{
+          position: 'absolute',
+          bottom: 8,
+          right: 10,
+          color: 'rgba(255,255,255,0.18)',
+          fontFamily: 'monospace',
+          fontSize: 10,
+          pointerEvents: 'none',
+        }}>
+          ` = calibration mode
+        </div>
+      )}
+    </div>
   )
 }
