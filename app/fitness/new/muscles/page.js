@@ -662,6 +662,7 @@ export default function MusclesPage() {
               <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
                 <ForgeButton count={count} onFire={() => {
                   play('card-confirm')
+                  try { localStorage.setItem('gtl-muscle-targets', JSON.stringify([...selected])) } catch (_) {}
                   setFireActive(true)
                 }} onHover={() => play('button-hover')} />
               </div>

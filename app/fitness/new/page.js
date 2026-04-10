@@ -240,6 +240,7 @@ export default function NewCycleNamePage() {
     if (isBranding) return
     if (name.trim().length === 0) return
     setIsBranding(true)
+    try { localStorage.setItem('gtl-cycle-name', name.trim()) } catch (_) {}
     play('brand-confirm')
     // Play a second impact ~400ms in to reinforce the peak of the brand
     setTimeout(() => play('stamp'), 380)
