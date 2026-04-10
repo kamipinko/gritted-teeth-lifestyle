@@ -395,6 +395,8 @@ export default function FitnessPage() {
   const handleSelect = (href) => {
     // NEW CYCLE gets the mega transition; the others get the normal one.
     if (href === '/fitness/new') {
+      // Clear any in-progress edit so ETCH CYCLE creates a fresh entry
+      try { localStorage.removeItem('gtl-editing-cycle-id') } catch (_) {}
       setTransitionConfig({ href, title: 'NEW CYCLE', intensity: 'mega' })
     } else if (href === '/fitness/load') {
       setTransitionConfig({ href, title: 'LOAD CYCLE', intensity: 'normal' })
