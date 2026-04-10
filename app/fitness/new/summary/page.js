@@ -135,6 +135,54 @@ function StatBlock({ number, label }) {
   )
 }
 
+/* ── EXPORT — print/save as PDF ── */
+function ExportButton() {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <button
+      type="button"
+      onClick={() => window.print()}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="relative cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-red focus-visible:outline-offset-4 no-print"
+      style={{ transform: 'rotate(0.7deg)', transformOrigin: 'center center' }}
+      aria-label="Export cycle summary as PDF"
+    >
+      {/* Shadow */}
+      <div
+        className="absolute inset-0 bg-gtl-edge"
+        style={{
+          clipPath: 'polygon(2% 0%, 100% 0%, 98% 100%, 0% 100%)',
+          transform: hovered ? 'translate(0,0)' : 'translate(5px, 5px)',
+          transition: 'transform 80ms ease-out',
+        }}
+        aria-hidden="true"
+      />
+      {/* Face */}
+      <div
+        className="relative flex items-center gap-6 px-10 py-4"
+        style={{
+          clipPath: 'polygon(2% 0%, 100% 0%, 98% 100%, 0% 100%)',
+          background: hovered ? '#2a2a2e' : '#1a1a1e',
+          border: '1px solid #3a3a42',
+          transform: hovered ? 'translate(5px, 5px)' : 'translate(0,0)',
+          transition: 'transform 80ms ease-out, background 80ms ease-out',
+        }}
+      >
+        <div className="font-display text-2xl text-gtl-ash leading-none tracking-tight">
+          EXPORT
+        </div>
+        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
+          SAVE AS PDF / PRINT
+        </div>
+        <div className="font-display text-xl text-gtl-smoke/50 leading-none select-none ml-auto">
+          ⬇
+        </div>
+      </div>
+    </button>
+  )
+}
+
 /* ── BEGIN — the final contract ── */
 function BeginButton({ onFire, onHover }) {
   const [pressed, setPressed] = useState(false)
@@ -142,7 +190,7 @@ function BeginButton({ onFire, onHover }) {
     <div
       role="button"
       tabIndex={0}
-      aria-label="Begin the cycle"
+      aria-label="Etch the cycle"
       onMouseDown={() => setPressed(true)}
       onMouseUp={() => { setPressed(false); onFire() }}
       onMouseLeave={() => setPressed(false)}
@@ -174,7 +222,7 @@ function BeginButton({ onFire, onHover }) {
       >
         <div>
           <div className="font-display text-8xl text-gtl-paper leading-none tracking-tight">
-            BEGIN
+            ETCH CYCLE
           </div>
           <div className="font-mono text-[10px] tracking-[0.5em] uppercase text-gtl-paper/50 mt-2">
             LAUNCH THE FORGE / THE CYCLE STARTS NOW
@@ -216,6 +264,32 @@ export default function SummaryPage() {
 
   const handleBegin = () => {
     play('card-confirm')
+    // Save or update the cycle in the persistent list
+    try {
+      const existing  = JSON.parse(localStorage.getItem('gtl-cycles') || '[]')
+      const editingId = localStorage.getItem('gtl-editing-cycle-id')
+      if (editingId) {
+        // Update the existing cycle in place, preserve original createdAt
+        const updated = existing.map((c) =>
+          c.id === editingId
+            ? { ...c, name: cycleName, targets, days, dailyPlan }
+            : c
+        )
+        localStorage.setItem('gtl-cycles', JSON.stringify(updated))
+        localStorage.removeItem('gtl-editing-cycle-id')
+      } else {
+        // Brand-new cycle
+        const cycle = {
+          id: Date.now().toString(),
+          name: cycleName,
+          targets,
+          days,
+          dailyPlan,
+          createdAt: new Date().toISOString(),
+        }
+        localStorage.setItem('gtl-cycles', JSON.stringify([cycle, ...existing]))
+      }
+    } catch (_) {}
     setStampVisible(true)
 
     // Impact fires at 70% through the 950ms slam animation = ~665ms
@@ -257,6 +331,21 @@ export default function SummaryPage() {
 
   return (
     <main ref={mainRef} className="relative min-h-screen overflow-x-hidden bg-gtl-void">
+
+      {/* ── Print styles ────────────────────────────────────────────── */}
+      <style>{`
+        @media print {
+          @page { margin: 0.6in; size: portrait; }
+          body { background: #ffffff !important; }
+          /* Hide decorative / interactive layers */
+          .no-print { display: none !important; }
+          .gtl-noise { display: none !important; }
+          /* Stamp overlay and fire transitions sit in fixed position — never print */
+          .fixed { display: none !important; }
+          /* Force color preservation so red slabs and gold numbers survive */
+          * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+        }
+      `}</style>
 
       {/* ── Atmospherics ────────────────────────────────────────────── */}
       <div className="absolute inset-0 gtl-noise pointer-events-none" />
@@ -387,8 +476,9 @@ export default function SummaryPage() {
         )}
       </section>
 
-      {/* ── BEGIN — the final signature ──────────────────────────────── */}
-      <section className="relative z-10 px-8 pb-20 pt-4">
+      {/* ── EXPORT + BEGIN ───────────────────────────────────────────── */}
+      <section className="relative z-10 px-8 pb-20 pt-4 flex flex-col gap-4 no-print">
+        <ExportButton />
         <BeginButton onFire={handleBegin} onHover={() => play('button-hover')} />
       </section>
 
@@ -516,7 +606,7 @@ export default function SummaryPage() {
       })()}
 
       <FireFadeIn duration={900} />
-      <FireTransition active={fireActive} onComplete={() => router.push('/fitness')} />
+      <FireTransition active={fireActive} onComplete={() => router.push('/fitness/load')} />
     </main>
   )
 }

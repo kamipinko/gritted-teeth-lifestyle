@@ -222,9 +222,15 @@ export default function NewCycleNamePage() {
   const mainRef = useRef(null)
   const { play } = useSound()
 
-  // Pick the random default exactly once on mount
+  // Pre-fill with saved cycle name if editing, otherwise pick a random default
   useEffect(() => {
-    const initial = pickRandomName()
+    let initial
+    try {
+      const saved = localStorage.getItem('gtl-cycle-name')
+      initial = saved && saved.trim().length > 0 ? saved.trim() : pickRandomName()
+    } catch (_) {
+      initial = pickRandomName()
+    }
     setName(initial)
     const t = setTimeout(() => setIsInitialMount(false), initial.length * 35 + 500)
     return () => clearTimeout(t)
