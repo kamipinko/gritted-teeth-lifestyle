@@ -15,9 +15,11 @@
  */
 import { useState, useEffect, useRef, Suspense } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { useSound } from '../../../../lib/useSound'
 import FireFadeIn from '../../../../components/FireFadeIn'
+import FireTransition from '../../../../components/FireTransition'
 
 // R3F is client-only and touches `window`; dynamic import with ssr: false
 // avoids hydration errors.
@@ -305,13 +307,89 @@ function ModelToggle({ value, onChange }) {
   )
 }
 
+/**
+ * ForgeButton — the physical stamp face inside the FORGE CYCLE widget.
+ * Presses on mousedown (face sinks into shadow), fires the transition on mouseup.
+ */
+function ForgeButton({ count, onFire, onHover }) {
+  const [pressed, setPressed] = useState(false)
+
+  const handleMouseDown = () => {
+    setPressed(true)
+  }
+
+  const handleMouseUp = () => {
+    setPressed(false)
+    onFire()
+  }
+
+  // If the cursor leaves while held, release without firing
+  const handleMouseLeave = () => {
+    setPressed(false)
+  }
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label={`Forge cycle — ${count} target${count !== 1 ? 's' : ''} locked`}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
+      onMouseEnter={onHover}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onFire()
+        }
+      }}
+      className="relative cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-red focus-visible:outline-offset-4"
+      style={{
+        transform: `rotate(-2.5deg)`,
+        transformOrigin: 'center center',
+        // Subtle scale-down on press gives physical weight
+        transition: 'transform 80ms ease-out',
+      }}
+    >
+      {/* Shadow slab — stays fixed; face moves onto it when pressed */}
+      <div
+        className="absolute inset-0 bg-gtl-red-deep"
+        style={{
+          clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)',
+          transform: pressed ? 'translate(0px, 0px)' : 'translate(8px, 8px)',
+          transition: 'transform 80ms ease-out',
+        }}
+        aria-hidden="true"
+      />
+      {/* Face — slides toward shadow on press */}
+      <div
+        className="relative py-5 px-8"
+        style={{
+          clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)',
+          background: pressed ? '#ff2a36' : '#d4181f',
+          transform: pressed ? 'translate(8px, 8px)' : 'translate(0px, 0px)',
+          transition: 'transform 80ms ease-out, background 80ms ease-out',
+        }}
+      >
+        <div className="font-display text-5xl text-gtl-paper leading-none tracking-tight">FORGE</div>
+        <div className="font-display text-5xl text-gtl-paper leading-none tracking-tight">CYCLE</div>
+        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-paper/60 mt-3 border-t border-gtl-paper/20 pt-2">
+          {count} TARGET{count !== 1 ? 'S' : ''} LOCKED ▸
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function MusclesPage() {
   const [selected, setSelected] = useState(() => new Set())
   const [focusedGroup, setFocusedGroup] = useState(null)
   const [modelKey, setModelKey] = useState('goku')
   const [stampRevision, setStampRevision] = useState(0)
+  const [fireActive, setFireActive] = useState(false)
   const { play } = useSound()
   const mainRef = useRef(null)
+  const router = useRouter()
 
   const handleStamp = () => {
     play('stamp')
@@ -534,8 +612,70 @@ export default function MusclesPage() {
             </div>
             <div className="h-px flex-1 bg-gtl-edge" />
           </div>
+
+          {/* Confirm button — neon sign, appears once a target is selected */}
         </aside>
       </section>
+
+      {/* ── FORGE CYCLE — stamp button, left side ─────────────────────── */}
+      {count > 0 && (
+        <div
+          className="absolute z-20 pointer-events-none"
+          style={{ left: '32px', bottom: '90px' }}
+        >
+          {/* Outer container — slam entry, then stays */}
+          <div style={{ animation: 'forge-slam 700ms cubic-bezier(0.2, 1.2, 0.4, 1) forwards' }}>
+
+            {/* Sizing context for the spinning shapes + button */}
+            <div className="relative" style={{ width: '300px', height: '210px' }}>
+
+              {/* Shape 1 — large parallelogram outline, rotates CW 22s */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{ animation: 'spin-cw 22s linear infinite', transformOrigin: 'center center' }}
+                aria-hidden="true"
+              >
+                <div className="absolute inset-0 border-2 border-gtl-red/15"
+                     style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }} />
+              </div>
+
+              {/* Shape 2 — diamond outline, rotates CCW 14s */}
+              <div
+                className="absolute inset-4 pointer-events-none"
+                style={{ animation: 'spin-ccw 14s linear infinite', transformOrigin: 'center center' }}
+                aria-hidden="true"
+              >
+                <div className="absolute inset-0 border border-gtl-red/20 rotate-45" />
+              </div>
+
+              {/* Shape 3 — smaller parallelogram, rotates CW 9s */}
+              <div
+                className="absolute inset-8 pointer-events-none"
+                style={{ animation: 'spin-cw 9s linear infinite', transformOrigin: 'center center' }}
+                aria-hidden="true"
+              >
+                <div className="absolute inset-0 border border-gtl-red/25"
+                     style={{ clipPath: 'polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%)' }} />
+              </div>
+
+              {/* The stamp — centered, permanently tilted, pressable */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
+                <ForgeButton count={count} onFire={() => {
+                  play('card-confirm')
+                  setFireActive(true)
+                }} onHover={() => play('button-hover')} />
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fire transition — erupts on mouseup, navigates on complete */}
+      <FireTransition
+        active={fireActive}
+        onComplete={() => router.push('/fitness/new/branded')}
+      />
 
       {/* Footer slash */}
       <div className="absolute bottom-6 left-0 right-0 z-10 flex items-center gap-4 px-8">

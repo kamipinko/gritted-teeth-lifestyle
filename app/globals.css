@@ -193,6 +193,16 @@ html, body {
   }
 }
 
+/* ----- Keyframes not referenced by Tailwind utility classes ----- */
+@keyframes spin-cw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes spin-ccw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+
 /* ----- Utilities ----- */
 @layer utilities {
   /* Reverse mix-blend so we can put red text on red backgrounds where needed */

@@ -283,6 +283,41 @@ module.exports = {
         // Checkbox stamp — used when ALL is selected. Crashes a small element
         // in from scale(10) with a hard squash at 72% for clear stamp impact.
         // Smaller starting scale than char-stamp so the shape stays readable.
+        // Forge entry — slashes in from the left like a card thrown onto a board.
+        // Arrives fast (ease-out), overshoots, settles at a permanent tilt.
+        'forge-entry': {
+          '0%':   { transform: 'translateX(-130%) rotate(-20deg) skewX(-12deg)', opacity: '0', filter: 'blur(8px)' },
+          '55%':  { transform: 'translateX(4%) rotate(-8deg) skewX(2deg)',       opacity: '1', filter: 'blur(0)' },
+          '72%':  { transform: 'translateX(-2%) rotate(-11deg) skewX(-1deg)',    opacity: '1', filter: 'blur(0)' },
+          '86%':  { transform: 'translateX(1%) rotate(-9.5deg) skewX(0deg)',     opacity: '1', filter: 'blur(0)' },
+          '100%': { transform: 'translateX(0) rotate(-10deg) skewX(0deg)',       opacity: '1', filter: 'blur(0)' },
+        },
+        // Neon flicker — simulates a real neon tube
+        'neon-flicker': {
+          '0%, 18%, 22%, 26%, 55%, 59%, 100%': { opacity: '1' },
+          '20%, 24%, 57%':                      { opacity: '0.6' },
+        },
+        // Neon wobble — periodic physical shake every 10s
+        'neon-wobble': {
+          '0%, 88%, 100%': { transform: 'rotate(0deg) translateX(0px)' },
+          '89.5%':         { transform: 'rotate(-1.5deg) translateX(-4px)' },
+          '91%':           { transform: 'rotate(1.5deg) translateX(5px)' },
+          '92.5%':         { transform: 'rotate(-1.2deg) translateX(-3px)' },
+          '94%':           { transform: 'rotate(1deg) translateX(3px)' },
+          '95.5%':         { transform: 'rotate(-0.6deg) translateX(-2px)' },
+          '97%':           { transform: 'rotate(0.3deg) translateX(1px)' },
+          '98.5%':         { transform: 'rotate(0deg) translateX(0px)' },
+        },
+        // Slow clockwise / counter-clockwise spin — for decorative shapes
+        'spin-cw':  { '0%': { transform: 'rotate(0deg)' }, '100%': { transform: 'rotate(360deg)' } },
+        'spin-ccw': { '0%': { transform: 'rotate(0deg)' }, '100%': { transform: 'rotate(-360deg)' } },
+        // Forge button slam — drops in from above, bounces to rest
+        'forge-slam': {
+          '0%':   { opacity: '0', transform: 'translateY(-60px) scale(0.95)' },
+          '60%':  { opacity: '1', transform: 'translateY(8px) scale(1.01)' },
+          '78%':  { opacity: '1', transform: 'translateY(-4px) scale(0.99)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
         // Row wobble — applied to the muscle row on stamp impact
         'row-wobble': {
           '0%':   { transform: 'translate(0, 0) rotate(0deg)' },
@@ -333,6 +368,10 @@ module.exports = {
         'flicker':        'flicker 4s ease-in-out infinite',
         'checkbox-stamp': 'checkbox-stamp 1000ms cubic-bezier(0.18, 1.4, 0.4, 1) both',
         'row-wobble':     'row-wobble 400ms cubic-bezier(0.4, 0, 0.6, 1) forwards',
+        'forge-entry':    'forge-entry 650ms cubic-bezier(0.15, 0, 0.1, 1) forwards',
+        'forge-slam':     'forge-slam 700ms cubic-bezier(0.2, 1.2, 0.4, 1) forwards',
+        'neon-flicker':   'neon-flicker 3s linear infinite',
+        'neon-wobble':    'neon-wobble 10s ease-in-out infinite',
       },
       // Custom rotation values for tilted layouts
       rotate: {
