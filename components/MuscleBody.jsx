@@ -60,6 +60,9 @@ const MODELS = {
       { group: 'hamstrings', position: [ 0.118, -0.85, -0.296], rotation: [0, 0, 0],      scale: [0.089, 0.250, 0.211] },
       { group: 'calves',     position: [-0.096, -1.45, -0.169], rotation: [0, 0, 0],      scale: [0.070, 0.230, 0.203] },
       { group: 'calves',     position: [ 0.096, -1.45, -0.169], rotation: [0, 0, 0],      scale: [0.070, 0.230, 0.203] },
+      // BACK — placeholder (lats/traps — drag to refine)
+      { group: 'back',       position: [-0.163,  0.40, -0.380], rotation: [0, 0, 0],      scale: [0.130, 0.280, 0.180] },
+      { group: 'back',       position: [ 0.163,  0.40, -0.380], rotation: [0, 0, 0],      scale: [0.130, 0.280, 0.180] },
     ],
   },
   gokuSSJ: {
@@ -89,6 +92,9 @@ const MODELS = {
       { group: 'hamstrings', position: [ 0.081, -0.85, -0.403], rotation: [0, 0, 0],      scale: [0.061, 0.250, 0.288] },
       { group: 'calves',     position: [-0.066, -1.45, -0.230], rotation: [0, 0, 0],      scale: [0.048, 0.230, 0.276] },
       { group: 'calves',     position: [ 0.066, -1.45, -0.230], rotation: [0, 0, 0],      scale: [0.048, 0.230, 0.276] },
+      // BACK — placeholder (lats/traps — drag to refine)
+      { group: 'back',       position: [-0.111,  0.40, -0.520], rotation: [0, 0, 0],      scale: [0.090, 0.280, 0.245] },
+      { group: 'back',       position: [ 0.111,  0.40, -0.520], rotation: [0, 0, 0],      scale: [0.090, 0.280, 0.245] },
     ],
   },
   gohan: {
@@ -119,6 +125,9 @@ const MODELS = {
       { group: 'hamstrings', position: [ 0.096, -0.85, -0.261], rotation: [0, 0, 0],      scale: [0.072, 0.250, 0.186] },
       { group: 'calves',     position: [-0.078, -1.45, -0.149], rotation: [0, 0, 0],      scale: [0.057, 0.230, 0.179] },
       { group: 'calves',     position: [ 0.078, -1.45, -0.149], rotation: [0, 0, 0],      scale: [0.057, 0.230, 0.179] },
+      // BACK — placeholder (lats/traps — drag to refine)
+      { group: 'back',       position: [-0.132,  0.35, -0.340], rotation: [0, 0, 0],      scale: [0.105, 0.280, 0.160] },
+      { group: 'back',       position: [ 0.132,  0.35, -0.340], rotation: [0, 0, 0],      scale: [0.105, 0.280, 0.160] },
     ],
   },
   anatomy: {
@@ -159,6 +168,9 @@ const MODELS = {
       // CALVES — placeholder (visual estimate — drag to refine)
       { group: 'calves', position: [-0.13, -1.20, -0.075], rotation: [0, 0, 0], scale: [0.095, 0.220, 0.095] },
       { group: 'calves', position: [ 0.13, -1.20, -0.075], rotation: [0, 0, 0], scale: [0.095, 0.220, 0.095] },
+      // BACK — placeholder (lats/traps — drag to refine)
+      { group: 'back', position: [-0.226, 0.900, -0.260], rotation: [0, 0, 0], scale: [0.220, 0.300, 0.110] },
+      { group: 'back', position: [ 0.226, 0.900, -0.260], rotation: [0, 0, 0], scale: [0.220, 0.300, 0.110] },
     ],
   },
 }

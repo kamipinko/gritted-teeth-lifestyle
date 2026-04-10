@@ -36,6 +36,7 @@ const MuscleBody = dynamic(() => import('../../../../components/MuscleBody'), {
 
 const MUSCLE_GROUPS = [
   { id: 'chest',      label: 'CHEST',      region: 'UPPER' },
+  { id: 'back',       label: 'BACK',       region: 'UPPER' },
   { id: 'shoulders',  label: 'SHOULDERS',  region: 'UPPER' },
   { id: 'biceps',     label: 'BICEPS',     region: 'ARMS'  },
   { id: 'triceps',    label: 'TRICEPS',    region: 'ARMS'  },
@@ -559,7 +560,7 @@ export default function MusclesPage() {
                 TARGET LIST
               </div>
               <div className="font-display text-3xl text-gtl-chalk leading-none mt-1">
-                {String(count).padStart(2, '0')} / 10
+                {String(count).padStart(2, '0')} / 11
               </div>
             </div>
             <div className="flex flex-col gap-1">
@@ -606,7 +607,7 @@ export default function MusclesPage() {
             <div className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-smoke px-3">
               {count === 0
                 ? 'NO TARGETS'
-                : count === 10
+                : count === 11
                 ? 'FULL BODY'
                 : `${count} TARGET${count === 1 ? '' : 'S'}`}
             </div>

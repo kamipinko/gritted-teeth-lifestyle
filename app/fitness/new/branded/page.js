@@ -25,7 +25,7 @@ const MONTH_NAMES = [
 const DAY_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 
 const MUSCLE_LABELS = {
-  chest: 'CHEST', shoulders: 'SHOULDERS', biceps: 'BICEPS',
+  chest: 'CHEST', back: 'BACK', shoulders: 'SHOULDERS', biceps: 'BICEPS',
   triceps: 'TRICEPS', forearms: 'FOREARMS', abs: 'ABS',
   glutes: 'GLUTES', quads: 'QUADS', hamstrings: 'HAMSTRINGS', calves: 'CALVES',
 }
