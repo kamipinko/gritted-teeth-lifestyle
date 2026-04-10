@@ -36,8 +36,8 @@ const MuscleBody = dynamic(() => import('../../../../components/MuscleBody'), {
 
 const MUSCLE_GROUPS = [
   { id: 'chest',      label: 'CHEST',      region: 'UPPER' },
-  { id: 'back',       label: 'BACK',       region: 'UPPER' },
   { id: 'shoulders',  label: 'SHOULDERS',  region: 'UPPER' },
+  { id: 'back',       label: 'BACK',       region: 'UPPER' },
   { id: 'biceps',     label: 'BICEPS',     region: 'ARMS'  },
   { id: 'triceps',    label: 'TRICEPS',    region: 'ARMS'  },
   { id: 'forearms',   label: 'FOREARMS',   region: 'ARMS'  },
