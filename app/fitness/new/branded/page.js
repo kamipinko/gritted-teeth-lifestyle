@@ -512,7 +512,7 @@ export default function SchedulePage() {
       {/* Fire transition — erupts on LOCK IN, navigates on complete */}
       <FireTransition
         active={fireActive}
-        onComplete={() => router.push('/fitness')}
+        onComplete={() => router.push('/fitness/new/plan')}
       />
     </main>
   )
