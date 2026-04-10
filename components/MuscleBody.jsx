@@ -13,6 +13,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useGLTF, Center, OrbitControls, TransformControls } from '@react-three/drei'
 import { Suspense, useRef, useState, useMemo, useEffect, useLayoutEffect } from 'react'
 import * as THREE from 'three'
+import { SkeletonUtils } from 'three-stdlib'
 
 // Preload all four models so switching between them is instant
 useGLTF.preload('/models/goku.glb')
@@ -616,11 +617,36 @@ function GlowFlash({ settledGroup, hitboxes, modelKey }) {
 // ── The displayed model ─────────────────────────────────────────────
 function ModelDisplay({ modelKey }) {
   const config = MODELS[modelKey] || MODELS.goku
-  const { scene } = useGLTF(config.path)
-  const cloned = useMemo(() => scene.clone(true), [scene])
+  const { scene, animations } = useGLTF(config.path)
+  const cloned = useMemo(() => SkeletonUtils.clone(scene), [scene])
 
   const normalizedScale = useMemo(() => {
+    // ── T-pose reset for Mixamo-rigged models ─────────────────────────
+    // Goku and Gohan are stored in action poses (punch / Kamehameha).
+    // Their bones use the standard Mixamo naming convention so we can
+    // zero the arm and spine rotations to get a neutral standing pose
+    // before computing the bounding box (otherwise the bounding box
+    // inherits the action pose's wide extent and normalizedScale is wrong).
+    //
+    // Bones we intentionally leave alone: hips, root, legs, feet, head —
+    // these are all in normal standing position already.
+    const ARM_BONES = new Set([
+      'mixamorigHips',
+      'mixamorigLeftShoulder',  'mixamorigRightShoulder',
+      'mixamorigLeftArm',       'mixamorigRightArm',
+      'mixamorigLeftForeArm',   'mixamorigRightForeArm',
+      'mixamorigLeftHand',      'mixamorigRightHand',
+      'mixamorigSpine',         'mixamorigSpine1',       'mixamorigSpine2',
+      'mixamorigNeck',
+    ])
+    cloned.traverse((obj) => {
+      if (obj.isBone && ARM_BONES.has(obj.name)) {
+        obj.rotation.set(0, 0, 0)
+        obj.quaternion.set(0, 0, 0, 1)
+      }
+    })
     cloned.updateMatrixWorld(true)
+
     const box = new THREE.Box3()
     let first = true
     cloned.traverse((obj) => {
@@ -671,10 +697,36 @@ function ModelDisplay({ modelKey }) {
       el.style.display = 'none'
       document.body.appendChild(el)
     }
-    el.dataset.model   = modelKey
-    el.dataset.meshes  = JSON.stringify(meshData)
+    el.dataset.model    = modelKey
+    el.dataset.meshes   = JSON.stringify(meshData)
     el.dataset.hitboxes = JSON.stringify(hitboxes)
-  }, [cloned, normalizedScale, modelKey])
+
+    // ── Animation emitter ─────────────────────────────────────────────
+    const bones = []
+    cloned.traverse((obj) => { if (obj.isBone) bones.push(obj.name) })
+
+    let skinnedMeshCount = 0
+    cloned.traverse((obj) => { if (obj.isSkinnedMesh) skinnedMeshCount++ })
+
+    const animInfo = {
+      animations: (animations || []).map((a) => ({
+        name:     a.name,
+        duration: a.duration,
+        tracks:   a.tracks.length,
+      })),
+      bones,
+      skinnedMeshes: skinnedMeshCount,
+    }
+
+    let animEl = document.getElementById('scene-anim-data')
+    if (!animEl) {
+      animEl = document.createElement('div')
+      animEl.id = 'scene-anim-data'
+      animEl.style.display = 'none'
+      document.body.appendChild(animEl)
+    }
+    animEl.dataset.info = JSON.stringify(animInfo)
+  }, [cloned, normalizedScale, modelKey, animations])
 
   return (
     <Center disableY={false}>
