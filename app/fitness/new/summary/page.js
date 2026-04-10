@@ -1,12 +1,12 @@
 'use client'
 /*
- * /fitness/new/summary — Cycle summary screen.
+ * /fitness/new/summary — Mission Briefing. The payoff screen.
  *
- * Reads everything from localStorage and presents the full cycle
- * as a visual mission briefing: cycle name, target muscles, and
- * each training day with its assigned muscles. P5 aesthetic.
- *
- * BEGIN fires a FireTransition to /fitness.
+ * The user named their cycle, picked their targets, carved their schedule,
+ * and assigned every session. This page makes them feel it. The cycle name
+ * dominates the hero band in white on red. Stats flash in gold. Muscle
+ * targets are stamped in big rotated parallelogram slabs. Day cards are
+ * tilted dossiers. BEGIN is the final contract.
  */
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -21,21 +21,41 @@ const MUSCLE_LABELS = {
   hamstrings: 'HAMSTRINGS', calves: 'CALVES',
 }
 
-const DAY_FULL  = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY']
-const DAY_SHORT = ['SUN','MON','TUE','WED','THU','FRI','SAT']
+const DAY_SHORT   = ['SUN','MON','TUE','WED','THU','FRI','SAT']
 const MONTH_SHORT = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
+
+// Alternating slab rotations — varied enough to feel handmade
+const SLAB_ROTATIONS = ['-1.5deg','1deg','-0.8deg','1.5deg','-1.2deg','0.8deg','-1.8deg','1.2deg','-0.6deg','1.4deg','-1deg']
+const CARD_ROTATIONS = ['-0.8deg','0.6deg','-0.5deg','0.9deg','-0.7deg','0.4deg','-1deg','0.7deg','-0.6deg','0.8deg']
 
 function parseDate(iso) {
   return new Date(iso + 'T12:00:00')
 }
 
-function MuscleTag({ id, dim = false }) {
+/* ── Muscle slab — big stamped parallelogram ── */
+function MuscleSlab({ id, index }) {
+  const rot = SLAB_ROTATIONS[index % SLAB_ROTATIONS.length]
   return (
     <div
-      className={`px-2.5 py-1.5 border text-[10px] font-mono tracking-[0.2em] uppercase leading-none
-        ${dim
-          ? 'border-gtl-edge text-gtl-smoke bg-transparent'
-          : 'border-gtl-red/60 text-gtl-red-bright bg-gtl-red/10'}`}
+      className="px-6 py-3 bg-gtl-red border-2 border-gtl-red-bright shadow-red-glow shrink-0"
+      style={{
+        clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
+        transform: `rotate(${rot})`,
+        transformOrigin: 'center center',
+      }}
+    >
+      <div className="font-display text-2xl text-gtl-paper leading-none tracking-wide whitespace-nowrap">
+        {MUSCLE_LABELS[id] || id.toUpperCase()}
+      </div>
+    </div>
+  )
+}
+
+/* ── Compact muscle chip — used inside day dossier cards ── */
+function MuscleChip({ id }) {
+  return (
+    <div
+      className="px-2 py-1 bg-gtl-red/20 border border-gtl-red/50 text-[8px] font-mono tracking-[0.2em] uppercase text-gtl-red-bright leading-none"
       style={{ clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)' }}
     >
       {MUSCLE_LABELS[id] || id.toUpperCase()}
@@ -43,45 +63,74 @@ function MuscleTag({ id, dim = false }) {
   )
 }
 
-function DaySummaryCard({ iso, muscles }) {
+/* ── Day dossier card ── */
+function DayCard({ iso, muscles, index }) {
   const date    = parseDate(iso)
   const dayName = DAY_SHORT[date.getDay()]
   const dayNum  = date.getDate()
   const mon     = MONTH_SHORT[date.getMonth()]
   const hasWork = muscles.length > 0
+  const rot     = CARD_ROTATIONS[index % CARD_ROTATIONS.length]
 
   return (
     <div
-      className={`flex flex-col border transition-colors duration-200
-        ${hasWork ? 'border-gtl-red/40 bg-gtl-ink' : 'border-gtl-edge bg-gtl-ink/50'}`}
-      style={{ clipPath: 'polygon(0% 0%, 96% 0%, 100% 3%, 100% 100%, 4% 100%, 0% 97%)' }}
+      className={`flex flex-col border-l-4 bg-gtl-ink border-r border-t border-b
+        ${hasWork ? 'border-l-gtl-red border-t-gtl-edge border-r-gtl-edge border-b-gtl-edge' : 'border-l-gtl-smoke border-t-gtl-edge border-r-gtl-edge border-b-gtl-edge'}`}
+      style={{ transform: `rotate(${rot})`, transformOrigin: 'center top' }}
     >
-      {/* Day header */}
-      <div className={`px-4 py-3 border-b ${hasWork ? 'border-gtl-red/30' : 'border-gtl-edge'}`}>
-        <div className={`font-display text-2xl leading-none tracking-wide ${hasWork ? 'text-gtl-red' : 'text-gtl-smoke'}`}>
+      {/* Date block */}
+      <div className="px-4 pt-4 pb-3">
+        <div className={`font-display text-3xl leading-none tracking-widest ${hasWork ? 'text-gtl-red' : 'text-gtl-smoke'}`}>
           {dayName}
         </div>
-        <div className="flex items-baseline gap-1.5 mt-0.5">
-          <span className={`font-display text-4xl leading-none ${hasWork ? 'text-gtl-chalk' : 'text-gtl-ash'}`}>
+        <div className="flex items-baseline gap-2 mt-0">
+          <span className={`font-display leading-none ${hasWork ? 'text-gtl-chalk' : 'text-gtl-ash'}`}
+                style={{ fontSize: 'clamp(3rem, 5vw, 5rem)' }}>
             {dayNum}
           </span>
-          <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-smoke">{mon}</span>
+          <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">{mon}</span>
         </div>
       </div>
 
-      {/* Muscle list */}
-      <div className="p-3 flex flex-wrap gap-1.5">
+      {/* Red slash divider — only on active days */}
+      {hasWork && (
+        <div className="mx-4 mb-3 h-0.5 bg-gtl-red" style={{ transform: 'skewX(-8deg)' }} />
+      )}
+
+      {/* Muscles */}
+      <div className="px-4 pb-4 flex flex-wrap gap-1.5 min-h-[2rem]">
         {hasWork
-          ? muscles.map((id) => <MuscleTag key={id} id={id} />)
-          : <span className="font-mono text-[9px] tracking-[0.2em] uppercase text-gtl-smoke">REST DAY</span>}
+          ? muscles.map((id) => <MuscleChip key={id} id={id} />)
+          : <span className="font-mono text-[8px] tracking-[0.2em] uppercase text-gtl-smoke self-center">REST</span>}
       </div>
     </div>
   )
 }
 
+/* ── Stat block — gold number + mono label ── */
+function StatBlock({ number, label }) {
+  return (
+    <div className="flex flex-col items-start">
+      <div
+        className="font-display leading-none"
+        style={{
+          fontSize: 'clamp(4rem, 8vw, 7rem)',
+          color: '#e4b022',
+          textShadow: '3px 3px 0 #8a6612, 5px 5px 0 #070708',
+        }}
+      >
+        {String(number).padStart(2, '0')}
+      </div>
+      <div className="font-mono text-[10px] tracking-[0.35em] uppercase text-gtl-ash mt-1">
+        {label}
+      </div>
+    </div>
+  )
+}
+
+/* ── BEGIN — the final contract ── */
 function BeginButton({ onFire, onHover }) {
   const [pressed, setPressed] = useState(false)
-
   return (
     <div
       role="button"
@@ -91,36 +140,41 @@ function BeginButton({ onFire, onHover }) {
       onMouseUp={() => { setPressed(false); onFire() }}
       onMouseLeave={() => setPressed(false)}
       onMouseEnter={onHover}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onFire() }
-      }}
-      className="relative cursor-pointer select-none outline-none
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onFire() } }}
+      className="relative w-full cursor-pointer select-none outline-none
         focus-visible:outline-2 focus-visible:outline-gtl-red focus-visible:outline-offset-4"
       style={{ transform: 'rotate(-1.5deg)', transformOrigin: 'center center' }}
     >
+      {/* Shadow slab */}
       <div
         className="absolute inset-0 bg-gtl-red-deep"
         style={{
-          clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)',
-          transform: pressed ? 'translate(0,0)' : 'translate(6px, 6px)',
+          clipPath: 'polygon(1% 0%, 100% 0%, 99% 100%, 0% 100%)',
+          transform: pressed ? 'translate(0,0)' : 'translate(10px, 10px)',
           transition: 'transform 80ms ease-out',
         }}
         aria-hidden="true"
       />
+      {/* Face */}
       <div
-        className="relative px-16 py-5"
+        className="relative flex items-center justify-between px-12 py-8"
         style={{
-          clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)',
+          clipPath: 'polygon(1% 0%, 100% 0%, 99% 100%, 0% 100%)',
           background: pressed ? '#ff2a36' : '#d4181f',
-          transform: pressed ? 'translate(6px, 6px)' : 'translate(0,0)',
+          transform: pressed ? 'translate(10px, 10px)' : 'translate(0,0)',
           transition: 'transform 80ms ease-out, background 80ms ease-out',
         }}
       >
-        <div className="font-display text-5xl text-gtl-paper leading-none tracking-tight whitespace-nowrap">
-          BEGIN
+        <div>
+          <div className="font-display text-8xl text-gtl-paper leading-none tracking-tight">
+            BEGIN
+          </div>
+          <div className="font-mono text-[10px] tracking-[0.5em] uppercase text-gtl-paper/50 mt-2">
+            LAUNCH THE FORGE / THE CYCLE STARTS NOW
+          </div>
         </div>
-        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-paper/60 mt-2 border-t border-gtl-paper/20 pt-1.5 text-center">
-          LAUNCH THE FORGE ▸
+        <div className="font-display text-6xl text-gtl-paper/30 leading-none select-none">
+          ▸
         </div>
       </div>
     </div>
@@ -133,20 +187,20 @@ export default function SummaryPage() {
 
   const [cycleName,  setCycleName]  = useState('NEW CYCLE')
   const [targets,    setTargets]    = useState([])
-  const [days,       setDays]       = useState([])   // sorted ISO strings
-  const [dailyPlan,  setDailyPlan]  = useState({})   // { iso: muscleId[] }
+  const [days,       setDays]       = useState([])
+  const [dailyPlan,  setDailyPlan]  = useState({})
   const [fireActive, setFireActive] = useState(false)
 
   useEffect(() => {
     try {
-      const name    = localStorage.getItem('gtl-cycle-name')
-      const rawT    = localStorage.getItem('gtl-muscle-targets')
-      const rawD    = localStorage.getItem('gtl-training-days')
-      const rawP    = localStorage.getItem('gtl-daily-plan')
-      if (name)  setCycleName(name)
-      if (rawT)  setTargets(JSON.parse(rawT))
-      if (rawD)  setDays(JSON.parse(rawD).sort())
-      if (rawP)  setDailyPlan(JSON.parse(rawP))
+      const name = localStorage.getItem('gtl-cycle-name')
+      const rawT = localStorage.getItem('gtl-muscle-targets')
+      const rawD = localStorage.getItem('gtl-training-days')
+      const rawP = localStorage.getItem('gtl-daily-plan')
+      if (name) setCycleName(name)
+      if (rawT) setTargets(JSON.parse(rawT))
+      if (rawD) setDays(JSON.parse(rawD).sort())
+      if (rawP) setDailyPlan(JSON.parse(rawP))
     } catch (_) {}
   }, [])
 
@@ -155,91 +209,146 @@ export default function SummaryPage() {
     setFireActive(true)
   }
 
-  // Grid columns for the day cards — same logic as plan page
+  const plannedSessions = days.filter((iso) => (dailyPlan[iso] || []).length > 0).length
+
   const cols = days.length <= 5 ? days.length
              : days.length <= 10 ? Math.ceil(days.length / 2)
              : Math.ceil(days.length / 3)
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-gtl-void">
-      {/* Atmospherics */}
-      <div className="absolute inset-0 gtl-noise pointer-events-none" />
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: 'linear-gradient(135deg, rgba(122,14,20,0.22) 0%, transparent 40%, transparent 60%, rgba(74,10,14,0.32) 100%)',
-        }}
-      />
+    <main className="relative min-h-screen overflow-x-hidden bg-gtl-void">
 
-      {/* Kanji watermark — 完 (complete/perfect) */}
+      {/* ── Atmospherics ────────────────────────────────────────────── */}
+      <div className="absolute inset-0 gtl-noise pointer-events-none" />
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ background: 'linear-gradient(160deg, rgba(122,14,20,0.18) 0%, transparent 45%, rgba(74,10,14,0.28) 100%)' }} />
+
+      {/* Kanji watermark — 完 (complete) — stronger than usual */}
       <div
-        className="absolute -top-8 -right-20 pointer-events-none select-none animate-flicker"
+        className="absolute -top-16 -right-24 pointer-events-none select-none"
         aria-hidden="true"
         style={{
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-          fontSize: '44rem', lineHeight: '0.8',
-          color: '#ffffff', opacity: 0.04, fontWeight: 900,
+          fontSize: '52rem', lineHeight: '0.8',
+          color: '#d4181f', opacity: 0.055, fontWeight: 900,
+          animation: 'flicker 6s ease-in-out infinite',
         }}
       >
         完
       </div>
 
-      {/* ── Nav ── */}
-      <nav className="relative z-10 flex items-center justify-between px-8 py-6">
-        <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-          PALACE / FITNESS / NEW CYCLE / SUMMARY
-        </div>
-      </nav>
+      {/* ── HERO BAND — cycle name on full-width red ──────────────── */}
+      <section className="relative z-10 overflow-hidden">
+        {/* The red band itself — skewed so it bleeds off both edges */}
+        <div
+          className="absolute inset-0 bg-gtl-red"
+          style={{ transform: 'skewY(-1.5deg)', transformOrigin: 'top left' }}
+          aria-hidden="true"
+        />
 
-      {/* ── Headline + cycle name ── */}
-      <section className="relative z-10 px-8 pb-8 max-w-[1440px] mx-auto">
-        <div className="flex items-center gap-4 mb-3">
-          <div className="h-0.5 w-16 bg-gtl-red" />
-          <span className="font-mono text-xs tracking-[0.4em] uppercase text-gtl-red font-bold">
-            STEP / 05 / REVIEW
-          </span>
-          <div className="h-0.5 w-16 bg-gtl-red" />
+        {/* "FORGED" ghost text on the band — big, rotated, proud */}
+        <div
+          className="absolute right-4 top-2 font-display text-[10rem] leading-none select-none pointer-events-none"
+          aria-hidden="true"
+          style={{ color: 'rgba(0,0,0,0.18)', transform: 'rotate(6deg)', transformOrigin: 'right top' }}
+        >
+          FORGED
         </div>
 
-        {/* Cycle name — the hero element */}
-        <div className="flex items-end justify-between gap-8 flex-wrap">
-          <div>
-            <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-ash mb-1">
-              CYCLE DESIGNATION
-            </div>
-            <h1
-              className="font-display text-6xl md:text-8xl text-gtl-chalk leading-none -rotate-1"
-              style={{ letterSpacing: '-0.02em' }}
-            >
-              {cycleName}
-            </h1>
+        {/* Content on top of red band */}
+        <div className="relative px-8 pt-8 pb-14">
+          {/* Breadcrumb */}
+          <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-paper/40 mb-6">
+            PALACE / FITNESS / NEW CYCLE / MISSION BRIEF
           </div>
-          <BeginButton onFire={handleBegin} onHover={() => play('button-hover')} />
+
+          {/* Step tag — counter-rotated */}
+          <div className="inline-flex items-center gap-3 mb-4" style={{ transform: 'rotate(1deg)' }}>
+            <div className="h-0.5 w-10 bg-gtl-paper/40" />
+            <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-paper/70 font-bold">
+              STEP 05 / REVIEW
+            </span>
+          </div>
+
+          {/* THE CYCLE NAME — the whole reason we're here */}
+          <h1
+            className="font-display text-gtl-paper leading-none"
+            style={{
+              fontSize: 'clamp(3.5rem, 11vw, 9rem)',
+              transform: 'rotate(-2deg)',
+              transformOrigin: 'left center',
+              textShadow: '5px 5px 0 #070708, 10px 10px 0 rgba(0,0,0,0.4)',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            {cycleName}
+          </h1>
+
+          {/* "CYCLE DESIGNATION" label below name — counter-rotated for tension */}
+          <div
+            className="font-mono text-[10px] tracking-[0.5em] uppercase text-gtl-paper/50 mt-4"
+            style={{ transform: 'rotate(0.8deg)' }}
+          >
+            CYCLE DESIGNATION / AUTHORIZED
+          </div>
+        </div>
+      </section>
+
+      {/* ── STATS ROW — gold numbers, earned ────────────────────────── */}
+      <section className="relative z-10 px-8 py-10">
+        <div className="flex items-start gap-8 flex-wrap">
+          <StatBlock number={days.length}       label="BATTLEDAYS" />
+
+          {/* Red slash separator */}
+          <div className="self-stretch flex items-center">
+            <div className="w-1 h-full min-h-[5rem] bg-gtl-red" style={{ transform: 'skewX(-12deg)' }} />
+          </div>
+
+          <StatBlock number={targets.length}    label="TARGETS LOCKED" />
+
+          <div className="self-stretch flex items-center">
+            <div className="w-1 h-full min-h-[5rem] bg-gtl-red" style={{ transform: 'skewX(-12deg)' }} />
+          </div>
+
+          <StatBlock number={plannedSessions}   label="SESSIONS MAPPED" />
         </div>
       </section>
 
       {/* Red slash divider */}
-      <div
-        className="relative z-10 mx-8 mb-6 h-[3px] bg-gtl-red"
-        style={{ transform: 'skewX(-5deg)', transformOrigin: 'left center' }}
-      />
+      <div className="relative z-10 mx-8 mb-10 h-[3px] bg-gtl-red"
+           style={{ transform: 'skewX(-6deg)', transformOrigin: 'left center' }} />
 
-      {/* ── Target muscles strip ── */}
-      <section className="relative z-10 px-8 mb-8 max-w-[1440px] mx-auto">
-        <div className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-red mb-3">
-          TARGET MUSCLES — {targets.length} / 11 LOCKED
+      {/* ── TARGET MUSCLES — big rotated stampstamps ─────────────────── */}
+      <section className="relative z-10 px-8 mb-12">
+        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-ash mb-6 flex items-center gap-4">
+          <span>TARGET MUSCLES</span>
+          <div className="h-px flex-1 bg-gtl-edge" />
+          <span className="text-gtl-red">{targets.length} / 11 LOCKED</span>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {targets.map((id) => (
-            <MuscleTag key={id} id={id} />
-          ))}
-        </div>
+
+        {targets.length === 0 ? (
+          <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-gtl-smoke">
+            NO TARGETS STORED
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-x-4 gap-y-5 items-center">
+            {targets.map((id, i) => (
+              <MuscleSlab key={id} id={id} index={i} />
+            ))}
+          </div>
+        )}
       </section>
 
-      {/* ── Training day cards ── */}
-      <section className="relative z-10 px-8 pb-24 max-w-[1440px] mx-auto">
-        <div className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-red mb-3">
-          SCHEDULE — {days.length} DAY{days.length !== 1 ? 'S' : ''} FORGED
+      {/* Red slash divider */}
+      <div className="relative z-10 mx-8 mb-10 h-[3px] bg-gtl-red"
+           style={{ transform: 'skewX(-6deg)', transformOrigin: 'right center' }} />
+
+      {/* ── SCHEDULE — tilted day dossiers ───────────────────────────── */}
+      <section className="relative z-10 px-8 mb-12">
+        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-ash mb-8 flex items-center gap-4">
+          <span>BATTLE SCHEDULE</span>
+          <div className="h-px flex-1 bg-gtl-edge" />
+          <span className="text-gtl-red">{days.length} DAY{days.length !== 1 ? 'S' : ''} FORGED</span>
         </div>
 
         {days.length === 0 ? (
@@ -248,28 +357,25 @@ export default function SummaryPage() {
           </div>
         ) : (
           <div
-            className="grid gap-3"
+            className="grid gap-4"
             style={{ gridTemplateColumns: `repeat(${Math.min(cols, days.length)}, 1fr)` }}
           >
-            {days.map((iso) => (
-              <DaySummaryCard
+            {days.map((iso, i) => (
+              <DayCard
                 key={iso}
                 iso={iso}
                 muscles={dailyPlan[iso] || []}
+                index={i}
               />
             ))}
           </div>
         )}
       </section>
 
-      {/* Footer */}
-      <div className="absolute bottom-6 left-0 right-0 z-10 flex items-center gap-4 px-8">
-        <div className="h-px flex-1 bg-gtl-edge" />
-        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
-          GRITTED TEETH LIFESTYLE / FITNESS PALACE / BRIEFING
-        </div>
-        <div className="h-px flex-1 bg-gtl-edge" />
-      </div>
+      {/* ── BEGIN — the final signature ──────────────────────────────── */}
+      <section className="relative z-10 px-8 pb-20 pt-4">
+        <BeginButton onFire={handleBegin} onHover={() => play('button-hover')} />
+      </section>
 
       <FireFadeIn duration={900} />
       <FireTransition active={fireActive} onComplete={() => router.push('/fitness')} />
