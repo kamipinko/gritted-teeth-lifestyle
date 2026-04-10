@@ -280,6 +280,31 @@ module.exports = {
           '0%, 100%': { opacity: '0.08' },
           '50%':      { opacity: '0.12' },
         },
+        // Checkbox stamp — used when ALL is selected. Crashes a small element
+        // in from scale(10) with a hard squash at 72% for clear stamp impact.
+        // Smaller starting scale than char-stamp so the shape stays readable.
+        // Row wobble — applied to the muscle row on stamp impact
+        'row-wobble': {
+          '0%':   { transform: 'translate(0, 0) rotate(0deg)' },
+          '15%':  { transform: 'translate(-6px, 2px) rotate(-1.5deg)' },
+          '30%':  { transform: 'translate(5px, -2px) rotate(1.2deg)' },
+          '45%':  { transform: 'translate(-4px, 1px) rotate(-0.8deg)' },
+          '60%':  { transform: 'translate(3px, -1px) rotate(0.5deg)' },
+          '75%':  { transform: 'translate(-2px, 1px) rotate(-0.3deg)' },
+          '88%':  { transform: 'translate(1px, 0px) rotate(0.1deg)' },
+          '100%': { transform: 'translate(0, 0) rotate(0deg)' },
+        },
+        'checkbox-stamp': {
+          '0%':   { transform: 'scale(10) rotate(-8deg)', opacity: '0', filter: 'blur(8px)' },
+          '8%':   { transform: 'scale(9) rotate(-7deg)',  opacity: '1', filter: 'blur(6px)' },
+          '40%':  { transform: 'scale(7) rotate(-5deg)',  opacity: '1', filter: 'blur(4px)' },
+          '58%':  { transform: 'scale(5) rotate(-3deg)',  opacity: '1', filter: 'blur(2px)' },
+          '68%':  { transform: 'scale(2) rotate(-1deg)',  opacity: '1', filter: 'blur(0)' },
+          '74%':  { transform: 'scale(0.35) rotate(0deg)', opacity: '1', filter: 'blur(0)' },
+          '82%':  { transform: 'scale(1.5) rotate(0deg)', opacity: '1', filter: 'blur(0)' },
+          '91%':  { transform: 'scale(0.88) rotate(0deg)', opacity: '1', filter: 'blur(0)' },
+          '100%': { transform: 'scale(1) rotate(0deg)',    opacity: '1', filter: 'blur(0)' },
+        },
       },
       animation: {
         'slash-wipe': 'slash-wipe 700ms cubic-bezier(0.7, 0, 0.2, 1) forwards',
@@ -306,6 +331,8 @@ module.exports = {
         'fire-consume':   'fire-consume 1800ms cubic-bezier(0.4, 0, 0.6, 1) forwards',
         'ash-reveal':     'ash-reveal 900ms cubic-bezier(0.3, 0, 0.5, 1) forwards',
         'flicker':        'flicker 4s ease-in-out infinite',
+        'checkbox-stamp': 'checkbox-stamp 1000ms cubic-bezier(0.18, 1.4, 0.4, 1) both',
+        'row-wobble':     'row-wobble 400ms cubic-bezier(0.4, 0, 0.6, 1) forwards',
       },
       // Custom rotation values for tilted layouts
       rotate: {

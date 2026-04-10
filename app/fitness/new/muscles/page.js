@@ -13,7 +13,7 @@
  *
  * Forward navigation deferred — RETREAT is the only exit for now.
  */
-import { useState, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useSound } from '../../../../lib/useSound'
@@ -100,9 +100,31 @@ function RetreatButton({ href = '/fitness/new' }) {
  * for training is a separate action via the checkbox on the left of the
  * row; the checkbox stops propagation so it never affects focus.
  */
-function MuscleRow({ group, selected, focusedGroup, onToggle, onFocus }) {
+function MuscleRow({ group, selected, focusedGroup, onToggle, onFocus, stampRevision = 0, index = 0, onStamp }) {
   const { play } = useSound()
   const [hovered, setHovered] = useState(false)
+  const [isStamping, setIsStamping] = useState(false)
+  const [isWobbling, setIsWobbling] = useState(false)
+  const prevRevisionRef = useRef(0)
+  const onStampRef = useRef(onStamp)
+  useEffect(() => { onStampRef.current = onStamp }, [onStamp])
+
+  useEffect(() => {
+    if (stampRevision > prevRevisionRef.current) {
+      prevRevisionRef.current = stampRevision
+      const startDelay = index * 500
+      const t = setTimeout(() => {
+        setIsStamping(true)
+        setTimeout(() => {
+          if (onStampRef.current) onStampRef.current()
+          setIsWobbling(true)
+          setTimeout(() => setIsWobbling(false), 400)
+        }, 740)
+        setTimeout(() => setIsStamping(false), 1050)
+      }, startDelay)
+      return () => clearTimeout(t)
+    }
+  }, [stampRevision, index])
   const isSelected = selected.has(group.id)
   const isFocused = focusedGroup === group.id
 
@@ -114,7 +136,18 @@ function MuscleRow({ group, selected, focusedGroup, onToggle, onFocus }) {
   const handleCheckboxClick = (e) => {
     e.stopPropagation()
     play('option-select')
-    onToggle(group.id)
+    if (!isSelected) {
+      setIsStamping(true)
+      setTimeout(() => {
+        onToggle(group.id)
+        if (onStampRef.current) onStampRef.current()
+        setIsWobbling(true)
+        setTimeout(() => setIsWobbling(false), 400)
+      }, 740)
+      setTimeout(() => setIsStamping(false), 1050)
+    } else {
+      onToggle(group.id)
+    }
   }
 
   return (
@@ -133,6 +166,7 @@ function MuscleRow({ group, selected, focusedGroup, onToggle, onFocus }) {
       className={`
         group relative w-full flex items-center gap-3 px-3 py-2 text-left cursor-pointer
         transition-all duration-200 ease-out outline-none
+        ${isWobbling ? 'animate-row-wobble' : ''}
         ${isFocused
           ? 'bg-gtl-red/25'
           : isSelected
@@ -172,12 +206,16 @@ function MuscleRow({ group, selected, focusedGroup, onToggle, onFocus }) {
         }}
         className={`
           relative w-5 h-5 shrink-0 flex items-center justify-center border-2
-          transition-all duration-150
+          transition-colors duration-150
+          ${isStamping ? 'animate-checkbox-stamp' : ''}
           ${isSelected
             ? 'bg-gtl-red-bright border-gtl-red-bright shadow-red-glow'
             : 'bg-gtl-ink border-gtl-edge hover:border-gtl-red'}
         `}
-        style={{ clipPath: 'polygon(12% 0%, 100% 0%, 88% 100%, 0% 100%)' }}
+        style={{
+          clipPath: 'polygon(12% 0%, 100% 0%, 88% 100%, 0% 100%)',
+          transformOrigin: 'center center',
+        }}
       >
         {isSelected && (
           <span className="font-display text-gtl-paper text-sm leading-none -rotate-12 select-none">
@@ -271,7 +309,27 @@ export default function MusclesPage() {
   const [selected, setSelected] = useState(() => new Set())
   const [focusedGroup, setFocusedGroup] = useState(null)
   const [modelKey, setModelKey] = useState('goku')
+  const [stampRevision, setStampRevision] = useState(0)
   const { play } = useSound()
+  const mainRef = useRef(null)
+
+  const handleStamp = () => {
+    play('stamp')
+    if (mainRef.current) {
+      mainRef.current.animate(
+        [
+          { transform: 'translate(0, 0)' },
+          { transform: 'translate(-8px, 5px)' },
+          { transform: 'translate(7px, -6px)' },
+          { transform: 'translate(-5px, -3px)' },
+          { transform: 'translate(4px, 4px)' },
+          { transform: 'translate(-2px, 2px)' },
+          { transform: 'translate(0, 0)' },
+        ],
+        { duration: 200, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
+      )
+    }
+  }
 
   // Toggle selection state
   const toggle = (id) => {
@@ -299,13 +357,19 @@ export default function MusclesPage() {
 
   const selectAll = () => {
     play('card-confirm')
-    setSelected(new Set(MUSCLE_GROUPS.map((g) => g.id)))
+    setSelected(new Set())
+    setStampRevision((r) => r + 1)
+    MUSCLE_GROUPS.forEach((g, i) => {
+      setTimeout(() => {
+        setSelected((prev) => new Set([...prev, g.id]))
+      }, i * 500 + 740)
+    })
   }
 
   const count = selected.size
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-gtl-void">
+    <main ref={mainRef} className="relative min-h-screen overflow-hidden bg-gtl-void">
       {/* Background atmospherics */}
       <div className="absolute inset-0 gtl-noise" />
       <div
@@ -443,7 +507,7 @@ export default function MusclesPage() {
 
           {/* Muscle rows */}
           <div className="flex flex-col gap-0.5">
-            {MUSCLE_GROUPS.map((group) => (
+            {MUSCLE_GROUPS.map((group, i) => (
               <MuscleRow
                 key={group.id}
                 group={group}
@@ -451,6 +515,9 @@ export default function MusclesPage() {
                 focusedGroup={focusedGroup}
                 onToggle={toggle}
                 onFocus={handleFocus}
+                stampRevision={stampRevision}
+                index={i}
+                onStamp={handleStamp}
               />
             ))}
           </div>

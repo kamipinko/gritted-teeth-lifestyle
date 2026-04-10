@@ -137,27 +137,21 @@ const MODELS = {
       { group: 'triceps', position: [-0.614, 0.839, -0.334], rotation: [-0.185,  0.191, -0.399], scale: [0.099, 0.183, -0.080] },
       { group: 'triceps', position: [ 0.614, 0.839, -0.334], rotation: [-0.185, -0.191,  0.399], scale: [0.099, 0.183, -0.080] },
       // FOREARMS — calibrated against the anatomy GLB.
-      { group: 'forearms', position: [-0.751, 0.332, -0.045], rotation: [-0.565, -0.093, -0.105], scale: [0.120, 0.258, 0.120] },
-      { group: 'forearms', position: [ 0.751, 0.332, -0.045], rotation: [-0.565,  0.093,  0.105], scale: [0.120, 0.258, 0.120] },
-      // ABS — placeholder (visual estimate from screenshots — drag to refine)
-      // Covers the rectus abdominis column, centered slightly left/right of midline.
-      // Taller and lower than the first guess — spans ~y 0.25 to 0.65.
-      { group: 'abs', position: [-0.10, 0.45, 0.175], rotation: [0, 0, 0], scale: [0.120, 0.240, 0.080] },
-      { group: 'abs', position: [ 0.10, 0.45, 0.175], rotation: [0, 0, 0], scale: [0.120, 0.240, 0.080] },
+      { group: 'forearms', position: [-0.751, 0.143, -0.045], rotation: [-0.565, -0.093, -0.105], scale: [0.120, 0.258, 0.120] },
+      { group: 'forearms', position: [ 0.751, 0.143, -0.045], rotation: [-0.565,  0.093,  0.105], scale: [0.120, 0.258, 0.120] },
+      // ABS — calibrated against the anatomy GLB.
+      { group: 'abs', position: [ 0, 0.501, 0.24], rotation: [0, 0, 0], scale: [0.198, 0.289, 0.062] },
+      { group: 'abs', position: [ 0, 0.501, 0.24], rotation: [0, 0, 0], scale: [0.198, 0.289, 0.062] },
       // GLUTES — placeholder (visual estimate — drag to refine)
-      // Posterior hip, centered near y=-0.20, offset back.
       { group: 'glutes', position: [-0.18, -0.20, -0.170], rotation: [0, 0, 0], scale: [0.150, 0.150, 0.110] },
       { group: 'glutes', position: [ 0.18, -0.20, -0.170], rotation: [0, 0, 0], scale: [0.150, 0.150, 0.110] },
       // QUADS — placeholder (visual estimate — drag to refine)
-      // Front of thigh, mid-thigh height. Z forward, wider X spread than calves.
       { group: 'quads', position: [-0.16, -0.62, 0.120], rotation: [0, 0, 0], scale: [0.130, 0.240, 0.110] },
       { group: 'quads', position: [ 0.16, -0.62, 0.120], rotation: [0, 0, 0], scale: [0.130, 0.240, 0.110] },
       // HAMSTRINGS — placeholder (visual estimate — drag to refine)
-      // Back of thigh, same Y as quads but offset back. Slightly narrower.
       { group: 'hamstrings', position: [-0.16, -0.62, -0.145], rotation: [0, 0, 0], scale: [0.120, 0.240, 0.100] },
       { group: 'hamstrings', position: [ 0.16, -0.62, -0.145], rotation: [0, 0, 0], scale: [0.120, 0.240, 0.100] },
       // CALVES — placeholder (visual estimate — drag to refine)
-      // Posterior lower leg. Lower Y than thighs, slight Z offset back.
       { group: 'calves', position: [-0.13, -1.20, -0.075], rotation: [0, 0, 0], scale: [0.095, 0.220, 0.095] },
       { group: 'calves', position: [ 0.13, -1.20, -0.075], rotation: [0, 0, 0], scale: [0.095, 0.220, 0.095] },
     ],
