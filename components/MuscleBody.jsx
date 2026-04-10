@@ -81,29 +81,28 @@ const MODELS = {
     // Off-origin GLB — Center component re-centers at runtime.
     // Same hair-inflation Y correction as goku.
     hitboxes: [
-      { group: 'chest',      position: [-0.111,  0.50,  0.546], rotation: [0, 0, 0],      scale: [0.109, 0.140, 0.316] },
-      { group: 'chest',      position: [ 0.111,  0.50,  0.546], rotation: [0, 0, 0],      scale: [0.109, 0.140, 0.316] },
-      { group: 'shoulders',  position: [-0.253,  0.75,  0.000], rotation: [0, 0, -0.724], scale: [0.162, 0.100, 0.460] },
-      { group: 'shoulders',  position: [ 0.253,  0.75,  0.000], rotation: [0, 0,  0.724], scale: [0.162, 0.100, 0.460] },
-      { group: 'biceps',     position: [-0.293,  0.55,  0.000], rotation: [0, 0, 0],      scale: [0.073, 0.210, 0.230] },
-      { group: 'biceps',     position: [ 0.293,  0.55,  0.000], rotation: [0, 0, 0],      scale: [0.073, 0.210, 0.230] },
-      { group: 'triceps',    position: [-0.309,  0.55, -0.489], rotation: [0, 0, 0],      scale: [0.051, 0.190, 0.230] },
-      { group: 'triceps',    position: [ 0.309,  0.55, -0.489], rotation: [0, 0, 0],      scale: [0.051, 0.190, 0.230] },
-      { group: 'forearms',   position: [-0.379,  0.20, -0.115], rotation: [0, 0, 0],      scale: [0.061, 0.260, 0.345] },
-      { group: 'forearms',   position: [ 0.379,  0.20, -0.115], rotation: [0, 0, 0],      scale: [0.061, 0.260, 0.345] },
-      { group: 'abs',        position: [-0.051,  0.00,  0.546], rotation: [0, 0, 0],      scale: [0.061, 0.250, 0.259] },
-      { group: 'abs',        position: [ 0.051,  0.00,  0.546], rotation: [0, 0, 0],      scale: [0.061, 0.250, 0.259] },
-      { group: 'glutes',     position: [-0.091, -0.40, -0.518], rotation: [0, 0, 0],      scale: [0.076, 0.160, 0.316] },
-      { group: 'glutes',     position: [ 0.091, -0.40, -0.518], rotation: [0, 0, 0],      scale: [0.076, 0.160, 0.316] },
-      { group: 'quads',      position: [-0.081, -0.85,  0.345], rotation: [0, 0, 0],      scale: [0.066, 0.250, 0.316] },
-      { group: 'quads',      position: [ 0.081, -0.85,  0.345], rotation: [0, 0, 0],      scale: [0.066, 0.250, 0.316] },
-      { group: 'hamstrings', position: [-0.081, -0.85, -0.403], rotation: [0, 0, 0],      scale: [0.061, 0.250, 0.288] },
-      { group: 'hamstrings', position: [ 0.081, -0.85, -0.403], rotation: [0, 0, 0],      scale: [0.061, 0.250, 0.288] },
-      { group: 'calves',     position: [-0.066, -1.45, -0.230], rotation: [0, 0, 0],      scale: [0.048, 0.230, 0.276] },
-      { group: 'calves',     position: [ 0.066, -1.45, -0.230], rotation: [0, 0, 0],      scale: [0.048, 0.230, 0.276] },
-      // BACK — placeholder (lats/traps — drag to refine)
-      { group: 'back',       position: [-0.111,  0.40, -0.520], rotation: [0, 0, 0],      scale: [0.090, 0.280, 0.245] },
-      { group: 'back',       position: [ 0.111,  0.40, -0.520], rotation: [0, 0, 0],      scale: [0.090, 0.280, 0.245] },
+      { group: 'chest', position: [-0.111,1.052,0.546], rotation: [0, 0, 0], scale: [0.109,0.140,0.316] },
+      { group: 'chest', position: [0.111,1.052,0.546], rotation: [0, 0, 0], scale: [0.109,0.140,0.316] },
+      { group: 'shoulders', position: [-0.253,1.174,0.000], rotation: [0.000,0.000,-0.724], scale: [0.162,0.100,0.460] },
+      { group: 'shoulders', position: [0.253,1.174,0.000], rotation: [0.000,0.000,0.724], scale: [0.162,0.100,0.460] },
+      { group: 'biceps', position: [-0.293,0.810,0.000], rotation: [0, 0, 0], scale: [0.073,0.210,0.230] },
+      { group: 'biceps', position: [0.293,0.810,0.000], rotation: [0, 0, 0], scale: [0.073,0.210,0.230] },
+      { group: 'triceps', position: [-0.309,0.840,-0.489], rotation: [0, 0, 0], scale: [0.051,0.190,0.230] },
+      { group: 'triceps', position: [0.309,0.840,-0.489], rotation: [0, 0, 0], scale: [0.051,0.190,0.230] },
+      { group: 'forearms', position: [-0.379,0.332,-0.115], rotation: [0, 0, 0], scale: [0.061,0.260,0.345] },
+      { group: 'forearms', position: [0.379,0.332,-0.115], rotation: [0, 0, 0], scale: [0.061,0.260,0.345] },
+      { group: 'abs', position: [-0.051,0.450,0.546], rotation: [0, 0, 0], scale: [0.061,0.250,0.259] },
+      { group: 'abs', position: [0.051,0.450,0.546], rotation: [0, 0, 0], scale: [0.061,0.250,0.259] },
+      { group: 'glutes', position: [-0.091,-0.200,-0.518], rotation: [0, 0, 0], scale: [0.076,0.160,0.316] },
+      { group: 'glutes', position: [0.091,-0.200,-0.518], rotation: [0, 0, 0], scale: [0.076,0.160,0.316] },
+      { group: 'quads', position: [-0.081,-0.620,0.345], rotation: [0, 0, 0], scale: [0.066,0.250,0.316] },
+      { group: 'quads', position: [0.081,-0.620,0.345], rotation: [0, 0, 0], scale: [0.066,0.250,0.316] },
+      { group: 'hamstrings', position: [-0.081,-0.620,-0.403], rotation: [0, 0, 0], scale: [0.061,0.250,0.288] },
+      { group: 'hamstrings', position: [0.081,-0.620,-0.403], rotation: [0, 0, 0], scale: [0.061,0.250,0.288] },
+      { group: 'calves', position: [-0.066,-1.200,-0.230], rotation: [0, 0, 0], scale: [0.048,0.230,0.276] },
+      { group: 'calves', position: [0.066,-1.200,-0.230], rotation: [0, 0, 0], scale: [0.048,0.230,0.276] },
+      { group: 'back', position: [-0.137,0.900,-0.403], rotation: [0, 0, 0], scale: [0.132,0.300,0.173] },
+      { group: 'back', position: [0.137,0.900,-0.403], rotation: [0, 0, 0], scale: [0.132,0.300,0.173] },
     ],
   },
   gohan: {
@@ -274,6 +273,7 @@ const MUSCLE_CAMERA = {
   glutes:     { target: [0,  0.10, -0.45], pos: [-YAW_OFFSET,  0.10 + PITCH_LIFT, -0.45 - YAW_DEPTH] },
   hamstrings: { target: [0, -0.50, -0.40], pos: [ YAW_OFFSET, -0.50 + PITCH_LIFT, -0.40 - YAW_DEPTH] },
   calves:     { target: [0, -1.40, -0.30], pos: [-YAW_OFFSET, -1.40 + PITCH_LIFT, -0.30 - YAW_DEPTH] },
+  back:       { target: [0,  0.80, -0.10], pos: [-YAW_OFFSET,  0.80 + PITCH_LIFT, -0.10 - YAW_DEPTH] },
 }
 
 // ── Muscle centers (same as MUSCLE_CAMERA targets) ──────────────────
@@ -824,18 +824,27 @@ function ModelDisplay({ modelKey }) {
   }, [cloned, normalizedScale, modelKey, animations])
 
   // Manual centering: offset the model so its bounding-box center lands at world origin.
-  // We compute this from the same bounding box used for normalizedScale so hitboxes
-  // (which are in world space at origin) stay perfectly aligned.
-  const cx = -rawCenter.x * normalizedScale
+  // Must account for rotationY because Three.js applies rotation before translation.
+  // For a point at raw position P: world = position + R_Y(θ) * (scale * P)
+  // To place center at origin: position = -scale * R_Y(θ) * rawCenter
+  //   cx = -scale * (Cx*cosθ - Cz*sinθ)
+  //   cy = -scale * Cy
+  //   cz = -scale * (Cx*sinθ + Cz*cosθ)
+  // For models with center ≈ (0,0,0) this is the same as -scale*rawCenter,
+  // but for off-origin models (e.g. GokuSSJ center at ~(1048,0,882)) the sign matters.
+  const θ   = config.rotationY ?? 0
+  const cosθ = Math.cos(θ)
+  const sinθ = Math.sin(θ)
+  const cx = -normalizedScale * (rawCenter.x * cosθ - rawCenter.z * sinθ)
   const cy = -rawCenter.y * normalizedScale
-  const cz = -rawCenter.z * normalizedScale
+  const cz = -normalizedScale * (rawCenter.x * sinθ + rawCenter.z * cosθ)
 
   return (
     <primitive
       object={cloned}
       scale={normalizedScale}
       position={[cx, cy, cz]}
-      rotation={[0, config.rotationY, 0]}
+      rotation={[0, θ, 0]}
     />
   )
 }
@@ -856,6 +865,7 @@ const DEBUG_GROUP_COLORS = {
   quads:      '#4400ff',
   hamstrings: '#aa00ff',
   calves:     '#ff00aa',
+  back:       '#ccff44',
 }
 
 // Each debug hitbox is rendered as a draggable wireframe with its own

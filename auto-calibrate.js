@@ -88,6 +88,16 @@ const MUSCLE_PROPORTIONS = {
     sx: 0.095, sy: 0.115, sz: 0.48,
     paired: true, side: 'back',
   },
+  // Proportions derived from anatomy hand-calibrated hitboxes:
+  //   anatomy: position [-0.226, 0.900, -0.260], scale [0.220, 0.300, 0.110]
+  //   anatomy hW=0.841, hH=2.0, hD=0.364
+  //   pX = 0.226/0.841 = 0.269, pY = 0.900/2.0 = 0.450, pZb = -0.260/0.364 = -0.714
+  //   sx = 0.220/0.841 = 0.261, sy = 0.300/2.0 = 0.150, sz = 0.110/0.364 = 0.302
+  back: {
+    pY:  0.450, pX: 0.27, pZb: -0.70,
+    sx: 0.26, sy: 0.15, sz: 0.30,
+    paired: true, side: 'back',
+  },
 }
 
 /**
@@ -145,10 +155,103 @@ function autoCalibrate(bbox) {
   return hitboxes
 }
 
+// ── Compute bbox and hitboxes for a model from mesh-data ─────────────
+function computeForModel(meshes) {
+  let minX = Infinity, minY = Infinity, minZ = Infinity
+  let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity
+  for (const m of meshes) {
+    const [cx, cy, cz] = m.center
+    const [sx, sy, sz] = m.size
+    minX = Math.min(minX, cx - sx/2); maxX = Math.max(maxX, cx + sx/2)
+    minY = Math.min(minY, cy - sy/2); maxY = Math.max(maxY, cy + sy/2)
+    minZ = Math.min(minZ, cz - sz/2); maxZ = Math.max(maxZ, cz + sz/2)
+  }
+  const rawH = maxY - minY
+  const rawW = maxX - minX
+  const rawD = maxZ - minZ
+  const maxDim = Math.max(rawH, rawW, rawD)
+  const scale = maxDim > 0 ? 4.0 / maxDim : 1
+  const Yc_raw = (minY + maxY) / 2
+  const Xc_raw = (minX + maxX) / 2
+  const Zc_raw = (minZ + maxZ) / 2
+  const bbox = {
+    min: { x: (minX - Xc_raw) * scale, y: (minY - Yc_raw) * scale, z: (minZ - Zc_raw) * scale },
+    max: { x: (maxX - Xc_raw) * scale, y: (maxY - Yc_raw) * scale, z: (maxZ - Zc_raw) * scale },
+  }
+  return { bbox, scale, rawH, rawW, rawD }
+}
+
+// ── Patch hitboxes for a model in MuscleBody.jsx ──────────────────────
+// Replaces the hitboxes: [...] array for the given model key in place.
+function patchMuscleBody(modelKey, hitboxes, filePath) {
+  const fs = require('fs')
+  let src = fs.readFileSync(filePath, 'utf8')
+
+  // Format the hitbox lines as JSX-compatible JS
+  const lines = hitboxes.map((h) => {
+    const p = h.position.map(v => v.toFixed(3))
+    const s = h.scale.map(v => v.toFixed(3))
+    const rotZ = h.rotation[2]
+    const rotLine = h.rotation.every(v => v === 0)
+      ? `rotation: [0, 0, 0]`
+      : `rotation: [${h.rotation.map(v => v.toFixed(3))}]`
+    return `      { group: '${h.group}', position: [${p}], ${rotLine}, scale: [${s}] },`
+  })
+  const newArray = `[\n${lines.join('\n')}\n    ]`
+
+  // Find the model's hitboxes block: look for the model key, then hitboxes: [
+  // Use a stateful search so we match balanced brackets.
+  const modelStart = src.indexOf(`  ${modelKey}: {`)
+  if (modelStart === -1) {
+    console.error(`  ERROR: model key "${modelKey}" not found in ${filePath}`)
+    return false
+  }
+
+  const hbLabel = 'hitboxes: ['
+  const hbStart = src.indexOf(hbLabel, modelStart)
+  if (hbStart === -1) {
+    console.error(`  ERROR: hitboxes array not found for ${modelKey}`)
+    return false
+  }
+
+  // Walk forward from '[' to find matching ']'
+  let depth = 0
+  let i = hbStart + hbLabel.length - 1  // at the '['
+  while (i < src.length) {
+    if (src[i] === '[') depth++
+    else if (src[i] === ']') { depth--; if (depth === 0) break }
+    i++
+  }
+  if (depth !== 0) {
+    console.error(`  ERROR: unbalanced brackets for ${modelKey} hitboxes`)
+    return false
+  }
+
+  const before = src.slice(0, hbStart + hbLabel.length - 1)
+  const after  = src.slice(i + 1)
+  src = before + newArray + after
+
+  fs.writeFileSync(filePath, src, 'utf8')
+  return true
+}
+
 // ── CLI: run against mesh-data.json to preview hitboxes for each model ──
+// Flags:
+//   --apply=modelKey   patch the named model's hitboxes into MuscleBody.jsx
+//                      (can repeat: --apply=gokuSSJ --apply=gohan)
+//   --muscle-body=path  path to MuscleBody.jsx (default: ./components/MuscleBody.jsx)
 if (require.main === module) {
   const fs   = require('fs')
   const path = require('path')
+
+  const args = process.argv.slice(2)
+  const applyModels = args
+    .filter(a => a.startsWith('--apply='))
+    .map(a => a.slice('--apply='.length))
+  const mbFlag = args.find(a => a.startsWith('--muscle-body='))
+  const mbPath = mbFlag
+    ? mbFlag.slice('--muscle-body='.length)
+    : path.join(__dirname, 'components', 'MuscleBody.jsx')
 
   const meshData = JSON.parse(
     fs.readFileSync(path.join(__dirname, 'mesh-data.json'), 'utf8')
@@ -158,45 +261,10 @@ if (require.main === module) {
     console.log(`\n══════════════════════════════`)
     console.log(`Model: ${model}`)
 
-    // Compute bounding box union over all meshes (raw space)
-    let minX = Infinity, minY = Infinity, minZ = Infinity
-    let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity
-
-    for (const m of meshes) {
-      const [cx, cy, cz] = m.center
-      const [sx, sy, sz] = m.size
-      minX = Math.min(minX, cx - sx/2); maxX = Math.max(maxX, cx + sx/2)
-      minY = Math.min(minY, cy - sy/2); maxY = Math.max(maxY, cy + sy/2)
-      minZ = Math.min(minZ, cz - sz/2); maxZ = Math.max(maxZ, cz + sz/2)
-    }
-
-    const rawH = maxY - minY
-    const rawW = maxX - minX
-    const rawD = maxZ - minZ
-    const maxDim = Math.max(rawH, rawW, rawD)
-    const scale = maxDim > 0 ? 4.0 / maxDim : 1
+    const { bbox, scale, rawH, rawW, rawD } = computeForModel(meshes)
 
     console.log(`  Raw bounds: H=${rawH.toFixed(3)} W=${rawW.toFixed(3)} D=${rawD.toFixed(3)}`)
     console.log(`  normalizedScale: ${scale.toFixed(4)}`)
-
-    // Re-center and apply normalizedScale
-    const Yc_raw = (minY + maxY) / 2
-    const Xc_raw = (minX + maxX) / 2
-    const Zc_raw = (minZ + maxZ) / 2
-
-    const bbox = {
-      min: {
-        x: (minX - Xc_raw) * scale,
-        y: (minY - Yc_raw) * scale,
-        z: (minZ - Zc_raw) * scale,
-      },
-      max: {
-        x: (maxX - Xc_raw) * scale,
-        y: (maxY - Yc_raw) * scale,
-        z: (maxZ - Zc_raw) * scale,
-      },
-    }
-
     console.log(`  Normalized bounds: Y [${bbox.min.y.toFixed(2)}, ${bbox.max.y.toFixed(2)}]`)
 
     const hitboxes = autoCalibrate(bbox)
@@ -208,6 +276,16 @@ if (require.main === module) {
       const s = h.scale.map(v => v.toFixed(3))
       console.log(`  { group: '${h.group}', position: [${p}], rotation: [${r}], scale: [${s}] },`)
     }
+
+    if (applyModels.includes(model)) {
+      process.stdout.write(`\n  Patching ${model} in MuscleBody.jsx... `)
+      const ok = patchMuscleBody(model, hitboxes, mbPath)
+      console.log(ok ? 'done.' : 'FAILED.')
+    }
+  }
+
+  if (applyModels.length > 0) {
+    console.log(`\nApplied: ${applyModels.join(', ')} → ${mbPath}`)
   }
 }
 
