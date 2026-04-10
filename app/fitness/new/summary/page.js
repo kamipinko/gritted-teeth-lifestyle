@@ -51,14 +51,21 @@ function MuscleSlab({ id, index }) {
   )
 }
 
-/* ── Compact muscle chip — used inside day dossier cards ── */
-function MuscleChip({ id }) {
+/* ── Compact muscle chip — mini slab, same energy as the top ones ── */
+function MuscleChip({ id, index = 0 }) {
+  const rot = SLAB_ROTATIONS[index % SLAB_ROTATIONS.length]
   return (
     <div
-      className="px-2 py-1 bg-gtl-red/20 border border-gtl-red/50 text-[8px] font-mono tracking-[0.2em] uppercase text-gtl-red-bright leading-none"
-      style={{ clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)' }}
+      className="px-4 py-2 bg-gtl-red border border-gtl-red-bright shadow-red-glow shrink-0"
+      style={{
+        clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
+        transform: `rotate(${rot})`,
+        transformOrigin: 'center center',
+      }}
     >
-      {MUSCLE_LABELS[id] || id.toUpperCase()}
+      <div className="font-display text-base text-gtl-paper leading-none whitespace-nowrap">
+        {MUSCLE_LABELS[id] || id.toUpperCase()}
+      </div>
     </div>
   )
 }
@@ -76,7 +83,7 @@ function DayCard({ iso, muscles, index }) {
     <div
       className={`flex flex-col border-l-4 bg-gtl-ink border-r border-t border-b
         ${hasWork ? 'border-l-gtl-red border-t-gtl-edge border-r-gtl-edge border-b-gtl-edge' : 'border-l-gtl-smoke border-t-gtl-edge border-r-gtl-edge border-b-gtl-edge'}`}
-      style={{ transform: `rotate(${rot})`, transformOrigin: 'center top' }}
+      style={{ transform: `rotate(${rot})`, transformOrigin: 'center top', overflow: 'visible' }}
     >
       {/* Date block */}
       <div className="px-4 pt-4 pb-3">
@@ -98,9 +105,9 @@ function DayCard({ iso, muscles, index }) {
       )}
 
       {/* Muscles */}
-      <div className="px-4 pb-4 flex flex-wrap gap-1.5 min-h-[2rem]">
+      <div className="px-4 pb-6 pt-1 flex flex-wrap gap-x-3 gap-y-4 min-h-[2rem]" style={{ overflow: 'visible' }}>
         {hasWork
-          ? muscles.map((id) => <MuscleChip key={id} id={id} />)
+          ? muscles.map((id, i) => <MuscleChip key={id} id={id} index={i} />)
           : <span className="font-mono text-[8px] tracking-[0.2em] uppercase text-gtl-smoke self-center">REST</span>}
       </div>
     </div>
@@ -317,31 +324,6 @@ export default function SummaryPage() {
       {/* Red slash divider */}
       <div className="relative z-10 mx-8 mb-10 h-[3px] bg-gtl-red"
            style={{ transform: 'skewX(-6deg)', transformOrigin: 'left center' }} />
-
-      {/* ── TARGET MUSCLES — big rotated stampstamps ─────────────────── */}
-      <section className="relative z-10 px-8 mb-12">
-        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-ash mb-6 flex items-center gap-4">
-          <span>TARGET MUSCLES</span>
-          <div className="h-px flex-1 bg-gtl-edge" />
-          <span className="text-gtl-red">{targets.length} / 11 LOCKED</span>
-        </div>
-
-        {targets.length === 0 ? (
-          <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-gtl-smoke">
-            NO TARGETS STORED
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-x-4 gap-y-5 items-center">
-            {targets.map((id, i) => (
-              <MuscleSlab key={id} id={id} index={i} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Red slash divider */}
-      <div className="relative z-10 mx-8 mb-10 h-[3px] bg-gtl-red"
-           style={{ transform: 'skewX(-6deg)', transformOrigin: 'right center' }} />
 
       {/* ── SCHEDULE — tilted day dossiers ───────────────────────────── */}
       <section className="relative z-10 px-8 mb-12">
