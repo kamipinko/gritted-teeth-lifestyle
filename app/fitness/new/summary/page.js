@@ -8,7 +8,7 @@
  * targets are stamped in big rotated parallelogram slabs. Day cards are
  * tilted dossiers. BEGIN is the final contract.
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSound } from '../../../../lib/useSound'
 import FireFadeIn from '../../../../components/FireFadeIn'
@@ -192,11 +192,14 @@ export default function SummaryPage() {
   const router = useRouter()
   const { play } = useSound()
 
-  const [cycleName,  setCycleName]  = useState('NEW CYCLE')
-  const [targets,    setTargets]    = useState([])
-  const [days,       setDays]       = useState([])
-  const [dailyPlan,  setDailyPlan]  = useState({})
-  const [fireActive, setFireActive] = useState(false)
+  const [cycleName,   setCycleName]  = useState('NEW CYCLE')
+  const [targets,     setTargets]    = useState([])
+  const [days,        setDays]       = useState([])
+  const [dailyPlan,   setDailyPlan]  = useState({})
+  const [fireActive,  setFireActive] = useState(false)
+  const [stampVisible, setStampVisible] = useState(false)
+  const [stampLanded,  setStampLanded]  = useState(false)
+  const mainRef = useRef(null)
 
   useEffect(() => {
     try {
@@ -213,7 +216,37 @@ export default function SummaryPage() {
 
   const handleBegin = () => {
     play('card-confirm')
-    setFireActive(true)
+    setStampVisible(true)
+
+    // Impact fires at 70% through the 950ms slam animation = ~665ms
+    setTimeout(() => {
+      play('stamp')
+      setStampLanded(true)
+      // Violent screen shake at impact
+      if (mainRef.current) {
+        mainRef.current.animate(
+          [
+            { transform: 'translate(0,0)' },
+            { transform: 'translate(-16px, 10px)' },
+            { transform: 'translate(14px, -14px)' },
+            { transform: 'translate(-12px, -7px)' },
+            { transform: 'translate(10px, 10px)' },
+            { transform: 'translate(-8px, 5px)' },
+            { transform: 'translate(6px, -8px)' },
+            { transform: 'translate(-4px, 4px)' },
+            { transform: 'translate(2px, -2px)' },
+            { transform: 'translate(0,0)' },
+          ],
+          { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
+        )
+      }
+    }, 665)
+
+    // Second stamp sound for extra weight
+    setTimeout(() => play('stamp'), 750)
+
+    // Fire transition after the stamp has been seen
+    setTimeout(() => setFireActive(true), 1900)
   }
 
   const plannedSessions = days.filter((iso) => (dailyPlan[iso] || []).length > 0).length
@@ -223,7 +256,7 @@ export default function SummaryPage() {
              : Math.ceil(days.length / 3)
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-gtl-void">
+    <main ref={mainRef} className="relative min-h-screen overflow-x-hidden bg-gtl-void">
 
       {/* ── Atmospherics ────────────────────────────────────────────── */}
       <div className="absolute inset-0 gtl-noise pointer-events-none" />
@@ -358,6 +391,129 @@ export default function SummaryPage() {
       <section className="relative z-10 px-8 pb-20 pt-4">
         <BeginButton onFire={handleBegin} onHover={() => play('button-hover')} />
       </section>
+
+      {/* ── DEADLINE STAMP OVERLAY ───────────────────────────────── */}
+      {stampVisible && days.length > 0 && (() => {
+        const lastDay  = days[days.length - 1]
+        const date     = parseDate(lastDay)
+        const dayName  = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'][date.getDay()]
+        const dayNum   = date.getDate()
+        const month    = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'][date.getMonth()]
+        const year     = date.getFullYear()
+
+        return (
+          <div className="fixed inset-0 z-[9997] flex items-center justify-center pointer-events-none">
+            <style>{`
+              @keyframes deadline-slam {
+                0%   { transform: translateY(-320px) scale(9) rotate(-18deg); opacity: 0; filter: blur(24px); }
+                6%   { opacity: 1; filter: blur(14px); }
+                45%  { transform: translateY(30px) scale(2.2) rotate(-10deg); opacity: 1; filter: blur(5px); }
+                65%  { transform: translateY(-20px) scale(0.78) rotate(-9deg); opacity: 1; filter: blur(0); }
+                78%  { transform: translateY(8px) scale(1.14) rotate(-10deg); opacity: 1; }
+                88%  { transform: translateY(-4px) scale(0.97) rotate(-10deg); opacity: 1; }
+                100% { transform: translateY(0) scale(1) rotate(-10deg); opacity: 1; }
+              }
+              @keyframes deadline-ring {
+                0%   { transform: translate(-50%,-50%) scale(0); opacity: 0; border-width: 14px; }
+                4%   { opacity: 1; }
+                70%  { opacity: 0.5; border-width: 4px; }
+                100% { transform: translate(-50%,-50%) scale(10); opacity: 0; border-width: 1px; }
+              }
+              @keyframes deadline-flash {
+                0%   { opacity: 0; }
+                12%  { opacity: 0.85; }
+                100% { opacity: 0; }
+              }
+            `}</style>
+
+            {/* White flash on impact */}
+            {stampLanded && (
+              <div
+                className="absolute inset-0 bg-white"
+                style={{ animation: 'deadline-flash 500ms cubic-bezier(0.3, 0, 0.5, 1) forwards', mixBlendMode: 'screen' }}
+              />
+            )}
+
+            {/* Shockwave rings — 3 staggered, expand from stamp center */}
+            {stampLanded && [0, 90, 180].map((delay, i) => (
+              <div
+                key={i}
+                className="absolute rounded-full border-gtl-red"
+                style={{
+                  left: '50%', top: '50%',
+                  width: '120px', height: '120px',
+                  borderColor: i === 0 ? '#ffffff' : i === 1 ? '#ff2a36' : '#d4181f',
+                  animation: `deadline-ring 900ms cubic-bezier(0.2, 0.8, 0.3, 1) ${delay}ms forwards`,
+                  mixBlendMode: 'screen',
+                }}
+              />
+            ))}
+
+            {/* The stamp itself */}
+            <div style={{ animation: 'deadline-slam 950ms cubic-bezier(0.18, 1.2, 0.35, 1) forwards' }}>
+              <div className="relative">
+                {/* Hard shadow slab */}
+                <div
+                  className="absolute inset-0 bg-gtl-red-deep"
+                  style={{
+                    transform: 'translate(18px, 18px)',
+                    clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)',
+                  }}
+                  aria-hidden="true"
+                />
+
+                {/* Stamp face */}
+                <div
+                  className="relative px-14 py-10 bg-gtl-red border-4 border-gtl-red-deep"
+                  style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)' }}
+                >
+                  {/* Top label */}
+                  <div
+                    className="font-mono text-[11px] tracking-[0.6em] uppercase text-gtl-paper/50 mb-2"
+                    style={{ letterSpacing: '0.6em' }}
+                  >
+                    ◼ DEADLINE ◼
+                  </div>
+
+                  {/* Month */}
+                  <div
+                    className="font-display text-5xl text-gtl-paper leading-none"
+                    style={{ textShadow: '3px 3px 0 #070708' }}
+                  >
+                    {month}
+                  </div>
+
+                  {/* Day number — the dominant element */}
+                  <div
+                    className="font-display text-gtl-paper leading-none"
+                    style={{
+                      fontSize: 'clamp(6rem, 16vw, 13rem)',
+                      textShadow: '6px 6px 0 #070708, 12px 12px 0 rgba(0,0,0,0.4)',
+                      lineHeight: '0.85',
+                    }}
+                  >
+                    {String(dayNum).padStart(2, '0')}
+                  </div>
+
+                  {/* Day of week + year */}
+                  <div
+                    className="font-display text-3xl text-gtl-paper/80 leading-none mt-3"
+                    style={{ textShadow: '2px 2px 0 #070708' }}
+                  >
+                    {dayName} · {year}
+                  </div>
+
+                  {/* Bottom border line */}
+                  <div className="mt-6 h-0.5 bg-gtl-paper/30" />
+                  <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-paper/40 mt-2">
+                    GRITTED TEETH LIFESTYLE / YOUR FINAL BATTLEDAY
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       <FireFadeIn duration={900} />
       <FireTransition active={fireActive} onComplete={() => router.push('/fitness')} />
