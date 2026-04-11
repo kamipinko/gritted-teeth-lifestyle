@@ -226,8 +226,7 @@ export default function NewCycleNamePage() {
   useEffect(() => {
     let initial
     try {
-      const saved = localStorage.getItem('gtl-cycle-name')
-      initial = saved && saved.trim().length > 0 ? saved.trim() : pickRandomName()
+      initial = pickRandomName()
     } catch (_) {
       initial = pickRandomName()
     }

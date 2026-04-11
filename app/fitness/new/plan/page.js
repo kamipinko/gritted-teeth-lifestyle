@@ -22,6 +22,9 @@ const MUSCLE_LABELS = {
   hamstrings: 'HAMSTRINGS', calves: 'CALVES',
 }
 
+const MUSCLE_ORDER = ['chest','shoulders','back','biceps','triceps','forearms','abs','glutes','quads','hamstrings','calves']
+
+
 const DAY_SHORT   = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 const MONTH_SHORT = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
 
@@ -32,7 +35,56 @@ function parseDate(iso) {
 function colCount(n) {
   if (n <= 5)  return n
   if (n <= 10) return Math.ceil(n / 2)
-  return Math.ceil(n / 3)
+  let cols = Math.ceil(n / 3)
+  // Ensure the last row always has ≥2 empty cells so the IGNITE button has space
+  const rows = Math.ceil(n / cols)
+  if (cols * rows - n < 2) cols++
+  return cols
+}
+
+function MuscleChip({ id, active, disabled, onClick, onHover }) {
+  const [stamping, setStamping] = useState(false)
+  const [wobbling, setWobbling] = useState(false)
+
+  const handleClick = () => {
+    if (disabled) return
+    if (!active) {
+      setStamping(true)
+      setTimeout(() => setStamping(false), 700)
+    }
+    setWobbling(true)
+    setTimeout(() => setWobbling(false), 400)
+    onClick()
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      onMouseEnter={onHover}
+      disabled={disabled}
+      className={`relative shrink-0 flex items-center gap-1.5 px-2 py-1 transition-all duration-150
+        ${wobbling ? 'animate-row-wobble' : ''}
+        ${disabled ? 'opacity-35 cursor-not-allowed' : 'cursor-pointer'}
+        ${active ? 'bg-gtl-red/20' : 'bg-white/[0.03] hover:bg-white/[0.07]'}`}
+      style={{ clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)' }}
+    >
+      {/* P5 checkbox */}
+      <div
+        className={`relative w-4 h-4 shrink-0 flex items-center justify-center border
+          ${stamping ? 'animate-checkbox-stamp' : ''}
+          ${active ? 'bg-gtl-red border-gtl-red-bright shadow-red-glow' : 'bg-gtl-ink border-gtl-edge'}`}
+        style={{ clipPath: 'polygon(12% 0%, 100% 0%, 88% 100%, 0% 100%)', transformOrigin: 'center' }}
+      >
+        {active && (
+          <span className="font-display text-white text-[9px] leading-none -rotate-12 select-none">✕</span>
+        )}
+      </div>
+      <span className={`font-mono text-[9px] tracking-[0.15em] uppercase leading-none ${active ? 'text-white' : 'text-gtl-chalk'}`}>
+        {MUSCLE_LABELS[id]}
+      </span>
+    </button>
+  )
 }
 
 function RetreatButton() {
@@ -62,61 +114,59 @@ function RetreatButton() {
   )
 }
 
-function MuscleChip({ id, active, onToggle }) {
-  const { play } = useSound()
-  return (
-    <button
-      type="button"
-      onClick={() => { play('option-select'); onToggle(id) }}
-      onMouseEnter={() => play('button-hover')}
-      className={`px-2 py-1 border text-[9px] font-mono tracking-[0.15em] uppercase
-        transition-colors duration-100 leading-none
-        ${active
-          ? 'bg-gtl-red border-gtl-red-bright text-gtl-paper'
-          : 'bg-transparent border-gtl-edge text-gtl-ash hover:border-gtl-red hover:text-gtl-chalk'}`}
-      style={{ clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)' }}
-    >
-      {MUSCLE_LABELS[id] || id.toUpperCase()}
-    </button>
-  )
-}
 
-function DayCard({ iso, targets, assigned, onToggle }) {
+function DayCard({ iso, assigned, compact, selected, onClick }) {
+  const { play } = useSound()
   const date    = parseDate(iso)
   const dayName = DAY_SHORT[date.getDay()]
   const dayNum  = date.getDate()
   const mon     = MONTH_SHORT[date.getMonth()]
-  const count   = assigned.size
+  const muscles = [...assigned]
 
   return (
     <div
-      className="flex flex-col h-full border border-gtl-edge bg-gtl-ink overflow-hidden"
-      style={{ clipPath: 'polygon(0% 0%, 97% 0%, 100% 2%, 100% 100%, 3% 100%, 0% 98%)' }}
+      role="button"
+      tabIndex={0}
+      onClick={() => { play('option-select'); onClick(iso) }}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(iso) } }}
+      className="flex flex-col h-full overflow-hidden cursor-pointer select-none outline-none transition-all duration-150"
+      style={{
+        clipPath: 'polygon(0% 0%, 97% 0%, 100% 2%, 100% 100%, 3% 100%, 0% 98%)',
+        border: selected ? '2px solid #ff2a36' : '1px solid #2a2a30',
+        background: selected ? '#150508' : '#0d0d10',
+        boxShadow: selected ? '0 0 20px rgba(212,24,31,0.35), inset 0 0 20px rgba(212,24,31,0.05)' : 'none',
+      }}
     >
-      {/* Header */}
-      <div className={`shrink-0 px-4 pt-4 pb-3 border-b transition-colors duration-200
-        ${count > 0 ? 'border-gtl-red/50 bg-gtl-red/5' : 'border-gtl-edge'}`}>
-        <div className="font-display text-3xl leading-none text-gtl-red tracking-wide">{dayName}</div>
-        <div className="flex items-baseline gap-2 mt-0.5">
-          <span className="font-display leading-none text-gtl-chalk" style={{ fontSize: 'clamp(2rem, 3.5vw, 3.5rem)' }}>
+      <div className={`shrink-0 transition-colors duration-150 ${compact ? 'px-2 pt-1.5 pb-1' : 'px-3 pt-2 pb-1.5'}`}>
+        <div className={`font-display leading-none tracking-wide ${compact ? 'text-sm' : 'text-xl'} ${selected ? 'text-gtl-red-bright' : 'text-gtl-red'}`}>
+          {dayName}
+        </div>
+        <div className="flex items-baseline gap-1">
+          <span className="font-display leading-none text-gtl-chalk" style={{ fontSize: compact ? '1.1rem' : 'clamp(1.4rem, 2.5vw, 2.5rem)' }}>
             {dayNum}
           </span>
-          <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-ash">{mon}</span>
-        </div>
-        <div className="font-mono text-[8px] tracking-[0.2em] uppercase mt-1">
-          <span className={count > 0 ? 'text-gtl-red-bright' : 'text-gtl-smoke'}>
-            {count > 0 ? `${count} / ${targets.length}` : '—'}
-          </span>
-          {count > 0 && <span className="text-gtl-smoke ml-1">ASSIGNED</span>}
+          <span className="font-mono tracking-[0.2em] uppercase text-gtl-ash" style={{ fontSize: compact ? '7px' : '9px' }}>{mon}</span>
         </div>
       </div>
 
-      {/* Muscle chips */}
-      <div className="flex-1 min-h-0 p-3 flex flex-wrap content-start gap-1.5 overflow-y-auto">
-        {targets.map((id) => (
-          <MuscleChip key={id} id={id} active={assigned.has(id)} onToggle={onToggle} />
-        ))}
-      </div>
+      {/* Assigned muscle indicators */}
+      {muscles.length > 0 && (
+        <div className={`flex flex-wrap overflow-hidden ${compact ? 'px-1 pb-1 gap-0.5' : 'px-2 pb-1.5 gap-0.5'}`}>
+          {muscles.map(id => (
+            <span key={id}
+              className="font-mono uppercase leading-none font-bold text-white"
+              style={{
+                fontSize: compact ? '10.5px' : '11.5px',
+                letterSpacing: '0.08em',
+                background: selected ? '#c0141a' : '#7a0e14',
+                clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)',
+                padding: compact ? '2px 5px' : '2px 6px',
+              }}>
+              {MUSCLE_LABELS[id] || id}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -128,14 +178,14 @@ function DayCard({ iso, targets, assigned, onToggle }) {
  *   - Stamp face presses down on mousedown (face translates to shadow)
  *   - On mouseup: shapes enter overdrive spin, then fire transition fires
  */
-function IgniteButton({ onFire, onHover }) {
+function IgniteButton({ onFire, onHover, disabled }) {
   const [pressed,   setPressed]   = useState(false)
   const [overdrive, setOverdrive] = useState(false)
 
   const handleMouseUp = () => {
+    if (disabled) return
     setPressed(false)
     setOverdrive(true)
-    // Let shapes spin wild for 600ms, then ignite
     setTimeout(() => onFire(), 600)
   }
 
@@ -145,10 +195,7 @@ function IgniteButton({ onFire, onHover }) {
     : { outer: '22s',  mid: '14s',   inner: '9s' }
 
   return (
-    <div
-      className="absolute z-20 pointer-events-none"
-      style={{ right: '32px', bottom: '90px' }}
-    >
+    <div className="absolute z-20 pointer-events-none" style={{ right: '32px', bottom: '16px', opacity: disabled ? 0.3 : 1, transition: 'opacity 300ms ease' }}>
       <div style={{ animation: 'forge-slam 700ms cubic-bezier(0.2, 1.2, 0.4, 1) forwards' }}>
         <div className="relative" style={{ width: '300px', height: '210px' }}>
 
@@ -187,15 +234,14 @@ function IgniteButton({ onFire, onHover }) {
               role="button"
               tabIndex={0}
               aria-label="Ignite the cycle"
-              onMouseDown={() => setPressed(true)}
+              onMouseDown={() => { if (!disabled) setPressed(true) }}
               onMouseUp={handleMouseUp}
               onMouseLeave={() => setPressed(false)}
-              onMouseEnter={onHover}
+              onMouseEnter={() => { if (!disabled) onHover() }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleMouseUp() }
               }}
-              className="relative cursor-pointer select-none outline-none
-                focus-visible:outline-2 focus-visible:outline-gtl-red focus-visible:outline-offset-4"
+              className={`relative select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-red focus-visible:outline-offset-4 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
               style={{ transform: 'rotate(-2.5deg)', transformOrigin: 'center center' }}
             >
               {/* Shadow slab */}
@@ -243,6 +289,12 @@ export default function PlanPage() {
   const [assignments, setAssignments] = useState({})
   const [fireActive, setFireActive] = useState(false)
   const [ready, setReady]           = useState(false)
+  const [selectedDay, setSelectedDay] = useState(null)
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
 
   useEffect(() => {
     try {
@@ -281,10 +333,20 @@ export default function PlanPage() {
     setFireActive(true)
   }
 
-  const cols = days.length > 0 ? colCount(days.length) : 1
+  const cols    = days.length > 0 ? colCount(days.length) : 1
+  const rows    = days.length > 0 ? Math.ceil(days.length / cols) : 1
+  const compact = days.length > 10
+
+  const handleDayClick = (iso) => setSelectedDay(prev => prev === iso ? null : iso)
+  const handleMuscleClick = (id) => {
+    if (!selectedDay) return
+    play('option-select')
+    toggleMuscle(selectedDay, id)
+  }
+  const anyAssigned = Object.values(assignments).some(s => s.size > 0)
 
   return (
-    <main className="h-dvh flex flex-col overflow-hidden bg-gtl-void">
+    <main className="h-dvh flex flex-col overflow-hidden bg-gtl-void" style={{ maxHeight: '100dvh' }}>
       {/* Atmospherics */}
       <div className="absolute inset-0 gtl-noise pointer-events-none" />
       <div
@@ -307,38 +369,60 @@ export default function PlanPage() {
         鍛
       </div>
 
-      {/* Nav */}
-      <nav className="relative z-10 shrink-0 flex items-center justify-between px-8 py-5">
+      {/* Nav + Headline + Muscle bar */}
+      <nav className="relative z-10 shrink-0 flex items-center gap-6 px-8 py-3" style={{ background: 'rgba(7,7,8,0.75)', borderBottom: '1px solid rgba(212,24,31,0.25)' }}>
         <RetreatButton />
-        <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-          PALACE / FITNESS / NEW CYCLE / PLAN
-        </div>
-      </nav>
-
-      {/* Headline */}
-      <div className="relative z-10 shrink-0 px-8 pb-4">
-        <div className="flex items-center gap-4 mb-2">
-          <div className="h-0.5 w-12 bg-gtl-red" />
-          <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-red font-bold">
-            STEP / 04 / PLAN
-          </span>
-        </div>
-        <h1 className="font-display text-5xl text-gtl-chalk leading-none -rotate-1">
-          FORGE YOUR
-          <span className="text-gtl-red gtl-headline-shadow-soft inline-block rotate-1 ml-3">SESSIONS</span>
+        <h1 className={`font-display text-white leading-none -rotate-1 shrink-0 ${compact ? 'text-2xl' : 'text-5xl'}`}>
+          FORGE YOUR <span className="text-gtl-red gtl-headline-shadow-soft">SESSIONS</span>
         </h1>
-      </div>
+
+        {/* Muscle bar — inline to the right of the heading */}
+        <div className="flex items-center gap-1.5 flex-wrap flex-1 min-w-0">
+          {/* Day prompt */}
+          <div className="relative shrink-0 flex items-center">
+            <div className="absolute inset-0" style={{ background: selectedDay ? '#d4181f' : '#1a1a1e', clipPath: 'polygon(0 0, 88% 0, 100% 50%, 88% 100%, 0 100%)' }} />
+            <span className="relative font-display text-[11px] tracking-[0.2em] uppercase leading-none px-3 py-1.5 pr-6 whitespace-nowrap">
+              {selectedDay
+                ? <span className="font-bold" style={{ color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.6)', fontSize: '13px' }}>{DAY_SHORT[parseDate(selectedDay).getDay()]} {parseDate(selectedDay).getDate()}</span>
+                : <span className="text-gtl-ash">SELECT DAY</span>
+              }
+            </span>
+          </div>
+
+          {[...targets].sort((a, b) => MUSCLE_ORDER.indexOf(a) - MUSCLE_ORDER.indexOf(b)).map(id => {
+            const active = selectedDay && assignments[selectedDay]?.has(id)
+            return (
+              <MuscleChip
+                key={id}
+                id={id}
+                active={!!active}
+                disabled={!selectedDay}
+                onClick={() => handleMuscleClick(id)}
+                onHover={() => play('button-hover')}
+              />
+            )
+          })}
+        </div>
+
+        <div className="shrink-0 flex flex-col items-end gap-1">
+          <div className="font-display leading-none" style={{ fontSize: '1.1rem', color: '#e4b022', textShadow: '1px 1px 0 #8a6612' }}>
+            {Object.values(assignments).filter(s => s.size > 0).length}
+            <span className="font-mono text-[9px] tracking-[0.2em] text-white ml-1">/ {days.length}</span>
+          </div>
+        </div>
+
+      </nav>
 
       {/* Red slash divider */}
       <div
-        className="relative z-10 shrink-0 mx-8 mb-4 h-[2px] bg-gtl-red"
+        className="relative z-10 shrink-0 mx-8 mb-2 h-[2px] bg-gtl-red"
         style={{ transform: 'skewX(-6deg)', transformOrigin: 'left center' }}
       />
 
       {/* Day cards — fills remaining height */}
-      <div className="relative z-10 flex-1 min-h-0 px-8 pb-[160px]">
+      <div className="relative z-10 flex-1 min-h-0 overflow-hidden flex flex-col px-8 pb-4">
         {ready && days.length === 0 ? (
-          <div className="h-full flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <div className="font-display text-4xl text-gtl-ash mb-3">NO DAYS SCHEDULED</div>
               <Link href="/fitness/new/branded"
@@ -349,26 +433,30 @@ export default function PlanPage() {
           </div>
         ) : (
           <div
-            className="h-full grid gap-2"
-            style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+            className="flex-1 min-h-0 grid gap-2"
+            style={{
+              gridTemplateColumns: `repeat(${cols}, 1fr)`,
+              gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
+            }}
           >
             {days.map((iso) => (
               <DayCard
                 key={iso}
                 iso={iso}
-                targets={targets}
                 assigned={assignments[iso] || new Set()}
-                onToggle={(muscleId) => toggleMuscle(iso, muscleId)}
+                compact={compact}
+                selected={selectedDay === iso}
+                onClick={handleDayClick}
               />
             ))}
           </div>
         )}
       </div>
 
-      {/* IGNITE THE CYCLE — absolute bottom-right, like FORGE CYCLE */}
       <IgniteButton
         onFire={handleIgnite}
         onHover={() => play('button-hover')}
+        disabled={!anyAssigned}
       />
 
       <FireFadeIn duration={900} />

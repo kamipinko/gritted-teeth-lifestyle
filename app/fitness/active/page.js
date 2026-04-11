@@ -27,17 +27,17 @@ const SLAB_ROTATIONS = ['-1.5deg','1deg','-0.8deg','1.5deg','-1.2deg','0.8deg','
 const CARD_ROTATIONS = ['-0.8deg','0.6deg','-0.5deg','0.9deg','-0.7deg','0.4deg','-1deg','0.7deg','-0.6deg','0.8deg']
 
 const EXERCISES = {
-  chest:      ['BARBELL BENCH PRESS','INCLINE DUMBBELL PRESS','DECLINE BENCH PRESS','DUMBBELL FLY','CABLE CROSSOVER','PEC DECK FLY','PUSH-UP','DIP','LANDMINE PRESS','SVEND PRESS'],
-  back:       ['DEADLIFT','PULL-UP','CHIN-UP','BARBELL ROW','DUMBBELL ROW','SEATED CABLE ROW','LAT PULLDOWN','T-BAR ROW','FACE PULL','STRAIGHT-ARM PULLDOWN','RACK PULL','PENDLAY ROW'],
-  shoulders:  ['OVERHEAD PRESS','DUMBBELL SHOULDER PRESS','LATERAL RAISE','FRONT RAISE','REAR DELT FLY','UPRIGHT ROW','ARNOLD PRESS','FACE PULL','CABLE LATERAL RAISE','PUSH PRESS'],
-  biceps:     ['BARBELL CURL','DUMBBELL CURL','HAMMER CURL','PREACHER CURL','INCLINE DUMBBELL CURL','CABLE CURL','CONCENTRATION CURL','EZ-BAR CURL','SPIDER CURL','REVERSE CURL'],
-  triceps:    ['CLOSE-GRIP BENCH PRESS','SKULL CRUSHER','TRICEP PUSHDOWN','OVERHEAD EXTENSION','DIP','DIAMOND PUSH-UP','CABLE OVERHEAD EXTENSION','KICKBACK','JM PRESS','TATE PRESS'],
-  forearms:   ['WRIST CURL','REVERSE WRIST CURL','HAMMER CURL','REVERSE CURL','FARMER CARRY','DEAD HANG','PLATE PINCH','BARBELL HOLD','WRIST ROLLER','ZOTTMAN CURL'],
-  abs:        ['CRUNCH','PLANK','HANGING LEG RAISE','CABLE CRUNCH','AB WHEEL ROLLOUT','RUSSIAN TWIST','DECLINE SIT-UP','HOLLOW BODY HOLD','DRAGON FLAG','SIDE PLANK','TOE-TO-BAR','PALLOF PRESS'],
-  glutes:     ['HIP THRUST','SQUAT','ROMANIAN DEADLIFT','BULGARIAN SPLIT SQUAT','CABLE KICKBACK','SUMO DEADLIFT','GLUTE BRIDGE','STEP-UP','GOOD MORNING','LATERAL BAND WALK'],
-  quads:      ['SQUAT','LEG PRESS','LEG EXTENSION','HACK SQUAT','FRONT SQUAT','WALKING LUNGE','BULGARIAN SPLIT SQUAT','STEP-UP','WALL SIT','SPANISH SQUAT'],
-  hamstrings: ['ROMANIAN DEADLIFT','LEG CURL','STIFF-LEG DEADLIFT','NORDIC CURL','GLUTE-HAM RAISE','GOOD MORNING','SUMO DEADLIFT','SEATED LEG CURL','CABLE PULL-THROUGH','HIP THRUST'],
-  calves:     ['STANDING CALF RAISE','SEATED CALF RAISE','DONKEY CALF RAISE','LEG PRESS CALF RAISE','SINGLE-LEG CALF RAISE','JUMP ROPE','BOX JUMP','TIBIALIS RAISE','CALF PRESS'],
+  chest:      ['BARBELL BENCH PRESS','INCLINE DUMBBELL PRESS','DUMBBELL FLY','CABLE CROSSOVER'],
+  back:       ['DEADLIFT','PULL-UP','BARBELL ROW','LAT PULLDOWN'],
+  shoulders:  ['OVERHEAD PRESS','LATERAL RAISE','REAR DELT FLY','ARNOLD PRESS'],
+  biceps:     ['BARBELL CURL','DUMBBELL CURL','HAMMER CURL','PREACHER CURL'],
+  triceps:    ['CLOSE-GRIP BENCH PRESS','SKULL CRUSHER','TRICEP PUSHDOWN','OVERHEAD EXTENSION'],
+  forearms:   ['WRIST CURL','REVERSE WRIST CURL','HAMMER CURL','FARMER CARRY'],
+  abs:        ['CRUNCH','PLANK','HANGING LEG RAISE','AB WHEEL ROLLOUT'],
+  glutes:     ['HIP THRUST','SQUAT','ROMANIAN DEADLIFT','BULGARIAN SPLIT SQUAT'],
+  quads:      ['SQUAT','LEG PRESS','LEG EXTENSION','HACK SQUAT'],
+  hamstrings: ['ROMANIAN DEADLIFT','LEG CURL','NORDIC CURL','GLUTE-HAM RAISE'],
+  calves:     ['STANDING CALF RAISE','SEATED CALF RAISE','DONKEY CALF RAISE','LEG PRESS CALF RAISE'],
 }
 
 function parseDate(iso) {
@@ -71,17 +71,21 @@ function RetreatButton() {
   )
 }
 
-function MuscleChip({ id, index }) {
+function MuscleChip({ id, index, total }) {
   const rot = SLAB_ROTATIONS[index % SLAB_ROTATIONS.length]
+  const fontSize = total <= 3 ? '0.8rem' : total <= 5 ? '0.65rem' : total <= 7 ? '0.52rem' : '0.42rem'
+  const px = total <= 3 ? '8px' : total <= 5 ? '6px' : '4px'
+  const py = total <= 3 ? '4px' : '3px'
   return (
     <div
-      className="px-4 py-2 bg-gtl-red border border-gtl-red-bright shadow-red-glow shrink-0"
+      className="bg-gtl-red border border-gtl-red-bright shadow-red-glow shrink-0"
       style={{
         clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
         transform: `rotate(${rot})`,
+        padding: `${py} ${px}`,
       }}
     >
-      <div className="font-display text-base text-gtl-paper leading-none whitespace-nowrap">
+      <div className="font-display text-gtl-paper leading-none whitespace-nowrap" style={{ fontSize }}>
         {MUSCLE_LABELS[id] || id.toUpperCase()}
       </div>
     </div>
@@ -89,21 +93,66 @@ function MuscleChip({ id, index }) {
 }
 
 /* ── Overview day card — clickable, zooms into focus view ── */
-function DayCard({ iso, muscles, index, onClick }) {
+function DayCard({ iso, muscles, index, onClick, doneKey }) {
   const { play } = useSound()
   const [hovered, setHovered] = useState(false)
   const [done, setDone]       = useState(false)
+  const [lifts, setLifts]     = useState([]) // [{ muscle, exercises: [{ name, sets: [{reps,weight}] }] }]
+  const [cardH, setCardH]     = useState(120)
+  const [cardW, setCardW]     = useState(200)
   const cardRef = useRef(null)
 
   useEffect(() => {
+    if (!cardRef.current) return
+    const ro = new ResizeObserver(entries => {
+      for (const e of entries) {
+        setCardH(e.contentRect.height)
+        setCardW(e.contentRect.width)
+      }
+    })
+    ro.observe(cardRef.current)
+    return () => ro.disconnect()
+  }, [])
+
+  useEffect(() => {
     try { setDone(localStorage.getItem(`gtl-done-${iso}`) === 'true') } catch (_) {}
-  }, [iso])
+  }, [iso, doneKey])
+
+  useEffect(() => {
+    if (!done) return
+    const result = []
+    for (const muscleId of muscles) {
+      try {
+        const rRaw = localStorage.getItem(`gtl-ex-${iso}-${muscleId}`)
+        const wRaw = localStorage.getItem(`gtl-wt-${iso}-${muscleId}`)
+        const rData = rRaw ? JSON.parse(rRaw) : {}
+        const wData = wRaw ? JSON.parse(wRaw) : {}
+        const names = Object.keys(rData).filter(n => {
+          const arr = rData[n]
+          return Array.isArray(arr) ? arr.some(r => r > 0) : rData[n] > 0
+        })
+        if (!names.length) continue
+        const exercises = names.map(name => {
+          const rArr = Array.isArray(rData[name]) ? rData[name] : [rData[name]]
+          const wArr = Array.isArray(wData[name]) ? wData[name] : [wData[name] || 0]
+          const sets = rArr.map((r, i) => ({ reps: r || 0, weight: wArr[i] || 0 })).filter(s => s.reps > 0)
+          return { name, sets }
+        })
+        result.push({ muscle: muscleId, exercises })
+      } catch (_) {}
+    }
+    setLifts(result)
+  }, [done, iso, muscles])
   const date    = parseDate(iso)
   const dayName = DAY_SHORT[date.getDay()]
   const dayNum  = date.getDate()
   const mon     = MONTH_SHORT[date.getMonth()]
   const hasWork = muscles.length > 0
   const rot     = CARD_ROTATIONS[index % CARD_ROTATIONS.length]
+
+  // Scale factor: base calibrated at 120px card height
+  const scale = Math.max(0.6, Math.min(2.5, cardH / 120))
+  const isLandscape = cardW / cardH > 1.4
 
   const handleClick = () => {
     play('option-select')
@@ -121,7 +170,8 @@ function DayCard({ iso, muscles, index, onClick }) {
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick() } }}
       onMouseEnter={() => { setHovered(true); play('button-hover') }}
       onMouseLeave={() => setHovered(false)}
-      className="relative flex flex-col cursor-pointer select-none outline-none
+      data-day-iso={iso}
+      className="relative flex flex-col cursor-pointer select-none outline-none h-full
         focus-visible:outline-2 focus-visible:outline-gtl-red focus-visible:outline-offset-4
         transition-all duration-200"
       style={{
@@ -129,45 +179,82 @@ function DayCard({ iso, muscles, index, onClick }) {
           ? `rotate(${rot}) translateY(-6px) scale(1.03)`
           : `rotate(${rot})`,
         transformOrigin: 'center top',
-        overflow: 'visible',
+        overflow: 'hidden',
         borderLeft: hasWork ? '4px solid #d4181f' : '4px solid #3a3a42',
         border: hovered ? '1px solid #d4181f' : '1px solid #2a2a30',
         background: hovered ? '#111115' : '#0d0d10',
         boxShadow: hovered ? '0 0 28px rgba(212,24,31,0.2)' : 'none',
       }}
     >
-      {/* Date block */}
-      <div className="px-4 pt-4 pb-3">
-        <div className={`font-display text-3xl leading-none tracking-widest transition-colors duration-200
-          ${hasWork ? (hovered ? 'text-gtl-red-bright' : 'text-gtl-red') : 'text-gtl-smoke'}`}>
-          {dayName}
+      {/* Date + lifts: row when landscape, column when portrait */}
+      <div className={`${isLandscape ? 'flex flex-row' : 'flex flex-col'} gap-2 px-3 pt-2 pb-1 overflow-hidden`}>
+        {/* Date block */}
+        <div className="shrink-0">
+          <div className={`font-display leading-none tracking-widest transition-colors duration-200
+            ${hasWork ? (hovered ? 'text-gtl-red-bright' : 'text-gtl-red') : 'text-gtl-smoke'}`}
+            style={{ fontSize: `${(done && lifts.length > 0 ? 0.7 : 1.25) * scale}rem` }}>
+            {dayName}
+          </div>
+          <div className="flex items-baseline gap-1 mt-0">
+            <span className={`font-display leading-none transition-colors duration-200
+              ${hasWork ? 'text-gtl-chalk' : 'text-gtl-ash'}`}
+                  style={{ fontSize: `${(done && lifts.length > 0 ? 1.1 : 2) * scale}rem` }}>
+              {dayNum}
+            </span>
+            <span className="font-mono tracking-[0.3em] uppercase text-gtl-smoke"
+                  style={{ fontSize: `${(done && lifts.length > 0 ? 7 : 10) * scale}px` }}>{mon}</span>
+          </div>
         </div>
-        <div className="flex items-baseline gap-2 mt-0">
-          <span className={`font-display leading-none transition-colors duration-200
-            ${hasWork ? 'text-gtl-chalk' : 'text-gtl-ash'}`}
-                style={{ fontSize: 'clamp(3rem, 5vw, 5rem)' }}>
-            {dayNum}
-          </span>
-          <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">{mon}</span>
-        </div>
+
+        {/* Lifts summary — right of date, only on completed days */}
+        {done && lifts.length > 0 && (() => {
+          const totalSets = lifts.reduce((a, { exercises }) => a + exercises.reduce((b, { sets }) => b + sets.length, 0), 0)
+          const numSize = `${Math.max(0.65, Math.min(3, 4 / Math.sqrt(Math.max(1, totalSets))) * scale).toFixed(2)}rem`
+          const chipSize = `${Math.max(7, Math.min(28, 11 * scale)).toFixed(1)}px`
+          const chipPad = `${Math.max(2, 3 * scale).toFixed(1)}px ${Math.max(4, 8 * scale).toFixed(1)}px`
+          return (
+            <div className={`flex flex-col gap-1 min-w-0 overflow-hidden ${isLandscape ? 'flex-1 justify-center' : ''}`}>
+              {lifts.map(({ muscle, exercises }) => (
+                <div key={muscle} className="flex flex-col gap-0.5">
+                  <span className="font-mono uppercase leading-none font-bold text-white self-start"
+                    style={{
+                      fontSize: chipSize,
+                      background: '#7a0e14',
+                      clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)',
+                      padding: chipPad,
+                      letterSpacing: '0.08em',
+                    }}>
+                    {MUSCLE_LABELS[muscle] || muscle.toUpperCase()}
+                  </span>
+                  <div className="flex flex-wrap gap-x-1.5 gap-y-0.5">
+                    {exercises.map(({ name, sets }) =>
+                      sets.map((s, si) => (
+                        <span key={`${name}-${si}`} className="font-display leading-none"
+                              style={{ fontSize: numSize, color: '#e4b022', textShadow: '1px 1px 0 #8a6612' }}>
+                          {s.weight > 0 ? `${s.weight}×${s.reps}` : `${s.reps}r`}
+                        </span>
+                      ))
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        })()}
+        {/* Muscles — right of date (landscape) or below (portrait), only on incomplete days */}
+        {!done && hasWork && (
+          <div className={`${isLandscape ? 'flex-1' : ''} flex flex-wrap gap-x-2 gap-y-2 content-start overflow-hidden min-w-0`}>
+            {muscles.map((id, i, arr) => <MuscleChip key={id} id={id} index={i} total={arr.length} />)}
+          </div>
+        )}
+        {!done && !hasWork && (
+          <div className="flex-1 flex items-center overflow-hidden">
+            <span className="font-mono tracking-[0.2em] uppercase text-gtl-smoke"
+              style={{ fontSize: `${8 * scale}px` }}>REST</span>
+          </div>
+        )}
       </div>
 
-      {hasWork && (
-        <div className="mx-4 mb-3 h-0.5 bg-gtl-red" style={{ transform: 'skewX(-8deg)' }} />
-      )}
-
-      {/* Muscles */}
-      <div className="px-4 pb-6 pt-1 flex flex-wrap gap-x-3 gap-y-4 min-h-[2rem]" style={{ overflow: 'visible' }}>
-        {hasWork
-          ? muscles.map((id, i) => <MuscleChip key={id} id={id} index={i} />)
-          : <span className="font-mono text-[8px] tracking-[0.2em] uppercase text-gtl-smoke self-center">REST</span>}
-      </div>
-
-      {/* Tap hint */}
-      <div className={`px-4 pb-3 font-mono text-[8px] tracking-[0.3em] uppercase transition-colors duration-200
-        ${hovered ? 'text-gtl-red' : 'text-gtl-smoke/0'}`}>
-        TAP TO FOCUS ▸
-      </div>
 
       {/* Done X stamp overlay */}
       {done && (
@@ -178,7 +265,7 @@ function DayCard({ iso, muscles, index, onClick }) {
           <div
             className="font-display leading-none select-none"
             style={{
-              fontSize: 'clamp(5rem, 10vw, 12rem)',
+              fontSize: `${cardH * 0.9}px`,
               color: 'rgba(212,24,31,0.35)',
               textShadow: '3px 3px 0 rgba(0,0,0,0.5)',
               transform: 'rotate(-6deg)',
@@ -812,95 +899,274 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
   )
 }
 
-/* ── Single exercise row — click opens reps popup ── */
-function ExerciseRow({ name, index, reps, weight, onOpen }) {
-  const { play } = useSound()
+/* ── Individual set chip inside an exercise row ── */
+function SetChip({ setIndex, set, hasData, ghostSet, onOpen, play }) {
   const [pressed, setPressed] = useState(false)
-  const rowRef = useRef(null)
-  const selected = reps > 0
+  const suffixes = ['TH','ST','ND','RD']
+  const n = setIndex + 1
+  const suffix = n <= 3 ? suffixes[n] : suffixes[0]
+  const label = `${n}${suffix} SET`
+  const hasGhost = !hasData && ghostSet && (ghostSet.weight > 0 || ghostSet.reps > 0)
 
-  const handleOpen = () => {
-    const rect = rowRef.current?.getBoundingClientRect() ?? null
-    onOpen(rect)
-  }
+  return (
+    <button
+      type="button"
+      onMouseDown={() => setPressed(true)}
+      onMouseUp={() => { setPressed(false); onOpen() }}
+      onMouseLeave={() => setPressed(false)}
+      onMouseEnter={() => play('button-hover')}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen() } }}
+      className="relative cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-red"
+      style={{ transform: pressed ? 'translateY(2px)' : 'translateY(0)', transition: 'transform 60ms ease-out' }}
+      aria-label={`${hasData ? 'Edit' : 'Log'} set ${setIndex + 1}${set.weight > 0 ? ` (${set.weight}lbs` : ''}${set.reps > 0 ? ` × ${set.reps})` : set.weight > 0 ? ')' : ''}`}
+    >
+      <div
+        className="flex flex-col items-center px-3 py-2"
+        style={{
+          clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)',
+          background: hasData ? '#d4181f' : '#1a1a1e',
+          border: `1px solid ${hasData ? '#ff2a36' : hasGhost ? 'rgba(212,24,31,0.25)' : '#3a3a42'}`,
+          minWidth: '72px',
+          transition: 'background 100ms',
+        }}
+      >
+        <span className="font-mono text-[9px] tracking-[0.2em] uppercase leading-none mb-1 font-bold"
+          style={{ color: hasData ? 'rgba(245,240,232,0.9)' : hasGhost ? 'rgba(212,24,31,0.6)' : '#6a6a72' }}>
+          {label}
+        </span>
+        {hasData ? (
+          <div className="flex items-baseline gap-1">
+            {set.weight > 0 && (
+              <span className="font-display leading-none"
+                style={{ fontSize: 'clamp(1rem, 2vw, 1.4rem)', color: '#f5f0e8', textShadow: '1px 1px 0 #8a0e13' }}>
+                {set.weight}<span style={{ fontSize: '0.6em', opacity: 0.7 }}>lb</span>
+              </span>
+            )}
+            {set.weight > 0 && set.reps > 0 && (
+              <span style={{ fontSize: '0.7rem', color: 'rgba(245,240,232,0.5)' }}>×</span>
+            )}
+            {set.reps > 0 && (
+              <span className="font-display leading-none"
+                style={{ fontSize: 'clamp(1rem, 2vw, 1.4rem)', color: '#f5f0e8', textShadow: '1px 1px 0 #8a0e13' }}>
+                {set.reps}
+              </span>
+            )}
+          </div>
+        ) : hasGhost ? (
+          <div className="flex items-baseline gap-1" style={{ opacity: 0.35 }}>
+            {ghostSet.weight > 0 && (
+              <span className="font-display leading-none"
+                style={{ fontSize: 'clamp(1rem, 2vw, 1.4rem)', color: '#f5f0e8' }}>
+                {ghostSet.weight}<span style={{ fontSize: '0.6em', opacity: 0.7 }}>lb</span>
+              </span>
+            )}
+            {ghostSet.weight > 0 && ghostSet.reps > 0 && (
+              <span style={{ fontSize: '0.7rem', color: 'rgba(245,240,232,0.5)' }}>×</span>
+            )}
+            {ghostSet.reps > 0 && (
+              <span className="font-display leading-none"
+                style={{ fontSize: 'clamp(1rem, 2vw, 1.4rem)', color: '#f5f0e8' }}>
+                {ghostSet.reps}
+              </span>
+            )}
+          </div>
+        ) : (
+          <span className="font-display leading-none" style={{ fontSize: '1.1rem', color: '#3a3a42' }}>—</span>
+        )}
+      </div>
+    </button>
+  )
+}
+
+/* ── Single exercise row — dynamic set chips + ADD SET ── */
+function ExerciseRow({ name, index, sets, ghostSets, onOpen, onAddSet, onDeleteSet }) {
+  const { play } = useSound()
+  const rowRef = useRef(null)
+  const selected = sets.some((s) => s.reps > 0)
 
   return (
     <li ref={rowRef} style={{ animation: `focus-content-in 250ms ${200 + index * 45}ms ease-out both`, listStyle: 'none' }}>
-      <button
-        type="button"
-        onMouseDown={() => setPressed(true)}
-        onMouseUp={() => { setPressed(false); handleOpen() }}
-        onMouseLeave={() => setPressed(false)}
-        onMouseEnter={() => play('button-hover')}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpen() } }}
-        className="w-full text-left cursor-pointer select-none outline-none
-          focus-visible:outline-2 focus-visible:outline-gtl-red focus-visible:outline-offset-2"
-        aria-label={`Set weight and reps for ${name}${weight > 0 ? ` (${weight}lbs` : ''}${reps > 0 ? ` × ${reps})` : weight > 0 ? ')' : ''}`}
+      <div
+        className="flex items-center gap-4 py-4 border-b"
+        style={{
+          borderColor: selected ? 'rgba(212,24,31,0.6)' : 'rgba(58,58,66,0.5)',
+          background: selected ? 'rgba(212,24,31,0.08)' : 'transparent',
+          borderLeft: selected ? '3px solid #d4181f' : '3px solid transparent',
+          paddingLeft: '8px',
+          transition: 'background 100ms, border-color 100ms',
+        }}
       >
-        <div
-          className="flex items-center gap-6 py-4 border-b transition-all duration-100"
+        {/* Index number */}
+        <span
+          className="font-display shrink-0 leading-none"
           style={{
-            borderColor: selected ? 'rgba(212,24,31,0.6)' : 'rgba(58,58,66,0.5)',
-            background: selected ? 'rgba(212,24,31,0.08)' : 'transparent',
-            borderLeft: selected ? '3px solid #d4181f' : '3px solid transparent',
-            paddingLeft: '8px',
-            transform: pressed ? 'translateY(2px)' : 'translateY(0)',
-            transition: 'transform 80ms ease-out, background 100ms, border-color 100ms',
+            fontSize: 'clamp(1.4rem, 3vw, 2.2rem)',
+            color: selected ? '#ff2a36' : '#e4b022',
+            textShadow: selected ? '2px 2px 0 #8a0e13' : '2px 2px 0 #8a6612',
+            minWidth: '2.5rem',
           }}
         >
-          {/* Index number */}
-          <span
-            className="font-display shrink-0 leading-none transition-colors duration-100"
-            style={{
-              fontSize: 'clamp(1.4rem, 3vw, 2.2rem)',
-              color: selected ? '#ff2a36' : '#e4b022',
-              textShadow: selected ? '2px 2px 0 #8a0e13' : '2px 2px 0 #8a6612',
-              minWidth: '2.5rem',
-            }}
-          >
-            {String(index + 1).padStart(2, '0')}
-          </span>
+          {String(index + 1).padStart(2, '0')}
+        </span>
 
-          {/* Exercise name */}
-          <span
-            className="font-display leading-none transition-colors duration-100 flex-1"
-            style={{
-              fontSize: 'clamp(1.4rem, 3.5vw, 2.8rem)',
-              color: selected ? '#ffffff' : '#c8c8c8',
-              transform: index % 2 === 0 ? 'rotate(-0.3deg)' : 'rotate(0.2deg)',
-            }}
-          >
-            {name}
-          </span>
+        {/* Exercise name */}
+        <span
+          className="font-display leading-none flex-1"
+          style={{
+            fontSize: 'clamp(1.4rem, 3.5vw, 2.8rem)',
+            color: selected ? '#ffffff' : '#c8c8c8',
+            transform: index % 2 === 0 ? 'rotate(-0.3deg)' : 'rotate(0.2deg)',
+          }}
+        >
+          {name}
+        </span>
 
-          {/* Weight + reps badge — centered between name and right edge */}
-          {weight > 0 || reps > 0 ? (
-            <div className="shrink-0 flex items-baseline gap-2">
-              {weight > 0 && (
-                <span className="font-display leading-none"
-                  style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)', color: '#e4b022', textShadow: '2px 2px 0 #8a6612, 4px 4px 0 #070708' }}>
-                  {weight}<span style={{ fontSize: '0.5em', opacity: 0.7 }}>lbs</span>
-                </span>
-              )}
-              {weight > 0 && reps > 0 && (
-                <span className="font-display leading-none" style={{ fontSize: 'clamp(1rem, 2vw, 1.6rem)', color: 'rgba(212,24,31,0.6)' }}>/</span>
-              )}
-              {reps > 0 && (
-                <span className="font-display leading-none"
-                  style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)', color: '#e4b022', textShadow: '2px 2px 0 #8a6612, 4px 4px 0 #070708' }}>
-                  {reps}×
-                </span>
-              )}
+        {/* Set chips + ADD SET */}
+        <div className="shrink-0 flex items-center gap-2">
+          {sets.map((s, si) => {
+            const hasData = s.reps > 0 || s.weight > 0
+            return (
+              <SetChip
+                key={si}
+                setIndex={si}
+                set={s}
+                hasData={hasData}
+                ghostSet={ghostSets?.[si]}
+                onOpen={() => {
+                  const rect = rowRef.current?.getBoundingClientRect() ?? null
+                  onOpen(rect, si)
+                }}
+                play={play}
+              />
+            )
+          })}
+          <button
+            type="button"
+            onClick={() => { play('button-hover'); onAddSet() }}
+            onMouseEnter={() => play('button-hover')}
+            className="relative cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-red shrink-0"
+          >
+            <div
+              className="flex flex-col items-center px-3 py-2"
+              style={{
+                clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)',
+                background: '#0d0d10',
+                border: '1px dashed #3a3a42',
+                minWidth: '64px',
+              }}
+            >
+              <span className="font-display leading-none" style={{ fontSize: 'clamp(0.7rem, 1.2vw, 0.9rem)', color: '#3a3a42' }}>+</span>
+              <span className="font-mono text-[7px] tracking-[0.3em] uppercase leading-none mt-0.5" style={{ color: '#3a3a42' }}>ADD SET</span>
             </div>
-          ) : (
-            <span className="font-display shrink-0 leading-none"
-              style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)', color: 'rgba(58,58,66,0.4)' }}>◻</span>
+          </button>
+          {sets.length > 1 && (
+            <button
+              type="button"
+              onClick={() => { play('menu-close'); onDeleteSet() }}
+              onMouseEnter={() => play('button-hover')}
+              className="relative cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-red shrink-0"
+            >
+              <div
+                className="flex flex-col items-center px-3 py-2"
+                style={{
+                  clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)',
+                  background: '#0d0d10',
+                  border: '1px dashed #3a1014',
+                  minWidth: '64px',
+                }}
+              >
+                <span className="font-display leading-none" style={{ fontSize: 'clamp(0.7rem, 1.2vw, 0.9rem)', color: '#8a0e13' }}>−</span>
+                <span className="font-mono text-[7px] tracking-[0.3em] uppercase leading-none mt-0.5" style={{ color: '#8a0e13' }}>DEL SET</span>
+              </div>
+            </button>
           )}
-          {/* Right spacer — equal to name's flex-1, pushes badge to center */}
-          <div className="flex-1" aria-hidden="true" />
         </div>
-      </button>
+      </div>
     </li>
+  )
+}
+
+/* ── Stamped name input — mirrors the Name Your Cycle page style ── */
+function CustomMoveInput({ value, onChange, onConfirm, onCancel, onCharAdded }) {
+  const inputRef = useRef(null)
+  const charKeysRef = useRef([])
+  const { play } = useSound()
+  const prevLenRef = useRef(0)
+
+  if (value.length !== prevLenRef.current) {
+    if (value.length > prevLenRef.current) {
+      while (charKeysRef.current.length < value.length) {
+        charKeysRef.current.push(`k-${Date.now()}-${Math.random()}`)
+      }
+    } else {
+      charKeysRef.current = charKeysRef.current.slice(0, value.length)
+    }
+    prevLenRef.current = value.length
+  }
+
+  useEffect(() => {
+    if (inputRef.current) inputRef.current.focus()
+  }, [])
+
+  const handleChange = (e) => {
+    const next = e.target.value.toUpperCase().slice(0, 24)
+    if (next.length > value.length) { play('option-select'); onCharAdded && onCharAdded() }
+    else if (next.length < value.length) play('char-erase')
+    onChange(next)
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && value.trim().length > 0) { e.preventDefault(); onConfirm() }
+    if (e.key === 'Escape') onCancel()
+  }
+
+  return (
+    <div
+      className="flex-1 relative cursor-text select-none"
+      onClick={() => inputRef.current?.focus()}
+    >
+      <input
+        ref={inputRef}
+        type="text"
+        value={value}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        maxLength={24}
+        className="sr-only"
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck="false"
+      />
+      <div className="flex flex-wrap items-baseline gap-y-1 min-h-[3rem]" style={{ overflow: 'visible' }}>
+        {value.split('').map((char, i) => (
+          <span
+            key={charKeysRef.current[i]}
+            className="inline-block font-display leading-none animate-char-stamp text-gtl-chalk"
+            style={{
+              fontSize: 'clamp(1.8rem, 4vw, 3.2rem)',
+              animationDelay: '0ms',
+              transformOrigin: 'center center',
+              position: 'relative', zIndex: 50,
+            }}
+          >
+            {char === ' ' ? '\u00a0' : char}
+          </span>
+        ))}
+        <span
+          className="inline-block bg-gtl-red-bright animate-cursor-blink self-center"
+          style={{ width: '3px', height: '2.4rem', marginLeft: '2px' }}
+          aria-hidden="true"
+        />
+      </div>
+      {value.length === 0 && (
+        <div className="absolute inset-0 flex items-center pointer-events-none">
+          <span className="font-display text-gtl-smoke"
+            style={{ fontSize: 'clamp(1.8rem, 4vw, 3.2rem)' }}>
+            NAME YOUR MOVE
+          </span>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -910,18 +1176,67 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose }) {
   const [closing, setClosing]           = useState(false)
   const [reps, setReps]                 = useState({})
   const [weights, setWeights]           = useState({})
+  const [setCounts, setSetCounts]       = useState({}) // exerciseName → number of sets (default 2)
+  const [priorData, setPriorData]       = useState({}) // exerciseName → { weight: [], reps: [] } from prior days
+  const [customName, setCustomName]       = useState('') // user-defined 5th exercise
+  const [editingCustom, setEditingCustom] = useState(false)
+  const [draftName, setDraftName]         = useState('')
+  const [shaking, setShaking]             = useState(false)
   const [activeExercise, setActiveExercise] = useState(null)
   const [activeExerciseRect, setActiveExerciseRect] = useState(null)
+  const [activeSetIndex, setActiveSetIndex] = useState(0)
   const [phase, setPhase]               = useState(null) // 'weight' | 'reps'
   const exercises    = EXERCISES[muscleId] || []
   const label        = MUSCLE_LABELS[muscleId] || muscleId.toUpperCase()
   const storageKey   = `gtl-ex-${dayIso}-${muscleId}`
   const weightKey    = `gtl-wt-${dayIso}-${muscleId}`
+  const setCountKey  = `gtl-setcounts-${muscleId}`
 
   const originX = originRect ? `${originRect.left + originRect.width / 2}px` : '50vw'
   const originY = originRect ? `${originRect.top + originRect.height / 2}px` : '50vh'
 
-  // Load persisted reps + weights on mount
+  // Load prior day data for ghost display in set chips
+  useEffect(() => {
+    try {
+      const rawDays = localStorage.getItem('gtl-training-days')
+      if (!rawDays) return
+      const allTrainingDays = JSON.parse(rawDays)
+      const priorIsos = allTrainingDays.filter(d => d < dayIso).sort()
+      const result = {}
+      // Walk backwards — most recent prior day wins
+      for (let i = priorIsos.length - 1; i >= 0; i--) {
+        const wRaw = localStorage.getItem(`gtl-wt-${priorIsos[i]}-${muscleId}`)
+        const rRaw = localStorage.getItem(`gtl-ex-${priorIsos[i]}-${muscleId}`)
+        const wData = wRaw ? JSON.parse(wRaw) : {}
+        const rData = rRaw ? JSON.parse(rRaw) : {}
+        const names = new Set([...Object.keys(wData), ...Object.keys(rData)])
+        for (const n of names) {
+          if (!result[n]) {
+            result[n] = {
+              weight: Array.isArray(wData[n]) ? wData[n] : typeof wData[n] === 'number' ? [wData[n]] : [],
+              reps:   Array.isArray(rData[n]) ? rData[n] : typeof rData[n] === 'number' ? [rData[n]] : [],
+            }
+          }
+        }
+      }
+      setPriorData(result)
+    } catch (_) {}
+  }, [dayIso, muscleId])
+
+  // Find the last logged value for an exercise across all previous days (used by popups)
+  const getPriorValue = (name, kind, setIndex) => {
+    const pd = priorData[name]
+    if (!pd) return 0
+    const arr = kind === 'weight' ? pd.weight : pd.reps
+    if (!arr) return 0
+    if ((arr[setIndex] ?? 0) !== 0) return arr[setIndex]
+    for (let s = arr.length - 1; s >= 0; s--) {
+      if ((arr[s] ?? 0) !== 0) return arr[s]
+    }
+    return 0
+  }
+
+  // Load persisted reps, weights, and set counts on mount
   useEffect(() => {
     try {
       const raw = localStorage.getItem(storageKey)
@@ -931,28 +1246,41 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose }) {
       const raw = localStorage.getItem(weightKey)
       if (raw) setWeights(JSON.parse(raw))
     } catch (_) {}
-  }, [storageKey, weightKey])
+    try {
+      const raw = localStorage.getItem(setCountKey)
+      if (raw) setSetCounts(JSON.parse(raw))
+    } catch (_) {}
+    try {
+      const name = localStorage.getItem(`gtl-custom-${muscleId}`)
+      if (name) setCustomName(name)
+    } catch (_) {}
+  }, [storageKey, weightKey, setCountKey, muscleId])
 
-  const saveReps = (name, value) => {
+  const saveReps = (name, value, setIndex) => {
     setReps((prev) => {
-      const next = { ...prev, [name]: value }
+      const arr = Array.isArray(prev[name]) ? [...prev[name]] : [0, 0]
+      arr[setIndex] = value
+      const next = { ...prev, [name]: arr }
       try { localStorage.setItem(storageKey, JSON.stringify(next)) } catch (_) {}
       return next
     })
   }
 
-  const saveWeight = (name, value) => {
+  const saveWeight = (name, value, setIndex) => {
     setWeights((prev) => {
-      const next = { ...prev, [name]: value }
+      const arr = Array.isArray(prev[name]) ? [...prev[name]] : [0, 0]
+      arr[setIndex] = value
+      const next = { ...prev, [name]: arr }
       try { localStorage.setItem(weightKey, JSON.stringify(next)) } catch (_) {}
       return next
     })
   }
 
-  const openExercise = (name, rect) => {
+  const openExercise = (name, rect, setIndex) => {
     play('option-select')
     setActiveExercise(name)
     setActiveExerciseRect(rect)
+    setActiveSetIndex(setIndex)
     setPhase('weight')
   }
 
@@ -984,6 +1312,7 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose }) {
           : 'day-focus-in 380ms cubic-bezier(0.0, 0.0, 0.2, 1) forwards',
       }}
     >
+    <div className={`w-full h-full${shaking ? ' animate-screen-shake' : ''}`}>
       {/* Atmospherics */}
       <div className="absolute inset-0 gtl-noise pointer-events-none" />
       <div className="absolute inset-0 pointer-events-none"
@@ -1052,9 +1381,9 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose }) {
              style={{ transform: 'skewX(-6deg)', transformOrigin: 'left center', maxWidth: '700px' }} />
 
         {/* Logged count */}
-        {Object.values(reps).filter(v => v > 0).length > 0 && (
+        {Object.values(reps).filter(v => Array.isArray(v) ? v.some(r => r > 0) : v > 0).length > 0 && (
           <div className="mb-4 shrink-0 font-mono text-[9px] tracking-[0.35em] uppercase text-gtl-red">
-            {Object.values(reps).filter(v => v > 0).length} EXERCISE{Object.values(reps).filter(v => v > 0).length !== 1 ? 'S' : ''} LOGGED
+            {Object.values(reps).filter(v => Array.isArray(v) ? v.some(r => r > 0) : v > 0).length} EXERCISE{Object.values(reps).filter(v => Array.isArray(v) ? v.some(r => r > 0) : v > 0).length !== 1 ? 'S' : ''} LOGGED
           </div>
         )}
 
@@ -1065,21 +1394,158 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose }) {
               key={name}
               name={name}
               index={i}
-              reps={reps[name] ?? 0}
-              weight={weights[name] ?? 0}
-              onOpen={(rect) => openExercise(name, rect)}
+              sets={Array.from({ length: setCounts[name] ?? 2 }, (_, si) => ({
+                reps: (reps[name] || [])[si] ?? 0,
+                weight: (weights[name] || [])[si] ?? 0,
+              }))}
+              ghostSets={Array.from({ length: setCounts[name] ?? 2 }, (_, si) => ({
+                weight: (priorData[name]?.weight || [])[si] ?? 0,
+                reps:   (priorData[name]?.reps   || [])[si] ?? 0,
+              }))}
+              onOpen={(rect, setIndex) => openExercise(name, rect, setIndex)}
+              onAddSet={() => setSetCounts((prev) => {
+                const next = { ...prev, [name]: (prev[name] ?? 2) + 1 }
+                try { localStorage.setItem(setCountKey, JSON.stringify(next)) } catch (_) {}
+                return next
+              })}
+              onDeleteSet={() => {
+                const current = setCounts[name] ?? 2
+                if (current <= 1) return
+                const next = current - 1
+                setSetCounts((prev) => {
+                  const updated = { ...prev, [name]: next }
+                  try { localStorage.setItem(setCountKey, JSON.stringify(updated)) } catch (_) {}
+                  return updated
+                })
+                setReps((prev) => {
+                  const arr = [...(prev[name] || [])].slice(0, next)
+                  const updated = { ...prev, [name]: arr }
+                  try { localStorage.setItem(storageKey, JSON.stringify(updated)) } catch (_) {}
+                  return updated
+                })
+                setWeights((prev) => {
+                  const arr = [...(prev[name] || [])].slice(0, next)
+                  const updated = { ...prev, [name]: arr }
+                  try { localStorage.setItem(weightKey, JSON.stringify(updated)) } catch (_) {}
+                  return updated
+                })
+              }}
             />
           ))}
+
+          {/* Custom exercise slot */}
+          <li style={{ listStyle: 'none', animation: 'focus-content-in 250ms 470ms ease-out both' }}>
+            {customName && !editingCustom ? (
+              <ExerciseRow
+                key={customName}
+                name={customName}
+                index={4}
+                sets={Array.from({ length: setCounts[customName] ?? 2 }, (_, si) => ({
+                  reps: (reps[customName] || [])[si] ?? 0,
+                  weight: (weights[customName] || [])[si] ?? 0,
+                }))}
+                ghostSets={Array.from({ length: setCounts[customName] ?? 2 }, (_, si) => ({
+                  weight: (priorData[customName]?.weight || [])[si] ?? 0,
+                  reps:   (priorData[customName]?.reps   || [])[si] ?? 0,
+                }))}
+                onOpen={(rect, setIndex) => openExercise(customName, rect, setIndex)}
+                onAddSet={() => setSetCounts((prev) => {
+                  const next = { ...prev, [customName]: (prev[customName] ?? 2) + 1 }
+                  try { localStorage.setItem(setCountKey, JSON.stringify(next)) } catch (_) {}
+                  return next
+                })}
+                onDeleteSet={() => {
+                  const current = setCounts[customName] ?? 2
+                  if (current <= 1) return
+                  const next = current - 1
+                  setSetCounts((prev) => {
+                    const updated = { ...prev, [customName]: next }
+                    try { localStorage.setItem(setCountKey, JSON.stringify(updated)) } catch (_) {}
+                    return updated
+                  })
+                  setReps((prev) => {
+                    const arr = [...(prev[customName] || [])].slice(0, next)
+                    const updated = { ...prev, [customName]: arr }
+                    try { localStorage.setItem(storageKey, JSON.stringify(updated)) } catch (_) {}
+                    return updated
+                  })
+                  setWeights((prev) => {
+                    const arr = [...(prev[customName] || [])].slice(0, next)
+                    const updated = { ...prev, [customName]: arr }
+                    try { localStorage.setItem(weightKey, JSON.stringify(updated)) } catch (_) {}
+                    return updated
+                  })
+                }}
+              />
+            ) : editingCustom ? (
+              <div className="flex items-center gap-4 py-4 border-b" style={{ borderColor: 'rgba(212,24,31,0.6)', paddingLeft: '8px' }}>
+                <span className="font-display shrink-0 leading-none"
+                  style={{ fontSize: 'clamp(1.4rem, 3vw, 2.2rem)', color: '#e4b022', textShadow: '2px 2px 0 #8a6612', minWidth: '2.5rem' }}>
+                  05
+                </span>
+                <CustomMoveInput
+                  value={draftName}
+                  onChange={setDraftName}
+                  onCharAdded={() => {
+                    setShaking(false)
+                    requestAnimationFrame(() => setShaking(true))
+                    setTimeout(() => setShaking(false), 300)
+                  }}
+                  onConfirm={() => {
+                    const val = draftName.trim()
+                    if (val) {
+                      setCustomName(val)
+                      try { localStorage.setItem(`gtl-custom-${muscleId}`, val) } catch (_) {}
+                    }
+                    setEditingCustom(false)
+                  }}
+                  onCancel={() => setEditingCustom(false)}
+                />
+              </div>
+            ) : (
+              <div
+                className="flex items-center gap-4 py-4 border-b cursor-pointer"
+                style={{ borderColor: 'rgba(58,58,66,0.3)', paddingLeft: '8px' }}
+                onClick={() => { setDraftName(customName); setEditingCustom(true) }}
+              >
+                <span className="font-display shrink-0 leading-none"
+                  style={{ fontSize: 'clamp(1.4rem, 3vw, 2.2rem)', color: '#3a3a42', minWidth: '2.5rem' }}>
+                  05
+                </span>
+                <span className="font-display leading-none"
+                  style={{ fontSize: 'clamp(1.4rem, 3.5vw, 2.8rem)', color: '#3a3a42' }}>
+                  + CUSTOM MOVE
+                </span>
+              </div>
+            )}
+            {customName && !editingCustom && (
+              <button
+                type="button"
+                onClick={() => { setDraftName(customName); setEditingCustom(true) }}
+                className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-smoke hover:text-gtl-red transition-colors mt-1 ml-2"
+              >
+                ✎ RENAME
+              </button>
+            )}
+          </li>
         </ol>
 
         {/* Weight popup — opens first */}
         {activeExercise && phase === 'weight' && (
           <WeightPopup
-            key={`weight-${activeExercise}`}
-            exerciseName={activeExercise}
-            initialWeight={weights[activeExercise] ?? 0}
+            key={`weight-${activeExercise}-${activeSetIndex}`}
+            exerciseName={`${activeExercise} · S${activeSetIndex + 1}`}
+            initialWeight={(() => {
+              const arr = weights[activeExercise] || []
+              const cur = arr[activeSetIndex] ?? 0
+              if (cur !== 0) return cur
+              for (let i = activeSetIndex - 1; i >= 0; i--) {
+                if ((arr[i] ?? 0) !== 0) return arr[i]
+              }
+              return getPriorValue(activeExercise, 'weight', activeSetIndex)
+            })()}
             rowRect={activeExerciseRect}
-            onSave={(val) => saveWeight(activeExercise, val)}
+            onSave={(val) => saveWeight(activeExercise, val, activeSetIndex)}
             onClose={() => setPhase('reps')}
           />
         )}
@@ -1087,11 +1553,19 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose }) {
         {/* Reps popup — opens after weight */}
         {activeExercise && phase === 'reps' && (
           <RepsPopup
-            key={`reps-${activeExercise}`}
-            exerciseName={activeExercise}
-            initialReps={reps[activeExercise] ?? 0}
+            key={`reps-${activeExercise}-${activeSetIndex}`}
+            exerciseName={`${activeExercise} · S${activeSetIndex + 1}`}
+            initialReps={(() => {
+              const arr = reps[activeExercise] || []
+              const cur = arr[activeSetIndex] ?? 0
+              if (cur !== 0) return cur
+              for (let i = activeSetIndex - 1; i >= 0; i--) {
+                if ((arr[i] ?? 0) !== 0) return arr[i]
+              }
+              return getPriorValue(activeExercise, 'reps', activeSetIndex)
+            })()}
             rowRect={activeExerciseRect}
-            onSave={(val) => saveReps(activeExercise, val)}
+            onSave={(val) => saveReps(activeExercise, val, activeSetIndex)}
             onClose={closePopup}
           />
         )}
@@ -1102,11 +1576,12 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose }) {
         </div>
       </div>
     </div>
+    </div>
   )
 }
 
 /* ── Full-screen day focus — zooms in from the card's position ── */
-function DayFocus({ iso, muscles, originRect, onClose }) {
+function DayFocus({ iso, muscles, isLastDay, originRect, onClose }) {
   const { play } = useSound()
   const [closing, setClosing]           = useState(false)
   const [focusMuscle, setFocusMuscle]   = useState(null)
@@ -1130,6 +1605,7 @@ function DayFocus({ iso, muscles, originRect, onClose }) {
     play('option-select')
     try { localStorage.setItem(`gtl-done-${iso}`, 'true') } catch (_) {}
     setStamped(true)
+    setTimeout(() => handleClose(), 900)
   }
 
   // Load all exercise reps + weights for this day's muscles from localStorage
@@ -1275,7 +1751,7 @@ function DayFocus({ iso, muscles, originRect, onClose }) {
             onClick={handleClose}
             className="group self-start relative inline-flex items-center mb-auto outline-none
               focus-visible:outline-2 focus-visible:outline-gtl-red"
-            style={{ zIndex: 1 }}
+            style={{ zIndex: 10 }}
           >
             <div
               className="absolute inset-0 -inset-x-2 bg-gtl-edge opacity-50 group-hover:bg-gtl-red group-hover:opacity-100 transition-all duration-300"
@@ -1358,10 +1834,10 @@ function DayFocus({ iso, muscles, originRect, onClose }) {
             {/* Exercise summary grid — full width, left-padded to clear the date column */}
             {hasWork && (
               <div
-                className="absolute inset-0 py-6"
-                style={{ paddingLeft: 'clamp(180px, 28vw, 340px)', display: 'grid', gridTemplateColumns: `repeat(${Math.max(1, muscles.filter(id => Object.values(allReps[id] || {}).some(v => v > 0)).length)}, 1fr)`, gap: '1rem 1.5rem', alignContent: 'center', animation: 'focus-content-in 350ms 400ms ease-out both' }}
+                className="absolute inset-0 py-6 pointer-events-none"
+                style={{ paddingLeft: 'clamp(180px, 28vw, 340px)', display: 'grid', gridTemplateColumns: `repeat(${Math.max(1, muscles.filter(id => Object.values(allReps[id] || {}).some(v => Array.isArray(v) ? v.some(r => r > 0) : v > 0)).length)}, 1fr)`, gap: '1rem 1.5rem', alignContent: 'center', animation: 'focus-content-in 350ms 400ms ease-out both' }}
               >
-                {muscles.every(id => !Object.values(allReps[id] || {}).some(v => v > 0)) ? (
+                {muscles.every(id => !Object.values(allReps[id] || {}).some(v => Array.isArray(v) ? v.some(r => r > 0) : v > 0)) ? (
                   <div style={{ transform: 'rotate(-1deg)' }}>
                     <div
                       className="font-display text-gtl-smoke/20 leading-none"
@@ -1378,95 +1854,119 @@ function DayFocus({ iso, muscles, originRect, onClose }) {
                   </div>
                 ) : muscles.map((muscleId, si) => {
                   const muscleReps = allReps[muscleId] || {}
-                  const logged = Object.entries(muscleReps).filter(([, v]) => v > 0)
+                  const logged = Object.entries(muscleReps).filter(([, v]) => Array.isArray(v) ? v.some(r => r > 0) : v > 0)
                   if (logged.length === 0) return null
+                  const loggedMuscles = muscles.filter(id => Object.values(allReps[id] || {}).some(v => Array.isArray(v) ? v.some(r => r > 0) : v > 0))
+                  const isFirstLogged = muscleId === loggedMuscles[0]
                   const rot = SLAB_ROTATIONS[si % SLAB_ROTATIONS.length]
 
                   return (
                     <div
                       key={muscleId}
                       style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.8rem',
                         animation: `focus-content-in 300ms ${si * 90}ms ease-out both`,
                         minWidth: 0,
                       }}
                     >
-                      {/* Muscle name slab — block wrapper forces it to its own line */}
-                      <div style={{ display: 'block', marginBottom: '0.6rem' }}>
-                        <div
-                          style={{
-                            display: 'inline-flex',
-                            position: 'relative',
-                            transform: `rotate(${rot})`,
-                            transformOrigin: 'left center',
-                          }}
-                        >
+                      {/* "Sets" — only on the first logged muscle group */}
+                      {isFirstLogged && (
+                        <span className="font-display leading-none shrink-0"
+                          style={{ fontSize: 'clamp(2rem, 4vw, 3.2rem)', color: '#d4181f', textShadow: '2px 2px 0 #8a0e13' }}>
+                          Sets
+                        </span>
+                      )}
+
+                      {/* Muscle slab + exercise entries */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', minWidth: 0 }}>
+                        {/* Muscle name slab */}
+                        <div style={{ display: 'block' }}>
                           <div
                             style={{
-                              position: 'absolute', inset: 0,
-                              background: '#8a0e13',
-                              clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
-                              transform: 'translate(4px,4px)',
-                            }}
-                            aria-hidden="true"
-                          />
-                          <div
-                            style={{
+                              display: 'inline-flex',
                               position: 'relative',
-                              padding: '2px 16px',
-                              background: '#d4181f',
-                              clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+                              transform: `rotate(${rot})`,
+                              transformOrigin: 'left center',
                             }}
                           >
-                            <span
-                              className="font-display text-gtl-paper leading-none whitespace-nowrap"
-                              style={{ fontSize: 'clamp(0.85rem, 1.8vw, 1.3rem)' }}
-                            >
-                              {MUSCLE_LABELS[muscleId] || muscleId.toUpperCase()}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Exercise entries */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        {logged.map(([name, reps], ei) => {
-                          const w = (allWeights[muscleId] || {})[name] ?? 0
-                          return (
                             <div
-                              key={name}
                               style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'flex-start',
-                                gap: '0.1rem',
-                                animation: `focus-content-in 220ms ${si * 90 + ei * 50 + 80}ms ease-out both`,
-                                transform: ei % 2 === 0 ? 'rotate(-0.4deg)' : 'rotate(0.3deg)',
-                                transformOrigin: 'left center',
+                                position: 'absolute', inset: 0,
+                                background: '#8a0e13',
+                                clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+                                transform: 'translate(4px,4px)',
+                              }}
+                              aria-hidden="true"
+                            />
+                            <div
+                              style={{
+                                position: 'relative',
+                                padding: '2px 16px',
+                                background: '#d4181f',
+                                clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
                               }}
                             >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                {/* Reps — big gold on the left */}
-                                <div className="font-display leading-none shrink-0"
-                                  style={{ fontSize: 'clamp(2.2rem, 4vw, 3.2rem)', color: '#e4b022', textShadow: '2px 2px 0 #8a6612, 4px 4px 0 #070708' }}>
-                                  {reps}×
-                                </div>
-                                {/* Weight + name stacked to the right */}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
-                                  {w > 0 && (
-                                    <div className="font-display leading-none"
-                                      style={{ fontSize: 'clamp(1.4rem, 2.5vw, 2rem)', color: '#e4b022', textShadow: '2px 2px 0 #8a6612, 3px 3px 0 #070708', opacity: 0.9 }}>
-                                      {w}<span style={{ fontSize: '0.6em', opacity: 0.7, marginLeft: '0.2em' }}>lbs</span>
-                                    </div>
-                                  )}
-                                  <div className="font-display text-gtl-chalk leading-none"
-                                    style={{ fontSize: 'clamp(1.1rem, 2vw, 1.6rem)', lineHeight: '1.2' }}>
-                                    {name}
-                                  </div>
-                                </div>
-                              </div>
+                              <span
+                                className="font-display text-gtl-paper leading-none whitespace-nowrap"
+                                style={{ fontSize: 'clamp(0.85rem, 1.8vw, 1.3rem)' }}
+                              >
+                                {MUSCLE_LABELS[muscleId] || muscleId.toUpperCase()}
+                              </span>
                             </div>
-                          )
-                        })}
+                          </div>
+                        </div>
+
+                        {/* Exercise entries */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          {logged.map(([name, repsVal], ei) => {
+                            const wVal = (allWeights[muscleId] || {})[name]
+                            const allSets = Array.isArray(repsVal)
+                              ? repsVal.map((r, i) => ({ reps: r, weight: Array.isArray(wVal) ? (wVal[i] ?? 0) : (i === 0 ? (wVal ?? 0) : 0) }))
+                              : [{ reps: repsVal, weight: wVal ?? 0 }, { reps: 0, weight: 0 }]
+                            return (
+                              <div
+                                key={name}
+                                style={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'flex-start',
+                                  gap: '0.15rem',
+                                  animation: `focus-content-in 220ms ${si * 90 + ei * 50 + 80}ms ease-out both`,
+                                  transform: ei % 2 === 0 ? 'rotate(-0.4deg)' : 'rotate(0.3deg)',
+                                  transformOrigin: 'left center',
+                                }}
+                              >
+                                <div className="font-display text-gtl-chalk leading-none"
+                                  style={{ fontSize: 'clamp(1.1rem, 2vw, 1.6rem)' }}>
+                                  {name}
+                                </div>
+                                {allSets.map((s, si) => {
+                                  if (si === 1 && s.reps === 0) return null
+                                  return (
+                                    <div key={si} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                      <span className="font-display leading-none shrink-0"
+                                        style={{ fontSize: 'clamp(0.75rem, 1.1vw, 1rem)', color: '#d4181f', minWidth: '2rem' }}>
+                                        {si === 0 ? '1ST' : '2ND'}
+                                      </span>
+                                      <div className="font-display leading-none shrink-0"
+                                        style={{ fontSize: 'clamp(1.8rem, 3.2vw, 2.6rem)', color: '#e4b022', textShadow: '2px 2px 0 #8a6612, 4px 4px 0 #070708' }}>
+                                        {s.reps > 0 ? `${s.reps}×` : '—'}
+                                      </div>
+                                      {s.weight > 0 && (
+                                        <div className="font-display leading-none"
+                                          style={{ fontSize: 'clamp(1rem, 1.8vw, 1.4rem)', color: '#e4b022', opacity: 0.85 }}>
+                                          {s.weight}<span style={{ fontSize: '0.6em', opacity: 0.7, marginLeft: '0.15em' }}>lbs</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            )
+                          })}
+                        </div>
                       </div>
                     </div>
                   )
@@ -1476,7 +1976,7 @@ function DayFocus({ iso, muscles, originRect, onClose }) {
           </div>
 
           {/* Bottom row: breadcrumb + stamp button */}
-          <div className="mt-auto pt-6 flex items-end justify-between gap-4">
+          <div className="mt-auto pt-6 flex items-end justify-between gap-4" style={{ position: 'relative', zIndex: 10 }}>
             <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
               PALACE / FITNESS / ACTIVE CYCLE / {dayName}
             </div>
@@ -1504,7 +2004,7 @@ function DayFocus({ iso, muscles, originRect, onClose }) {
                   className="font-display leading-none"
                   style={{ fontSize: 'clamp(1rem, 1.8vw, 1.4rem)', color: '#f5f0e8', textShadow: '2px 2px 0 #070708' }}
                 >
-                  {stamped ? 'TOMORROW WILL COME' : 'BRING ON TOMORROW'}
+                  {stamped ? 'TOMORROW WILL COME' : isLastDay ? 'ASCEND TO THE NEXT LEVEL' : 'BRING ON TOMORROW'}
                 </span>
                 {!stamped && (
                   <span className="font-display text-gtl-paper leading-none" style={{ fontSize: '1.2rem' }}>▶</span>
@@ -1535,7 +2035,7 @@ function StatBlock({ number, label }) {
       <div
         className="font-display leading-none"
         style={{
-          fontSize: 'clamp(4rem, 8vw, 7rem)',
+          fontSize: 'clamp(2rem, 4vw, 3.5rem)',
           color: '#e4b022',
           textShadow: '3px 3px 0 #8a6612, 5px 5px 0 #070708',
         }}
@@ -1545,6 +2045,17 @@ function StatBlock({ number, label }) {
       <div className="font-mono text-[10px] tracking-[0.35em] uppercase text-gtl-ash mt-1">
         {label}
       </div>
+    </div>
+  )
+}
+
+function StatMini({ number, label }) {
+  return (
+    <div className="flex items-baseline gap-1.5">
+      <span className="font-display leading-none" style={{ fontSize: '1.3rem', color: '#e4b022', textShadow: '1px 1px 0 #8a6612' }}>
+        {String(number).padStart(2, '0')}
+      </span>
+      <span className="font-mono text-[8px] tracking-[0.2em] uppercase text-gtl-ash">{label}</span>
     </div>
   )
 }
@@ -1559,6 +2070,16 @@ export default function ActiveCyclePage() {
   const [ready,      setReady]      = useState(false)
   const [focusDay,   setFocusDay]   = useState(null)   // ISO string | null
   const [focusRect,  setFocusRect]  = useState(null)   // DOMRect | null
+  const [cardRefreshKey, setCardRefreshKey] = useState(0)
+  const [completedDays, setCompletedDays]   = useState(0)
+  const [barXP, setBarXP]                   = useState(0) // starts empty, only advances when XP animation fires
+  const [xpAnim, setXpAnim]                 = useState(null) // null | { phase, particles, total, barRect }
+  const xpBarRef                            = useRef(null)
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
 
   useEffect(() => {
     try {
@@ -1574,14 +2095,90 @@ export default function ActiveCyclePage() {
     setReady(true)
   }, [])
 
+  useEffect(() => {
+    if (!days.length) return
+    let count = 0
+    for (const iso of days) {
+      try { if (localStorage.getItem(`gtl-done-${iso}`) === 'true') count++ } catch (_) {}
+    }
+    setCompletedDays(count)
+  }, [days, cardRefreshKey])
+
+
   const handleDayClick = (iso, rect) => {
     setFocusRect(rect)
     setFocusDay(iso)
   }
 
+  const repMult = (r) => {
+    if (r >= 5 && r <= 15) return 1.0
+    if (r < 5)  return Math.exp(-Math.pow(r - 5,  2) / 8)
+    return              Math.exp(-Math.pow(r - 15, 2) / 32)
+  }
+
+  const triggerXPAnimation = useCallback((closingDay) => {
+    // Build particles: one per completed day, positioned at each card
+    const sortedDays = [...days].sort()
+    const particles = []
+    let total = 0
+    for (const iso of sortedDays) {
+      try {
+        if (localStorage.getItem(`gtl-done-${iso}`) !== 'true') continue
+        const el = document.querySelector(`[data-day-iso="${iso}"]`)
+        const rect = el?.getBoundingClientRect()
+        const dailyMuscles = dailyPlan[iso] || []
+        let dayVolume = 0
+        for (const muscleId of dailyMuscles) {
+          const rRaw = localStorage.getItem(`gtl-ex-${iso}-${muscleId}`)
+          const wRaw = localStorage.getItem(`gtl-wt-${iso}-${muscleId}`)
+          const rData = rRaw ? JSON.parse(rRaw) : {}
+          const wData = wRaw ? JSON.parse(wRaw) : {}
+          for (const name of Object.keys(rData)) {
+            const rArr = Array.isArray(rData[name]) ? rData[name] : [rData[name]]
+            const wArr = Array.isArray(wData[name]) ? wData[name] : [wData[name] || 0]
+            for (let i = 0; i < rArr.length; i++) {
+              const reps   = rArr[i] || 0
+              const weight = wArr[i] || 0
+              if (reps === 0) continue
+              const mult = repMult(reps)
+              dayVolume += weight > 0
+                ? weight * mult * reps
+                : reps * mult
+            }
+          }
+        }
+        if (dayVolume > 0 && rect) {
+          particles.push({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, value: dayVolume })
+          total += dayVolume
+        }
+      } catch (_) {}
+    }
+    if (!total) return
+    const barRect = xpBarRef.current?.getBoundingClientRect()
+    setXpAnim({ phase: 'expand', particles, total, barRect })
+    setTimeout(() => setXpAnim(p => p ? { ...p, phase: 'converge' } : null), 700)
+    setTimeout(() => setXpAnim(p => p ? { ...p, phase: 'combine' } : null), 1500)
+    setTimeout(() => setXpAnim(p => p ? { ...p, phase: 'fly' } : null), 2400)
+    setTimeout(() => {
+      setXpAnim(p => p ? { ...p, phase: 'fill' } : null)
+      setBarXP(total)
+    }, 3100)
+    setTimeout(() => setXpAnim(null), 5000)
+  }, [days, dailyPlan])
+
   const handleCloseFocus = () => {
+    const lastDay = days.length > 0 ? [...days].sort()[days.length - 1] : null
+    const wasLastDay = focusDay === lastDay
     setFocusDay(null)
     setFocusRect(null)
+    setCardRefreshKey((k) => k + 1)
+    if (wasLastDay) {
+      try {
+        if (localStorage.getItem(`gtl-done-${lastDay}`) === 'true') {
+          setTimeout(() => triggerXPAnimation(lastDay), 500)
+        }
+      } catch (_) {}
+    }
   }
 
   const plannedSessions = days.filter((iso) => (dailyPlan[iso] || []).length > 0).length
@@ -1589,9 +2186,10 @@ export default function ActiveCyclePage() {
   const cols = days.length <= 4 ? days.length
              : days.length <= 8 ? Math.ceil(days.length / 2)
              : Math.ceil(days.length / 3)
+  const rows = Math.ceil(days.length / cols)
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-gtl-void">
+    <main className="relative h-screen overflow-hidden flex flex-col bg-gtl-void">
 
       {/* Atmospherics */}
       <div className="absolute inset-0 gtl-noise pointer-events-none" />
@@ -1611,75 +2209,83 @@ export default function ActiveCyclePage() {
         動
       </div>
 
-      {/* Nav */}
-      <nav className="relative z-10 shrink-0 flex items-center justify-between px-8 py-5">
-        <RetreatButton />
-        <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-          PALACE / FITNESS / ACTIVE CYCLE
+      {/* Cycle name watermark — floats above grid */}
+      <div className="absolute inset-0 flex items-center justify-start pointer-events-none select-none overflow-hidden" style={{ zIndex: 20 }}>
+        <div
+          className="font-display leading-none"
+          style={{
+            fontSize: 'clamp(5rem, 16vw, 18rem)',
+            color: '#e8e0d0',
+            opacity: 0.03,
+            transform: 'rotate(-4deg) translateY(10%)',
+            transformOrigin: 'left center',
+            letterSpacing: '-0.02em',
+            whiteSpace: 'nowrap',
+            paddingLeft: '2rem',
+          }}
+        >
+          {cycleName}
         </div>
+      </div>
+
+      {/* Nav */}
+      <nav className="relative z-10 shrink-0 flex items-center gap-4 px-8 py-3">
+        <RetreatButton />
+        <div className="w-px self-stretch bg-gtl-edge" style={{ transform: 'skewX(-12deg)' }} />
+        {/* XP Bar inline in nav */}
+        {days.length > 0 && (
+          <div className="flex-1 flex items-center gap-3 min-w-0">
+            <span className="font-display text-base uppercase text-white shrink-0" style={{ textShadow: '1px 1px 0 #d4181f' }}>EXP</span>
+            <div
+              ref={xpBarRef}
+              className="relative flex-1 min-w-0 overflow-hidden"
+              style={{
+                height: '18px',
+                background: '#1a1a1e',
+                clipPath: 'polygon(0% 0%, 100% 0%, 98% 100%, 2% 100%)',
+                border: '1px solid #2a2a30',
+                animation: xpAnim?.phase === 'fill' ? 'xp-bar-wobble 900ms cubic-bezier(0.2, 0.9, 0.3, 1) 1800ms both' : 'none',
+                transformOrigin: 'left center',
+              }}
+            >
+              <div
+                style={{
+                  position: 'absolute', inset: 0,
+                  width: `${days.length > 0 ? Math.min(100, (barXP / (days.length * 5000)) * 100) : 0}%`,
+                  background: (barXP >= days.length * 5000 || xpAnim?.phase === 'fill')
+                    ? 'linear-gradient(90deg, #8a6612, #e4b022, #f5d060, #e4b022)'
+                    : 'linear-gradient(90deg, #8a6612, #e4b022)',
+                  clipPath: 'polygon(0% 0%, 100% 0%, 98% 100%, 2% 100%)',
+                  transition: xpAnim?.phase === 'fill'
+                    ? 'width 1800ms cubic-bezier(0.1, 0.7, 0.2, 1)'
+                    : 'width 600ms cubic-bezier(0.2, 1, 0.3, 1)',
+                  boxShadow: xpAnim?.phase === 'fill'
+                    ? '0 0 30px rgba(228,176,34,0.9), 0 0 60px rgba(228,176,34,0.4)'
+                    : barXP >= days.length * 5000 ? '0 0 16px rgba(228,176,34,0.6)' : '0 0 8px rgba(228,176,34,0.3)',
+                  animation: xpAnim?.phase === 'fill' ? 'xp-bar-pulse 1s ease-in-out 3' : 'none',
+                }}
+              />
+              {days.map((_, i) => i > 0 && (
+                <div key={i} style={{
+                  position: 'absolute', top: 0, bottom: 0,
+                  left: `${(i / days.length) * 100}%`,
+                  width: '1px',
+                  background: 'rgba(7,7,8,0.5)',
+                }} />
+              ))}
+            </div>
+          </div>
+        )}
       </nav>
 
-      {/* ── HERO BAND ── */}
-      <section className="relative z-10 overflow-hidden">
-        <div
-          className="absolute inset-0 bg-gtl-red"
-          style={{ transform: 'skewY(-1.5deg)', transformOrigin: 'top left' }}
-          aria-hidden="true"
-        />
-        <div
-          className="absolute right-4 top-2 font-display text-[10rem] leading-none select-none pointer-events-none"
-          aria-hidden="true"
-          style={{ color: 'rgba(0,0,0,0.18)', transform: 'rotate(6deg)', transformOrigin: 'right top' }}
-        >
-          ACTIVE
-        </div>
-        <div className="relative px-8 pt-8 pb-14">
-          <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-paper/40 mb-6">
-            PALACE / FITNESS / ACTIVE CYCLE
-          </div>
-          <h1
-            className="font-display text-gtl-paper leading-none"
-            style={{
-              fontSize: 'clamp(3.5rem, 11vw, 9rem)',
-              transform: 'rotate(-2deg)',
-              transformOrigin: 'left center',
-              textShadow: '5px 5px 0 #070708, 10px 10px 0 rgba(0,0,0,0.4)',
-              letterSpacing: '-0.02em',
-            }}
-          >
-            {cycleName}
-          </h1>
-          <div
-            className="font-mono text-[10px] tracking-[0.5em] uppercase text-gtl-paper/50 mt-4"
-            style={{ transform: 'rotate(0.8deg)' }}
-          >
-            CYCLE IN PROGRESS / TAP A DAY TO FOCUS
-          </div>
-        </div>
-      </section>
-
-      {/* ── STATS ── */}
-      <section className="relative z-10 px-8 py-10">
-        <div className="flex items-start gap-8 flex-wrap">
-          <StatBlock number={days.length}      label="BATTLEDAYS" />
-          <div className="self-stretch flex items-center">
-            <div className="w-1 h-full min-h-[5rem] bg-gtl-red" style={{ transform: 'skewX(-12deg)' }} />
-          </div>
-          <StatBlock number={targets.length}   label="TARGETS LOCKED" />
-          <div className="self-stretch flex items-center">
-            <div className="w-1 h-full min-h-[5rem] bg-gtl-red" style={{ transform: 'skewX(-12deg)' }} />
-          </div>
-          <StatBlock number={plannedSessions}  label="SESSIONS MAPPED" />
-        </div>
-      </section>
-
-      {/* Red slash divider */}
-      <div className="relative z-10 mx-8 mb-10 h-[3px] bg-gtl-red"
+      {/* Thin red accent line under nav */}
+      <div className="relative z-10 mx-8 mb-1 h-[2px] bg-gtl-red shrink-0"
            style={{ transform: 'skewX(-6deg)', transformOrigin: 'left center' }} />
 
       {/* ── DAY GRID ── */}
-      <section className="relative z-10 px-8 pb-24">
-        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-ash mb-8 flex items-center gap-4">
+      <section className="relative z-10 flex-1 min-h-0 overflow-hidden flex flex-col px-8 pb-2">
+
+        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-ash mb-3 flex items-center gap-4">
           <span>BATTLE SCHEDULE</span>
           <div className="h-px flex-1 bg-gtl-edge" />
           <span className="text-gtl-red">{days.length} DAY{days.length !== 1 ? 'S' : ''}</span>
@@ -1691,8 +2297,11 @@ export default function ActiveCyclePage() {
           </div>
         ) : (
           <div
-            className="grid gap-4"
-            style={{ gridTemplateColumns: `repeat(${Math.min(cols, days.length)}, 1fr)`, overflow: 'visible' }}
+            className="grid gap-2 flex-1 min-h-0"
+            style={{
+              gridTemplateColumns: `repeat(${Math.min(cols, days.length)}, 1fr)`,
+              gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
+            }}
           >
             {days.map((iso, i) => (
               <DayCard
@@ -1701,6 +2310,7 @@ export default function ActiveCyclePage() {
                 muscles={dailyPlan[iso] || []}
                 index={i}
                 onClick={handleDayClick}
+                doneKey={cardRefreshKey}
               />
             ))}
           </div>
@@ -1713,10 +2323,121 @@ export default function ActiveCyclePage() {
           key={focusDay}
           iso={focusDay}
           muscles={dailyPlan[focusDay] || []}
+          isLastDay={(() => {
+            const undoneDays = days.filter(d => {
+              try { return localStorage.getItem(`gtl-done-${d}`) !== 'true' } catch { return true }
+            })
+            return undoneDays.length === 1 && undoneDays[0] === focusDay
+          })()}
           originRect={focusRect}
           onClose={handleCloseFocus}
         />
       )}
+
+      {/* ── XP ANIMATION OVERLAY ── */}
+      {xpAnim && (() => {
+        const cx = window.innerWidth / 2
+        const cy = window.innerHeight / 2
+        const { phase, particles, total, barRect } = xpAnim
+        const barCx = barRect ? barRect.left + barRect.width / 2 : cx
+        const barCy = barRect ? barRect.top + barRect.height / 2 : 80
+        const fmt = (n) => {
+          const w = Math.round(n)
+          return w >= 1000 ? `${Math.round(w / 1000)}K` : w.toLocaleString()
+        }
+
+        return (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 9999, pointerEvents: 'none' }}>
+            <style>{`
+              ${particles.map((p, i) => `
+                @keyframes xp-p-${i} {
+                  0%   { transform: translate(${p.x}px, ${p.y}px) translate(-50%,-50%) scale(0.2); opacity: 0; }
+                  10%  { opacity: 1; }
+                  42%  { transform: translate(${p.x}px, ${p.y}px) translate(-50%,-50%) scale(1.6); opacity: 1; }
+                  100% { transform: translate(${cx}px, ${cy}px) translate(-50%,-50%) scale(0.05); opacity: 0; }
+                }
+              `).join('')}
+              @keyframes xp-combine-in {
+                0%   { transform: translate(${cx}px, ${cy}px) translate(-50%,-50%) scale(0.08) rotate(-4deg); opacity: 0; filter: blur(10px); }
+                35%  { filter: blur(0); opacity: 1; }
+                65%  { transform: translate(${cx}px, ${cy}px) translate(-50%,-50%) scale(1.18) rotate(1deg); }
+                82%  { transform: translate(${cx}px, ${cy}px) translate(-50%,-50%) scale(0.96) rotate(-0.5deg); }
+                100% { transform: translate(${cx}px, ${cy}px) translate(-50%,-50%) scale(1) rotate(0deg); opacity: 1; }
+              }
+              @keyframes xp-fly {
+                0%   { transform: translate(${cx}px, ${cy}px) translate(-50%,-50%) scale(1); opacity: 1; }
+                25%  { transform: translate(${cx}px, ${cy}px) translate(-50%,-50%) scale(1.25); }
+                100% { transform: translate(${barCx}px, ${barCy}px) translate(-50%,-50%) scale(0.1); opacity: 0; }
+              }
+              @keyframes xp-bar-pulse {
+                0%   { box-shadow: 0 0 30px rgba(228,176,34,0.9), 0 0 60px rgba(228,176,34,0.4); }
+                50%  { box-shadow: 0 0 60px rgba(228,176,34,1), 0 0 120px rgba(228,176,34,0.7), 0 0 200px rgba(228,176,34,0.3); }
+                100% { box-shadow: 0 0 30px rgba(228,176,34,0.9), 0 0 60px rgba(228,176,34,0.4); }
+              }
+              @keyframes xp-bar-wobble {
+                0%   { transform: scaleY(1)    scaleX(1); }
+                8%   { transform: scaleY(1.5)  scaleX(0.96); }
+                18%  { transform: scaleY(0.75) scaleX(1.04); }
+                30%  { transform: scaleY(1.3)  scaleX(0.97); }
+                42%  { transform: scaleY(0.85) scaleX(1.02); }
+                55%  { transform: scaleY(1.15) scaleX(0.99); }
+                68%  { transform: scaleY(0.92) scaleX(1.01); }
+                80%  { transform: scaleY(1.06) scaleX(1); }
+                90%  { transform: scaleY(0.97) scaleX(1); }
+                100% { transform: scaleY(1)    scaleX(1); }
+              }
+            `}</style>
+
+            {/* Particles: expand at card positions then converge to center */}
+            {(phase === 'expand' || phase === 'converge') && particles.map((p, i) => (
+              <div key={i} style={{
+                position: 'fixed', left: 0, top: 0,
+                fontFamily: 'Anton, Impact, sans-serif',
+                fontSize: 'clamp(1.8rem, 3.5vw, 3rem)',
+                color: '#e4b022',
+                textShadow: '2px 2px 0 #8a6612, 0 0 24px rgba(228,176,34,0.9)',
+                whiteSpace: 'nowrap',
+                lineHeight: 1,
+                animation: `xp-p-${i} 1500ms cubic-bezier(0.4, 0, 0.6, 1) both`,
+              }}>
+                {fmt(p.value)}
+              </div>
+            ))}
+
+            {/* Combined number: slams in at center */}
+            {phase === 'combine' && (
+              <div style={{
+                position: 'fixed', left: 0, top: 0,
+                fontFamily: 'Anton, Impact, sans-serif',
+                fontSize: 'clamp(5rem, 12vw, 10rem)',
+                color: '#e4b022',
+                textShadow: '4px 4px 0 #8a6612, 0 0 50px rgba(228,176,34,1), 0 0 100px rgba(228,176,34,0.5)',
+                whiteSpace: 'nowrap',
+                lineHeight: 1,
+                animation: 'xp-combine-in 900ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both',
+              }}>
+                {fmt(total)}
+              </div>
+            )}
+
+            {/* Combined number flying into bar */}
+            {phase === 'fly' && (
+              <div style={{
+                position: 'fixed', left: 0, top: 0,
+                fontFamily: 'Anton, Impact, sans-serif',
+                fontSize: 'clamp(5rem, 12vw, 10rem)',
+                color: '#e4b022',
+                textShadow: '4px 4px 0 #8a6612, 0 0 50px rgba(228,176,34,1)',
+                whiteSpace: 'nowrap',
+                lineHeight: 1,
+                animation: 'xp-fly 700ms cubic-bezier(0.4, 0, 1, 1) both',
+              }}>
+                {fmt(total)}
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       <FireFadeIn duration={900} />
     </main>

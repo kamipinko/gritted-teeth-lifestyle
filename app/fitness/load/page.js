@@ -7,7 +7,7 @@
  * action bar fixed at the bottom. Only one cycle selected at a time.
  * DELETE goes through three confirmation stages in the bottom bar.
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSound } from '../../../lib/useSound'
@@ -223,6 +223,50 @@ function CycleCard({ cycle, index, selected, onSelect }) {
   const created = new Date(cycle.createdAt)
   const createdStr = `${MONTH_SHORT[created.getMonth()]} ${created.getDate()} ${created.getFullYear()}`
 
+  const [doneDays, setDoneDays] = useState({})
+  useEffect(() => {
+    const result = {}
+    for (const iso of (cycle.days || [])) {
+      try { result[iso] = localStorage.getItem(`gtl-done-${iso}`) === 'true' } catch (_) {}
+    }
+    setDoneDays(result)
+  }, [cycle.id])
+
+  const allDone = cycle.days?.length > 0 && cycle.days.every(iso => doneDays[iso])
+
+  // Random splatter — generated once per card mount so it's different every time
+  const splatter = useMemo(() => {
+    const rnd = (min, max) => min + Math.random() * (max - min)
+    const pick = () => Math.random() > 0.45 ? '#8b0000' : '#d4181f'
+    const drops = []
+
+    // Spray around a focal point, biased toward (bx,by) direction
+    function spray(ox, oy, bx, by, count, baseDelay) {
+      for (let i = 0; i < count; i++) {
+        // angle biased toward bias direction with wide spread
+        const biasAngle = Math.atan2(by - oy, bx - ox)
+        const spread = Math.PI * 1.4
+        const angle = biasAngle + rnd(-spread / 2, spread / 2)
+        const dist = i < 3 ? rnd(4, 25) : rnd(20, 110) // first few close, rest far
+        const cx = ox + Math.cos(angle) * dist
+        const cy = oy + Math.sin(angle) * dist
+        const rx = rnd(3, i < 3 ? 18 : 7)
+        // elongated drops for distant ones
+        const ry = dist > 50 ? rx * rnd(0.3, 0.7) : rx * rnd(0.7, 1.0)
+        const rot = (Math.atan2(Math.sin(angle), Math.cos(angle)) * 180 / Math.PI)
+        drops.push({ cx, cy, rx, ry, rot, fill: pick(), delay: baseDelay + i * rnd(20, 60) })
+      }
+    }
+
+    // stroke 1 endpoints + center
+    const cx = 500, cy = 210
+    spray(16,  20,  cx, cy, 12, 100)   // top-left endpoint
+    spray(980, 398, cx, cy, 12, 850)   // bottom-right endpoint
+    spray(cx,  cy,  cx, cy, 16, 1250)  // center — full 360° burst
+
+    return drops
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div
       className="relative bg-gtl-ink overflow-visible transition-all duration-200"
@@ -234,9 +278,70 @@ function CycleCard({ cycle, index, selected, onSelect }) {
         boxShadow: selected ? '0 0 24px rgba(212,24,31,0.25)' : 'none',
       }}
     >
-      {/* Index stamp — top right */}
-      <div className="absolute top-4 right-6 font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
-        CYCLE / {String(index + 1).padStart(2, '0')}
+      {/* Top-right corner: cycle index + deadline stamp */}
+      <div className="absolute top-4 right-6 flex flex-col items-end gap-2">
+        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
+          CYCLE / {String(index + 1).padStart(2, '0')}
+        </div>
+        {lastDay && (() => {
+          const d = parseDate(lastDay)
+          return (
+            <div className="relative" style={{ transform: 'rotate(-1.5deg)' }}>
+              {/* Shadow slab */}
+              <div
+                className="absolute inset-0 bg-gtl-red-deep"
+                style={{
+                  clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)',
+                  transform: 'translate(3px, 3px)',
+                }}
+                aria-hidden="true"
+              />
+              {/* Stamp face */}
+              <div
+                className="relative px-6 py-3 bg-gtl-red border-2 border-gtl-red-deep"
+                style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)' }}
+              >
+                <div className="font-display text-base tracking-[0.3em] uppercase text-gtl-paper leading-none mb-2"
+                     style={{ textShadow: '2px 2px 0 #070708' }}>
+                  ◼ DEADLINE ◼
+                </div>
+                <div className="font-display text-gtl-paper leading-none"
+                     style={{ fontSize: '1.1rem', textShadow: '1px 1px 0 #070708' }}>
+                  {d.toLocaleDateString('en-US', { month: 'long' }).toUpperCase()}
+                </div>
+                {/* Day number with spinning square behind */}
+                <div className="relative flex items-center justify-center my-1" style={{ width: '100px', height: '100px' }}>
+                  <style>{`
+                    @keyframes spin-square {
+                      from { transform: rotate(0deg); }
+                      to   { transform: rotate(360deg); }
+                    }
+                  `}</style>
+                  {/* Spinning black square */}
+                  <div
+                    className="absolute"
+                    style={{
+                      width: '80px', height: '80px',
+                      background: '#070708',
+                      animation: 'spin-square 8s linear infinite',
+                      boxShadow: '0 0 20px rgba(0,0,0,0.8)',
+                    }}
+                    aria-hidden="true"
+                  />
+                  {/* Day number on top */}
+                  <div className="relative font-display text-gtl-paper leading-none"
+                       style={{ fontSize: '5rem', textShadow: '4px 4px 0 #070708', lineHeight: 1, zIndex: 1 }}>
+                    {String(d.getDate()).padStart(2, '0')}
+                  </div>
+                </div>
+                <div className="font-display text-gtl-paper/80 leading-none mt-1.5"
+                     style={{ fontSize: '0.85rem', textShadow: '1px 1px 0 #070708' }}>
+                  {d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()} · {d.getFullYear()}
+                </div>
+              </div>
+            </div>
+          )
+        })()}
       </div>
 
       {/* Giant checkmark — slams in on select, gone on deselect */}
@@ -275,31 +380,70 @@ function CycleCard({ cycle, index, selected, onSelect }) {
           </div>
         )}
 
-        {/* Stats row */}
-        <div className="flex items-center gap-6 mb-6">
-          <div>
-            <div className="font-display text-3xl leading-none"
-                 style={{ color: '#e4b022', textShadow: '2px 2px 0 #8a6612' }}>
-              {String(cycle.days?.length ?? 0).padStart(2, '0')}
+        {/* Stats + day grid — same row */}
+        <div className="flex items-center gap-6 mb-6 flex-wrap">
+          {/* Stats */}
+          <div className="flex items-center gap-6 shrink-0">
+            <div>
+              <div className="font-display text-3xl leading-none"
+                   style={{ color: '#e4b022', textShadow: '2px 2px 0 #8a6612' }}>
+                {String(cycle.days?.length ?? 0).padStart(2, '0')}
+              </div>
+              <div className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-smoke mt-0.5">BATTLEDAYS</div>
             </div>
-            <div className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-smoke mt-0.5">BATTLEDAYS</div>
-          </div>
-          <div className="w-px h-10 bg-gtl-red" style={{ transform: 'skewX(-12deg)' }} />
-          <div>
-            <div className="font-display text-3xl leading-none"
-                 style={{ color: '#e4b022', textShadow: '2px 2px 0 #8a6612' }}>
-              {String(cycle.targets?.length ?? 0).padStart(2, '0')}
+            <div className="w-px h-10 bg-gtl-red" style={{ transform: 'skewX(-12deg)' }} />
+            <div>
+              <div className="font-display text-3xl leading-none"
+                   style={{ color: '#e4b022', textShadow: '2px 2px 0 #8a6612' }}>
+                {String(cycle.targets?.length ?? 0).padStart(2, '0')}
+              </div>
+              <div className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-smoke mt-0.5">TARGETS</div>
             </div>
-            <div className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-smoke mt-0.5">TARGETS</div>
-          </div>
-          <div className="w-px h-10 bg-gtl-red" style={{ transform: 'skewX(-12deg)' }} />
-          <div>
-            <div className="font-display text-3xl leading-none"
-                 style={{ color: '#e4b022', textShadow: '2px 2px 0 #8a6612' }}>
-              {String(plannedSessions).padStart(2, '0')}
+            <div className="w-px h-10 bg-gtl-red" style={{ transform: 'skewX(-12deg)' }} />
+            <div>
+              <div className="font-display text-3xl leading-none"
+                   style={{ color: '#e4b022', textShadow: '2px 2px 0 #8a6612' }}>
+                {String(plannedSessions).padStart(2, '0')}
+              </div>
+              <div className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-smoke mt-0.5">SESSIONS</div>
             </div>
-            <div className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-smoke mt-0.5">SESSIONS</div>
           </div>
+
+          {/* Day progress chips */}
+          {cycle.days?.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 ml-24">
+              {cycle.days.map((iso) => {
+                const date = new Date(iso + 'T12:00:00')
+                const dayNum = date.getDate()
+                const hasWork = (cycle.dailyPlan?.[iso] || []).length > 0
+                const done = doneDays[iso]
+                return (
+                  <div key={iso} className="relative" style={{ width: '34px', height: '34px' }}>
+                    <div style={{
+                      width: '100%', height: '100%',
+                      background: hasWork ? 'rgba(212,24,31,0.12)' : 'rgba(26,26,30,0.6)',
+                      border: `1px solid ${hasWork ? 'rgba(212,24,31,0.35)' : 'rgba(58,58,66,0.4)'}`,
+                      clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <span className="font-display leading-none"
+                        style={{ fontSize: '0.85rem', color: hasWork ? '#c8c8c8' : '#3a3a42' }}>
+                        {dayNum}
+                      </span>
+                    </div>
+                    {done && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+                        <span className="font-display leading-none"
+                          style={{ fontSize: '1.6rem', color: 'rgba(212,24,31,0.55)', transform: 'rotate(-5deg)', textShadow: '1px 1px 0 rgba(0,0,0,0.5)' }}>
+                          X
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {/* Red slash divider */}
@@ -314,6 +458,104 @@ function CycleCard({ cycle, index, selected, onSelect }) {
           </div>
         )}
       </div>
+
+      {/* Completed cycle — blood spilt X */}
+      {allDone && (
+        <>
+          <style>{`
+            @keyframes blood-stroke-1 {
+              from { stroke-dashoffset: 2000; opacity: 0; }
+              2%   { opacity: 1; }
+              to   { stroke-dashoffset: 0; opacity: 1; }
+            }
+            @keyframes blood-stroke-2 {
+              from { stroke-dashoffset: 2000; opacity: 0; }
+              2%   { opacity: 1; }
+              to   { stroke-dashoffset: 0; opacity: 1; }
+            }
+            @keyframes blood-splat {
+              0%   { transform: scale(0); opacity: 0; }
+              60%  { transform: scale(1.3); opacity: 1; }
+              100% { transform: scale(1);   opacity: 0.85; }
+            }
+            @keyframes blood-text {
+              0%   { transform: translate(-50%,-50%) rotate(-18deg) scale(2.5); opacity: 0; filter: blur(8px); }
+              60%  { transform: translate(-50%,-50%) rotate(-18deg) scale(0.9); opacity: 1; filter: blur(0); }
+              80%  { transform: translate(-50%,-50%) rotate(-18deg) scale(1.06); }
+              100% { transform: translate(-50%,-50%) rotate(-18deg) scale(1); opacity: 1; }
+            }
+          `}</style>
+          <svg
+            className="absolute inset-0 pointer-events-none"
+            width="100%" height="100%"
+            viewBox="0 0 1000 420"
+            preserveAspectRatio="none"
+            style={{ zIndex: 10 }}
+            aria-hidden="true"
+          >
+            <defs>
+              <filter id="blood-blur">
+                <feGaussianBlur stdDeviation="1.5" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+
+            {/* ── STROKE 1: top-left → bottom-right ── */}
+            {/* shadow */}
+            <path d="M 18,22 C 120,48 310,160 498,215 C 680,268 850,340 982,400"
+              stroke="rgba(0,0,0,0.55)" strokeWidth="14" strokeLinecap="round" fill="none"
+              strokeDasharray="2000" style={{ animation: 'blood-stroke-1 800ms cubic-bezier(0.3,0,0.2,1) 100ms both' }} />
+            {/* main */}
+            <path d="M 16,20 C 118,46 308,158 496,213 C 678,266 848,338 980,398"
+              stroke="#8b0000" strokeWidth="11" strokeLinecap="round" fill="none"
+              strokeDasharray="2000" style={{ animation: 'blood-stroke-1 800ms cubic-bezier(0.3,0,0.2,1) 100ms both', filter: 'url(#blood-blur)' }} />
+            {/* wet sheen */}
+            <path d="M 16,18 C 118,44 308,156 496,211 C 678,264 848,336 980,396"
+              stroke="#d4181f" strokeWidth="5" strokeLinecap="round" fill="none" opacity="0.7"
+              strokeDasharray="2000" style={{ animation: 'blood-stroke-1 800ms cubic-bezier(0.3,0,0.2,1) 100ms both' }} />
+            {/* highlight */}
+            <path d="M 16,17 C 118,43 308,155 496,210 C 678,263 848,335 980,395"
+              stroke="rgba(255,100,100,0.35)" strokeWidth="2" strokeLinecap="round" fill="none"
+              strokeDasharray="2000" style={{ animation: 'blood-stroke-1 800ms cubic-bezier(0.3,0,0.2,1) 100ms both' }} />
+
+
+{/* ── INK SPLATTER — randomly placed on mount ── */}
+            {splatter.map(({ cx, cy, rx, ry, rot, fill, delay }, i) => (
+              <g key={i} transform={`rotate(${rot} ${cx} ${cy})`}>
+                <ellipse cx={cx} cy={cy} rx={rx} ry={ry}
+                  fill={fill} opacity="0"
+                  style={{ animation: `blood-splat 400ms ease-out ${Math.round(delay)}ms both`, transformBox: 'fill-box', transformOrigin: 'center' }} />
+              </g>
+            ))}
+          </svg>
+
+          {/* BLOOD SPILT stamp */}
+          <div
+            className="absolute pointer-events-none select-none"
+            style={{
+              left: '50%', top: '50%', zIndex: 11,
+              animation: 'blood-text 600ms cubic-bezier(0.2, 1.4, 0.3, 1) 1500ms both',
+            }}
+            aria-hidden="true"
+          >
+            <div style={{
+              transform: 'translate(-50%, -50%) rotate(-18deg)',
+              fontFamily: 'Anton, Impact, sans-serif',
+              fontSize: 'clamp(2.5rem, 6vw, 5rem)',
+              color: '#8b0000',
+              letterSpacing: '0.12em',
+              textShadow: '4px 4px 0 rgba(0,0,0,0.75), 0 0 40px rgba(139,0,0,0.7)',
+              border: '4px solid #8b0000',
+              padding: '6px 20px',
+              lineHeight: 1.1,
+              opacity: 0.92,
+              whiteSpace: 'nowrap',
+            }}>
+              BLOOD SPILT
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
