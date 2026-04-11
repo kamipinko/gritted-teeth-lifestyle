@@ -39,39 +39,39 @@ const MODELS = {
     //               ForeArm=±1.247,1.203 Spine1=[0,0.875] Hips=[0,0.437]
     //               UpLeg=±0.311,0.324 Leg=±0.566,−0.947
     hitboxes: [
-      // CHEST — between Spine1(0.875) and Spine2(1.145), pushed forward
-      { group: 'chest',      position: [-0.22,  1.01,  0.23], rotation: [-0.554, 0,  0],     scale: [0.25, 0.16, 0.13] },
-      { group: 'chest',      position: [ 0.22,  1.01,  0.23], rotation: [-0.554, 0,  0],     scale: [0.25, 0.16, 0.13] },
+      // CHEST — between Spine1(0.875) and Spine2(1.145), pushed forward (Z- = front for rotated model)
+      { group: 'chest',      position: [-0.22,  1.01, -0.23], rotation: [-0.554, 0,  0],     scale: [0.25, 0.16, 0.13] },
+      { group: 'chest',      position: [ 0.22,  1.01, -0.23], rotation: [-0.554, 0,  0],     scale: [0.25, 0.16, 0.13] },
       // SHOULDERS — deltoid: at arm bone (X=0.672, Y=1.306), rotated diagonally
-      { group: 'shoulders',  position: [-0.67,  1.31,  0.13], rotation: [0, 0, -0.724],      scale: [0.45, 0.13, 0.18] },
-      { group: 'shoulders',  position: [ 0.67,  1.31,  0.13], rotation: [0, 0,  0.724],      scale: [0.45, 0.13, 0.18] },
-      // BICEPS — mid upper arm: X=(0.672+1.247)/2=0.96, front of arm (Z+)
-      { group: 'biceps',     position: [-0.96,  1.26,  0.19], rotation: [0, 0,  0],          scale: [0.48, 0.12, 0.13] },
-      { group: 'biceps',     position: [ 0.96,  1.26,  0.19], rotation: [0, 0,  0],          scale: [0.48, 0.12, 0.13] },
-      // TRICEPS — same mid as biceps, back of arm (Z-)
-      { group: 'triceps',    position: [-0.96,  1.26, -0.02], rotation: [0, 0,  0],          scale: [0.42, 0.10, 0.12] },
-      { group: 'triceps',    position: [ 0.96,  1.26, -0.02], rotation: [0, 0,  0],          scale: [0.42, 0.10, 0.12] },
-      // FOREARMS — mid forearm: ForeArm(1.247) to hand(est.1.75), X mid=1.50
-      { group: 'forearms',   position: [-1.50,  1.20,  0.13], rotation: [0, 0,  0],          scale: [0.42, 0.11, 0.12] },
-      { group: 'forearms',   position: [ 1.50,  1.20,  0.13], rotation: [0, 0,  0],          scale: [0.42, 0.11, 0.12] },
-      // ABS — between Spine(0.639) and Spine1(0.875), center=0.757, pushed forward
-      { group: 'abs',        position: [-0.18,  0.76,  0.17], rotation: [0, 0,  0],          scale: [0.22, 0.35, 0.08] },
-      { group: 'abs',        position: [ 0.18,  0.76,  0.17], rotation: [0, 0,  0],          scale: [0.22, 0.35, 0.08] },
-      // GLUTES — Hips(0.437), slightly below/behind
-      { group: 'glutes',     position: [-0.28,  0.36, -0.16], rotation: [0, 0,  0],          scale: [0.18, 0.18, 0.13] },
-      { group: 'glutes',     position: [ 0.28,  0.36, -0.16], rotation: [0, 0,  0],          scale: [0.18, 0.18, 0.13] },
-      // QUADS — mid thigh: X=(0.311+0.566)/2=0.44, Y=(0.324−0.947)/2=−0.31, front
-      { group: 'quads',      position: [-0.44, -0.31,  0.08], rotation: [0, 0,  0],          scale: [0.16, 0.28, 0.13] },
-      { group: 'quads',      position: [ 0.44, -0.31,  0.08], rotation: [0, 0,  0],          scale: [0.16, 0.28, 0.13] },
-      // HAMSTRINGS — same mid thigh, back
-      { group: 'hamstrings', position: [-0.44, -0.31, -0.12], rotation: [0, 0,  0],          scale: [0.14, 0.28, 0.12] },
-      { group: 'hamstrings', position: [ 0.44, -0.31, -0.12], rotation: [0, 0,  0],          scale: [0.14, 0.28, 0.12] },
-      // CALVES — below knee(−0.947) to ankle(est.−1.85), mid=−1.40
-      { group: 'calves',     position: [-0.53, -1.40, -0.08], rotation: [0, 0,  0],          scale: [0.12, 0.27, 0.12] },
-      { group: 'calves',     position: [ 0.53, -1.40, -0.08], rotation: [0, 0,  0],          scale: [0.12, 0.27, 0.12] },
-      // BACK — lats/traps: mid of Spine→Spine2, behind body
-      { group: 'back',       position: [-0.22,  0.80, -0.08], rotation: [0, 0,  0],          scale: [0.22, 0.40, 0.13] },
-      { group: 'back',       position: [ 0.22,  0.80, -0.08], rotation: [0, 0,  0],          scale: [0.22, 0.40, 0.13] },
+      { group: 'shoulders',  position: [-0.67,  1.31, -0.13], rotation: [0, 0, -0.724],      scale: [0.45, 0.13, 0.18] },
+      { group: 'shoulders',  position: [ 0.67,  1.31, -0.13], rotation: [0, 0,  0.724],      scale: [0.45, 0.13, 0.18] },
+      // BICEPS — mid upper arm: front of arm (Z-)
+      { group: 'biceps',     position: [-0.96,  1.26, -0.19], rotation: [0, 0,  0],          scale: [0.48, 0.12, 0.13] },
+      { group: 'biceps',     position: [ 0.96,  1.26, -0.19], rotation: [0, 0,  0],          scale: [0.48, 0.12, 0.13] },
+      // TRICEPS — back of arm (Z+)
+      { group: 'triceps',    position: [-0.96,  1.26,  0.15], rotation: [0, 0,  0],          scale: [0.42, 0.10, 0.12] },
+      { group: 'triceps',    position: [ 0.96,  1.26,  0.15], rotation: [0, 0,  0],          scale: [0.42, 0.10, 0.12] },
+      // FOREARMS — mid forearm
+      { group: 'forearms',   position: [-1.50,  1.20, -0.13], rotation: [0, 0,  0],          scale: [0.42, 0.11, 0.12] },
+      { group: 'forearms',   position: [ 1.50,  1.20, -0.13], rotation: [0, 0,  0],          scale: [0.42, 0.11, 0.12] },
+      // ABS — front torso (Z-)
+      { group: 'abs',        position: [-0.18,  0.76, -0.17], rotation: [0, 0,  0],          scale: [0.22, 0.35, 0.08] },
+      { group: 'abs',        position: [ 0.18,  0.76, -0.17], rotation: [0, 0,  0],          scale: [0.22, 0.35, 0.08] },
+      // GLUTES — rear (Z+)
+      { group: 'glutes',     position: [-0.28,  0.36,  0.16], rotation: [0, 0,  0],          scale: [0.18, 0.18, 0.13] },
+      { group: 'glutes',     position: [ 0.28,  0.36,  0.16], rotation: [0, 0,  0],          scale: [0.18, 0.18, 0.13] },
+      // QUADS — front thigh (Z-)
+      { group: 'quads',      position: [-0.44, -0.31, -0.08], rotation: [0, 0,  0],          scale: [0.16, 0.28, 0.13] },
+      { group: 'quads',      position: [ 0.44, -0.31, -0.08], rotation: [0, 0,  0],          scale: [0.16, 0.28, 0.13] },
+      // HAMSTRINGS — rear thigh (Z+)
+      { group: 'hamstrings', position: [-0.44, -0.31,  0.12], rotation: [0, 0,  0],          scale: [0.14, 0.28, 0.12] },
+      { group: 'hamstrings', position: [ 0.44, -0.31,  0.12], rotation: [0, 0,  0],          scale: [0.14, 0.28, 0.12] },
+      // CALVES — rear lower leg (Z+)
+      { group: 'calves',     position: [-0.53, -1.40,  0.08], rotation: [0, 0,  0],          scale: [0.12, 0.27, 0.12] },
+      { group: 'calves',     position: [ 0.53, -1.40,  0.08], rotation: [0, 0,  0],          scale: [0.12, 0.27, 0.12] },
+      // BACK — lats/traps (Z+)
+      { group: 'back',       position: [-0.22,  0.80,  0.16], rotation: [0, 0,  0],          scale: [0.22, 0.40, 0.13] },
+      { group: 'back',       position: [ 0.22,  0.80,  0.16], rotation: [0, 0,  0],          scale: [0.22, 0.40, 0.13] },
     ],
   },
   gokuSSJ: {
@@ -81,28 +81,28 @@ const MODELS = {
     // Off-origin GLB — Center component re-centers at runtime.
     // Same hair-inflation Y correction as goku.
     hitboxes: [
-      { group: 'chest', position: [-0.111,1.052,0.546], rotation: [0, 0, 0], scale: [0.109,0.140,0.316] },
-      { group: 'chest', position: [0.111,1.052,0.546], rotation: [0, 0, 0], scale: [0.109,0.140,0.316] },
+      { group: 'chest', position: [-0.111,1.052,-0.546], rotation: [0, 0, 0], scale: [0.109,0.140,0.316] },
+      { group: 'chest', position: [0.111,1.052,-0.546], rotation: [0, 0, 0], scale: [0.109,0.140,0.316] },
       { group: 'shoulders', position: [-0.253,1.174,0.000], rotation: [0.000,0.000,-0.724], scale: [0.162,0.100,0.460] },
       { group: 'shoulders', position: [0.253,1.174,0.000], rotation: [0.000,0.000,0.724], scale: [0.162,0.100,0.460] },
       { group: 'biceps', position: [-0.293,0.810,0.000], rotation: [0, 0, 0], scale: [0.073,0.210,0.230] },
       { group: 'biceps', position: [0.293,0.810,0.000], rotation: [0, 0, 0], scale: [0.073,0.210,0.230] },
-      { group: 'triceps', position: [-0.309,0.840,-0.489], rotation: [0, 0, 0], scale: [0.051,0.190,0.230] },
-      { group: 'triceps', position: [0.309,0.840,-0.489], rotation: [0, 0, 0], scale: [0.051,0.190,0.230] },
-      { group: 'forearms', position: [-0.379,0.332,-0.115], rotation: [0, 0, 0], scale: [0.061,0.260,0.345] },
-      { group: 'forearms', position: [0.379,0.332,-0.115], rotation: [0, 0, 0], scale: [0.061,0.260,0.345] },
-      { group: 'abs', position: [-0.051,0.450,0.546], rotation: [0, 0, 0], scale: [0.061,0.250,0.259] },
-      { group: 'abs', position: [0.051,0.450,0.546], rotation: [0, 0, 0], scale: [0.061,0.250,0.259] },
-      { group: 'glutes', position: [-0.091,-0.200,-0.518], rotation: [0, 0, 0], scale: [0.076,0.160,0.316] },
-      { group: 'glutes', position: [0.091,-0.200,-0.518], rotation: [0, 0, 0], scale: [0.076,0.160,0.316] },
-      { group: 'quads', position: [-0.081,-0.620,0.345], rotation: [0, 0, 0], scale: [0.066,0.250,0.316] },
-      { group: 'quads', position: [0.081,-0.620,0.345], rotation: [0, 0, 0], scale: [0.066,0.250,0.316] },
-      { group: 'hamstrings', position: [-0.081,-0.620,-0.403], rotation: [0, 0, 0], scale: [0.061,0.250,0.288] },
-      { group: 'hamstrings', position: [0.081,-0.620,-0.403], rotation: [0, 0, 0], scale: [0.061,0.250,0.288] },
-      { group: 'calves', position: [-0.066,-1.200,-0.230], rotation: [0, 0, 0], scale: [0.048,0.230,0.276] },
-      { group: 'calves', position: [0.066,-1.200,-0.230], rotation: [0, 0, 0], scale: [0.048,0.230,0.276] },
-      { group: 'back', position: [-0.137,0.900,-0.403], rotation: [0, 0, 0], scale: [0.132,0.300,0.173] },
-      { group: 'back', position: [0.137,0.900,-0.403], rotation: [0, 0, 0], scale: [0.132,0.300,0.173] },
+      { group: 'triceps', position: [-0.309,0.840,0.489], rotation: [0, 0, 0], scale: [0.051,0.190,0.230] },
+      { group: 'triceps', position: [0.309,0.840,0.489], rotation: [0, 0, 0], scale: [0.051,0.190,0.230] },
+      { group: 'forearms', position: [-0.379,0.332,0.115], rotation: [0, 0, 0], scale: [0.061,0.260,0.345] },
+      { group: 'forearms', position: [0.379,0.332,0.115], rotation: [0, 0, 0], scale: [0.061,0.260,0.345] },
+      { group: 'abs', position: [-0.051,0.450,-0.546], rotation: [0, 0, 0], scale: [0.061,0.250,0.259] },
+      { group: 'abs', position: [0.051,0.450,-0.546], rotation: [0, 0, 0], scale: [0.061,0.250,0.259] },
+      { group: 'glutes', position: [-0.091,-0.200,0.518], rotation: [0, 0, 0], scale: [0.076,0.160,0.316] },
+      { group: 'glutes', position: [0.091,-0.200,0.518], rotation: [0, 0, 0], scale: [0.076,0.160,0.316] },
+      { group: 'quads', position: [-0.081,-0.620,-0.345], rotation: [0, 0, 0], scale: [0.066,0.250,0.316] },
+      { group: 'quads', position: [0.081,-0.620,-0.345], rotation: [0, 0, 0], scale: [0.066,0.250,0.316] },
+      { group: 'hamstrings', position: [-0.081,-0.620,0.403], rotation: [0, 0, 0], scale: [0.061,0.250,0.288] },
+      { group: 'hamstrings', position: [0.081,-0.620,0.403], rotation: [0, 0, 0], scale: [0.061,0.250,0.288] },
+      { group: 'calves', position: [-0.066,-1.200,0.230], rotation: [0, 0, 0], scale: [0.048,0.230,0.276] },
+      { group: 'calves', position: [0.066,-1.200,0.230], rotation: [0, 0, 0], scale: [0.048,0.230,0.276] },
+      { group: 'back', position: [-0.137,0.900,0.403], rotation: [0, 0, 0], scale: [0.132,0.300,0.173] },
+      { group: 'back', position: [0.137,0.900,0.403], rotation: [0, 0, 0], scale: [0.132,0.300,0.173] },
     ],
   },
   gohan: {
@@ -115,38 +115,38 @@ const MODELS = {
     //               UpLeg=±0.285,−0.030 Leg=±0.401,−1.090
     hitboxes: [
       // CHEST — between Spine1(0.578) and Spine2(0.876), mid=0.727, pushed forward
-      { group: 'chest',      position: [-0.19,  0.73,  0.27], rotation: [-0.554, 0,  0],     scale: [0.22, 0.15, 0.12] },
-      { group: 'chest',      position: [ 0.19,  0.73,  0.27], rotation: [-0.554, 0,  0],     scale: [0.22, 0.15, 0.12] },
+      { group: 'chest',      position: [-0.19,  0.73, -0.27], rotation: [-0.554, 0,  0],     scale: [0.22, 0.15, 0.12] },
+      { group: 'chest',      position: [ 0.19,  0.73, -0.27], rotation: [-0.554, 0,  0],     scale: [0.22, 0.15, 0.12] },
       // SHOULDERS — deltoid: at arm bone (X=0.550, Y=1.046)
-      { group: 'shoulders',  position: [-0.55,  1.05,  0.18], rotation: [0, 0, -0.724],      scale: [0.38, 0.12, 0.16] },
-      { group: 'shoulders',  position: [ 0.55,  1.05,  0.18], rotation: [0, 0,  0.724],      scale: [0.38, 0.12, 0.16] },
-      // BICEPS — mid upper arm: X=(0.550+1.121)/2=0.836, front of arm (Z+)
-      { group: 'biceps',     position: [-0.84,  1.01,  0.24], rotation: [0, 0,  0],          scale: [0.44, 0.11, 0.12] },
-      { group: 'biceps',     position: [ 0.84,  1.01,  0.24], rotation: [0, 0,  0],          scale: [0.44, 0.11, 0.12] },
-      // TRICEPS — same mid as biceps, back of arm (Z-)
-      { group: 'triceps',    position: [-0.84,  1.01,  0.06], rotation: [0, 0,  0],          scale: [0.38, 0.10, 0.11] },
-      { group: 'triceps',    position: [ 0.84,  1.01,  0.06], rotation: [0, 0,  0],          scale: [0.38, 0.10, 0.11] },
-      // FOREARMS — mid forearm: ForeArm(1.121) to hand(est.1.58), X mid=1.35
-      { group: 'forearms',   position: [-1.35,  0.97,  0.18], rotation: [0, 0,  0],          scale: [0.38, 0.10, 0.11] },
-      { group: 'forearms',   position: [ 1.35,  0.97,  0.18], rotation: [0, 0,  0],          scale: [0.38, 0.10, 0.11] },
-      // ABS — between Spine(0.317) and Spine1(0.578), center=0.448, pushed forward
-      { group: 'abs',        position: [-0.16,  0.45,  0.20], rotation: [0, 0,  0],          scale: [0.20, 0.30, 0.07] },
-      { group: 'abs',        position: [ 0.16,  0.45,  0.20], rotation: [0, 0,  0],          scale: [0.20, 0.30, 0.07] },
-      // GLUTES — Hips(0.094), slightly below/behind
-      { group: 'glutes',     position: [-0.24,  0.03, -0.14], rotation: [0, 0,  0],          scale: [0.16, 0.17, 0.12] },
-      { group: 'glutes',     position: [ 0.24,  0.03, -0.14], rotation: [0, 0,  0],          scale: [0.16, 0.17, 0.12] },
-      // QUADS — mid thigh: X=(0.285+0.401)/2=0.343, Y=(−0.030−1.090)/2=−0.56, front
-      { group: 'quads',      position: [-0.34, -0.56,  0.12], rotation: [0, 0,  0],          scale: [0.14, 0.26, 0.12] },
-      { group: 'quads',      position: [ 0.34, -0.56,  0.12], rotation: [0, 0,  0],          scale: [0.14, 0.26, 0.12] },
-      // HAMSTRINGS — same mid thigh, back
-      { group: 'hamstrings', position: [-0.34, -0.56, -0.09], rotation: [0, 0,  0],          scale: [0.12, 0.26, 0.11] },
-      { group: 'hamstrings', position: [ 0.34, -0.56, -0.09], rotation: [0, 0,  0],          scale: [0.12, 0.26, 0.11] },
-      // CALVES — below knee(−1.090) to ankle(est.−2.0), mid=−1.55
-      { group: 'calves',     position: [-0.41, -1.55, -0.03], rotation: [0, 0,  0],          scale: [0.10, 0.25, 0.10] },
-      { group: 'calves',     position: [ 0.41, -1.55, -0.03], rotation: [0, 0,  0],          scale: [0.10, 0.25, 0.10] },
-      // BACK — lats/traps: mid of Spine→Spine2, behind body
-      { group: 'back',       position: [-0.18,  0.60, -0.07], rotation: [0, 0,  0],          scale: [0.18, 0.36, 0.11] },
-      { group: 'back',       position: [ 0.18,  0.60, -0.07], rotation: [0, 0,  0],          scale: [0.18, 0.36, 0.11] },
+      { group: 'shoulders',  position: [-0.55,  1.05, -0.18], rotation: [0, 0, -0.724],      scale: [0.38, 0.12, 0.16] },
+      { group: 'shoulders',  position: [ 0.55,  1.05, -0.18], rotation: [0, 0,  0.724],      scale: [0.38, 0.12, 0.16] },
+      // BICEPS — front of arm (Z-)
+      { group: 'biceps',     position: [-0.84,  1.01, -0.24], rotation: [0, 0,  0],          scale: [0.44, 0.11, 0.12] },
+      { group: 'biceps',     position: [ 0.84,  1.01, -0.24], rotation: [0, 0,  0],          scale: [0.44, 0.11, 0.12] },
+      // TRICEPS — back of arm (Z+)
+      { group: 'triceps',    position: [-0.84,  1.01,  0.14], rotation: [0, 0,  0],          scale: [0.38, 0.10, 0.11] },
+      { group: 'triceps',    position: [ 0.84,  1.01,  0.14], rotation: [0, 0,  0],          scale: [0.38, 0.10, 0.11] },
+      // FOREARMS — mid forearm
+      { group: 'forearms',   position: [-1.35,  0.97, -0.18], rotation: [0, 0,  0],          scale: [0.38, 0.10, 0.11] },
+      { group: 'forearms',   position: [ 1.35,  0.97, -0.18], rotation: [0, 0,  0],          scale: [0.38, 0.10, 0.11] },
+      // ABS — front torso (Z-)
+      { group: 'abs',        position: [-0.16,  0.45, -0.20], rotation: [0, 0,  0],          scale: [0.20, 0.30, 0.07] },
+      { group: 'abs',        position: [ 0.16,  0.45, -0.20], rotation: [0, 0,  0],          scale: [0.20, 0.30, 0.07] },
+      // GLUTES — rear (Z+)
+      { group: 'glutes',     position: [-0.24,  0.03,  0.14], rotation: [0, 0,  0],          scale: [0.16, 0.17, 0.12] },
+      { group: 'glutes',     position: [ 0.24,  0.03,  0.14], rotation: [0, 0,  0],          scale: [0.16, 0.17, 0.12] },
+      // QUADS — front thigh (Z-)
+      { group: 'quads',      position: [-0.34, -0.56, -0.12], rotation: [0, 0,  0],          scale: [0.14, 0.26, 0.12] },
+      { group: 'quads',      position: [ 0.34, -0.56, -0.12], rotation: [0, 0,  0],          scale: [0.14, 0.26, 0.12] },
+      // HAMSTRINGS — rear thigh (Z+)
+      { group: 'hamstrings', position: [-0.34, -0.56,  0.09], rotation: [0, 0,  0],          scale: [0.12, 0.26, 0.11] },
+      { group: 'hamstrings', position: [ 0.34, -0.56,  0.09], rotation: [0, 0,  0],          scale: [0.12, 0.26, 0.11] },
+      // CALVES — rear lower leg (Z+)
+      { group: 'calves',     position: [-0.41, -1.55,  0.10], rotation: [0, 0,  0],          scale: [0.10, 0.25, 0.10] },
+      { group: 'calves',     position: [ 0.41, -1.55,  0.10], rotation: [0, 0,  0],          scale: [0.10, 0.25, 0.10] },
+      // BACK — lats/traps (Z+)
+      { group: 'back',       position: [-0.18,  0.60,  0.15], rotation: [0, 0,  0],          scale: [0.18, 0.36, 0.11] },
+      { group: 'back',       position: [ 0.18,  0.60,  0.15], rotation: [0, 0,  0],          scale: [0.18, 0.36, 0.11] },
     ],
   },
   anatomy: {
@@ -250,52 +250,52 @@ function buildStandardHitboxes({ bodyScale = 1.0 }) {
 //   • slight upward pitch so the camera looks down at the target
 //   • pulled in closer than the overview for drama
 // The overview camera (no selection) stays centered and unangled.
-const OVERVIEW_CAM = { pos: [0, 0.6, 8], target: [0, 0.6, 0] }
+const OVERVIEW_CAM = { pos: [0, 0.6, -8], target: [0, 0.6, 0] }
 
 const DIST_CLOSE = 2.4                        // radial distance from target
 const YAW_OFFSET = DIST_CLOSE * Math.sin(Math.PI / 6)  // sin(30°) ≈ 1.20
 const YAW_DEPTH  = DIST_CLOSE * Math.cos(Math.PI / 6)  // cos(30°) ≈ 2.08
 const PITCH_LIFT = 0.25                       // camera sits slightly above target
 
-// Sign convention: positive yaw pushes the camera toward +X for front
-// muscles and toward +X for back muscles too (so the viewer's right stays
-// consistent across sides). The alternation happens in the table below.
-const MUSCLE_CAMERA = {
-  // Front-facing muscles → camera comes from +Z, alternating yaw
-  chest:      { target: [0,  1.60,  0.55], pos: [ YAW_OFFSET,  1.60 + PITCH_LIFT,  0.55 + YAW_DEPTH] },
-  shoulders:  { target: [0,  1.85,  0.05], pos: [-YAW_OFFSET,  1.85 + PITCH_LIFT,  0.05 + YAW_DEPTH] },
-  biceps:     { target: [0,  1.40,  0.35], pos: [ YAW_OFFSET,  1.40 + PITCH_LIFT,  0.35 + YAW_DEPTH] },
-  forearms:   { target: [0,  0.90,  0.15], pos: [-YAW_OFFSET,  0.90 + PITCH_LIFT,  0.15 + YAW_DEPTH] },
-  abs:        { target: [0,  1.00,  0.55], pos: [ YAW_OFFSET,  1.00 + PITCH_LIFT,  0.55 + YAW_DEPTH] },
-  quads:      { target: [0, -0.50,  0.40], pos: [-YAW_OFFSET, -0.50 + PITCH_LIFT,  0.40 + YAW_DEPTH] },
-  // Back-facing muscles → camera comes from -Z, alternating yaw
-  triceps:    { target: [0,  1.40, -0.30], pos: [ YAW_OFFSET,  1.40 + PITCH_LIFT, -0.30 - YAW_DEPTH] },
-  glutes:     { target: [0,  0.10, -0.45], pos: [-YAW_OFFSET,  0.10 + PITCH_LIFT, -0.45 - YAW_DEPTH] },
-  hamstrings: { target: [0, -0.50, -0.40], pos: [ YAW_OFFSET, -0.50 + PITCH_LIFT, -0.40 - YAW_DEPTH] },
-  calves:     { target: [0, -1.40, -0.30], pos: [-YAW_OFFSET, -1.40 + PITCH_LIFT, -0.30 - YAW_DEPTH] },
-  back:       { target: [0,  0.80, -0.10], pos: [-YAW_OFFSET,  0.80 + PITCH_LIFT, -0.10 - YAW_DEPTH] },
+// Alternating yaw sign per muscle group — keeps consecutive selections
+// feeling distinct (one comes from the left, the next from the right).
+const MUSCLE_YAW_SIGN = {
+  chest: 1, shoulders: -1, biceps: 1, forearms: -1, abs: 1, quads: -1,
+  triceps: 1, glutes: -1, hamstrings: 1, calves: -1, back: -1,
 }
 
-// ── Muscle centers (same as MUSCLE_CAMERA targets) ──────────────────
-// Used to position the focus point light directly on the 3D geometry.
-const MUSCLE_CENTERS = Object.fromEntries(
-  Object.entries(MUSCLE_CAMERA).map(([k, v]) => [k, v.target])
-)
+// Compute per-muscle camera positions directly from a model's hitboxes.
+// Averages all hitbox centers for each group → derives target + camera pos
+// using the same angular formula that the old hardcoded table used.
+// This means every model auto-gets correct zoom-in positions for free —
+// no manual MUSCLE_CAMERA table needed per model.
+function computeMuscleCameras(hitboxes) {
+  const groups = {}
+  for (const h of hitboxes) {
+    if (!groups[h.group]) groups[h.group] = []
+    groups[h.group].push(h.position)
+  }
 
-// ── Per-model glow position fixes ────────────────────────────────────
-// The click hitboxes are calibrated for Goku's proportions. For models
-// whose limbs sit in slightly different places, add a per-muscle Y
-// (or X/Z) offset here so the projected glow lines up with the actual
-// anatomy. Only the glow is offset — clickable hitboxes are untouched.
-const GLOW_OFFSETS = {
-  anatomy: {
-    quads:      [0, 0.55, 0],
-    glutes:     [0, 0.50, 0],
-    hamstrings: [0, 0.55, 0],
-    calves:     [0, 0.40, 0],
-    forearms:   [0, 0.20, 0],
-  },
+  const cameras = {}
+  for (const [group, positions] of Object.entries(groups)) {
+    const avgY = positions.reduce((s, p) => s + p[1], 0) / positions.length
+    const avgZ = positions.reduce((s, p) => s + p[2], 0) / positions.length
+
+    const sign  = MUSCLE_YAW_SIGN[group] ?? 1
+    // Front muscles have positive Z, back muscles negative — approach from same side
+    const depth = avgZ >= 0 ? YAW_DEPTH : -YAW_DEPTH
+
+    cameras[group] = {
+      target: [0, avgY, avgZ],
+      pos:    [sign * YAW_OFFSET, avgY + PITCH_LIFT, avgZ + depth],
+    }
+  }
+  return cameras
 }
+
+// Per-model glow position offsets — only needed if a model's hitboxes
+// don't fully align with its geometry after calibration.
+const GLOW_OFFSETS = {}
 
 function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
@@ -307,7 +307,7 @@ function easeInOutCubic(t) {
 //   • Zoom in on new selection
 //   • Zoom out → pan in when switching muscles
 //   • Zoom out on dismiss
-function CameraRig({ focusGroup, onSettled }) {
+function CameraRig({ focusGroup, muscleCameras, onSettled }) {
   const { camera } = useThree()
 
   // Continuously interpolated camera state (so we always know where we are mid-animation)
@@ -354,7 +354,7 @@ function CameraRig({ focusGroup, onSettled }) {
       pendingGroup.current = focusGroup
     } else {
       // First selection from overview — zoom in directly
-      const cfg = MUSCLE_CAMERA[focusGroup] || OVERVIEW_CAM
+      const cfg = muscleCameras[focusGroup] || OVERVIEW_CAM
       animTo.current.pos.set(...cfg.pos)
       animTo.current.target.set(...cfg.target)
       phase.current = 'in'
@@ -380,7 +380,7 @@ function CameraRig({ focusGroup, onSettled }) {
           // Phase 1 (zoom-out) done — start phase 2 (zoom-in to pending group)
           animFrom.current.pos.copy(camPos.current)
           animFrom.current.target.copy(camTarget.current)
-          const cfg = MUSCLE_CAMERA[pendingGroup.current] || OVERVIEW_CAM
+          const cfg = muscleCameras[pendingGroup.current] || OVERVIEW_CAM
           animTo.current.pos.set(...cfg.pos)
           animTo.current.target.set(...cfg.target)
           phase.current = 'in'
@@ -512,7 +512,7 @@ function GlowFlash({ settledGroup, hitboxes, modelKey }) {
   // way through the body surface — otherwise the GreaterDepth trick has
   // nothing to draw against and the highlight vanishes on thin models.
   const INFLATE_XY = 1.20
-  const INFLATE_Z  = 3.0
+  const INFLATE_Z  = 1.0
 
   const offsets = GLOW_OFFSETS[modelKey] || {}
   const muscleOffset = offsets[settledGroup] || [0, 0, 0]
@@ -1238,24 +1238,33 @@ function DebugHitboxes({ hitboxes, modelKey }) {
   )
 }
 
-// ── Large background plane — click anywhere to dismiss focus ────────
+// ── Background sphere — click anywhere to dismiss focus ─────────────
+// A large hollow sphere (BackSide) that wraps the whole scene so any
+// click that misses the model or hitboxes dismisses the current focus,
+// regardless of which direction the camera is facing.
 function BackgroundPlane({ onDismiss }) {
   return (
     <mesh
-      position={[0, 0, -10]}
       onClick={(e) => {
         e.stopPropagation()
         onDismiss()
       }}
     >
-      <planeGeometry args={[200, 200]} />
-      <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+      <sphereGeometry args={[25, 8, 8]} />
+      <meshBasicMaterial transparent opacity={0} depthWrite={false} side={THREE.BackSide} />
     </mesh>
   )
 }
 
 function SceneContent({ modelKey, focusedGroup, onFocus, debugMode }) {
   const config = MODELS[modelKey] || MODELS.goku
+
+  // Derive camera positions from this model's hitboxes so the zoom-in
+  // targets the actual geometry regardless of which model is loaded.
+  const muscleCameras = useMemo(
+    () => computeMuscleCameras(config.hitboxes),
+    [config.hitboxes]
+  )
 
   // `settledGroup` lags `focusedGroup` by the camera animation duration —
   // it only becomes non-null once CameraRig finishes easing into the muscle.
@@ -1312,7 +1321,7 @@ function SceneContent({ modelKey, focusedGroup, onFocus, debugMode }) {
       {debugMode ? (
         <OrbitControls makeDefault enableDamping={false} />
       ) : (
-        <CameraRig focusGroup={focusedGroup} onSettled={setSettledGroup} />
+        <CameraRig focusGroup={focusedGroup} muscleCameras={muscleCameras} onSettled={setSettledGroup} />
       )}
     </group>
   )
