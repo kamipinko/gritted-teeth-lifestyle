@@ -14,6 +14,7 @@ import { useGLTF, Center, OrbitControls, TransformControls } from '@react-three/
 import { Suspense, useRef, useState, useMemo, useEffect, useLayoutEffect } from 'react'
 import * as THREE from 'three'
 import { SkeletonUtils } from 'three-stdlib'
+import { useSound } from '../lib/useSound'
 
 // Preload all four models so switching between them is instant
 useGLTF.preload('/models/goku.glb')
@@ -307,7 +308,7 @@ function easeInOutCubic(t) {
 //   • Zoom in on new selection
 //   • Zoom out → pan in when switching muscles
 //   • Zoom out on dismiss
-function CameraRig({ focusGroup, muscleCameras, onSettled }) {
+function CameraRig({ focusGroup, muscleCameras, onSettled, play }) {
   const { camera } = useThree()
 
   // Continuously interpolated camera state (so we always know where we are mid-animation)
@@ -346,12 +347,14 @@ function CameraRig({ focusGroup, muscleCameras, onSettled }) {
       animTo.current.target.set(...OVERVIEW_CAM.target)
       phase.current = 'out'
       pendingGroup.current = null
+      play('camera-swoosh')
     } else if (prev) {
       // Switching muscles — zoom out first, pendingGroup triggers zoom-in after
       animTo.current.pos.set(...OVERVIEW_CAM.pos)
       animTo.current.target.set(...OVERVIEW_CAM.target)
       phase.current = 'out'
       pendingGroup.current = focusGroup
+      play('camera-swoosh')
     } else {
       // First selection from overview — zoom in directly
       const cfg = muscleCameras[focusGroup] || OVERVIEW_CAM
@@ -359,6 +362,7 @@ function CameraRig({ focusGroup, muscleCameras, onSettled }) {
       animTo.current.target.set(...cfg.target)
       phase.current = 'in'
       pendingGroup.current = null
+      play('camera-swoosh')
     }
   }, [focusGroup])
 
@@ -386,6 +390,7 @@ function CameraRig({ focusGroup, muscleCameras, onSettled }) {
           phase.current = 'in'
           progress.current = 0
           pendingGroup.current = null
+          play('camera-swoosh')
         } else {
           phase.current = 'idle'
           // Sync autoRotAngle so the slow rotation resumes from the right angle
@@ -1256,7 +1261,7 @@ function BackgroundPlane({ onDismiss }) {
   )
 }
 
-function SceneContent({ modelKey, focusedGroup, onFocus, debugMode }) {
+function SceneContent({ modelKey, focusedGroup, onFocus, debugMode, play }) {
   const config = MODELS[modelKey] || MODELS.goku
 
   // Derive camera positions from this model's hitboxes so the zoom-in
@@ -1321,7 +1326,7 @@ function SceneContent({ modelKey, focusedGroup, onFocus, debugMode }) {
       {debugMode ? (
         <OrbitControls makeDefault enableDamping={false} />
       ) : (
-        <CameraRig focusGroup={focusedGroup} muscleCameras={muscleCameras} onSettled={setSettledGroup} />
+        <CameraRig focusGroup={focusedGroup} muscleCameras={muscleCameras} onSettled={setSettledGroup} play={play} />
       )}
     </group>
   )
@@ -1329,6 +1334,7 @@ function SceneContent({ modelKey, focusedGroup, onFocus, debugMode }) {
 
 export default function MuscleBody({ onFocus, focusedGroup, modelKey = 'goku' }) {
   const [debugMode, setDebugMode] = useState(false)
+  const { play } = useSound()
 
   useEffect(() => {
     const onKey = (e) => {
@@ -1351,6 +1357,7 @@ export default function MuscleBody({ onFocus, focusedGroup, modelKey = 'goku' })
           focusedGroup={focusedGroup}
           onFocus={onFocus}
           debugMode={debugMode}
+          play={play}
         />
       </Canvas>
 
