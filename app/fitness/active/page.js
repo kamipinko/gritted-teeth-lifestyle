@@ -10,6 +10,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useSound } from '../../../lib/useSound'
+import { useProfileGuard } from '../../../lib/useProfileGuard'
+import { pk } from '../../../lib/storage'
 import FireFadeIn from '../../../components/FireFadeIn'
 
 const MUSCLE_LABELS = {
@@ -93,7 +95,7 @@ function MuscleChip({ id, index, total }) {
 }
 
 /* ── Overview day card — clickable, zooms into focus view ── */
-function DayCard({ iso, muscles, index, onClick, doneKey }) {
+function DayCard({ iso, muscles, index, onClick, doneKey, cycleId }) {
   const { play } = useSound()
   const [hovered, setHovered] = useState(false)
   const [done, setDone]       = useState(false)
@@ -115,7 +117,7 @@ function DayCard({ iso, muscles, index, onClick, doneKey }) {
   }, [])
 
   useEffect(() => {
-    try { setDone(localStorage.getItem(`gtl-done-${iso}`) === 'true') } catch (_) {}
+    try { setDone(localStorage.getItem(pk(`done-${cycleId}-${iso}`)) === 'true') } catch (_) {}
   }, [iso, doneKey])
 
   useEffect(() => {
@@ -123,8 +125,8 @@ function DayCard({ iso, muscles, index, onClick, doneKey }) {
     const result = []
     for (const muscleId of muscles) {
       try {
-        const rRaw = localStorage.getItem(`gtl-ex-${iso}-${muscleId}`)
-        const wRaw = localStorage.getItem(`gtl-wt-${iso}-${muscleId}`)
+        const rRaw = localStorage.getItem(pk(`ex-${cycleId}-${iso}-${muscleId}`))
+        const wRaw = localStorage.getItem(pk(`wt-${cycleId}-${iso}-${muscleId}`))
         const rData = rRaw ? JSON.parse(rRaw) : {}
         const wData = wRaw ? JSON.parse(wRaw) : {}
         const names = Object.keys(rData).filter(n => {
@@ -1171,7 +1173,7 @@ function CustomMoveInput({ value, onChange, onConfirm, onCancel, onCharAdded }) 
 }
 
 /* ── Exercise list panel — zooms from the tapped muscle slab ── */
-function ExercisePanel({ muscleId, dayIso, originRect, onClose }) {
+function ExercisePanel({ muscleId, dayIso, originRect, onClose, cycleId }) {
   const { play } = useSound()
   const [closing, setClosing]           = useState(false)
   const [reps, setReps]                 = useState({})
@@ -1188,35 +1190,27 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose }) {
   const [phase, setPhase]               = useState(null) // 'weight' | 'reps'
   const exercises    = EXERCISES[muscleId] || []
   const label        = MUSCLE_LABELS[muscleId] || muscleId.toUpperCase()
-  const storageKey   = `gtl-ex-${dayIso}-${muscleId}`
-  const weightKey    = `gtl-wt-${dayIso}-${muscleId}`
-  const setCountKey  = `gtl-setcounts-${muscleId}`
+  const storageKey   = pk(`ex-${cycleId}-${dayIso}-${muscleId}`)
+  const weightKey    = pk(`wt-${cycleId}-${dayIso}-${muscleId}`)
+  const setCountKey  = pk(`setcounts-${muscleId}`)
 
   const originX = originRect ? `${originRect.left + originRect.width / 2}px` : '50vw'
   const originY = originRect ? `${originRect.top + originRect.height / 2}px` : '50vh'
 
-  // Load prior day data for ghost display in set chips
+  // Load prior data for ghost display — reads the most recently saved session
+  // for this muscle across any cycle, so predictions always reflect real history.
   useEffect(() => {
     try {
-      const rawDays = localStorage.getItem('gtl-training-days')
-      if (!rawDays) return
-      const allTrainingDays = JSON.parse(rawDays)
-      const priorIsos = allTrainingDays.filter(d => d < dayIso).sort()
       const result = {}
-      // Walk backwards — most recent prior day wins
-      for (let i = priorIsos.length - 1; i >= 0; i--) {
-        const wRaw = localStorage.getItem(`gtl-wt-${priorIsos[i]}-${muscleId}`)
-        const rRaw = localStorage.getItem(`gtl-ex-${priorIsos[i]}-${muscleId}`)
-        const wData = wRaw ? JSON.parse(wRaw) : {}
-        const rData = rRaw ? JSON.parse(rRaw) : {}
-        const names = new Set([...Object.keys(wData), ...Object.keys(rData)])
-        for (const n of names) {
-          if (!result[n]) {
-            result[n] = {
-              weight: Array.isArray(wData[n]) ? wData[n] : typeof wData[n] === 'number' ? [wData[n]] : [],
-              reps:   Array.isArray(rData[n]) ? rData[n] : typeof rData[n] === 'number' ? [rData[n]] : [],
-            }
-          }
+      const wRaw = localStorage.getItem(pk(`latest-wt-${muscleId}`))
+      const rRaw = localStorage.getItem(pk(`latest-ex-${muscleId}`))
+      const wData = wRaw ? JSON.parse(wRaw) : {}
+      const rData = rRaw ? JSON.parse(rRaw) : {}
+      const names = new Set([...Object.keys(wData), ...Object.keys(rData)])
+      for (const n of names) {
+        result[n] = {
+          weight: Array.isArray(wData[n]) ? wData[n] : typeof wData[n] === 'number' ? [wData[n]] : [],
+          reps:   Array.isArray(rData[n]) ? rData[n] : typeof rData[n] === 'number' ? [rData[n]] : [],
         }
       }
       setPriorData(result)
@@ -1251,7 +1245,7 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose }) {
       if (raw) setSetCounts(JSON.parse(raw))
     } catch (_) {}
     try {
-      const name = localStorage.getItem(`gtl-custom-${muscleId}`)
+      const name = localStorage.getItem(pk(`custom-${muscleId}`))
       if (name) setCustomName(name)
     } catch (_) {}
   }, [storageKey, weightKey, setCountKey, muscleId])
@@ -1261,7 +1255,10 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose }) {
       const arr = Array.isArray(prev[name]) ? [...prev[name]] : [0, 0]
       arr[setIndex] = value
       const next = { ...prev, [name]: arr }
-      try { localStorage.setItem(storageKey, JSON.stringify(next)) } catch (_) {}
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(next))
+        localStorage.setItem(pk(`latest-ex-${muscleId}`), JSON.stringify(next))
+      } catch (_) {}
       return next
     })
   }
@@ -1271,7 +1268,10 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose }) {
       const arr = Array.isArray(prev[name]) ? [...prev[name]] : [0, 0]
       arr[setIndex] = value
       const next = { ...prev, [name]: arr }
-      try { localStorage.setItem(weightKey, JSON.stringify(next)) } catch (_) {}
+      try {
+        localStorage.setItem(weightKey, JSON.stringify(next))
+        localStorage.setItem(pk(`latest-wt-${muscleId}`), JSON.stringify(next))
+      } catch (_) {}
       return next
     })
   }
@@ -1495,7 +1495,7 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose }) {
                     const val = draftName.trim()
                     if (val) {
                       setCustomName(val)
-                      try { localStorage.setItem(`gtl-custom-${muscleId}`, val) } catch (_) {}
+                      try { localStorage.setItem(pk(`custom-${muscleId}`), val) } catch (_) {}
                     }
                     setEditingCustom(false)
                   }}
@@ -1581,7 +1581,7 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose }) {
 }
 
 /* ── Full-screen day focus — zooms in from the card's position ── */
-function DayFocus({ iso, muscles, isLastDay, originRect, onClose }) {
+function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
   const { play } = useSound()
   const [closing, setClosing]           = useState(false)
   const [focusMuscle, setFocusMuscle]   = useState(null)
@@ -1596,16 +1596,28 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose }) {
   const [allReps, setAllReps]       = useState({})
   const [allWeights, setAllWeights] = useState({})
   const [refreshKey, setRefreshKey] = useState(0)
+  const [unlogOpen, setUnlogOpen]   = useState(false)
   const [stamped, setStamped]       = useState(() => {
-    try { return localStorage.getItem(`gtl-done-${iso}`) === 'true' } catch { return false }
+    try { return localStorage.getItem(pk(`done-${cycleId}-${iso}`)) === 'true' } catch { return false }
   })
 
   const handleStamp = () => {
     if (stamped) return
     play('option-select')
-    try { localStorage.setItem(`gtl-done-${iso}`, 'true') } catch (_) {}
+    try { localStorage.setItem(pk(`done-${cycleId}-${iso}`), 'true') } catch (_) {}
     setStamped(true)
     setTimeout(() => handleClose(), 900)
+  }
+
+  const handleUnlogMuscle = (muscleId) => {
+    play('menu-close')
+    try {
+      localStorage.removeItem(pk(`ex-${cycleId}-${iso}-${muscleId}`))
+      localStorage.removeItem(pk(`wt-${cycleId}-${iso}-${muscleId}`))
+    } catch (_) {}
+    setAllReps(prev  => { const n = { ...prev };  delete n[muscleId]; return n })
+    setAllWeights(prev => { const n = { ...prev }; delete n[muscleId]; return n })
+    setRefreshKey(k => k + 1)
   }
 
   // Load all exercise reps + weights for this day's muscles from localStorage
@@ -1614,11 +1626,11 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose }) {
     const loadedReps = {}, loadedWeights = {}
     for (const muscleId of muscles) {
       try {
-        const raw = localStorage.getItem(`gtl-ex-${iso}-${muscleId}`)
+        const raw = localStorage.getItem(pk(`ex-${cycleId}-${iso}-${muscleId}`))
         if (raw) loadedReps[muscleId] = JSON.parse(raw)
       } catch (_) {}
       try {
-        const raw = localStorage.getItem(`gtl-wt-${iso}-${muscleId}`)
+        const raw = localStorage.getItem(pk(`wt-${cycleId}-${iso}-${muscleId}`))
         if (raw) loadedWeights[muscleId] = JSON.parse(raw)
       } catch (_) {}
     }
@@ -1745,24 +1757,96 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose }) {
             </div>
           )}
 
-          {/* Back button */}
-          <button
-            type="button"
-            onClick={handleClose}
-            className="group self-start relative inline-flex items-center mb-auto outline-none
-              focus-visible:outline-2 focus-visible:outline-gtl-red"
-            style={{ zIndex: 10 }}
-          >
-            <div
-              className="absolute inset-0 -inset-x-2 bg-gtl-edge opacity-50 group-hover:bg-gtl-red group-hover:opacity-100 transition-all duration-300"
-              style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
-              aria-hidden="true"
-            />
-            <div className="relative flex items-center gap-3 px-4 py-2">
-              <span className="font-display text-base text-gtl-red group-hover:text-gtl-paper group-hover:-translate-x-1 transition-all duration-300 leading-none">◀</span>
-              <span className="font-mono text-[10px] tracking-[0.3em] uppercase font-bold text-gtl-chalk group-hover:text-gtl-paper transition-colors duration-300">BACK</span>
-            </div>
-          </button>
+          {/* Top nav row — BACK on left, UNLOG on right */}
+          <div className="flex items-start justify-between mb-auto" style={{ zIndex: 10 }}>
+            <button
+              type="button"
+              onClick={handleClose}
+              className="group relative inline-flex items-center outline-none
+                focus-visible:outline-2 focus-visible:outline-gtl-red"
+            >
+              <div
+                className="absolute inset-0 -inset-x-2 bg-gtl-edge opacity-50 group-hover:bg-gtl-red group-hover:opacity-100 transition-all duration-300"
+                style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
+                aria-hidden="true"
+              />
+              <div className="relative flex items-center gap-3 px-4 py-2">
+                <span className="font-display text-base text-gtl-red group-hover:text-gtl-paper group-hover:-translate-x-1 transition-all duration-300 leading-none">◀</span>
+                <span className="font-mono text-[10px] tracking-[0.3em] uppercase font-bold text-gtl-chalk group-hover:text-gtl-paper transition-colors duration-300">BACK</span>
+              </div>
+            </button>
+
+            {/* UNLOG SETS — only when sets are logged and day not stamped */}
+            {!stamped && Object.keys(allReps).some(m => Object.values(allReps[m] || {}).flat().some(v => v > 0)) && (
+              <div className="flex flex-col items-end gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => { play('button-hover'); setUnlogOpen(o => !o) }}
+                  className="group relative inline-flex items-center outline-none focus-visible:outline-2 focus-visible:outline-gtl-red"
+                >
+                  <div
+                    className="absolute inset-0 -inset-x-2 transition-all duration-300"
+                    style={{
+                      clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)',
+                      background: unlogOpen ? '#d4181f' : '#1a1a1e',
+                      border: `1px solid ${unlogOpen ? '#ff2a36' : '#3a3a42'}`,
+                    }}
+                    aria-hidden="true"
+                  />
+                  <div className="relative flex items-center gap-2 px-5 py-3">
+                    <span className={`font-mono text-xs tracking-[0.3em] uppercase font-bold transition-colors duration-300 ${unlogOpen ? 'text-gtl-paper' : 'text-gtl-ash group-hover:text-gtl-chalk'}`}>
+                      {unlogOpen ? 'CANCEL' : 'UNLOG SETS'}
+                    </span>
+                    <span className={`font-display text-base leading-none transition-colors duration-300 ${unlogOpen ? 'text-gtl-paper' : 'text-gtl-red'}`}>
+                      {unlogOpen ? '✕' : '▼'}
+                    </span>
+                  </div>
+                </button>
+
+                {unlogOpen && (
+                  <div className="flex flex-col gap-2 items-end">
+                    {Object.keys(allReps).map(muscleId => {
+                      const setCount = Object.values(allReps[muscleId] || {}).flat().filter(v => v > 0).length
+                      if (!setCount) return null
+                      return (
+                        <div key={muscleId} className="flex items-center gap-3">
+                          <div className="flex items-center gap-3">
+                            <span className="font-mono uppercase font-bold text-white leading-none whitespace-nowrap"
+                              style={{
+                                fontSize: '13px',
+                                background: '#7a0e14',
+                                clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)',
+                                padding: '4px 14px',
+                                letterSpacing: '0.08em',
+                              }}>
+                              {MUSCLE_LABELS[muscleId] || muscleId}
+                            </span>
+                            <span className="font-display text-lg leading-none text-gtl-red whitespace-nowrap">
+                              {setCount} SET{setCount !== 1 ? 'S' : ''}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleUnlogMuscle(muscleId)}
+                            className="group relative inline-flex items-center outline-none"
+                          >
+                            <div
+                              className="absolute inset-0 -inset-x-1 bg-gtl-red/20 group-hover:bg-gtl-red transition-colors duration-150"
+                              style={{ clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)' }}
+                              aria-hidden="true"
+                            />
+                            <span className="relative font-mono text-[11px] tracking-[0.2em] uppercase text-gtl-red group-hover:text-gtl-paper transition-colors duration-150 px-4 py-1.5">
+                              CLEAR
+                            </span>
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Two-column layout: date+muscles left, exercise log right */}
           <div className="flex-1 relative min-h-0">
@@ -1977,8 +2061,10 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose }) {
 
           {/* Bottom row: breadcrumb + stamp button */}
           <div className="mt-auto pt-6 flex items-end justify-between gap-4" style={{ position: 'relative', zIndex: 10 }}>
-            <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
-              PALACE / FITNESS / ACTIVE CYCLE / {dayName}
+            <div>
+              <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
+                PALACE / FITNESS / ACTIVE CYCLE / {dayName}
+              </div>
             </div>
 
             {/* BRING ON TOMORROW button */}
@@ -2021,6 +2107,7 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose }) {
             muscleId={focusMuscle}
             dayIso={iso}
             originRect={focusMuscleRect}
+            cycleId={cycleId}
             onClose={() => { setFocusMuscle(null); setFocusMuscleRect(null); setRefreshKey(k => k + 1) }}
           />
         )}
@@ -2060,9 +2147,65 @@ function StatMini({ number, label }) {
   )
 }
 
+function getLevelInfo(totalXP) {
+  let level = 0
+  let xpUsed = 0
+  while (true) {
+    const threshold = 15000 + level * 1000
+    if (xpUsed + threshold > totalXP) {
+      return { level, progress: totalXP - xpUsed, threshold }
+    }
+    xpUsed += threshold
+    level++
+  }
+}
+
+function repMult(r) {
+  if (r >= 5 && r <= 15) return 1.0
+  if (r < 5)  return Math.exp(-Math.pow(r - 5,  2) / 8)
+  return              Math.exp(-Math.pow(r - 15, 2) / 32)
+}
+
+function computeTotalXP() {
+  try {
+    const raw = localStorage.getItem(pk('cycles'))
+    if (!raw) return { xp: 0, totalDays: 0 }
+    const allCycles = JSON.parse(raw)
+    let xp = 0
+    let totalDays = 0
+    for (const cycle of allCycles) {
+      if (!cycle.days || !cycle.dailyPlan) continue
+      totalDays += cycle.days.length
+      for (const iso of cycle.days) {
+        if (localStorage.getItem(pk(`done-${cycle.id}-${iso}`)) !== 'true') continue
+        for (const muscleId of (cycle.dailyPlan[iso] || [])) {
+          const rRaw = localStorage.getItem(pk(`ex-${cycle.id}-${iso}-${muscleId}`))
+          const wRaw = localStorage.getItem(pk(`wt-${cycle.id}-${iso}-${muscleId}`))
+          const rData = rRaw ? JSON.parse(rRaw) : {}
+          const wData = wRaw ? JSON.parse(wRaw) : {}
+          for (const name of Object.keys(rData)) {
+            const rArr = Array.isArray(rData[name]) ? rData[name] : [rData[name]]
+            const wArr = Array.isArray(wData[name]) ? wData[name] : [wData[name] || 0]
+            for (let i = 0; i < rArr.length; i++) {
+              const reps = rArr[i] || 0
+              const weight = wArr[i] || 0
+              if (reps === 0) continue
+              const mult = repMult(reps)
+              xp += weight > 0 ? weight * mult * reps : reps * mult
+            }
+          }
+        }
+      }
+    }
+    return { xp, totalDays }
+  } catch (_) { return { xp: 0, totalDays: 0 } }
+}
+
 export default function ActiveCyclePage() {
+  useProfileGuard()
   const { play } = useSound()
 
+  const [cycleId,    setCycleId]    = useState('')
   const [cycleName,  setCycleName]  = useState('ACTIVE CYCLE')
   const [targets,    setTargets]    = useState([])
   const [days,       setDays]       = useState([])
@@ -2072,7 +2215,8 @@ export default function ActiveCyclePage() {
   const [focusRect,  setFocusRect]  = useState(null)   // DOMRect | null
   const [cardRefreshKey, setCardRefreshKey] = useState(0)
   const [completedDays, setCompletedDays]   = useState(0)
-  const [barXP, setBarXP]                   = useState(0) // starts empty, only advances when XP animation fires
+  const [barXP, setBarXP]                   = useState(0)
+  const [allCyclesDays, setAllCyclesDays]   = useState(0)
   const [xpAnim, setXpAnim]                 = useState(null) // null | { phase, particles, total, barRect }
   const xpBarRef                            = useRef(null)
 
@@ -2083,14 +2227,19 @@ export default function ActiveCyclePage() {
 
   useEffect(() => {
     try {
-      const name = localStorage.getItem('gtl-cycle-name')
-      const rawT = localStorage.getItem('gtl-muscle-targets')
-      const rawD = localStorage.getItem('gtl-training-days')
-      const rawP = localStorage.getItem('gtl-daily-plan')
+      const cid  = localStorage.getItem(pk('active-cycle-id'))
+      const name = localStorage.getItem(pk('cycle-name'))
+      const rawT = localStorage.getItem(pk('muscle-targets'))
+      const rawD = localStorage.getItem(pk('training-days'))
+      const rawP = localStorage.getItem(pk('daily-plan'))
+      if (cid)  setCycleId(cid)
       if (name) setCycleName(name)
       if (rawT) setTargets(JSON.parse(rawT))
       if (rawD) setDays(JSON.parse(rawD).sort())
       if (rawP) setDailyPlan(JSON.parse(rawP))
+      const { xp, totalDays } = computeTotalXP()
+      setBarXP(xp)
+      setAllCyclesDays(totalDays)
     } catch (_) {}
     setReady(true)
   }, [])
@@ -2099,7 +2248,7 @@ export default function ActiveCyclePage() {
     if (!days.length) return
     let count = 0
     for (const iso of days) {
-      try { if (localStorage.getItem(`gtl-done-${iso}`) === 'true') count++ } catch (_) {}
+      try { if (localStorage.getItem(pk(`done-${cycleId}-${iso}`)) === 'true') count++ } catch (_) {}
     }
     setCompletedDays(count)
   }, [days, cardRefreshKey])
@@ -2110,12 +2259,6 @@ export default function ActiveCyclePage() {
     setFocusDay(iso)
   }
 
-  const repMult = (r) => {
-    if (r >= 5 && r <= 15) return 1.0
-    if (r < 5)  return Math.exp(-Math.pow(r - 5,  2) / 8)
-    return              Math.exp(-Math.pow(r - 15, 2) / 32)
-  }
-
   const triggerXPAnimation = useCallback((closingDay) => {
     // Build particles: one per completed day, positioned at each card
     const sortedDays = [...days].sort()
@@ -2123,14 +2266,14 @@ export default function ActiveCyclePage() {
     let total = 0
     for (const iso of sortedDays) {
       try {
-        if (localStorage.getItem(`gtl-done-${iso}`) !== 'true') continue
+        if (localStorage.getItem(pk(`done-${cycleId}-${iso}`)) !== 'true') continue
         const el = document.querySelector(`[data-day-iso="${iso}"]`)
         const rect = el?.getBoundingClientRect()
         const dailyMuscles = dailyPlan[iso] || []
         let dayVolume = 0
         for (const muscleId of dailyMuscles) {
-          const rRaw = localStorage.getItem(`gtl-ex-${iso}-${muscleId}`)
-          const wRaw = localStorage.getItem(`gtl-wt-${iso}-${muscleId}`)
+          const rRaw = localStorage.getItem(pk(`ex-${cycleId}-${iso}-${muscleId}`))
+          const wRaw = localStorage.getItem(pk(`wt-${cycleId}-${iso}-${muscleId}`))
           const rData = rRaw ? JSON.parse(rRaw) : {}
           const wData = wRaw ? JSON.parse(wRaw) : {}
           for (const name of Object.keys(rData)) {
@@ -2161,7 +2304,7 @@ export default function ActiveCyclePage() {
     setTimeout(() => setXpAnim(p => p ? { ...p, phase: 'fly' } : null), 2400)
     setTimeout(() => {
       setXpAnim(p => p ? { ...p, phase: 'fill' } : null)
-      setBarXP(total)
+      setBarXP(computeTotalXP().xp)
     }, 3100)
     setTimeout(() => setXpAnim(null), 5000)
   }, [days, dailyPlan])
@@ -2174,7 +2317,7 @@ export default function ActiveCyclePage() {
     setCardRefreshKey((k) => k + 1)
     if (wasLastDay) {
       try {
-        if (localStorage.getItem(`gtl-done-${lastDay}`) === 'true') {
+        if (localStorage.getItem(pk(`done-${cycleId}-${lastDay}`)) === 'true') {
           setTimeout(() => triggerXPAnimation(lastDay), 500)
         }
       } catch (_) {}
@@ -2233,49 +2376,57 @@ export default function ActiveCyclePage() {
         <RetreatButton />
         <div className="w-px self-stretch bg-gtl-edge" style={{ transform: 'skewX(-12deg)' }} />
         {/* XP Bar inline in nav */}
-        {days.length > 0 && (
-          <div className="flex-1 flex items-center gap-3 min-w-0">
-            <span className="font-display text-base uppercase text-white shrink-0" style={{ textShadow: '1px 1px 0 #d4181f' }}>EXP</span>
-            <div
-              ref={xpBarRef}
-              className="relative flex-1 min-w-0 overflow-hidden"
-              style={{
-                height: '18px',
-                background: '#1a1a1e',
-                clipPath: 'polygon(0% 0%, 100% 0%, 98% 100%, 2% 100%)',
-                border: '1px solid #2a2a30',
-                animation: xpAnim?.phase === 'fill' ? 'xp-bar-wobble 900ms cubic-bezier(0.2, 0.9, 0.3, 1) 1800ms both' : 'none',
-                transformOrigin: 'left center',
-              }}
-            >
+        {days.length > 0 && (() => {
+          const { level, progress, threshold } = getLevelInfo(barXP)
+          const fillPct = Math.min(100, (progress / threshold) * 100)
+          const isFull = progress >= threshold
+          return (
+            <div className="flex-1 flex items-center gap-3 min-w-0">
+              <div className="flex flex-col items-center shrink-0">
+                <span className="font-display text-base uppercase text-white leading-none" style={{ textShadow: '1px 1px 0 #d4181f' }}>EXP</span>
+                <span className="font-mono text-[9px] tracking-[0.2em] uppercase text-gtl-ash leading-none mt-0.5">LV.{level}</span>
+              </div>
               <div
+                ref={xpBarRef}
+                className="relative flex-1 min-w-0 overflow-hidden"
                 style={{
-                  position: 'absolute', inset: 0,
-                  width: `${days.length > 0 ? Math.min(100, (barXP / (days.length * 5000)) * 100) : 0}%`,
-                  background: (barXP >= days.length * 5000 || xpAnim?.phase === 'fill')
-                    ? 'linear-gradient(90deg, #8a6612, #e4b022, #f5d060, #e4b022)'
-                    : 'linear-gradient(90deg, #8a6612, #e4b022)',
+                  height: '18px',
+                  background: '#1a1a1e',
                   clipPath: 'polygon(0% 0%, 100% 0%, 98% 100%, 2% 100%)',
-                  transition: xpAnim?.phase === 'fill'
-                    ? 'width 1800ms cubic-bezier(0.1, 0.7, 0.2, 1)'
-                    : 'width 600ms cubic-bezier(0.2, 1, 0.3, 1)',
-                  boxShadow: xpAnim?.phase === 'fill'
-                    ? '0 0 30px rgba(228,176,34,0.9), 0 0 60px rgba(228,176,34,0.4)'
-                    : barXP >= days.length * 5000 ? '0 0 16px rgba(228,176,34,0.6)' : '0 0 8px rgba(228,176,34,0.3)',
-                  animation: xpAnim?.phase === 'fill' ? 'xp-bar-pulse 1s ease-in-out 3' : 'none',
+                  border: '1px solid #2a2a30',
+                  animation: xpAnim?.phase === 'fill' ? 'xp-bar-wobble 900ms cubic-bezier(0.2, 0.9, 0.3, 1) 1800ms both' : 'none',
+                  transformOrigin: 'left center',
                 }}
-              />
-              {days.map((_, i) => i > 0 && (
-                <div key={i} style={{
-                  position: 'absolute', top: 0, bottom: 0,
-                  left: `${(i / days.length) * 100}%`,
-                  width: '1px',
-                  background: 'rgba(7,7,8,0.5)',
-                }} />
-              ))}
+              >
+                <div
+                  style={{
+                    position: 'absolute', inset: 0,
+                    width: `${fillPct}%`,
+                    background: (isFull || xpAnim?.phase === 'fill')
+                      ? 'linear-gradient(90deg, #8a6612, #e4b022, #f5d060, #e4b022)'
+                      : 'linear-gradient(90deg, #8a6612, #e4b022)',
+                    clipPath: 'polygon(0% 0%, 100% 0%, 98% 100%, 2% 100%)',
+                    transition: xpAnim?.phase === 'fill'
+                      ? 'width 1800ms cubic-bezier(0.1, 0.7, 0.2, 1)'
+                      : 'width 600ms cubic-bezier(0.2, 1, 0.3, 1)',
+                    boxShadow: xpAnim?.phase === 'fill'
+                      ? '0 0 30px rgba(228,176,34,0.9), 0 0 60px rgba(228,176,34,0.4)'
+                      : isFull ? '0 0 16px rgba(228,176,34,0.6)' : '0 0 8px rgba(228,176,34,0.3)',
+                    animation: xpAnim?.phase === 'fill' ? 'xp-bar-pulse 1s ease-in-out 3' : 'none',
+                  }}
+                />
+                {days.map((_, i) => i > 0 && (
+                  <div key={i} style={{
+                    position: 'absolute', top: 0, bottom: 0,
+                    left: `${(i / days.length) * 100}%`,
+                    width: '1px',
+                    background: 'rgba(7,7,8,0.5)',
+                  }} />
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
       </nav>
 
       {/* Thin red accent line under nav */}
@@ -2311,6 +2462,7 @@ export default function ActiveCyclePage() {
                 index={i}
                 onClick={handleDayClick}
                 doneKey={cardRefreshKey}
+                cycleId={cycleId}
               />
             ))}
           </div>
@@ -2323,9 +2475,10 @@ export default function ActiveCyclePage() {
           key={focusDay}
           iso={focusDay}
           muscles={dailyPlan[focusDay] || []}
+          cycleId={cycleId}
           isLastDay={(() => {
             const undoneDays = days.filter(d => {
-              try { return localStorage.getItem(`gtl-done-${d}`) !== 'true' } catch { return true }
+              try { return localStorage.getItem(pk(`done-${cycleId}-${d}`)) !== 'true' } catch { return true }
             })
             return undoneDays.length === 1 && undoneDays[0] === focusDay
           })()}

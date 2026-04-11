@@ -7,10 +7,12 @@
  * action bar fixed at the bottom. Only one cycle selected at a time.
  * DELETE goes through three confirmation stages in the bottom bar.
  */
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSound } from '../../../lib/useSound'
+import { useProfileGuard } from '../../../lib/useProfileGuard'
+import { pk } from '../../../lib/storage'
 import FireFadeIn from '../../../components/FireFadeIn'
 import FireTransition from '../../../components/FireTransition'
 
@@ -227,12 +229,27 @@ function CycleCard({ cycle, index, selected, onSelect }) {
   useEffect(() => {
     const result = {}
     for (const iso of (cycle.days || [])) {
-      try { result[iso] = localStorage.getItem(`gtl-done-${iso}`) === 'true' } catch (_) {}
+      try { result[iso] = localStorage.getItem(pk(`done-${cycle.id}-${iso}`)) === 'true' } catch (_) {}
     }
     setDoneDays(result)
   }, [cycle.id])
 
   const allDone = cycle.days?.length > 0 && cycle.days.every(iso => doneDays[iso])
+
+  // Only start blood animation once the card is scrolled into view
+  const cardRef = useRef(null)
+  const [bloodVisible, setBloodVisible] = useState(false)
+  useEffect(() => {
+    if (!allDone) return
+    const el = cardRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setBloodVisible(true); observer.disconnect() } },
+      { threshold: 0.3 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [allDone])
 
   // Random splatter — generated once per card mount so it's different every time
   const splatter = useMemo(() => {
@@ -241,12 +258,10 @@ function CycleCard({ cycle, index, selected, onSelect }) {
     const drops = []
 
     // Spray around a focal point, biased toward (bx,by) direction
-    function spray(ox, oy, bx, by, count, baseDelay) {
+    function spray(ox, oy, _bx, _by, count, baseDelay) {
       for (let i = 0; i < count; i++) {
-        // angle biased toward bias direction with wide spread
-        const biasAngle = Math.atan2(by - oy, bx - ox)
-        const spread = Math.PI * 1.4
-        const angle = biasAngle + rnd(-spread / 2, spread / 2)
+        // full 360° random scatter — no directional bias
+        const angle = rnd(0, Math.PI * 2)
         const dist = i < 3 ? rnd(4, 25) : rnd(20, 110) // first few close, rest far
         const cx = ox + Math.cos(angle) * dist
         const cy = oy + Math.sin(angle) * dist
@@ -258,17 +273,20 @@ function CycleCard({ cycle, index, selected, onSelect }) {
       }
     }
 
-    // stroke 1 endpoints + center
+    // Stroke runs top-left→bottom-right at ~22°.
+    // Perpendicular offset (rotated 90°): dx≈-0.37, dy≈0.93 — pushes origins off the line.
+    // Two clusters on opposite sides of the stroke + one at center.
     const cx = 500, cy = 210
-    spray(16,  20,  cx, cy, 12, 100)   // top-left endpoint
-    spray(980, 398, cx, cy, 12, 850)   // bottom-right endpoint
-    spray(cx,  cy,  cx, cy, 16, 1250)  // center — full 360° burst
+    spray(220, 195,  cx, cy, 12, 100)   // upper-third, offset below-left of stroke
+    spray(780, 220,  cx, cy, 12, 850)   // lower-third, offset above-right of stroke
+    spray(cx,  cy,   cx, cy, 16, 1250)  // center intersection — full burst
 
     return drops
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div
+      ref={cardRef}
       className="relative bg-gtl-ink overflow-visible transition-all duration-200"
       style={{
         transform: `rotate(${cardRot})`,
@@ -338,6 +356,29 @@ function CycleCard({ cycle, index, selected, onSelect }) {
                      style={{ fontSize: '0.85rem', textShadow: '1px 1px 0 #070708' }}>
                   {d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()} · {d.getFullYear()}
                 </div>
+                {/* X stamp overlay — rendered after date so it sits on top */}
+                {bloodVisible && (
+                  <div
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                    style={{ zIndex: 10, transform: 'translateX(-12px)' }}
+                    aria-hidden="true"
+                  >
+                    <div style={{
+                      animation: 'x-stamp 600ms cubic-bezier(0.2, 1.4, 0.3, 1) 1800ms both',
+                      fontFamily: 'Anton, Impact, sans-serif',
+                      fontSize: '10rem',
+                      color: '#8b0000',
+                      lineHeight: 1,
+                      textShadow: '3px 3px 0 rgba(0,0,0,0.6)',
+                      border: '5px solid #8b0000',
+                      padding: '0 10px',
+                      opacity: 0.75,
+                      userSelect: 'none',
+                    }}>
+                      ✕
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )
@@ -459,8 +500,8 @@ function CycleCard({ cycle, index, selected, onSelect }) {
         )}
       </div>
 
-      {/* Completed cycle — blood spilt X */}
-      {allDone && (
+      {/* Completed cycle — blood spilt X (only renders once card enters viewport) */}
+      {bloodVisible && (
         <>
           <style>{`
             @keyframes blood-stroke-1 {
@@ -483,6 +524,12 @@ function CycleCard({ cycle, index, selected, onSelect }) {
               60%  { transform: translate(-50%,-50%) rotate(-18deg) scale(0.9); opacity: 1; filter: blur(0); }
               80%  { transform: translate(-50%,-50%) rotate(-18deg) scale(1.06); }
               100% { transform: translate(-50%,-50%) rotate(-18deg) scale(1); opacity: 1; }
+            }
+            @keyframes x-stamp {
+              0%   { transform: rotate(-8deg) scale(2.5); opacity: 0; filter: blur(8px); }
+              60%  { transform: rotate(-8deg) scale(0.9); opacity: 1; filter: blur(0); }
+              80%  { transform: rotate(-8deg) scale(1.06); }
+              100% { transform: rotate(-8deg) scale(1); opacity: 1; }
             }
           `}</style>
           <svg
@@ -745,6 +792,7 @@ function BottomBar({ cycle, onActivate, onReview, onDelete }) {
 }
 
 export default function LoadCyclePage() {
+  useProfileGuard()
   const router = useRouter()
   const { play } = useSound()
   const [cycles, setCycles]       = useState([])
@@ -755,7 +803,7 @@ export default function LoadCyclePage() {
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem('gtl-cycles')
+      const raw = localStorage.getItem(pk('cycles'))
       if (raw) setCycles(JSON.parse(raw))
     } catch (_) {}
     setReady(true)
@@ -769,23 +817,24 @@ export default function LoadCyclePage() {
 
   const loadCycleIntoStorage = (cycle) => {
     try {
-      localStorage.setItem('gtl-cycle-name',    cycle.name)
-      localStorage.setItem('gtl-muscle-targets', JSON.stringify(cycle.targets))
-      localStorage.setItem('gtl-training-days',  JSON.stringify(cycle.days))
-      localStorage.setItem('gtl-daily-plan',     JSON.stringify(cycle.dailyPlan))
+      localStorage.setItem(pk('active-cycle-id'), cycle.id)
+      localStorage.setItem(pk('cycle-name'),       cycle.name)
+      localStorage.setItem(pk('muscle-targets'),   JSON.stringify(cycle.targets))
+      localStorage.setItem(pk('training-days'),    JSON.stringify(cycle.days))
+      localStorage.setItem(pk('daily-plan'),       JSON.stringify(cycle.dailyPlan))
     } catch (_) {}
   }
 
   const handleActivate = (cycle) => {
     loadCycleIntoStorage(cycle)
-    try { localStorage.removeItem('gtl-editing-cycle-id') } catch (_) {}
+    try { localStorage.removeItem(pk('editing-cycle-id')) } catch (_) {}
     setFireDest('/fitness/active')
     setFireActive(true)
   }
 
   const handleReview = (cycle) => {
     loadCycleIntoStorage(cycle)
-    try { localStorage.setItem('gtl-editing-cycle-id', cycle.id) } catch (_) {}
+    try { localStorage.setItem(pk('editing-cycle-id'), cycle.id) } catch (_) {}
     setFireDest('/fitness/new')
     setFireActive(true)
   }
@@ -795,7 +844,7 @@ export default function LoadCyclePage() {
     setCycles(updated)
     setSelectedId(null)
     try {
-      localStorage.setItem('gtl-cycles', JSON.stringify(updated))
+      localStorage.setItem(pk('cycles'), JSON.stringify(updated))
     } catch (_) {}
   }
 

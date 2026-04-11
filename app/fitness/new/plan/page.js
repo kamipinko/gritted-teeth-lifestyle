@@ -8,10 +8,12 @@
  * concentric spinning shapes, presses on mousedown, overdrive-spins on
  * mouseup then fires the full FireTransition to /fitness/new/summary.
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSound } from '../../../../lib/useSound'
+import { useProfileGuard } from '../../../../lib/useProfileGuard'
+import { pk } from '../../../../lib/storage'
 import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
 
@@ -123,8 +125,25 @@ function DayCard({ iso, assigned, compact, selected, onClick }) {
   const mon     = MONTH_SHORT[date.getMonth()]
   const muscles = [...assigned]
 
+  const cardRef = useRef(null)
+  const [cardH, setCardH] = useState(80)
+  useEffect(() => {
+    const el = cardRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([e]) => setCardH(e.contentRect.height))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  // Scale date relative to 80px baseline; clamp so it never gets absurd
+  const scale = Math.max(0.7, Math.min(3, cardH / 80))
+  const dayNameSize = `${Math.round(11 * scale)}px`
+  const dayNumSize  = `${(1.1 * scale).toFixed(2)}rem`
+  const monSize     = `${Math.round(7 * scale)}px`
+
   return (
     <div
+      ref={cardRef}
       role="button"
       tabIndex={0}
       onClick={() => { play('option-select'); onClick(iso) }}
@@ -138,14 +157,15 @@ function DayCard({ iso, assigned, compact, selected, onClick }) {
       }}
     >
       <div className={`shrink-0 transition-colors duration-150 ${compact ? 'px-2 pt-1.5 pb-1' : 'px-3 pt-2 pb-1.5'}`}>
-        <div className={`font-display leading-none tracking-wide ${compact ? 'text-sm' : 'text-xl'} ${selected ? 'text-gtl-red-bright' : 'text-gtl-red'}`}>
+        <div className={`font-display leading-none tracking-wide ${selected ? 'text-gtl-red-bright' : 'text-gtl-red'}`}
+             style={{ fontSize: dayNameSize }}>
           {dayName}
         </div>
         <div className="flex items-baseline gap-1">
-          <span className="font-display leading-none text-gtl-chalk" style={{ fontSize: compact ? '1.1rem' : 'clamp(1.4rem, 2.5vw, 2.5rem)' }}>
+          <span className="font-display leading-none text-gtl-chalk" style={{ fontSize: dayNumSize }}>
             {dayNum}
           </span>
-          <span className="font-mono tracking-[0.2em] uppercase text-gtl-ash" style={{ fontSize: compact ? '7px' : '9px' }}>{mon}</span>
+          <span className="font-mono tracking-[0.2em] uppercase text-gtl-ash" style={{ fontSize: monSize }}>{mon}</span>
         </div>
       </div>
 
@@ -281,6 +301,7 @@ function IgniteButton({ onFire, onHover, disabled }) {
 }
 
 export default function PlanPage() {
+  useProfileGuard()
   const router = useRouter()
   const { play } = useSound()
 
@@ -298,8 +319,8 @@ export default function PlanPage() {
 
   useEffect(() => {
     try {
-      const rawDays    = localStorage.getItem('gtl-training-days')
-      const rawTargets = localStorage.getItem('gtl-muscle-targets')
+      const rawDays    = localStorage.getItem(pk('training-days'))
+      const rawTargets = localStorage.getItem(pk('muscle-targets'))
       if (rawDays) {
         const sorted = JSON.parse(rawDays).sort()
         setDays(sorted)
@@ -328,7 +349,7 @@ export default function PlanPage() {
       Object.entries(assignments).forEach(([iso, set]) => {
         serialized[iso] = [...set]
       })
-      localStorage.setItem('gtl-daily-plan', JSON.stringify(serialized))
+      localStorage.setItem(pk('daily-plan'), JSON.stringify(serialized))
     } catch (_) {}
     setFireActive(true)
   }

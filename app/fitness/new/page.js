@@ -17,6 +17,8 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSound } from '../../../lib/useSound'
+import { useProfileGuard } from '../../../lib/useProfileGuard'
+import { pk } from '../../../lib/storage'
 import FireTransition from '../../../components/FireTransition'
 
 const MAX_LEN = 40
@@ -214,6 +216,7 @@ function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAd
 }
 
 export default function NewCycleNamePage() {
+  useProfileGuard()
   const router = useRouter()
   const [name, setName] = useState('')
   const [isInitialMount, setIsInitialMount] = useState(true)
@@ -222,11 +225,15 @@ export default function NewCycleNamePage() {
   const mainRef = useRef(null)
   const { play } = useSound()
 
-  // Pre-fill with saved cycle name if editing, otherwise pick a random default
+  // Pre-fill with the cycle's existing name when editing, otherwise random
   useEffect(() => {
     let initial
     try {
-      initial = pickRandomName()
+      const editingId = localStorage.getItem(pk('editing-cycle-id'))
+      const savedName = localStorage.getItem(pk('cycle-name'))
+      initial = editingId && savedName && savedName.trim().length > 0
+        ? savedName.trim()
+        : pickRandomName()
     } catch (_) {
       initial = pickRandomName()
     }
@@ -245,7 +252,7 @@ export default function NewCycleNamePage() {
     if (isBranding) return
     if (name.trim().length === 0) return
     setIsBranding(true)
-    try { localStorage.setItem('gtl-cycle-name', name.trim()) } catch (_) {}
+    try { localStorage.setItem(pk('cycle-name'), name.trim()) } catch (_) {}
     play('brand-confirm')
     // Play a second impact ~400ms in to reinforce the peak of the brand
     setTimeout(() => play('stamp'), 380)

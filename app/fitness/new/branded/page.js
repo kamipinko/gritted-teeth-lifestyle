@@ -15,6 +15,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSound } from '../../../../lib/useSound'
+import { useProfileGuard } from '../../../../lib/useProfileGuard'
+import { pk } from '../../../../lib/storage'
 import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
 
@@ -137,6 +139,7 @@ function LockButton({ count, onFire, onHover }) {
 }
 
 export default function SchedulePage() {
+  useProfileGuard()
   const router = useRouter()
   const { play } = useSound()
 
@@ -157,9 +160,9 @@ export default function SchedulePage() {
   // Load stored cycle data from localStorage
   useEffect(() => {
     try {
-      const name = localStorage.getItem('gtl-cycle-name')
+      const name = localStorage.getItem(pk('cycle-name'))
       if (name) setCycleName(name)
-      const raw = localStorage.getItem('gtl-muscle-targets')
+      const raw = localStorage.getItem(pk('muscle-targets'))
       if (raw) setTargets(JSON.parse(raw))
     } catch (_) {}
   }, [])
@@ -220,7 +223,7 @@ export default function SchedulePage() {
   const handleLockIn = () => {
     play('card-confirm')
     try {
-      localStorage.setItem('gtl-training-days', JSON.stringify([...trainingDays]))
+      localStorage.setItem(pk('training-days'), JSON.stringify([...trainingDays]))
     } catch (_) {}
     setFireActive(true)
   }

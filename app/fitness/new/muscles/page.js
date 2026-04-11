@@ -18,6 +18,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { useSound } from '../../../../lib/useSound'
+import { useProfileGuard } from '../../../../lib/useProfileGuard'
+import { pk } from '../../../../lib/storage'
 import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
 
@@ -35,13 +37,13 @@ const MuscleBody = dynamic(() => import('../../../../components/MuscleBody'), {
 })
 
 const MUSCLE_GROUPS = [
-  { id: 'back',       label: 'BACK',       region: 'UPPER' },
-  { id: 'shoulders',  label: 'SHOULDERS',  region: 'UPPER' },
   { id: 'chest',      label: 'CHEST',      region: 'UPPER' },
-  { id: 'abs',        label: 'ABS',        region: 'CORE'  },
+  { id: 'shoulders',  label: 'SHOULDERS',  region: 'UPPER' },
+  { id: 'back',       label: 'BACK',       region: 'UPPER' },
   { id: 'biceps',     label: 'BICEPS',     region: 'ARMS'  },
   { id: 'triceps',    label: 'TRICEPS',    region: 'ARMS'  },
   { id: 'forearms',   label: 'FOREARMS',   region: 'ARMS'  },
+  { id: 'abs',        label: 'ABS',        region: 'CORE'  },
   { id: 'glutes',     label: 'GLUTES',     region: 'LOWER' },
   { id: 'quads',      label: 'QUADS',      region: 'LOWER' },
   { id: 'hamstrings', label: 'HAMSTRINGS', region: 'LOWER' },
@@ -383,6 +385,7 @@ function ForgeButton({ count, onFire, onHover }) {
 }
 
 export default function MusclesPage() {
+  useProfileGuard()
   const [selected, setSelected] = useState(() => new Set())
   const [focusedGroup, setFocusedGroup] = useState(null)
   const [modelKey, setModelKey] = useState('goku')
@@ -663,7 +666,7 @@ export default function MusclesPage() {
               <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
                 <ForgeButton count={count} onFire={() => {
                   play('card-confirm')
-                  try { localStorage.setItem('gtl-muscle-targets', JSON.stringify([...selected])) } catch (_) {}
+                  try { localStorage.setItem(pk('muscle-targets'), JSON.stringify([...selected])) } catch (_) {}
                   setFireActive(true)
                 }} onHover={() => play('button-hover')} />
               </div>

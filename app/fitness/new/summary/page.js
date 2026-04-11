@@ -11,6 +11,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSound } from '../../../../lib/useSound'
+import { useProfileGuard } from '../../../../lib/useProfileGuard'
+import { pk } from '../../../../lib/storage'
 import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
 
@@ -237,6 +239,7 @@ function BeginButton({ onFire, onHover }) {
 }
 
 export default function SummaryPage() {
+  useProfileGuard()
   const router = useRouter()
   const { play } = useSound()
 
@@ -251,10 +254,10 @@ export default function SummaryPage() {
 
   useEffect(() => {
     try {
-      const name = localStorage.getItem('gtl-cycle-name')
-      const rawT = localStorage.getItem('gtl-muscle-targets')
-      const rawD = localStorage.getItem('gtl-training-days')
-      const rawP = localStorage.getItem('gtl-daily-plan')
+      const name = localStorage.getItem(pk('cycle-name'))
+      const rawT = localStorage.getItem(pk('muscle-targets'))
+      const rawD = localStorage.getItem(pk('training-days'))
+      const rawP = localStorage.getItem(pk('daily-plan'))
       if (name) setCycleName(name)
       if (rawT) setTargets(JSON.parse(rawT))
       if (rawD) setDays(JSON.parse(rawD).sort())
@@ -266,8 +269,8 @@ export default function SummaryPage() {
     play('card-confirm')
     // Save or update the cycle in the persistent list
     try {
-      const existing  = JSON.parse(localStorage.getItem('gtl-cycles') || '[]')
-      const editingId = localStorage.getItem('gtl-editing-cycle-id')
+      const existing  = JSON.parse(localStorage.getItem(pk('cycles')) || '[]')
+      const editingId = localStorage.getItem(pk('editing-cycle-id'))
       if (editingId) {
         // Update the existing cycle in place, preserve original createdAt
         const updated = existing.map((c) =>
@@ -275,8 +278,8 @@ export default function SummaryPage() {
             ? { ...c, name: cycleName, targets, days, dailyPlan }
             : c
         )
-        localStorage.setItem('gtl-cycles', JSON.stringify(updated))
-        localStorage.removeItem('gtl-editing-cycle-id')
+        localStorage.setItem(pk('cycles'), JSON.stringify(updated))
+        localStorage.removeItem(pk('editing-cycle-id'))
       } else {
         // Brand-new cycle
         const cycle = {
@@ -287,7 +290,7 @@ export default function SummaryPage() {
           dailyPlan,
           createdAt: new Date().toISOString(),
         }
-        localStorage.setItem('gtl-cycles', JSON.stringify([cycle, ...existing]))
+        localStorage.setItem(pk('cycles'), JSON.stringify([cycle, ...existing]))
       }
     } catch (_) {}
     setStampVisible(true)
