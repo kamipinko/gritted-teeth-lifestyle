@@ -177,7 +177,7 @@ export default function ProfilePage() {
                 placeholder="ENTER YOUR NAME"
                 maxLength={24}
                 autoFocus
-                className="relative w-full bg-transparent font-display text-2xl text-gtl-chalk tracking-wide uppercase px-6 py-4 outline-none placeholder:text-gtl-smoke"
+                className="relative w-full bg-transparent font-display text-lg md:text-2xl text-gtl-chalk tracking-wide uppercase px-4 md:px-6 py-4 outline-none placeholder:text-gtl-smoke"
                 style={{ caretColor: '#d4181f' }}
               />
             </div>
@@ -192,7 +192,7 @@ export default function ProfilePage() {
                 style={{ clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)' }}
                 aria-hidden="true"
               />
-              <div className="relative px-8 py-4 flex items-center gap-2">
+              <div className="relative px-4 md:px-8 py-4 flex items-center gap-2">
                 <span className={`font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-200
                   ${trimmed ? 'text-gtl-paper' : 'text-gtl-ash'}`}>
                   {isNew ? 'CREATE' : isExisting ? 'ENTER' : 'ENTER'}
