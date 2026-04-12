@@ -74,7 +74,8 @@ def run(args_raw):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=not headed)
         context = browser.new_context(
-            viewport={"width": 1280, "height": 900},
+            viewport={"width": 1920, "height": 1080},
+            device_scale_factor=1,
             ignore_https_errors=True,
         )
         page = context.new_page()
