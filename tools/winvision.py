@@ -38,6 +38,33 @@ SCREENSHOT_PATH = r"C:\Users\Pinko\claudesandbox\tools\screen.png"
 pyautogui.FAILSAFE = True
 pyautogui.PAUSE = 0.1
 
+# Target width Claude can read clearly. 4K -> 1920 cuts each pixel to half,
+# making text readable. Zoom/crop commands bypass this to preserve their upscale.
+CLAUDE_MAX_WIDTH = 1920
+
+
+# ── Resize helper ──────────────────────────────────────────────────────────────
+
+def _normalize(img, max_width=CLAUDE_MAX_WIDTH):
+    """Downscale wide images so Claude can read them clearly. Never upscales."""
+    if img.width > max_width:
+        ratio = max_width / img.width
+        new_size = (max_width, int(img.height * ratio))
+        img = img.resize(new_size, Image.LANCZOS)
+    return img
+
+
+def _save(img, label="", normalize=True):
+    if normalize:
+        orig = img.size
+        img = _normalize(img)
+        if img.size != orig:
+            print(f"Resized: {orig} to {img.size}  (normalized for Claude)")
+    img.save(SCREENSHOT_PATH)
+    msg = f"Saved: {SCREENSHOT_PATH}  ({img.size[0]}x{img.size[1]})"
+    print(f"{label}  {msg}" if label else msg)
+    return img
+
 
 # ── Screenshot helpers ─────────────────────────────────────────────────────────
 
@@ -53,39 +80,35 @@ def screenshot(window_title=None):
             win.activate()
             time.sleep(0.4)
         except Exception:
-            pass  # Can't steal focus from terminal — screenshot region directly
+            pass
         bbox = (win.left, win.top, win.right, win.bottom)
         img = ImageGrab.grab(bbox=bbox)
-        print(f"Window '{win.title}' at {bbox}  size={img.size}")
+        print(f"Window '{win.title}' at {bbox}  raw={img.size}")
     else:
         img = ImageGrab.grab()
-        print(f"Full screen: {img.size}")
+        print(f"Full screen raw: {img.size}")
 
-    img.save(SCREENSHOT_PATH)
-    print(f"Saved: {SCREENSHOT_PATH}")
-    return img
+    return _save(img)
 
 
 def region(x1, y1, x2, y2):
     """Capture a specific rectangle of the screen."""
     img = ImageGrab.grab(bbox=(x1, y1, x2, y2))
-    img.save(SCREENSHOT_PATH)
-    print(f"Region ({x1},{y1})to({x2},{y2})  size={img.size}  saved: {SCREENSHOT_PATH}")
-    return img
+    print(f"Region ({x1},{y1})->({x2},{y2})  raw={img.size}")
+    return _save(img)
 
 
 def zoom(x1, y1, x2, y2, scale=3):
-    """Capture a screen region and scale it up for readability."""
+    """Capture a screen region and scale it up for readability. Skips normalization."""
     img = ImageGrab.grab(bbox=(x1, y1, x2, y2))
     new_size = (img.width * scale, img.height * scale)
     img = img.resize(new_size, Image.NEAREST)
-    img.save(SCREENSHOT_PATH)
-    print(f"Zoom {scale}x  region ({x1},{y1})to({x2},{y2})  output={img.size}  saved: {SCREENSHOT_PATH}")
-    return img
+    # Zoom is intentionally upscaled — don't normalize back down
+    return _save(img, label=f"Zoom {scale}x  ({x1},{y1})->({x2},{y2})", normalize=False)
 
 
 def crop(x1, y1, x2, y2, scale=2):
-    """Crop from the last saved screenshot (pixel coords in that image)."""
+    """Crop from the last saved screenshot (pixel coords in that image) and upscale."""
     try:
         img = Image.open(SCREENSHOT_PATH)
     except FileNotFoundError:
@@ -94,8 +117,8 @@ def crop(x1, y1, x2, y2, scale=2):
     cropped = img.crop((x1, y1, x2, y2))
     new_size = (cropped.width * scale, cropped.height * scale)
     cropped = cropped.resize(new_size, Image.LANCZOS)
-    cropped.save(SCREENSHOT_PATH)
-    print(f"Cropped ({x1},{y1})to({x2},{y2}) scaled {scale}x  output={cropped.size}  saved: {SCREENSHOT_PATH}")
+    # Crop is intentionally upscaled — don't normalize back down
+    _save(cropped, label=f"Crop ({x1},{y1})->({x2},{y2}) scaled {scale}x", normalize=False)
 
 
 # ── Window helpers ─────────────────────────────────────────────────────────────
