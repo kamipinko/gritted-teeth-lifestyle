@@ -419,7 +419,7 @@ export default function NewCycleNamePage() {
       {/* Top nav row */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-6">
         <RetreatButton />
-        <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
+        <div className="hidden md:block font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
           PALACE / FITNESS / NEW CYCLE / NAME
         </div>
       </nav>

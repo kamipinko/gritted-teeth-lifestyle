@@ -390,7 +390,7 @@ export default function SummaryPage() {
         {/* Content on top of red band */}
         <div className="relative px-8 pt-8 pb-14">
           {/* Breadcrumb */}
-          <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-paper/40 mb-6">
+          <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-paper/40 mb-6 overflow-hidden truncate">
             PALACE / FITNESS / NEW CYCLE / MISSION BRIEF
           </div>
 
@@ -428,7 +428,7 @@ export default function SummaryPage() {
 
       {/* ── STATS ROW — gold numbers, earned ────────────────────────── */}
       <section className="relative z-10 px-8 py-10">
-        <div className="flex items-start gap-8 flex-wrap">
+        <div className="flex items-start gap-4 md:gap-8 flex-wrap">
           <StatBlock number={days.length}       label="BATTLEDAYS" />
 
           {/* Red slash separator */}
@@ -557,7 +557,7 @@ export default function SummaryPage() {
 
                 {/* Stamp face */}
                 <div
-                  className="relative px-14 py-10 bg-gtl-red border-4 border-gtl-red-deep"
+                  className="relative px-8 md:px-14 py-10 bg-gtl-red border-4 border-gtl-red-deep"
                   style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)' }}
                 >
                   {/* Top label */}
@@ -570,7 +570,7 @@ export default function SummaryPage() {
 
                   {/* Month */}
                   <div
-                    className="font-display text-5xl text-gtl-paper leading-none"
+                    className="font-display text-3xl md:text-5xl text-gtl-paper leading-none"
                     style={{ textShadow: '3px 3px 0 #070708' }}
                   >
                     {month}
