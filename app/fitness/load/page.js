@@ -139,7 +139,8 @@ function SelectStamp({ selected, onToggle }) {
 }
 
 /* ── Giant checkmark slam — mounts on select, unmounts on deselect ── */
-function CheckSlam() {
+/* part='shadow' renders only the offset shadow; part='face' renders ring + face */
+function CheckSlam({ part = 'face' }) {
   return (
     <>
       <style>{`
@@ -159,55 +160,70 @@ function CheckSlam() {
         }
       `}</style>
 
-      {/* Shockwave ring */}
-      <div
-        className="absolute pointer-events-none rounded-full"
-        style={{
-          left: '50%', top: '50%',
-          width: '80px', height: '80px',
-          border: '3px solid #d4181f',
-          animation: 'check-ring 700ms cubic-bezier(0.2, 0.8, 0.3, 1) 580ms forwards',
-          opacity: 0,
-        }}
-        aria-hidden="true"
-      />
+      {part === 'face' && (
+        <>
+          {/* Shockwave ring */}
+          <div
+            className="absolute pointer-events-none rounded-full"
+            style={{
+              left: '50%', top: '50%',
+              width: '80px', height: '80px',
+              border: '3px solid #7a0e14',
+              animation: 'check-ring 700ms cubic-bezier(0.2, 0.8, 0.3, 1) 580ms forwards',
+              opacity: 0,
+            }}
+            aria-hidden="true"
+          />
+          {/* Face */}
+          <div
+            className="pointer-events-none select-none"
+            style={{
+              animation: 'check-slam 800ms cubic-bezier(0.18, 1.2, 0.35, 1) forwards',
+              fontFamily: 'inherit',
+              lineHeight: 1,
+            }}
+            aria-hidden="true"
+          >
+            <div
+              className="relative font-display"
+              style={{
+                fontSize: 'clamp(8rem, 14vw, 13rem)',
+                color: '#7a0e14',
+                textShadow: '0 0 40px rgba(122,14,20,0.6)',
+                lineHeight: 1,
+                userSelect: 'none',
+              }}
+            >
+              ✓
+            </div>
+          </div>
+        </>
+      )}
 
-      {/* The checkmark */}
-      <div
-        className="pointer-events-none select-none"
-        style={{
-          animation: 'check-slam 800ms cubic-bezier(0.18, 1.2, 0.35, 1) forwards',
-          fontFamily: 'inherit',
-          lineHeight: 1,
-        }}
-        aria-hidden="true"
-      >
-        {/* Hard shadow */}
+      {part === 'shadow' && (
+        /* Hard shadow — animates identically so it tracks the face */
         <div
-          className="absolute font-display text-gtl-red-deep"
+          className="pointer-events-none select-none"
           style={{
-            fontSize: 'clamp(8rem, 14vw, 13rem)',
-            transform: 'translate(10px, 10px)',
+            animation: 'check-slam 800ms cubic-bezier(0.18, 1.2, 0.35, 1) forwards',
+            fontFamily: 'inherit',
             lineHeight: 1,
-            userSelect: 'none',
           }}
+          aria-hidden="true"
         >
-          ✓
+          <div
+            className="font-display text-gtl-red-deep"
+            style={{
+              fontSize: 'clamp(8rem, 14vw, 13rem)',
+              transform: 'translate(10px, 10px)',
+              lineHeight: 1,
+              userSelect: 'none',
+            }}
+          >
+            ✓
+          </div>
         </div>
-        {/* Face */}
-        <div
-          className="relative font-display"
-          style={{
-            fontSize: 'clamp(8rem, 14vw, 13rem)',
-            color: '#d4181f',
-            textShadow: '0 0 40px rgba(212,24,31,0.5)',
-            lineHeight: 1,
-            userSelect: 'none',
-          }}
-        >
-          ✓
-        </div>
-      </div>
+      )}
     </>
   )
 }
@@ -385,11 +401,16 @@ function CycleCard({ cycle, index, selected, onSelect }) {
         })()}
       </div>
 
-      {/* Giant checkmark — slams in on select, gone on deselect */}
+      {/* Giant checkmark — shadow behind deadline block, face in front */}
       {selected && (
-        <div className="absolute right-10 top-1/2 -translate-y-1/2 flex items-center justify-center overflow-visible pointer-events-none">
-          <CheckSlam />
-        </div>
+        <>
+          <div className="absolute right-10 top-1/2 -translate-y-1/2 flex items-center justify-center overflow-visible pointer-events-none" style={{ zIndex: 5 }}>
+            <CheckSlam part="shadow" />
+          </div>
+          <div className="absolute right-10 top-1/2 -translate-y-1/2 flex items-center justify-center overflow-visible pointer-events-none" style={{ zIndex: 20 }}>
+            <CheckSlam part="face" />
+          </div>
+        </>
       )}
 
       <div className="px-8 pt-6 pb-8">
@@ -488,7 +509,7 @@ function CycleCard({ cycle, index, selected, onSelect }) {
         </div>
 
         {/* Red slash divider */}
-        <div className="mb-5 h-px bg-gtl-red" style={{ transform: 'skewX(-8deg)' }} />
+        <div className="mb-5 h-px bg-gtl-red" style={{ transform: 'skewX(-8deg)', position: 'relative', zIndex: 10 }} />
 
         {/* Muscle targets */}
         {cycle.targets?.length > 0 && (
