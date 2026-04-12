@@ -152,7 +152,7 @@ function CycleOption({
 
         <p
           className={`
-            font-mono text-[10px] tracking-[0.25em] uppercase mt-3 max-w-xs
+            font-mono text-[10px] tracking-[0.25em] uppercase mt-3 max-w-[60%]
             ${isPrimary ? 'text-gtl-paper/80' : 'text-gtl-ink/70'}
           `}
         >
@@ -259,22 +259,22 @@ function GhostOption({ number, label, caption, href, onClick }) {
       />
 
       {/* Content — laid out horizontally, system-command style */}
-      <div className="relative h-full flex items-center gap-6 px-8 py-5">
-        {/* Number stamp on the left */}
+      <div className="relative h-full flex items-center gap-3 md:gap-6 px-4 md:px-8 py-5">
+        {/* Number stamp on the left — hidden on mobile to give text room */}
         <div
           className={`
-            font-display leading-none transition-all duration-300
-            ${hovered ? 'text-gtl-red-bright text-7xl' : 'text-gtl-red text-6xl'}
+            hidden md:block font-display leading-none transition-all duration-300 shrink-0
+            ${hovered ? 'text-gtl-red-bright md:text-7xl' : 'text-gtl-red md:text-6xl'}
           `}
           aria-hidden="true"
         >
           {number}
         </div>
 
-        {/* Vertical separator */}
+        {/* Vertical separator — hidden on mobile */}
         <div
           className={`
-            w-px transition-all duration-300
+            hidden md:block w-px transition-all duration-300
             ${hovered ? 'h-16 bg-gtl-red-bright' : 'h-12 bg-gtl-red/60'}
           `}
         />
@@ -295,7 +295,7 @@ function GhostOption({ number, label, caption, href, onClick }) {
           </div>
           <h3
             className={`
-              font-display text-3xl md:text-4xl leading-none transition-colors duration-300
+              font-display text-xl md:text-3xl lg:text-4xl leading-tight transition-colors duration-300
               ${hovered ? 'text-gtl-paper' : 'text-gtl-chalk'}
             `}
           >
@@ -325,7 +325,7 @@ function GhostOption({ number, label, caption, href, onClick }) {
           </span>
           <span
             className={`
-              font-display text-4xl leading-none transition-colors duration-300
+              font-display text-2xl md:text-4xl leading-none transition-colors duration-300
               ${hovered ? 'text-gtl-red-bright' : 'text-gtl-red'}
             `}
           >

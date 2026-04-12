@@ -215,9 +215,9 @@ function IgniteButton({ onFire, onHover, disabled }) {
     : { outer: '22s',  mid: '14s',   inner: '9s' }
 
   return (
-    <div className="absolute z-20 pointer-events-none" style={{ right: '32px', bottom: '16px', opacity: disabled ? 0.3 : 1, transition: 'opacity 300ms ease' }}>
+    <div className="absolute z-20 pointer-events-none" style={{ right: '16px', bottom: '16px', opacity: disabled ? 0.3 : 1, transition: 'opacity 300ms ease' }}>
       <div style={{ animation: 'forge-slam 700ms cubic-bezier(0.2, 1.2, 0.4, 1) forwards' }}>
-        <div className="relative" style={{ width: '300px', height: '210px' }}>
+        <div className="relative" style={{ width: 'min(300px, 80vw)', height: 'min(210px, 56vw)' }}>
 
           {/* Shape 1 — large parallelogram, CW */}
           <div
@@ -284,9 +284,9 @@ function IgniteButton({ onFire, onHover, disabled }) {
                   transition: 'transform 80ms ease-out, background 80ms ease-out',
                 }}
               >
-                <div className="font-display text-4xl text-gtl-paper leading-none tracking-tight">IGNITE</div>
-                <div className="font-display text-4xl text-gtl-paper leading-none tracking-tight">THE</div>
-                <div className="font-display text-4xl text-gtl-paper leading-none tracking-tight">CYCLE</div>
+                <div className="font-display text-2xl md:text-4xl text-gtl-paper leading-none tracking-tight">IGNITE</div>
+                <div className="font-display text-2xl md:text-4xl text-gtl-paper leading-none tracking-tight">THE</div>
+                <div className="font-display text-2xl md:text-4xl text-gtl-paper leading-none tracking-tight">CYCLE</div>
                 <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-paper/60 mt-3 border-t border-gtl-paper/20 pt-2">
                   PIERCE THE LIMIT ▸
                 </div>
@@ -391,14 +391,23 @@ export default function PlanPage() {
       </div>
 
       {/* Nav + Headline + Muscle bar */}
-      <nav className="relative z-10 shrink-0 flex items-center gap-6 px-8 py-3" style={{ background: 'rgba(7,7,8,0.75)', borderBottom: '1px solid rgba(212,24,31,0.25)' }}>
-        <RetreatButton />
-        <h1 className={`font-display text-white leading-none -rotate-1 shrink-0 ${compact ? 'text-2xl' : 'text-5xl'}`}>
-          FORGE YOUR <span className="text-gtl-red gtl-headline-shadow-soft">SESSIONS</span>
-        </h1>
+      <nav className="relative z-10 shrink-0 flex flex-col gap-2 px-4 md:px-8 py-3" style={{ background: 'rgba(7,7,8,0.75)', borderBottom: '1px solid rgba(212,24,31,0.25)' }}>
+        {/* Top row: back + title + count */}
+        <div className="flex items-center gap-3">
+          <RetreatButton />
+          <h1 className={`font-display text-white leading-none -rotate-1 shrink-0 flex-1 min-w-0 ${compact ? 'text-lg' : 'text-2xl md:text-5xl'}`}>
+            FORGE YOUR <span className="text-gtl-red gtl-headline-shadow-soft">SESSIONS</span>
+          </h1>
+          <div className="shrink-0 flex flex-col items-end gap-1">
+            <div className="font-display leading-none" style={{ fontSize: '1.1rem', color: '#e4b022', textShadow: '1px 1px 0 #8a6612' }}>
+              {Object.values(assignments).filter(s => s.size > 0).length}
+              <span className="font-mono text-[9px] tracking-[0.2em] text-white ml-1">/ {days.length}</span>
+            </div>
+          </div>
+        </div>
 
-        {/* Muscle bar — inline to the right of the heading */}
-        <div className="flex items-center gap-1.5 flex-wrap flex-1 min-w-0">
+        {/* Muscle bar — below heading on all sizes */}
+        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
           {/* Day prompt */}
           <div className="relative shrink-0 flex items-center">
             <div className="absolute inset-0" style={{ background: selectedDay ? '#d4181f' : '#1a1a1e', clipPath: 'polygon(0 0, 88% 0, 100% 50%, 88% 100%, 0 100%)' }} />
@@ -424,14 +433,6 @@ export default function PlanPage() {
             )
           })}
         </div>
-
-        <div className="shrink-0 flex flex-col items-end gap-1">
-          <div className="font-display leading-none" style={{ fontSize: '1.1rem', color: '#e4b022', textShadow: '1px 1px 0 #8a6612' }}>
-            {Object.values(assignments).filter(s => s.size > 0).length}
-            <span className="font-mono text-[9px] tracking-[0.2em] text-white ml-1">/ {days.length}</span>
-          </div>
-        </div>
-
       </nav>
 
       {/* Red slash divider */}
