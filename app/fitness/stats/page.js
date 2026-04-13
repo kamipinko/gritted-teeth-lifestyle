@@ -349,12 +349,6 @@ function BodyStarChart({ regionXP }) {
         {/* Filled XP star */}
         <path d={starPath} fill="rgba(228,176,34,0.18)" stroke="#e4b022" strokeWidth="1.5" />
 
-        {/* Gold dots at badge anchors */}
-        {REGION_ANGLES.map((_, i) => {
-          const { x, y } = badgeAnchor(i)
-          return <circle key={i} cx={x} cy={y} r={3} fill="#e4b022" />
-        })}
-
         {/* Small center dot */}
         <circle cx={CX} cy={CY} r={4} fill="#e4b022" />
       </svg>
