@@ -343,7 +343,7 @@ function BodyStarChart({ regionXP }) {
         <TransmutationCircle />
 
         {/* Outer level ring */}
-        <circle cx={CX} cy={CY} r={LEVEL_RING_RADII[4]} fill="none" stroke="#3a3a3a" strokeWidth="1.5" />
+        <circle cx={CX} cy={CY} r={LEVEL_RING_RADII[5]} fill="none" stroke="#3a3a3a" strokeWidth="1.5" />
 
         {/* Ghost star — max potential, faint outline */}
         <path d={ghostPath} fill="none" stroke="#3a3a3a" strokeWidth="1" />
