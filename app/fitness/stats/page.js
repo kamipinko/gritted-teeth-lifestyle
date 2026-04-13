@@ -127,7 +127,7 @@ const VH = 310
 const CX = 170
 const CY = 148
 
-const OUTER_MAX_R = 120  // max spike length at full XP — aligns with transmutation outer ring
+const OUTER_MAX_R = 134  // max spike length at full XP — aligns with transmutation outer ring
 const INNER_R     = 38   // fixed inner indent of the star
 const BADGE_R     = 138  // radius for badge anchor dots (outside max star)
 
