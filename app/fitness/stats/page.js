@@ -136,19 +136,43 @@ const REGION_ANGLES = BODY_REGIONS.map((_, i) => -Math.PI / 2 + i * (2 * Math.PI
 // 5 inner angles sit halfway between outer angles
 const INNER_ANGLES = REGION_ANGLES.map(a => a + Math.PI / 5)
 
-function buildStarPath(regionXP, maxXP, outerMaxR, innerR) {
+// XP thresholds for levels 1–5 per region
+const REGION_XP_LEVELS = [500, 3000, 10000, 25000, 60000]
+
+function getRegionLevel(xp) {
+  let level = 0
+  for (const threshold of REGION_XP_LEVELS) {
+    if (xp >= threshold) level++
+    else break
+  }
+  return level  // 0–5
+}
+
+function levelToR(level) {
+  return INNER_R + (level / 5) * (OUTER_MAX_R - INNER_R)
+}
+
+// Radii for the 5 level rings (sit exactly at each level's spike length)
+const LEVEL_RING_RADII = [1, 2, 3, 4, 5].map(levelToR)
+
+function buildStarPath(regionXP) {
   const pts = []
   for (let i = 0; i < 5; i++) {
-    const r = innerR + (regionXP[i] / maxXP) * (outerMaxR - innerR)
+    const level = getRegionLevel(regionXP[i])
+    const r = levelToR(level)
     pts.push(`${CX + r * Math.cos(REGION_ANGLES[i])},${CY + r * Math.sin(REGION_ANGLES[i])}`)
-    pts.push(`${CX + innerR * Math.cos(INNER_ANGLES[i])},${CY + innerR * Math.sin(INNER_ANGLES[i])}`)
+    pts.push(`${CX + INNER_R * Math.cos(INNER_ANGLES[i])},${CY + INNER_R * Math.sin(INNER_ANGLES[i])}`)
   }
   return `M ${pts.join(' L ')} Z`
 }
 
-function buildGhostPath(outerMaxR, innerR) {
-  const full = new Array(5).fill(outerMaxR)
-  return buildStarPath(full.map(() => outerMaxR), outerMaxR, outerMaxR, innerR)
+function buildGhostPath() {
+  const pts = []
+  for (let i = 0; i < 5; i++) {
+    pts.push(`${CX + OUTER_MAX_R * Math.cos(REGION_ANGLES[i])},${CY + OUTER_MAX_R * Math.sin(REGION_ANGLES[i])}`)
+    pts.push(`${CX + INNER_R * Math.cos(INNER_ANGLES[i])},${CY + INNER_R * Math.sin(INNER_ANGLES[i])}`)
+  }
+  return `M ${pts.join(' L ')} Z`
 }
 
 // Badge anchor dots in SVG coords
@@ -182,14 +206,18 @@ function badgeCSS(i) {
 }
 
 function RegionBadge({ region, xp }) {
+  const level = getRegionLevel(xp)
   return (
     <div className="text-center">
       <div
-        className="inline-block px-2 py-0.5"
+        className="inline-flex items-baseline gap-0.5 px-2 py-0.5"
         style={{ background: '#e4b022', clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)' }}
       >
         <span className="font-display text-xs leading-none text-gtl-ink" style={{ fontStyle: 'italic' }}>
           {region.label}
+        </span>
+        <span className="font-mono text-[9px] leading-none text-gtl-ink" style={{ verticalAlign: 'super', fontSize: '0.55rem' }}>
+          {level}
         </span>
       </div>
       <div className="font-mono text-[8px] tracking-[0.1em] text-gtl-ash whitespace-nowrap mt-0.5">
@@ -200,9 +228,8 @@ function RegionBadge({ region, xp }) {
 }
 
 function BodyStarChart({ regionXP }) {
-  const maxXP = Math.max(...regionXP, 1)
-  const starPath  = buildStarPath(regionXP, maxXP, OUTER_MAX_R, INNER_R)
-  const ghostPath = buildGhostPath(OUTER_MAX_R, INNER_R)
+  const starPath  = buildStarPath(regionXP)
+  const ghostPath = buildGhostPath()
 
   return (
     <div className="relative mx-auto" style={{ width: '100%', maxWidth: `${VW}px`, height: `${VH}px` }}>
@@ -211,10 +238,13 @@ function BodyStarChart({ regionXP }) {
         viewBox={`0 0 ${VW} ${VH}`}
         aria-hidden="true"
       >
-        {/* Concentric rings */}
-        {[35, 60, 85, OUTER_MAX_R].map(r => (
-          <circle key={r} cx={CX} cy={CY} r={r}
-            fill="none" stroke="#252525" strokeWidth="1" />
+        {/* Level rings — each ring = one level threshold */}
+        {LEVEL_RING_RADII.map((r, i) => (
+          <circle key={i} cx={CX} cy={CY} r={r}
+            fill="none"
+            stroke={i === 4 ? '#3a3a3a' : '#252525'}
+            strokeWidth={i === 4 ? 1.5 : 1}
+          />
         ))}
 
         {/* Radial guide lines */}
