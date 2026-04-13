@@ -39,7 +39,7 @@ function RetreatButton() {
   const [hovered, setHovered] = useState(false)
   return (
     <Link
-      href="/fitness"
+      href="/fitness/hub"
       onMouseEnter={() => { setHovered(true); play('button-hover') }}
       onMouseLeave={() => setHovered(false)}
       onClick={() => play('menu-close')}
