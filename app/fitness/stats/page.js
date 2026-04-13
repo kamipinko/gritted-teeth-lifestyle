@@ -192,7 +192,7 @@ function badgeAnchor(i) {
 const BADGE_MARGIN = 18
 function badgeCSS(i) {
   const angle = REGION_ANGLES[i]
-  const r = BADGE_R + BADGE_MARGIN
+  const r = BADGE_R + BADGE_MARGIN + (i === 0 ? 12 : 0)
   const x = CX + r * Math.cos(angle)
   const y = CY + r * Math.sin(angle)
   // Anchor point alignment per quadrant
