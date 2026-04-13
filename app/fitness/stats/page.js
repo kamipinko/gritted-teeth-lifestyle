@@ -229,6 +229,83 @@ function RegionBadge({ region, xp }) {
   )
 }
 
+// Transmutation circle overlay — rendered inside the tilted SVG, behind the star
+function TransmutationCircle() {
+  const RO1 = 128   // outer ring
+  const RO2 = 120   // inner edge of text band
+  const RT  = 124   // text path radius
+  const RH  = 88    // hexagram vertex radius
+  const RI  = 56    // inner concentric circle
+  const RHB = 18    // central hub
+  const RS  = 9     // symbol circle radius
+
+  const hexA = Array.from({ length: 6 }, (_, i) => -Math.PI / 2 + i * (Math.PI / 3))
+  const hexP = hexA.map(a => [CX + RH * Math.cos(a), CY + RH * Math.sin(a)])
+
+  const tri1 = [hexP[0], hexP[2], hexP[4]].map(p => p.join(',')).join(' ')
+  const tri2 = [hexP[1], hexP[3], hexP[5]].map(p => p.join(',')).join(' ')
+
+  const syms = ['♂', '⊕', '♄', '♀', '☿', '♃']
+
+  const textPath = `M ${CX - RT},${CY} A ${RT},${RT} 0 1,1 ${CX + RT},${CY} A ${RT},${RT} 0 1,1 ${CX - RT},${CY}`
+
+  return (
+    <g stroke="#e4b022" fill="none" strokeWidth="0.8" opacity="0.45">
+      <defs>
+        <path id="txring" d={textPath} />
+      </defs>
+
+      {/* Double outer ring */}
+      <circle cx={CX} cy={CY} r={RO1} />
+      <circle cx={CX} cy={CY} r={RO2} />
+
+      {/* Circular text */}
+      <text fill="#e4b022" stroke="none" fontSize="5" fontFamily="Georgia, serif">
+        <textPath href="#txring" startOffset="0%">
+          THERE SHALL APPEAR BEFORE YOU PERFECT WHITE AND MANY MORE • AND AFTER SHALL APPEAR THE RED BODY • FORGE THE BODY • PIERCE THE HEAVENS • GRITTED TEETH •
+        </textPath>
+      </text>
+
+      {/* Hexagram — two overlapping triangles */}
+      <polygon points={tri1} />
+      <polygon points={tri2} />
+
+      {/* Three diameters through center */}
+      {[0, 1, 2].map(i => (
+        <line key={i}
+          x1={hexP[i][0]} y1={hexP[i][1]}
+          x2={hexP[i + 3][0]} y2={hexP[i + 3][1]}
+        />
+      ))}
+
+      {/* Inner concentric circle */}
+      <circle cx={CX} cy={CY} r={RI} />
+
+      {/* Central hub */}
+      <circle cx={CX} cy={CY} r={RHB} />
+
+      {/* Hub spokes to inner circle */}
+      {hexA.map((a, i) => (
+        <line key={i}
+          x1={CX + RHB * Math.cos(a)} y1={CY + RHB * Math.sin(a)}
+          x2={CX + RI  * Math.cos(a)} y2={CY + RI  * Math.sin(a)}
+        />
+      ))}
+
+      {/* Symbol circles at hexagram vertices */}
+      {hexP.map(([x, y], i) => (
+        <g key={i}>
+          <circle cx={x} cy={y} r={RS} fill="#0a0a0a" stroke="#e4b022" />
+          <text fill="#e4b022" stroke="none" textAnchor="middle" dominantBaseline="central"
+            x={x} y={y} fontSize="7" fontFamily="serif">
+            {syms[i]}
+          </text>
+        </g>
+      ))}
+    </g>
+  )
+}
+
 function BodyStarChart({ regionXP }) {
   const starPath  = buildStarPath(regionXP)
   const ghostPath = buildGhostPath()
@@ -241,6 +318,9 @@ function BodyStarChart({ regionXP }) {
         viewBox={`0 0 ${VW} ${VH}`}
         aria-hidden="true"
       >
+        {/* Transmutation circle — behind the star */}
+        <TransmutationCircle />
+
         {/* Outer level ring */}
         <circle cx={CX} cy={CY} r={LEVEL_RING_RADII[4]} fill="none" stroke="#3a3a3a" strokeWidth="1.5" />
 
