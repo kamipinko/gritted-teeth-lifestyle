@@ -136,10 +136,10 @@ function StatBox({ label, value, sub }) {
   return (
     <div className="relative">
       <div
-        className="bg-gtl-surface pl-5 pr-8 py-4"
-        style={{ clipPath: 'polygon(0 0, 100% 0, 97% 100%, 3% 100%)' }}
+        className="bg-gtl-surface px-4 py-4"
+        style={{ clipPath: 'polygon(0 0, 96% 0, 93% 100%, 4% 100%)' }}
       >
-        <div className="font-display text-5xl md:text-6xl leading-none text-gtl-chalk">{value}</div>
+        <div className="font-display text-4xl md:text-5xl leading-none text-gtl-chalk">{value}</div>
         {sub && (
           <div className="font-mono text-[9px] tracking-[0.25em] uppercase text-gtl-red mt-1">{sub}</div>
         )}
@@ -314,25 +314,21 @@ export default function StatsPage() {
                   {stats.topMuscles.map(({ id, label, count }, i) => {
                     const pct = Math.round((count / stats.maxMuscleCount) * 100)
                     return (
-                      <div key={id} className="flex items-center gap-4">
-                        <span className="font-mono text-[9px] tracking-[0.2em] text-gtl-smoke w-4 shrink-0">
-                          {String(i + 1).padStart(2, '0')}
-                        </span>
-                        <span className="font-mono text-xs tracking-[0.2em] uppercase text-gtl-chalk w-28 shrink-0">
-                          {label}
-                        </span>
-                        <div className="flex-1 h-2 bg-gtl-surface" style={{ clipPath: 'polygon(0 0, 100% 0, 98% 100%, 2% 100%)' }}>
-                          <div
-                            className="h-full bg-gtl-red"
-                            style={{
-                              width: `${pct}%`,
-                              clipPath: 'polygon(0 0, 100% 0, 98% 100%, 2% 100%)',
-                            }}
-                          />
+                      <div key={id}>
+                        <div className="flex items-center gap-3 mb-1">
+                          <span className="font-mono text-[9px] tracking-[0.2em] text-gtl-smoke w-4 shrink-0">
+                            {String(i + 1).padStart(2, '0')}
+                          </span>
+                          <span className="font-mono text-xs tracking-[0.2em] uppercase text-gtl-chalk flex-1">
+                            {label}
+                          </span>
+                          <span className="font-mono text-[9px] tracking-[0.15em] uppercase text-gtl-ash shrink-0">
+                            {count}×
+                          </span>
                         </div>
-                        <span className="font-mono text-[9px] tracking-[0.2em] text-gtl-ash w-20 text-right shrink-0">
-                          {count} {count === 1 ? 'SESSION' : 'SESSIONS'}
-                        </span>
+                        <div className="ml-7 h-1.5 bg-gtl-surface">
+                          <div className="h-full bg-gtl-red" style={{ width: `${pct}%` }} />
+                        </div>
                       </div>
                     )
                   })}
