@@ -51,7 +51,7 @@ function pickRandomName() {
 /**
  * Reusable retreat button.
  */
-function RetreatButton({ href = '/fitness' }) {
+function RetreatButton({ href = '/fitness/hub' }) {
   const { play } = useSound()
   const [hovered, setHovered] = useState(false)
   return (
