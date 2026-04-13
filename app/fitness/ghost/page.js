@@ -78,61 +78,6 @@ function MuscleTag({ id, index }) {
   )
 }
 
-function SelectStamp({ selected, onToggle }) {
-  const { play } = useSound()
-  const [pressed, setPressed] = useState(false)
-
-  const handleMouseUp = () => {
-    setPressed(false)
-    play(selected ? 'menu-close' : 'option-select')
-    onToggle()
-    if (!selected) setTimeout(() => play('stamp'), 440)
-  }
-
-  return (
-    <button
-      type="button"
-      onMouseDown={() => setPressed(true)}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={() => setPressed(false)}
-      onMouseEnter={() => play('button-hover')}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleMouseUp() } }}
-      className="relative cursor-pointer select-none outline-none
-        focus-visible:outline-2 focus-visible:outline-gtl-red focus-visible:outline-offset-2"
-      style={{ transform: 'rotate(-0.5deg)' }}
-      aria-pressed={selected}
-      aria-label={selected ? 'Deselect cycle' : 'Select cycle'}
-    >
-      <div
-        className="absolute inset-0"
-        style={{
-          clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
-          background: selected ? '#8a0e13' : '#1a1a1e',
-          transform: pressed ? 'translate(0,0)' : 'translate(4px, 4px)',
-          transition: 'transform 80ms ease-out',
-        }}
-        aria-hidden="true"
-      />
-      <div
-        className="relative px-5 py-2"
-        style={{
-          clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
-          background: pressed
-            ? (selected ? '#ff2a36' : '#2a2a30')
-            : (selected ? '#d4181f' : 'transparent'),
-          border: `1px solid ${selected ? '#ff2a36' : '#3a3a42'}`,
-          transform: pressed ? 'translate(4px, 4px)' : 'translate(0,0)',
-          transition: 'transform 80ms ease-out, background 80ms ease-out',
-        }}
-      >
-        <div className={`font-mono text-[9px] tracking-[0.25em] uppercase leading-none whitespace-nowrap
-          ${selected ? 'text-gtl-paper' : 'text-gtl-ash'}`}>
-          {selected ? '◼ SELECTED' : '◻ SELECT'}
-        </div>
-      </div>
-    </button>
-  )
-}
 
 function CheckSlam({ part = 'face' }) {
   return (
@@ -220,7 +165,14 @@ function CheckSlam({ part = 'face' }) {
 }
 
 function CycleCard({ cycle, index, selected, onSelect }) {
+  const { play } = useSound()
   const cardRot = index % 2 === 0 ? '-0.4deg' : '0.3deg'
+
+  const handleCardClick = () => {
+    play(selected ? 'menu-close' : 'option-select')
+    onSelect()
+    if (!selected) setTimeout(() => play('stamp'), 440)
+  }
 
   const firstDay = cycle.days?.[0]
   const lastDay  = cycle.days?.[cycle.days.length - 1]
@@ -282,7 +234,11 @@ function CycleCard({ cycle, index, selected, onSelect }) {
   return (
     <div
       ref={cardRef}
-      className="relative bg-gtl-ink overflow-visible transition-all duration-200"
+      role="button"
+      tabIndex={0}
+      onClick={handleCardClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardClick() } }}
+      className="relative bg-gtl-ink overflow-visible transition-all duration-200 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-gtl-red"
       style={{
         transform: `rotate(${cardRot})`,
         transformOrigin: 'center top',
@@ -386,11 +342,8 @@ function CycleCard({ cycle, index, selected, onSelect }) {
       )}
 
       <div className="px-8 pt-6 pb-8">
-        <div className="flex items-center gap-6 mb-3">
-          <div className="font-mono text-[9px] tracking-[0.35em] uppercase text-gtl-smoke">
-            FORGED {createdStr}
-          </div>
-          <SelectStamp selected={selected} onToggle={onSelect} />
+        <div className="font-mono text-[9px] tracking-[0.35em] uppercase text-gtl-smoke mb-3">
+          FORGED {createdStr}
         </div>
 
         <h2

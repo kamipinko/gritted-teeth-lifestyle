@@ -92,9 +92,11 @@ function MuscleChip({ id, active, disabled, onClick, onHover }) {
 function RetreatButton() {
   const { play } = useSound()
   const [hovered, setHovered] = useState(false)
+  let backHref = '/fitness/new/branded'
+  try { if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit' } catch (_) {}
   return (
     <Link
-      href="/fitness/new/branded"
+      href={backHref}
       onMouseEnter={() => { setHovered(true); play('button-hover') }}
       onMouseLeave={() => setHovered(false)}
       onClick={() => play('menu-close')}
@@ -304,6 +306,15 @@ export default function PlanPage() {
   useProfileGuard()
   const router = useRouter()
   const { play } = useSound()
+  useEffect(() => {
+    try { if (localStorage.getItem('gtl-back-to-edit') !== '1') return } catch (_) { return }
+    const handleKey = (e) => {
+      if (e.key === 'Enter' && !['INPUT','TEXTAREA','SELECT','BUTTON'].includes(document.activeElement?.tagName))
+        router.push('/fitness/edit')
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [router])
 
   const [days, setDays]             = useState([])
   const [targets, setTargets]       = useState([])

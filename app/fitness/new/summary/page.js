@@ -10,6 +10,7 @@
  */
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useSound } from '../../../../lib/useSound'
 import { useProfileGuard } from '../../../../lib/useProfileGuard'
 import { pk } from '../../../../lib/storage'
@@ -186,7 +187,7 @@ function ExportButton() {
 }
 
 /* ── BEGIN — the final contract ── */
-function BeginButton({ onFire, onHover }) {
+function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
   const [pressed, setPressed] = useState(false)
   return (
     <div
@@ -224,7 +225,7 @@ function BeginButton({ onFire, onHover }) {
       >
         <div>
           <div className="font-display text-8xl text-gtl-paper leading-none tracking-tight">
-            ETCH CYCLE
+            {label}
           </div>
           <div className="font-mono text-[10px] tracking-[0.5em] uppercase text-gtl-paper/50 mt-2">
             LAUNCH THE FORGE / THE CYCLE STARTS NOW
@@ -238,10 +239,48 @@ function BeginButton({ onFire, onHover }) {
   )
 }
 
+function RetreatButton() {
+  const { play } = useSound()
+  const [hovered, setHovered] = useState(false)
+  let backHref = '/fitness/new/plan'
+  try { if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit' } catch (_) {}
+  return (
+    <Link
+      href={backHref}
+      onMouseEnter={() => { setHovered(true); play('button-hover') }}
+      onMouseLeave={() => setHovered(false)}
+      onClick={() => play('menu-close')}
+      className="group relative inline-flex items-center"
+    >
+      <div
+        className={`absolute inset-0 -inset-x-2 transition-all duration-300 ease-out
+          ${hovered ? 'bg-gtl-paper opacity-20' : 'bg-gtl-paper opacity-10'}`}
+        style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
+        aria-hidden="true"
+      />
+      <div className="relative flex items-center gap-3 px-4 py-2">
+        <span className={`font-display text-base leading-none transition-all duration-300
+          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-paper/60'}`}>◀</span>
+        <span className={`font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300
+          ${hovered ? 'text-gtl-paper' : 'text-gtl-paper/60'}`}>RETREAT</span>
+      </div>
+    </Link>
+  )
+}
+
 export default function SummaryPage() {
   useProfileGuard()
   const router = useRouter()
   const { play } = useSound()
+  useEffect(() => {
+    try { if (localStorage.getItem('gtl-back-to-edit') !== '1') return } catch (_) { return }
+    const handleKey = (e) => {
+      if (e.key === 'Enter' && !['INPUT','TEXTAREA','SELECT','BUTTON'].includes(document.activeElement?.tagName))
+        router.push('/fitness/edit')
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [router])
 
   const [cycleName,   setCycleName]  = useState('NEW CYCLE')
   const [targets,     setTargets]    = useState([])
@@ -389,9 +428,12 @@ export default function SummaryPage() {
 
         {/* Content on top of red band */}
         <div className="relative px-8 pt-8 pb-14">
-          {/* Breadcrumb */}
-          <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-paper/40 mb-6 overflow-hidden truncate">
-            PALACE / FITNESS / NEW CYCLE / MISSION BRIEF
+          {/* Nav row: retreat + breadcrumb */}
+          <div className="flex items-center gap-4 mb-6">
+            <RetreatButton />
+            <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-paper/40 overflow-hidden truncate">
+              PALACE / FITNESS / NEW CYCLE / MISSION BRIEF
+            </div>
           </div>
 
           {/* Step tag — counter-rotated */}
@@ -482,7 +524,11 @@ export default function SummaryPage() {
       {/* ── EXPORT + BEGIN ───────────────────────────────────────────── */}
       <section className="relative z-10 px-8 pb-20 pt-4 flex flex-col gap-4 no-print">
         <ExportButton />
-        <BeginButton onFire={handleBegin} onHover={() => play('button-hover')} />
+        <BeginButton
+          onFire={handleBegin}
+          onHover={() => play('button-hover')}
+          label={(() => { try { return localStorage.getItem('gtl-back-to-edit') === '1' ? 'RE-ETCH CYCLE' : 'ETCH CYCLE' } catch (_) { return 'ETCH CYCLE' } })()}
+        />
       </section>
 
       {/* ── DEADLINE STAMP OVERLAY ───────────────────────────────── */}
@@ -576,16 +622,24 @@ export default function SummaryPage() {
                     {month}
                   </div>
 
-                  {/* Day number — the dominant element */}
-                  <div
-                    className="font-display text-gtl-paper leading-none"
-                    style={{
-                      fontSize: 'clamp(6rem, 16vw, 13rem)',
-                      textShadow: '6px 6px 0 #070708, 12px 12px 0 rgba(0,0,0,0.4)',
-                      lineHeight: '0.85',
-                    }}
-                  >
-                    {String(dayNum).padStart(2, '0')}
+                  {/* Day number + logo side by side */}
+                  <div className="flex items-center gap-16">
+                    <div
+                      className="font-display text-gtl-paper leading-none"
+                      style={{
+                        fontSize: 'clamp(6rem, 16vw, 13rem)',
+                        textShadow: '6px 6px 0 #070708, 12px 12px 0 rgba(0,0,0,0.4)',
+                        lineHeight: '0.85',
+                      }}
+                    >
+                      {String(dayNum).padStart(2, '0')}
+                    </div>
+                    <img
+                      src="/logo.png"
+                      alt="Gritted Teeth"
+                      className="-rotate-12 opacity-90"
+                      style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                    />
                   </div>
 
                   {/* Day of week + year */}

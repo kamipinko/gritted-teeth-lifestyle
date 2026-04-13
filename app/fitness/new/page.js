@@ -54,6 +54,7 @@ function pickRandomName() {
 function RetreatButton({ href = '/fitness/hub' }) {
   const { play } = useSound()
   const [hovered, setHovered] = useState(false)
+  try { if (localStorage.getItem('gtl-back-to-edit') === '1') href = '/fitness/edit' } catch (_) {}
   return (
     <Link
       href={href}
@@ -219,6 +220,34 @@ export default function NewCycleNamePage() {
   useProfileGuard()
   const router = useRouter()
   const [name, setName] = useState('')
+  const nameRef = useRef('')
+  useEffect(() => { nameRef.current = name }, [name])
+  useEffect(() => {
+    try { if (localStorage.getItem('gtl-back-to-edit') !== '1') return } catch (_) { return }
+    const handleKey = (e) => {
+      if (e.key === 'Enter' && !['INPUT','TEXTAREA','SELECT','BUTTON'].includes(document.activeElement?.tagName)) {
+        const trimmed = nameRef.current.trim()
+        if (trimmed) {
+          try {
+            localStorage.setItem(pk('cycle-name'), trimmed)
+            const cycleId = localStorage.getItem(pk('editing-cycle-id'))
+            if (cycleId) {
+              const raw = localStorage.getItem(pk('cycles'))
+              if (raw) {
+                const all = JSON.parse(raw)
+                localStorage.setItem(pk('cycles'), JSON.stringify(
+                  all.map(c => c.id === cycleId ? { ...c, name: trimmed } : c)
+                ))
+              }
+            }
+          } catch (_) {}
+        }
+        router.push('/fitness/edit')
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [router])
   const [isInitialMount, setIsInitialMount] = useState(true)
   const [isBranding, setIsBranding] = useState(false)
   const [isFireActive, setIsFireActive] = useState(false)

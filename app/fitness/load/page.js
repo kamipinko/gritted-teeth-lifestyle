@@ -78,66 +78,6 @@ function MuscleTag({ id, index }) {
   )
 }
 
-/* ── Parallelogram stamp toggle — same energy as muscle chips ── */
-function SelectStamp({ selected, onToggle }) {
-  const { play } = useSound()
-  const [pressed, setPressed] = useState(false)
-
-  const handleMouseUp = () => {
-    setPressed(false)
-    play(selected ? 'menu-close' : 'option-select')
-    onToggle()
-    // Fire stamp sound at checkmark impact (~55% through 800ms animation)
-    if (!selected) setTimeout(() => play('stamp'), 440)
-  }
-
-  return (
-    <button
-      type="button"
-      onMouseDown={() => setPressed(true)}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={() => setPressed(false)}
-      onMouseEnter={() => play('button-hover')}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleMouseUp() } }}
-      className="relative cursor-pointer select-none outline-none
-        focus-visible:outline-2 focus-visible:outline-gtl-red focus-visible:outline-offset-2"
-      style={{ transform: 'rotate(-0.5deg)' }}
-      aria-pressed={selected}
-      aria-label={selected ? 'Deselect cycle' : 'Select cycle'}
-    >
-      {/* Shadow slab */}
-      <div
-        className="absolute inset-0"
-        style={{
-          clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
-          background: selected ? '#8a0e13' : '#1a1a1e',
-          transform: pressed ? 'translate(0,0)' : 'translate(4px, 4px)',
-          transition: 'transform 80ms ease-out',
-        }}
-        aria-hidden="true"
-      />
-      {/* Face */}
-      <div
-        className="relative px-5 py-2"
-        style={{
-          clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
-          background: pressed
-            ? (selected ? '#ff2a36' : '#2a2a30')
-            : (selected ? '#d4181f' : 'transparent'),
-          border: `1px solid ${selected ? '#ff2a36' : '#3a3a42'}`,
-          transform: pressed ? 'translate(4px, 4px)' : 'translate(0,0)',
-          transition: 'transform 80ms ease-out, background 80ms ease-out',
-        }}
-      >
-        <div className={`font-mono text-[9px] tracking-[0.25em] uppercase leading-none whitespace-nowrap
-          ${selected ? 'text-gtl-paper' : 'text-gtl-ash'}`}>
-          {selected ? '◼ SELECTED' : '◻ SELECT'}
-        </div>
-      </div>
-    </button>
-  )
-}
-
 /* ── Giant checkmark slam — mounts on select, unmounts on deselect ── */
 /* part='shadow' renders only the offset shadow; part='face' renders ring + face */
 function CheckSlam({ part = 'face' }) {
@@ -228,9 +168,16 @@ function CheckSlam({ part = 'face' }) {
   )
 }
 
-/* ── Cycle dossier card — no action buttons, just info + stamp toggle ── */
+/* ── Cycle dossier card — click anywhere to select/deselect ── */
 function CycleCard({ cycle, index, selected, onSelect }) {
+  const { play } = useSound()
   const cardRot = index % 2 === 0 ? '-0.4deg' : '0.3deg'
+
+  const handleCardClick = () => {
+    play(selected ? 'menu-close' : 'option-select')
+    onSelect()
+    if (!selected) setTimeout(() => play('stamp'), 440)
+  }
 
   const firstDay = cycle.days?.[0]
   const lastDay  = cycle.days?.[cycle.days.length - 1]
@@ -303,7 +250,11 @@ function CycleCard({ cycle, index, selected, onSelect }) {
   return (
     <div
       ref={cardRef}
-      className="relative bg-gtl-ink overflow-visible transition-all duration-200"
+      role="button"
+      tabIndex={0}
+      onClick={handleCardClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardClick() } }}
+      className="relative bg-gtl-ink overflow-visible transition-all duration-200 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-gtl-red"
       style={{
         transform: `rotate(${cardRot})`,
         transformOrigin: 'center top',
@@ -414,12 +365,9 @@ function CycleCard({ cycle, index, selected, onSelect }) {
       )}
 
       <div className="px-8 pt-6 pb-8">
-        {/* Created date + select stamp on same row */}
-        <div className="flex items-center gap-6 mb-3">
-          <div className="font-mono text-[9px] tracking-[0.35em] uppercase text-gtl-smoke">
-            FORGED {createdStr}
-          </div>
-          <SelectStamp selected={selected} onToggle={onSelect} />
+        {/* Created date */}
+        <div className="font-mono text-[9px] tracking-[0.35em] uppercase text-gtl-smoke mb-3">
+          FORGED {createdStr}
         </div>
 
         {/* Cycle name — dominant */}
@@ -856,7 +804,7 @@ export default function LoadCyclePage() {
   const handleReview = (cycle) => {
     loadCycleIntoStorage(cycle)
     try { localStorage.setItem(pk('editing-cycle-id'), cycle.id) } catch (_) {}
-    setFireDest('/fitness/new')
+    setFireDest('/fitness/edit')
     setFireActive(true)
   }
 
@@ -955,6 +903,7 @@ export default function LoadCyclePage() {
               <div className="h-px flex-1 bg-gtl-edge" />
               <Link
                 href="/fitness/new"
+                onClick={() => { try { localStorage.removeItem('gtl-back-to-edit'); localStorage.removeItem(pk('editing-cycle-id')) } catch (_) {} }}
                 className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-ash hover:text-gtl-red transition-colors"
               >
                 + FORGE A NEW CYCLE

@@ -1848,79 +1848,72 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
             )}
           </div>
 
-          {/* Two-column layout: date+muscles left, exercise log right */}
-          <div className="flex-1 relative min-h-0">
+          {/* Vertical layout: compact date header + muscle slabs + exercise log */}
+          <div className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-5 py-2">
 
-            {/* Left column — date display + muscle slabs, absolutely positioned so it doesn't push grid */}
-            <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-center" style={{ zIndex: 1 }}>
-
-              {/* Month + year */}
-              <div className="font-mono text-[11px] tracking-[0.5em] uppercase text-gtl-red mb-4">
+            {/* Compact date header */}
+            <div>
+              <div className="font-mono text-[10px] tracking-[0.5em] uppercase text-gtl-red/60 mb-1">
                 {month} · {year}
               </div>
-
-              {/* Day number — dominant */}
-              <div
-                className="font-display text-gtl-chalk leading-none"
-                style={{
-                  fontSize: 'clamp(8rem, 22vw, 20rem)',
-                  textShadow: '8px 8px 0 #070708, 16px 16px 0 rgba(0,0,0,0.4)',
-                  lineHeight: '0.85',
-                }}
-              >
-                {String(dayNum).padStart(2, '0')}
-              </div>
-
-              {/* Day of week */}
-              <div
-                className="font-display text-gtl-red leading-none mt-2"
-                style={{
-                  fontSize: 'clamp(3rem, 8vw, 7rem)',
-                  textShadow: '4px 4px 0 #070708',
-                  transform: 'rotate(-1deg)',
-                }}
-              >
-                {dayName}
-              </div>
-
-              {/* Red slash divider */}
-              <div
-                className="my-8 h-[3px] bg-gtl-red"
-                style={{ transform: 'skewX(-6deg)', transformOrigin: 'left center', maxWidth: '600px' }}
-              />
-
-              {/* Muscle slabs or REST */}
-              {hasWork ? (
-                <div className="flex flex-wrap gap-x-4 gap-y-6" style={{ overflow: 'visible' }}>
-                  {muscles.map((id, i) => {
-                    const rot = SLAB_ROTATIONS[i % SLAB_ROTATIONS.length]
-                    return (
-                      <MuscleSlab
-                        key={id}
-                        id={id}
-                        rot={rot}
-                        delay={320 + i * 60}
-                        onClick={(rect) => { play('option-select'); setFocusMuscle(id); setFocusMuscleRect(rect) }}
-                      />
-                    )
-                  })}
-                </div>
-              ) : (
+              <div className="flex items-baseline gap-4">
                 <div
-                  className="font-display text-gtl-smoke leading-none"
-                  style={{ fontSize: 'clamp(3rem, 7vw, 6rem)', transform: 'rotate(-1deg)' }}
+                  className="font-display text-gtl-chalk leading-none"
+                  style={{
+                    fontSize: 'clamp(3.5rem, 12vw, 7rem)',
+                    textShadow: '4px 4px 0 #070708, 8px 8px 0 rgba(0,0,0,0.4)',
+                    lineHeight: '0.85',
+                  }}
                 >
-                  REST DAY
+                  {String(dayNum).padStart(2, '0')}
                 </div>
-              )}
+                <div
+                  className="font-display text-gtl-red leading-none"
+                  style={{
+                    fontSize: 'clamp(1.5rem, 5vw, 3rem)',
+                    textShadow: '2px 2px 0 #070708',
+                    transform: 'rotate(-1deg)',
+                  }}
+                >
+                  {dayName}
+                </div>
+              </div>
             </div>
 
-            {/* Exercise summary grid — full width, left-padded to clear the date column */}
-            {hasWork && (
+            {/* Red slash divider */}
+            <div
+              className="h-[3px] bg-gtl-red shrink-0"
+              style={{ transform: 'skewX(-6deg)', transformOrigin: 'left center' }}
+            />
+
+            {/* Muscle slabs or REST */}
+            {hasWork ? (
+              <div className="flex flex-wrap gap-x-4 gap-y-3">
+                {muscles.map((id, i) => {
+                  const rot = SLAB_ROTATIONS[i % SLAB_ROTATIONS.length]
+                  return (
+                    <MuscleSlab
+                      key={id}
+                      id={id}
+                      rot={rot}
+                      delay={320 + i * 60}
+                      onClick={(rect) => { play('option-select'); setFocusMuscle(id); setFocusMuscleRect(rect) }}
+                    />
+                  )
+                })}
+              </div>
+            ) : (
               <div
-                className="absolute inset-0 py-6 pointer-events-none"
-                style={{ paddingLeft: 'clamp(180px, 28vw, 340px)', display: 'grid', gridTemplateColumns: `repeat(${Math.max(1, muscles.filter(id => Object.values(allReps[id] || {}).some(v => Array.isArray(v) ? v.some(r => r > 0) : v > 0)).length)}, 1fr)`, gap: '1rem 1.5rem', alignContent: 'center', animation: 'focus-content-in 350ms 400ms ease-out both' }}
+                className="font-display text-gtl-smoke leading-none"
+                style={{ fontSize: 'clamp(3rem, 7vw, 6rem)', transform: 'rotate(-1deg)' }}
               >
+                REST DAY
+              </div>
+            )}
+
+            {/* Exercise log — full width, one block per muscle group */}
+            {hasWork && (
+              <div style={{ animation: 'focus-content-in 350ms 400ms ease-out both' }}>
                 {muscles.every(id => !Object.values(allReps[id] || {}).some(v => Array.isArray(v) ? v.some(r => r > 0) : v > 0)) ? (
                   <div style={{ transform: 'rotate(-1deg)' }}>
                     <div
@@ -1936,125 +1929,114 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
                       SET LOGGED YET
                     </div>
                   </div>
-                ) : muscles.map((muscleId, si) => {
-                  const muscleReps = allReps[muscleId] || {}
-                  const logged = Object.entries(muscleReps).filter(([, v]) => Array.isArray(v) ? v.some(r => r > 0) : v > 0)
-                  if (logged.length === 0) return null
-                  const loggedMuscles = muscles.filter(id => Object.values(allReps[id] || {}).some(v => Array.isArray(v) ? v.some(r => r > 0) : v > 0))
-                  const isFirstLogged = muscleId === loggedMuscles[0]
-                  const rot = SLAB_ROTATIONS[si % SLAB_ROTATIONS.length]
+                ) : (
+                  <div className="flex flex-col gap-5">
+                    <div className="font-display leading-none"
+                      style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', color: '#d4181f', textShadow: '2px 2px 0 #8a0e13' }}>
+                      Sets
+                    </div>
+                    {muscles.map((muscleId, si) => {
+                      const muscleReps = allReps[muscleId] || {}
+                      const logged = Object.entries(muscleReps).filter(([, v]) => Array.isArray(v) ? v.some(r => r > 0) : v > 0)
+                      if (logged.length === 0) return null
+                      const rot = SLAB_ROTATIONS[si % SLAB_ROTATIONS.length]
 
-                  return (
-                    <div
-                      key={muscleId}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.8rem',
-                        animation: `focus-content-in 300ms ${si * 90}ms ease-out both`,
-                        minWidth: 0,
-                      }}
-                    >
-                      {/* "Sets" — only on the first logged muscle group */}
-                      {isFirstLogged && (
-                        <span className="font-display leading-none shrink-0"
-                          style={{ fontSize: 'clamp(2rem, 4vw, 3.2rem)', color: '#d4181f', textShadow: '2px 2px 0 #8a0e13' }}>
-                          Sets
-                        </span>
-                      )}
-
-                      {/* Muscle slab + exercise entries */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', minWidth: 0 }}>
-                        {/* Muscle name slab */}
-                        <div style={{ display: 'block' }}>
-                          <div
-                            style={{
-                              display: 'inline-flex',
-                              position: 'relative',
-                              transform: `rotate(${rot})`,
-                              transformOrigin: 'left center',
-                            }}
-                          >
+                      return (
+                        <div
+                          key={muscleId}
+                          style={{ animation: `focus-content-in 300ms ${si * 90}ms ease-out both` }}
+                        >
+                          {/* Muscle name slab */}
+                          <div style={{ display: 'block', marginBottom: '0.5rem' }}>
                             <div
                               style={{
-                                position: 'absolute', inset: 0,
-                                background: '#8a0e13',
-                                clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
-                                transform: 'translate(4px,4px)',
-                              }}
-                              aria-hidden="true"
-                            />
-                            <div
-                              style={{
+                                display: 'inline-flex',
                                 position: 'relative',
-                                padding: '2px 16px',
-                                background: '#d4181f',
-                                clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+                                transform: `rotate(${rot})`,
+                                transformOrigin: 'left center',
                               }}
                             >
-                              <span
-                                className="font-display text-gtl-paper leading-none whitespace-nowrap"
-                                style={{ fontSize: 'clamp(0.85rem, 1.8vw, 1.3rem)' }}
-                              >
-                                {MUSCLE_LABELS[muscleId] || muscleId.toUpperCase()}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Exercise entries */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                          {logged.map(([name, repsVal], ei) => {
-                            const wVal = (allWeights[muscleId] || {})[name]
-                            const allSets = Array.isArray(repsVal)
-                              ? repsVal.map((r, i) => ({ reps: r, weight: Array.isArray(wVal) ? (wVal[i] ?? 0) : (i === 0 ? (wVal ?? 0) : 0) }))
-                              : [{ reps: repsVal, weight: wVal ?? 0 }, { reps: 0, weight: 0 }]
-                            return (
                               <div
-                                key={name}
                                 style={{
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  alignItems: 'flex-start',
-                                  gap: '0.15rem',
-                                  animation: `focus-content-in 220ms ${si * 90 + ei * 50 + 80}ms ease-out both`,
-                                  transform: ei % 2 === 0 ? 'rotate(-0.4deg)' : 'rotate(0.3deg)',
-                                  transformOrigin: 'left center',
+                                  position: 'absolute', inset: 0,
+                                  background: '#8a0e13',
+                                  clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+                                  transform: 'translate(4px,4px)',
+                                }}
+                                aria-hidden="true"
+                              />
+                              <div
+                                style={{
+                                  position: 'relative',
+                                  padding: '2px 16px',
+                                  background: '#d4181f',
+                                  clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
                                 }}
                               >
-                                <div className="font-display text-gtl-chalk leading-none"
-                                  style={{ fontSize: 'clamp(1.1rem, 2vw, 1.6rem)' }}>
-                                  {name}
-                                </div>
-                                {allSets.map((s, si) => {
-                                  if (si === 1 && s.reps === 0) return null
-                                  return (
-                                    <div key={si} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                      <span className="font-display leading-none shrink-0"
-                                        style={{ fontSize: 'clamp(0.75rem, 1.1vw, 1rem)', color: '#d4181f', minWidth: '2rem' }}>
-                                        {si === 0 ? '1ST' : '2ND'}
-                                      </span>
-                                      <div className="font-display leading-none shrink-0"
-                                        style={{ fontSize: 'clamp(1.8rem, 3.2vw, 2.6rem)', color: '#e4b022', textShadow: '2px 2px 0 #8a6612, 4px 4px 0 #070708' }}>
-                                        {s.reps > 0 ? `${s.reps}×` : '—'}
-                                      </div>
-                                      {s.weight > 0 && (
-                                        <div className="font-display leading-none"
-                                          style={{ fontSize: 'clamp(1rem, 1.8vw, 1.4rem)', color: '#e4b022', opacity: 0.85 }}>
-                                          {s.weight}<span style={{ fontSize: '0.6em', opacity: 0.7, marginLeft: '0.15em' }}>lbs</span>
-                                        </div>
-                                      )}
-                                    </div>
-                                  )
-                                })}
+                                <span
+                                  className="font-display text-gtl-paper leading-none whitespace-nowrap"
+                                  style={{ fontSize: 'clamp(0.85rem, 1.8vw, 1.3rem)' }}
+                                >
+                                  {MUSCLE_LABELS[muscleId] || muscleId.toUpperCase()}
+                                </span>
                               </div>
-                            )
-                          })}
+                            </div>
+                          </div>
+
+                          {/* Exercise entries */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(160px, 100%), 1fr))', gap: '0.4rem 1.5rem' }}>
+                            {logged.map(([name, repsVal], ei) => {
+                              const wVal = (allWeights[muscleId] || {})[name]
+                              const allSets = Array.isArray(repsVal)
+                                ? repsVal.map((r, i) => ({ reps: r, weight: Array.isArray(wVal) ? (wVal[i] ?? 0) : (i === 0 ? (wVal ?? 0) : 0) }))
+                                : [{ reps: repsVal, weight: wVal ?? 0 }, { reps: 0, weight: 0 }]
+                              return (
+                                <div
+                                  key={name}
+                                  style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'flex-start',
+                                    gap: '0.15rem',
+                                    animation: `focus-content-in 220ms ${si * 90 + ei * 50 + 80}ms ease-out both`,
+                                    transform: ei % 2 === 0 ? 'rotate(-0.4deg)' : 'rotate(0.3deg)',
+                                    transformOrigin: 'left center',
+                                  }}
+                                >
+                                  <div className="font-display text-gtl-chalk leading-none"
+                                    style={{ fontSize: 'clamp(1rem, 2vw, 1.5rem)' }}>
+                                    {name}
+                                  </div>
+                                  {allSets.map((s, si) => {
+                                    if (si === 1 && s.reps === 0) return null
+                                    return (
+                                      <div key={si} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <span className="font-display leading-none shrink-0"
+                                          style={{ fontSize: 'clamp(0.7rem, 1.1vw, 0.9rem)', color: '#d4181f', minWidth: '2rem' }}>
+                                          {si === 0 ? '1ST' : '2ND'}
+                                        </span>
+                                        <div className="font-display leading-none shrink-0"
+                                          style={{ fontSize: 'clamp(1.5rem, 2.8vw, 2.2rem)', color: '#e4b022', textShadow: '2px 2px 0 #8a6612, 4px 4px 0 #070708' }}>
+                                          {s.reps > 0 ? `${s.reps}×` : '—'}
+                                        </div>
+                                        {s.weight > 0 && (
+                                          <div className="font-display leading-none"
+                                            style={{ fontSize: 'clamp(0.9rem, 1.6vw, 1.3rem)', color: '#e4b022', opacity: 0.85 }}>
+                                            {s.weight}<span style={{ fontSize: '0.6em', opacity: 0.7, marginLeft: '0.15em' }}>lbs</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              )
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  )
-                })}
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>

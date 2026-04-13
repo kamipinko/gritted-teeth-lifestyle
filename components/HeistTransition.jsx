@@ -26,7 +26,7 @@ export default function HeistTransition({
   active,
   onComplete,
   intensity = 'normal',
-  title = 'GTL',
+  title = 'GRIT THOSE TEETH',
 }) {
   const { play } = useSound()
   const [phase, setPhase] = useState('idle')
@@ -145,17 +145,11 @@ export default function HeistTransition({
           `}
         >
           {isMega ? (
-            <>
-              <div className="text-[6vw] tracking-[0.2em] opacity-80 mb-2 text-gtl-red-bright">
-                ▼ INFILTRATING ▼
-              </div>
-              <div>{title}</div>
-              <div className="text-[3vw] tracking-[0.4em] opacity-70 mt-2 text-gtl-paper">
-                COMMITMENT BEGINS
-              </div>
-            </>
+            <div className="text-[14vw] tracking-[0.2em] text-gtl-paper">
+              PIERCE THROUGH THE HEAVENS
+            </div>
           ) : (
-            'GTL'
+            title
           )}
         </div>
       </div>

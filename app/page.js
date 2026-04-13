@@ -48,14 +48,13 @@ export default function Home() {
           </div>
         </header>
 
-        {/* Title */}
-        <section className="relative z-10 px-8 pt-8 pb-12 text-center">
-          <h1 className="font-display text-[4rem] md:text-[6rem] leading-[0.9] text-gtl-chalk tracking-tight">
-            GRITTED <span className="text-gtl-red">TEETH</span>
-          </h1>
-          <p className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-ash mt-2">
-            Lifestyle
-          </p>
+        {/* Logo */}
+        <section className="relative z-10 flex justify-center pt-6 pb-8">
+          <img
+            src="/logo.png"
+            alt="Gritted Teeth Lifestyle"
+            style={{ width: 'clamp(180px, 45vw, 320px)', height: 'clamp(180px, 45vw, 320px)', borderRadius: '50%', objectFit: 'cover' }}
+          />
         </section>
 
         {/* Cards / corkboard */}
@@ -96,6 +95,7 @@ export default function Home() {
       <HeistTransition
         active={transitioning}
         onComplete={handleTransitionComplete}
+        title="GTL"
       />
     </>
   )

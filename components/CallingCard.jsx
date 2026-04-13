@@ -225,25 +225,13 @@ export default function CallingCard({
             </span>
           </div>
 
-          {/* Insignia — rotates harder on hover, almost like it's reacting */}
+          {/* Logo — rotates harder on hover, almost like it's reacting */}
           <div className="relative shrink-0">
-            <Insignia
-              size={80}
-              className={`
-                transition-all duration-500 ease-out
-                ${hovered
-                  ? 'text-gtl-red-bright -rotate-[18deg] scale-110 opacity-100'
-                  : 'text-gtl-red -rotate-12 opacity-90'}
-              `}
-            />
-            <div
-              className={`
-                absolute inset-0 -m-1 border-2 rounded-full transition-all duration-500
-                ${hovered
-                  ? 'border-gtl-red-bright -rotate-[18deg] scale-110 opacity-60'
-                  : 'border-gtl-red -rotate-12 opacity-30'}
-              `}
-              aria-hidden="true"
+            <img
+              src="/logo.png"
+              alt="Gritted Teeth"
+              className={`rounded-full transition-all duration-500 ease-out ${hovered ? '-rotate-[55deg] scale-110 opacity-100' : '-rotate-45 opacity-90'}`}
+              style={{ width: 80, height: 80, objectFit: 'cover' }}
             />
           </div>
         </div>

@@ -40,9 +40,11 @@ const CARD_CLIP  = 'polygon(0% 0%, 97% 0%, 100% 5%, 100% 100%, 3% 100%, 0% 95%)'
 function RetreatButton() {
   const { play } = useSound()
   const [hovered, setHovered] = useState(false)
+  let backHref = '/fitness/new/muscles'
+  try { if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit' } catch (_) {}
   return (
     <Link
-      href="/fitness/new/muscles"
+      href={backHref}
       onMouseEnter={() => { setHovered(true); play('button-hover') }}
       onMouseLeave={() => setHovered(false)}
       onClick={() => play('menu-close')}
@@ -91,19 +93,21 @@ function MonthNavButton({ dir, onClick }) {
 
 function LockButton({ count, onFire, onHover }) {
   const [pressed, setPressed] = useState(false)
+  const disabled = count === 0
   return (
     <div
       role="button"
-      tabIndex={0}
+      tabIndex={disabled ? -1 : 0}
+      aria-disabled={disabled}
       aria-label={`Lock in cycle — ${count} training day${count !== 1 ? 's' : ''} scheduled`}
-      onMouseDown={() => setPressed(true)}
-      onMouseUp={() => { setPressed(false); onFire() }}
+      onMouseDown={() => { if (!disabled) setPressed(true) }}
+      onMouseUp={() => { if (!disabled) { setPressed(false); onFire() } }}
       onMouseLeave={() => setPressed(false)}
-      onMouseEnter={onHover}
+      onMouseEnter={() => { if (!disabled) onHover() }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onFire() }
+        if (!disabled && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onFire() }
       }}
-      className="relative cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-red focus-visible:outline-offset-4 w-full"
+      className={`relative select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-red focus-visible:outline-offset-4 w-full ${disabled ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}`}
       style={{ transform: 'rotate(-1.5deg)', transformOrigin: 'center center' }}
     >
       {/* Shadow slab */}
@@ -142,6 +146,15 @@ export default function SchedulePage() {
   useProfileGuard()
   const router = useRouter()
   const { play } = useSound()
+  useEffect(() => {
+    try { if (localStorage.getItem('gtl-back-to-edit') !== '1') return } catch (_) { return }
+    const handleKey = (e) => {
+      if (e.key === 'Enter' && !['INPUT','TEXTAREA','SELECT','BUTTON'].includes(document.activeElement?.tagName))
+        router.push('/fitness/edit')
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [router])
 
   const [cycleName, setCycleName] = useState('NEW CYCLE')
   const [targets, setTargets] = useState([])

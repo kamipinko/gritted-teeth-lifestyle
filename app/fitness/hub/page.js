@@ -393,16 +393,17 @@ export default function FitnessPage() {
   const router = useRouter()
   const { play } = useSound()
   const [transitioning, setTransitioning] = useState(false)
-  const [transitionConfig, setTransitionConfig] = useState({ href: '', title: 'GTL', intensity: 'normal' })
+  const [transitionConfig, setTransitionConfig] = useState({ href: '', title: 'GRIT THOSE TEETH', intensity: 'normal' })
 
   const handleSelect = (href) => {
     // NEW CYCLE gets the mega transition; the others get the normal one.
     if (href === '/fitness/new') {
       // Clear any in-progress edit so ETCH CYCLE creates a fresh entry
       try { localStorage.removeItem(pk('editing-cycle-id')) } catch (_) {}
+      try { localStorage.removeItem('gtl-back-to-edit') } catch (_) {}
       setTransitionConfig({ href, title: 'NEW CYCLE', intensity: 'mega' })
     } else if (href === '/fitness/load') {
-      setTransitionConfig({ href, title: 'LOAD CYCLE', intensity: 'normal' })
+      setTransitionConfig({ href, title: 'FURTHER WITH EVERY TURN', intensity: 'normal' })
     } else if (href === '/fitness/stats') {
       setTransitionConfig({ href, title: 'WAR RECORD', intensity: 'normal' })
     } else {

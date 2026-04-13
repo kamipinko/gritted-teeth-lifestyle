@@ -61,6 +61,7 @@ const MODEL_OPTIONS = [
 function RetreatButton({ href = '/fitness/new' }) {
   const { play } = useSound()
   const [hovered, setHovered] = useState(false)
+  try { if (localStorage.getItem('gtl-back-to-edit') === '1') href = '/fitness/edit' } catch (_) {}
   return (
     <Link
       href={href}
@@ -394,6 +395,15 @@ export default function MusclesPage() {
   const { play } = useSound()
   const mainRef = useRef(null)
   const router = useRouter()
+  useEffect(() => {
+    try { if (localStorage.getItem('gtl-back-to-edit') !== '1') return } catch (_) { return }
+    const handleKey = (e) => {
+      if (e.key === 'Enter' && !['INPUT','TEXTAREA','SELECT','BUTTON'].includes(document.activeElement?.tagName))
+        router.push('/fitness/edit')
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [router])
 
   const handleStamp = () => {
     play('stamp')

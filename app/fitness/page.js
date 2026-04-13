@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useSound } from '../../lib/useSound'
+import HeistTransition from '../../components/HeistTransition'
 
 function RetreatButton() {
   const { play } = useSound()
@@ -66,6 +67,7 @@ export default function ProfilePage() {
   const [profiles, setProfiles] = useState([])
   const [input, setInput] = useState('')
   const [ready, setReady] = useState(false)
+  const [transitioning, setTransitioning] = useState(false)
   const inputRef = useRef(null)
 
   useEffect(() => {
@@ -80,7 +82,7 @@ export default function ProfilePage() {
     try {
       localStorage.setItem('gtl-active-profile', name)
     } catch (_) {}
-    router.push('/fitness/hub')
+    setTransitioning(true)
   }
 
   const handleSubmit = (e) => {
@@ -104,6 +106,7 @@ export default function ProfilePage() {
   const isExisting = trimmed.length > 0 && profiles.includes(trimmed)
 
   return (
+    <>
     <main className="relative min-h-screen overflow-hidden bg-gtl-void flex flex-col">
       <div className="absolute inset-0 gtl-noise" />
       <div
@@ -228,5 +231,11 @@ export default function ProfilePage() {
         )}
       </section>
     </main>
+
+    <HeistTransition
+      active={transitioning}
+      onComplete={() => router.push('/fitness/hub')}
+    />
+    </>
   )
 }
