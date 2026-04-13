@@ -226,7 +226,7 @@ function RegionBadge({ region, xp, isTop }) {
           {region.label}
         </span>
       </div>
-      <div className="inline-block font-mono whitespace-nowrap px-1.5 py-0.5" style={{ fontSize: '0.65rem', letterSpacing: '0.18em', marginTop: '5px', marginLeft: '4px', color: '#e4b022', background: 'rgba(10,10,10,0.85)', clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)', textShadow: '0 0 8px rgba(228,176,34,0.9)' }}>
+      <div className="font-mono whitespace-nowrap" style={{ fontSize: '0.65rem', letterSpacing: '0.18em', marginTop: '5px', marginLeft: '4px', color: '#e4b022', textShadow: '0 0 8px rgba(228,176,34,0.9), 0 0 2px rgba(0,0,0,1)' }}>
         {tier}
       </div>
     </div>
