@@ -131,6 +131,120 @@ function loadStats() {
   }
 }
 
+// Five badge positions around the star, matching P5 social stats layout
+const BADGE_POSITIONS = [
+  { top: '0%',   left: '50%',  tx: '-50%', ty: '0%'    }, // top-center
+  { top: '38%',  left: '0%',   tx: '0%',   ty: '-50%'  }, // middle-left
+  { top: '38%',  left: '100%', tx: '-100%',ty: '-50%'  }, // middle-right
+  { top: '82%',  left: '18%',  tx: '-50%', ty: '-50%'  }, // bottom-left
+  { top: '82%',  left: '82%',  tx: '-50%', ty: '-50%'  }, // bottom-right
+]
+
+function MuscleStatBadge({ label, xp, rank }) {
+  return (
+    <div className="text-center">
+      {/* Gold badge */}
+      <div
+        className="inline-flex items-baseline gap-1 px-2 py-0.5 mb-1"
+        style={{
+          background: '#e4b022',
+          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+        }}
+      >
+        <span className="font-display text-sm leading-none text-gtl-ink italic">
+          {label}
+        </span>
+        <span
+          className="font-display text-[10px] leading-none text-gtl-ink italic"
+          style={{ verticalAlign: 'super', fontSize: '0.6rem' }}
+        >
+          {rank}
+        </span>
+      </div>
+      {/* XP sublabel */}
+      <div className="font-mono text-[9px] tracking-[0.15em] text-gtl-chalk whitespace-nowrap">
+        {Math.round(xp).toLocaleString()} XP
+      </div>
+    </div>
+  )
+}
+
+function MuscleStarChart({ muscles, maxXP }) {
+  // Pad to 5 slots
+  const slots = [...muscles]
+  while (slots.length < 5) slots.push(null)
+
+  return (
+    <div className="relative mx-auto" style={{ width: '100%', height: '300px' }}>
+      {/* Outer dark star ring */}
+      <div
+        className="absolute"
+        style={{
+          width: '220px',
+          height: '220px',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -42%)',
+          background: '#2a2a2a',
+          clipPath: 'polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)',
+          zIndex: 1,
+        }}
+        aria-hidden="true"
+      />
+      {/* Inner dark star (creates the ring effect) */}
+      <div
+        className="absolute"
+        style={{
+          width: '180px',
+          height: '180px',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -42%)',
+          background: '#111',
+          clipPath: 'polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)',
+          zIndex: 2,
+        }}
+        aria-hidden="true"
+      />
+      {/* Gold center star */}
+      <div
+        className="absolute"
+        style={{
+          width: '100px',
+          height: '100px',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -42%)',
+          background: '#e4b022',
+          clipPath: 'polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)',
+          zIndex: 3,
+        }}
+        aria-hidden="true"
+      />
+
+      {/* Stat badges */}
+      {slots.map((m, i) => {
+        if (!m) return null
+        const pos = BADGE_POSITIONS[i]
+        return (
+          <div
+            key={m.id}
+            className="absolute"
+            style={{
+              top: pos.top,
+              left: pos.left,
+              transform: `translate(${pos.tx}, ${pos.ty})`,
+              zIndex: 10,
+            }}
+          >
+            <MuscleStatBadge label={m.label} xp={m.xp} rank={i + 1} />
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function StatBox({ label, value, sub }) {
   return (
     <div className="relative">
@@ -299,39 +413,17 @@ export default function StatsPage() {
               <StatBox label="COMPLETION RATE" value={`${completionPct}%`} />
             </div>
 
-            {/* ── Top muscles ─────────────────────────────────────── */}
+            {/* ── Top muscles — P5 social stats layout ────────────── */}
             {stats.topMuscles.length > 0 && (
               <div className="mb-10">
-                <div className="flex items-center gap-4 mb-5">
+                <div className="flex items-center gap-4 mb-6">
                   <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-red font-bold">
                     TOP TARGETS
                   </span>
                   <div className="h-px flex-1 bg-gtl-edge" />
                 </div>
 
-                <div className="space-y-3">
-                  {stats.topMuscles.map(({ id, label, xp }, i) => {
-                    const pct = Math.round((xp / stats.maxMuscleXP) * 100)
-                    return (
-                      <div key={id}>
-                        <div className="flex items-center gap-3 mb-1">
-                          <span className="font-mono text-[9px] tracking-[0.2em] text-gtl-smoke w-4 shrink-0">
-                            {String(i + 1).padStart(2, '0')}
-                          </span>
-                          <span className="font-mono text-xs tracking-[0.2em] uppercase text-gtl-chalk flex-1">
-                            {label}
-                          </span>
-                          <span className="font-mono text-[9px] tracking-[0.15em] text-gtl-gold shrink-0">
-                            {Math.round(xp).toLocaleString()} XP
-                          </span>
-                        </div>
-                        <div className="ml-7 h-1.5 bg-gtl-surface">
-                          <div className="h-full bg-gtl-gold" style={{ width: `${pct}%` }} />
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
+                <MuscleStarChart muscles={stats.topMuscles} maxXP={stats.maxMuscleXP} />
               </div>
             )}
 
