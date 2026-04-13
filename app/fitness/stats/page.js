@@ -247,22 +247,41 @@ function TransmutationCircle() {
 
   const syms = ['♂', '⊕', '♄', '♀', '☿', '♃']
 
-  const textPath = `M ${CX - RT},${CY} A ${RT},${RT} 0 1,1 ${CX + RT},${CY} A ${RT},${RT} 0 1,1 ${CX - RT},${CY}`
+  const RT2 = 108  // second text ring (just inside outer rings)
+  const RT3 = 72   // third text ring (between hexagram and inner circle)
+
+  const mkRing = (r) => `M ${CX - r},${CY} A ${r},${r} 0 1,1 ${CX + r},${CY} A ${r},${r} 0 1,1 ${CX - r},${CY}`
 
   return (
     <g stroke="#e4b022" fill="none" strokeWidth="0.8" opacity="0.45">
       <defs>
-        <path id="txring" d={textPath} />
+        <path id="txring1" d={mkRing(RT)} />
+        <path id="txring2" d={mkRing(RT2)} />
+        <path id="txring3" d={mkRing(RT3)} />
       </defs>
 
       {/* Double outer ring */}
       <circle cx={CX} cy={CY} r={RO1} />
       <circle cx={CX} cy={CY} r={RO2} />
 
-      {/* Circular text */}
+      {/* Outer circular text */}
       <text fill="#e4b022" stroke="none" fontSize="5" fontFamily="Georgia, serif">
-        <textPath href="#txring" startOffset="0%">
+        <textPath href="#txring1" startOffset="0%">
           THERE SHALL APPEAR BEFORE YOU PERFECT WHITE AND MANY MORE • AND AFTER SHALL APPEAR THE RED BODY • FORGE THE BODY • PIERCE THE HEAVENS • GRITTED TEETH •
+        </textPath>
+      </text>
+
+      {/* Second text ring — just inside the hexagram boundary */}
+      <text fill="#e4b022" stroke="none" fontSize="4" fontFamily="Georgia, serif">
+        <textPath href="#txring2" startOffset="0%">
+          WASH THE BODY AND THE ELEMENTS ARE TURNED INTO FIRE BY CIRCULATING • TO YOURS DESIRE YOU NEED NOT BE IN DOUBT • FOR THE WORK OF THE PHILOSOPHER •
+        </textPath>
+      </text>
+
+      {/* Third text ring — inner, between hexagram and hub */}
+      <text fill="#e4b022" stroke="none" fontSize="3.5" fontFamily="Georgia, serif">
+        <textPath href="#txring3" startOffset="0%">
+          OF OUR PHILOSOPHIE WE HAVE FORMED • BUT OF THIS COURSE THE SUN • GRITTED TEETH LIFESTYLE • WAR RECORD • FORGE • PIERCE •
         </textPath>
       </text>
 
