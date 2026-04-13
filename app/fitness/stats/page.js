@@ -233,9 +233,9 @@ function BodyStarChart({ regionXP }) {
   const ghostPath = buildGhostPath()
 
   return (
-    <div className="relative mx-auto" style={{ width: '100%', maxWidth: `${VW}px`, height: `${VH}px`, perspective: '500px' }}>
+    <div className="relative mx-auto" style={{ width: '100%', maxWidth: `${VW}px`, height: `${VH}px`, perspective: '500px', transform: 'translateX(24px)' }}>
+    {/* 3D tilted — SVG only */}
     <div className="absolute inset-0" style={{ transform: 'rotateX(30deg) rotateY(20deg)', transformOrigin: 'center center' }}>
-    <div className="absolute inset-0">
       <svg
         className="absolute inset-0 w-full h-full"
         viewBox={`0 0 ${VW} ${VH}`}
@@ -276,10 +276,9 @@ function BodyStarChart({ regionXP }) {
         {/* Small center dot */}
         <circle cx={CX} cy={CY} r={4} fill="#e4b022" />
       </svg>
-
     </div>
 
-    {/* Badges — outside the 3D wrapper, stay flat */}
+    {/* Badges — outside the 3D wrapper, face the user flat */}
     {BODY_REGIONS.map((region, i) => (
       <div
         key={region.id}
@@ -289,7 +288,6 @@ function BodyStarChart({ regionXP }) {
         <RegionBadge region={region} xp={regionXP[i]} />
       </div>
     ))}
-    </div>
     </div>
   )
 }
