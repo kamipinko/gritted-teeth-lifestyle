@@ -289,7 +289,8 @@ function MuscleSlab({ id, rot, delay, onClick }) {
     <button
       type="button"
       onMouseDown={() => setPressed(true)}
-      onMouseUp={handleClick}
+      onMouseUp={() => setPressed(false)}
+      onClick={handleClick}
       onMouseLeave={() => { setPressed(false); setHovered(false) }}
       onMouseEnter={() => { setHovered(true); play('button-hover') }}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(e) } }}
