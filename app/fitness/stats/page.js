@@ -128,7 +128,7 @@ const CX = 170
 const CY = 148
 
 const OUTER_MAX_R = 134  // max spike length at full XP — level 5 meets transmutation outer ring
-const INNER_R     = 30   // fixed inner indent of the star
+const INNER_R     = 24   // fixed inner indent of the star
 const BADGE_R     = 138  // radius for badge anchor dots (outside max star)
 
 // 5 region angles clockwise from top (FRONT, ARMS, LEGS, CORE, BACK)
@@ -170,7 +170,7 @@ function buildStarPath(regionXP) {
   return `M ${pts.join(' L ')} Z`
 }
 
-const GHOST_INNER_R = 62  // wider indent for ghost outline — fatter points than filled star
+const GHOST_INNER_R = 54  // wider indent for ghost outline — fatter points than filled star
 
 function buildGhostPath() {
   const pts = []
