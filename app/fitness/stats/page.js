@@ -233,9 +233,8 @@ function BodyStarChart({ regionXP }) {
   const ghostPath = buildGhostPath()
 
   return (
-    <div className="relative mx-auto" style={{ width: '100%', maxWidth: `${VW}px`, height: `${VH}px`, perspective: '500px' }}>
-    {/* 3D tilted star — SVG only */}
-    <div className="absolute inset-0" style={{ transform: 'rotateX(30deg)', transformOrigin: 'center center' }}>
+    <div className="relative mx-auto" style={{ width: '100%', maxWidth: `${VW}px`, height: `${VH}px` }}>
+    <div className="absolute inset-0">
       <svg
         className="absolute inset-0 w-full h-full"
         viewBox={`0 0 ${VW} ${VH}`}
