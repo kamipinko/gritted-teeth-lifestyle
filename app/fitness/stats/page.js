@@ -136,7 +136,7 @@ function StatBox({ label, value, sub }) {
   return (
     <div className="relative">
       <div
-        className="bg-gtl-surface px-5 py-4"
+        className="bg-gtl-surface pl-5 pr-8 py-4"
         style={{ clipPath: 'polygon(0 0, 100% 0, 97% 100%, 3% 100%)' }}
       >
         <div className="font-display text-5xl md:text-6xl leading-none text-gtl-chalk">{value}</div>
@@ -330,7 +330,7 @@ export default function StatsPage() {
                             }}
                           />
                         </div>
-                        <span className="font-mono text-[9px] tracking-[0.2em] text-gtl-ash w-16 text-right shrink-0">
+                        <span className="font-mono text-[9px] tracking-[0.2em] text-gtl-ash w-20 text-right shrink-0">
                           {count} {count === 1 ? 'SESSION' : 'SESSIONS'}
                         </span>
                       </div>
