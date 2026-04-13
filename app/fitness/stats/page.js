@@ -205,7 +205,7 @@ function badgeCSS(i) {
   return {
     left: `${(x / VW) * 100}%`,
     top:  `${(y / VH) * 100}%`,
-    transform: `translate(${tx}, ${ty})`,
+    transform: `translate(${tx}, ${ty}) rotateY(-20deg) rotateX(-30deg)`,
   }
 }
 
@@ -235,7 +235,7 @@ function BodyStarChart({ regionXP }) {
 
   return (
     <div className="relative mx-auto" style={{ width: '100%', maxWidth: `${VW}px`, height: `${VH}px`, perspective: '500px', transform: 'translateX(24px)' }}>
-    <div className="absolute inset-0" style={{ transform: 'rotateX(30deg) rotateY(20deg)', transformOrigin: 'center center' }}>
+    <div className="absolute inset-0" style={{ transform: 'rotateX(30deg) rotateY(20deg)', transformOrigin: 'center center', transformStyle: 'preserve-3d' }}>
       <svg
         className="absolute inset-0 w-full h-full"
         viewBox={`0 0 ${VW} ${VH}`}
