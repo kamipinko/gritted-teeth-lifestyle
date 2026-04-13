@@ -191,7 +191,7 @@ function badgeAnchor(i) {
 
 // Badge CSS positions — fixed outside the star regardless of XP
 // Computed from BADGE_R + small extra margin
-const BADGE_MARGIN = 18
+const BADGE_MARGIN = 32
 function badgeCSS(i) {
   const angle = REGION_ANGLES[i]
   const r = BADGE_R + BADGE_MARGIN + (i === 0 ? 12 : 0)
