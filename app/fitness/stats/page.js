@@ -234,7 +234,7 @@ function BodyStarChart({ regionXP }) {
 
   return (
     <div className="relative mx-auto" style={{ width: '100%', maxWidth: `${VW}px`, height: `${VH}px`, perspective: '500px' }}>
-    <div className="absolute inset-0" style={{ transform: 'rotateX(30deg)', transformOrigin: 'center center' }}>
+    <div className="absolute inset-0" style={{ transform: 'rotateX(30deg) rotateY(20deg)', transformOrigin: 'center center' }}>
     <div className="absolute inset-0">
       <svg
         className="absolute inset-0 w-full h-full"
