@@ -12,19 +12,18 @@ import { useProfileGuard } from '../../../lib/useProfileGuard'
 import { pk } from '../../../lib/storage'
 import { useSound } from '../../../lib/useSound'
 
-const MUSCLE_LABELS = {
-  chest:      'CHEST',
-  shoulders:  'SHOULDERS',
-  back:       'BACK',
-  biceps:     'BICEPS',
-  triceps:    'TRICEPS',
-  forearms:   'FOREARMS',
-  abs:        'ABS',
-  glutes:     'GLUTES',
-  quads:      'QUADS',
-  hamstrings: 'HAMSTRINGS',
-  calves:     'CALVES',
-}
+// 5 body regions — each star point represents one
+const BODY_REGIONS = [
+  { id: 'front', label: 'FRONT', muscles: ['chest', 'shoulders'] },
+  { id: 'arms',  label: 'ARMS',  muscles: ['biceps', 'triceps', 'forearms'] },
+  { id: 'legs',  label: 'LEGS',  muscles: ['quads', 'hamstrings', 'glutes', 'calves'] },
+  { id: 'core',  label: 'CORE',  muscles: ['abs'] },
+  { id: 'back',  label: 'BACK',  muscles: ['back'] },
+]
+
+// Build a lookup: muscleId → regionIndex
+const MUSCLE_TO_REGION = {}
+BODY_REGIONS.forEach((r, i) => r.muscles.forEach(m => { MUSCLE_TO_REGION[m] = i }))
 
 function getLevelInfo(totalXP) {
   let level = 0
@@ -53,7 +52,7 @@ function loadStats() {
     let totalXP = 0
     let daysScheduled = 0
     let daysCompleted = 0
-    const muscleXP = {}   // muscleId → XP earned
+    const regionXP = [0, 0, 0, 0, 0]  // one per BODY_REGIONS entry
     const cycleStats = []
 
     for (const cycle of allCycles) {
@@ -83,7 +82,8 @@ function loadStats() {
               if (reps === 0) continue
               const mult = repMult(reps)
               const earned = weight > 0 ? weight * mult * reps : reps * mult
-              muscleXP[muscleId] = (muscleXP[muscleId] || 0) + earned
+              const ri = MUSCLE_TO_REGION[muscleId]
+              if (ri !== undefined) regionXP[ri] += earned
               cycleXP += earned
               totalXP += earned
             }
@@ -101,21 +101,12 @@ function loadStats() {
       })
     }
 
-    // Sort muscles by XP earned desc, take top 5
-    const topMuscles = Object.entries(muscleXP)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([id, xp]) => ({ id, label: MUSCLE_LABELS[id] || id.toUpperCase(), xp }))
-
-    const maxMuscleXP = topMuscles[0]?.xp || 1
-
     return {
       totalXP,
       cycles: allCycles.length,
       daysScheduled,
       daysCompleted,
-      topMuscles,
-      maxMuscleXP,
+      regionXP,
       cycleLog: cycleStats,
     }
   } catch (_) {
@@ -124,123 +115,145 @@ function loadStats() {
       cycles: 0,
       daysScheduled: 0,
       daysCompleted: 0,
-      topMuscles: [],
-      maxMuscleXP: 1,
+      regionXP: [0, 0, 0, 0, 0],
       cycleLog: [],
     }
   }
 }
 
-// Five badge positions around the star, matching P5 social stats layout
-const BADGE_POSITIONS = [
-  { top: '0%',   left: '50%',  tx: '-50%', ty: '0%'    }, // top-center
-  { top: '38%',  left: '0%',   tx: '0%',   ty: '-50%'  }, // middle-left
-  { top: '38%',  left: '100%', tx: '-100%',ty: '-50%'  }, // middle-right
-  { top: '82%',  left: '18%',  tx: '-50%', ty: '-50%'  }, // bottom-left
-  { top: '82%',  left: '82%',  tx: '-50%', ty: '-50%'  }, // bottom-right
-]
+// SVG canvas
+const VW = 340
+const VH = 310
+const CX = 170
+const CY = 148
 
-function MuscleStatBadge({ label, xp, rank }) {
+const OUTER_MAX_R = 108  // max spike length at full XP
+const INNER_R     = 22   // fixed inner indent of the star
+const BADGE_R     = 138  // radius for badge anchor dots (outside max star)
+
+// 5 region angles clockwise from top (FRONT, ARMS, LEGS, CORE, BACK)
+const REGION_ANGLES = BODY_REGIONS.map((_, i) => -Math.PI / 2 + i * (2 * Math.PI / 5))
+// 5 inner angles sit halfway between outer angles
+const INNER_ANGLES = REGION_ANGLES.map(a => a + Math.PI / 5)
+
+function buildStarPath(regionXP, maxXP, outerMaxR, innerR) {
+  const pts = []
+  for (let i = 0; i < 5; i++) {
+    const r = innerR + (regionXP[i] / maxXP) * (outerMaxR - innerR)
+    pts.push(`${CX + r * Math.cos(REGION_ANGLES[i])},${CY + r * Math.sin(REGION_ANGLES[i])}`)
+    pts.push(`${CX + innerR * Math.cos(INNER_ANGLES[i])},${CY + innerR * Math.sin(INNER_ANGLES[i])}`)
+  }
+  return `M ${pts.join(' L ')} Z`
+}
+
+function buildGhostPath(outerMaxR, innerR) {
+  const full = new Array(5).fill(outerMaxR)
+  return buildStarPath(full.map(() => outerMaxR), outerMaxR, outerMaxR, innerR)
+}
+
+// Badge anchor dots in SVG coords
+function badgeAnchor(i) {
+  return {
+    x: CX + BADGE_R * Math.cos(REGION_ANGLES[i]),
+    y: CY + BADGE_R * Math.sin(REGION_ANGLES[i]),
+  }
+}
+
+// Badge CSS positions — fixed outside the star regardless of XP
+// Computed from BADGE_R + small extra margin
+const BADGE_MARGIN = 18
+function badgeCSS(i) {
+  const angle = REGION_ANGLES[i]
+  const r = BADGE_R + BADGE_MARGIN
+  const x = CX + r * Math.cos(angle)
+  const y = CY + r * Math.sin(angle)
+  // Anchor point alignment per quadrant
+  let tx = '-50%', ty = '-50%'
+  if (i === 0) { ty = '0%' }           // top: anchor at top-center
+  else if (i === 1) { tx = '0%' }       // right: anchor at left
+  else if (i === 2) { ty = '-100%' }    // bottom-right: anchor at bottom
+  else if (i === 3) { ty = '-100%' }    // bottom-left: anchor at bottom
+  else if (i === 4) { tx = '-100%' }    // left: anchor at right
+  return {
+    left: `${(x / VW) * 100}%`,
+    top:  `${(y / VH) * 100}%`,
+    transform: `translate(${tx}, ${ty})`,
+  }
+}
+
+function RegionBadge({ region, xp }) {
   return (
     <div className="text-center">
-      {/* Gold badge */}
       <div
-        className="inline-flex items-baseline gap-1 px-2 py-0.5 mb-1"
-        style={{
-          background: '#e4b022',
-          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
-        }}
+        className="inline-block px-2 py-0.5"
+        style={{ background: '#e4b022', clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)' }}
       >
-        <span className="font-display text-sm leading-none text-gtl-ink italic">
-          {label}
-        </span>
-        <span
-          className="font-display text-[10px] leading-none text-gtl-ink italic"
-          style={{ verticalAlign: 'super', fontSize: '0.6rem' }}
-        >
-          {rank}
+        <span className="font-display text-xs leading-none text-gtl-ink" style={{ fontStyle: 'italic' }}>
+          {region.label}
         </span>
       </div>
-      {/* XP sublabel */}
-      <div className="font-mono text-[9px] tracking-[0.15em] text-gtl-chalk whitespace-nowrap">
-        {Math.round(xp).toLocaleString()} XP
+      <div className="font-mono text-[8px] tracking-[0.1em] text-gtl-ash whitespace-nowrap mt-0.5">
+        {xp > 0 ? `${Math.round(xp).toLocaleString()} XP` : '—'}
       </div>
     </div>
   )
 }
 
-function MuscleStarChart({ muscles, maxXP }) {
-  // Pad to 5 slots
-  const slots = [...muscles]
-  while (slots.length < 5) slots.push(null)
+function BodyStarChart({ regionXP }) {
+  const maxXP = Math.max(...regionXP, 1)
+  const starPath  = buildStarPath(regionXP, maxXP, OUTER_MAX_R, INNER_R)
+  const ghostPath = buildGhostPath(OUTER_MAX_R, INNER_R)
 
   return (
-    <div className="relative mx-auto" style={{ width: '100%', height: '300px' }}>
-      {/* Outer dark star ring */}
-      <div
-        className="absolute"
-        style={{
-          width: '220px',
-          height: '220px',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -42%)',
-          background: '#2a2a2a',
-          clipPath: 'polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)',
-          zIndex: 1,
-        }}
+    <div className="relative mx-auto" style={{ width: '100%', maxWidth: `${VW}px`, height: `${VH}px` }}>
+      <svg
+        className="absolute inset-0 w-full h-full"
+        viewBox={`0 0 ${VW} ${VH}`}
         aria-hidden="true"
-      />
-      {/* Inner dark star (creates the ring effect) */}
-      <div
-        className="absolute"
-        style={{
-          width: '180px',
-          height: '180px',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -42%)',
-          background: '#111',
-          clipPath: 'polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)',
-          zIndex: 2,
-        }}
-        aria-hidden="true"
-      />
-      {/* Gold center star */}
-      <div
-        className="absolute"
-        style={{
-          width: '100px',
-          height: '100px',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -42%)',
-          background: '#e4b022',
-          clipPath: 'polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)',
-          zIndex: 3,
-        }}
-        aria-hidden="true"
-      />
+      >
+        {/* Concentric rings */}
+        {[35, 60, 85, OUTER_MAX_R].map(r => (
+          <circle key={r} cx={CX} cy={CY} r={r}
+            fill="none" stroke="#252525" strokeWidth="1" />
+        ))}
 
-      {/* Stat badges */}
-      {slots.map((m, i) => {
-        if (!m) return null
-        const pos = BADGE_POSITIONS[i]
-        return (
-          <div
-            key={m.id}
-            className="absolute"
-            style={{
-              top: pos.top,
-              left: pos.left,
-              transform: `translate(${pos.tx}, ${pos.ty})`,
-              zIndex: 10,
-            }}
-          >
-            <MuscleStatBadge label={m.label} xp={m.xp} rank={i + 1} />
-          </div>
-        )
-      })}
+        {/* Radial guide lines */}
+        {REGION_ANGLES.map((angle, i) => {
+          const tip = badgeAnchor(i)
+          return (
+            <line key={i}
+              x1={CX} y1={CY} x2={tip.x} y2={tip.y}
+              stroke="#2e2e2e" strokeWidth="1" strokeDasharray="4 3"
+            />
+          )
+        })}
+
+        {/* Ghost star — max potential, faint outline */}
+        <path d={ghostPath} fill="none" stroke="#3a3a3a" strokeWidth="1" />
+
+        {/* Filled XP star */}
+        <path d={starPath} fill="rgba(228,176,34,0.18)" stroke="#e4b022" strokeWidth="1.5" />
+
+        {/* Gold dots at badge anchors */}
+        {REGION_ANGLES.map((_, i) => {
+          const { x, y } = badgeAnchor(i)
+          return <circle key={i} cx={x} cy={y} r={3} fill="#e4b022" />
+        })}
+
+        {/* Small center dot */}
+        <circle cx={CX} cy={CY} r={4} fill="#e4b022" />
+      </svg>
+
+      {/* Region badges */}
+      {BODY_REGIONS.map((region, i) => (
+        <div
+          key={region.id}
+          className="absolute"
+          style={{ ...badgeCSS(i), zIndex: 10 }}
+        >
+          <RegionBadge region={region} xp={regionXP[i]} />
+        </div>
+      ))}
     </div>
   )
 }
@@ -414,7 +427,7 @@ export default function StatsPage() {
             </div>
 
             {/* ── Top muscles — P5 social stats layout ────────────── */}
-            {stats.topMuscles.length > 0 && (
+            {stats.regionXP.some(x => x > 0) && (
               <div className="mb-10">
                 <div className="flex items-center gap-4 mb-6">
                   <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-red font-bold">
@@ -423,7 +436,7 @@ export default function StatsPage() {
                   <div className="h-px flex-1 bg-gtl-edge" />
                 </div>
 
-                <MuscleStarChart muscles={stats.topMuscles} maxXP={stats.maxMuscleXP} />
+                <BodyStarChart regionXP={stats.regionXP} />
               </div>
             )}
 
