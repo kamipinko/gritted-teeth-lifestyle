@@ -140,6 +140,9 @@ const INNER_ANGLES = REGION_ANGLES.map(a => a + Math.PI / 5)
 // XP thresholds for levels 1–5 per region
 const REGION_XP_LEVELS = [0, 90000, 300000, 750000, 1800000]
 
+// Tier label per level (levels 1–5)
+const REGION_TIER_LABELS = ['VICTIM', 'SKINNY FAT', 'STACKED', 'YOLKED', 'DICED']
+
 function getRegionLevel(xp) {
   let level = 0
   for (const threshold of REGION_XP_LEVELS) {
@@ -208,17 +211,18 @@ function badgeCSS(i) {
 
 function RegionBadge({ region, xp }) {
   const level = getRegionLevel(xp)
+  const tier = REGION_TIER_LABELS[level - 1] ?? 'VICTIM'
   return (
     <div className="text-center">
       <div
-        className="inline-flex items-baseline gap-0.5 px-2 py-0.5"
+        className="inline-flex flex-col items-center px-2 py-0.5"
         style={{ background: '#e4b022', clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)' }}
       >
         <span className="font-display text-base leading-none text-gtl-ink" style={{ fontStyle: 'italic' }}>
           {region.label}
         </span>
-        <span className="font-mono text-[9px] leading-none text-gtl-ink" style={{ verticalAlign: 'super', fontSize: '0.55rem' }}>
-          {level}
+        <span className="font-mono leading-none text-gtl-ink" style={{ fontSize: '0.5rem', letterSpacing: '0.05em' }}>
+          {tier}
         </span>
       </div>
     </div>
