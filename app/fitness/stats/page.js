@@ -193,7 +193,7 @@ function badgeAnchor(i) {
 // Computed from BADGE_R + small extra margin
 const BADGE_MARGIN = 28
 // Extra outward push per badge to clear the transmutation circle at each angle
-const BADGE_EXTRA = [18, 0, 20, 20, 0]
+const BADGE_EXTRA = [32, 0, 20, 20, 0]
 function badgeCSS(i) {
   const angle = REGION_ANGLES[i]
   const r = BADGE_R + BADGE_MARGIN + BADGE_EXTRA[i]
@@ -213,7 +213,7 @@ function badgeCSS(i) {
   }
 }
 
-function RegionBadge({ region, xp }) {
+function RegionBadge({ region, xp, isTop }) {
   const level = getRegionLevel(xp)
   const tier = REGION_TIER_LABELS[level - 1] ?? 'VICTIM'
   return (
@@ -222,11 +222,11 @@ function RegionBadge({ region, xp }) {
         className="inline-flex items-baseline gap-0.5 px-2 py-0.5"
         style={{ background: '#e4b022', clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)' }}
       >
-        <span className="font-display text-base leading-none text-gtl-ink" style={{ fontStyle: 'italic' }}>
+        <span className={`font-display leading-none text-gtl-ink ${isTop ? 'text-xl' : 'text-base'}`} style={{ fontStyle: 'italic' }}>
           {region.label}
         </span>
       </div>
-      <div className="font-mono whitespace-nowrap" style={{ fontSize: '0.65rem', letterSpacing: '0.18em', marginTop: '5px', marginLeft: '4px', color: '#e4b022', textShadow: '0 0 8px rgba(228,176,34,0.9), 0 0 2px rgba(0,0,0,1)' }}>
+      <div className="font-mono whitespace-nowrap" style={{ fontSize: isTop ? '0.75rem' : '0.65rem', letterSpacing: '0.18em', marginTop: '5px', marginLeft: '4px', color: '#e4b022', textShadow: '0 0 8px rgba(228,176,34,0.9), 0 0 2px rgba(0,0,0,1)' }}>
         {tier}
       </div>
     </div>
@@ -365,7 +365,7 @@ function BodyStarChart({ regionXP }) {
           className="absolute"
           style={{ ...badgeCSS(i), zIndex: 10 }}
         >
-          <RegionBadge region={region} xp={regionXP[i]} />
+          <RegionBadge region={region} xp={regionXP[i]} isTop={i === 0} />
         </div>
       ))}
     </div>
