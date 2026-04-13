@@ -137,7 +137,7 @@ const REGION_ANGLES = BODY_REGIONS.map((_, i) => -Math.PI / 2 + i * (2 * Math.PI
 const INNER_ANGLES = REGION_ANGLES.map(a => a + Math.PI / 5)
 
 // XP thresholds for levels 1–5 per region
-const REGION_XP_LEVELS = [0, 9000, 30000, 75000, 180000]
+const REGION_XP_LEVELS = [0, 90000, 300000, 750000, 1800000]
 
 function getRegionLevel(xp) {
   let level = 0
