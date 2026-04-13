@@ -286,7 +286,7 @@ export default function StatsPage() {
               {/* XP bar */}
               <div className="relative h-3 bg-gtl-surface" style={{ clipPath: 'polygon(0 0, 100% 0, 98% 100%, 2% 100%)' }}>
                 <div
-                  className="absolute inset-y-0 left-0 bg-gtl-red transition-all duration-700"
+                  className="absolute inset-y-0 left-0 bg-gtl-gold transition-all duration-700"
                   style={{ width: `${xpPct}%`, clipPath: 'polygon(0 0, 100% 0, 98% 100%, 2% 100%)' }}
                 />
               </div>
