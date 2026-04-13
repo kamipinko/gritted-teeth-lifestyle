@@ -294,10 +294,9 @@ export default function StatsPage() {
             </div>
 
             {/* ── Key stats ───────────────────────────────────────── */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
+            <div className="grid grid-cols-3 gap-3 mb-10">
               <StatBox label="CYCLES FORGED" value={stats.cycles} />
               <StatBox label="DAYS COMPLETED" value={stats.daysCompleted} />
-              <StatBox label="DAYS SCHEDULED" value={stats.daysScheduled} />
               <StatBox label="COMPLETION RATE" value={`${completionPct}%`} />
             </div>
 
