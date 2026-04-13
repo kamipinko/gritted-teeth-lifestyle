@@ -137,11 +137,11 @@ const REGION_ANGLES = BODY_REGIONS.map((_, i) => -Math.PI / 2 + STAR_TILT + i * 
 // 5 inner angles sit halfway between outer angles
 const INNER_ANGLES = REGION_ANGLES.map(a => a + Math.PI / 5)
 
-// XP thresholds for levels 1–5 per region
-const REGION_XP_LEVELS = [0, 90000, 300000, 750000, 1800000]
+// XP thresholds for levels 1–6 per region
+const REGION_XP_LEVELS = [0, 90000, 300000, 750000, 1800000, 4500000]
 
-// Tier label per level (levels 1–5)
-const REGION_TIER_LABELS = ['VICTIM', 'SKINNY FAT', 'STACKED', 'YOLKED', 'DICED']
+// Tier label per level (levels 1–6)
+const REGION_TIER_LABELS = ['VICTIM', 'SKINNY FAT', 'STACKED', 'YOLKED', 'DICED', 'SHREDDED']
 
 function getRegionLevel(xp) {
   let level = 0
@@ -149,15 +149,15 @@ function getRegionLevel(xp) {
     if (xp >= threshold) level++
     else break
   }
-  return level  // 0–5
+  return level  // 0–6
 }
 
 function levelToR(level) {
-  return INNER_R + (level / 5) * (OUTER_MAX_R - INNER_R)
+  return INNER_R + (level / 6) * (OUTER_MAX_R - INNER_R)
 }
 
-// Radii for the 5 level rings
-const LEVEL_RING_RADII = [1, 2, 3, 4, 5].map(levelToR)
+// Radii for the 6 level rings
+const LEVEL_RING_RADII = [1, 2, 3, 4, 5, 6].map(levelToR)
 
 function buildStarPath(regionXP) {
   const pts = []
@@ -170,11 +170,13 @@ function buildStarPath(regionXP) {
   return `M ${pts.join(' L ')} Z`
 }
 
+const GHOST_INNER_R = 62  // wider indent for ghost outline — fatter points than filled star
+
 function buildGhostPath() {
   const pts = []
   for (let i = 0; i < 5; i++) {
     pts.push(`${CX + OUTER_MAX_R * Math.cos(REGION_ANGLES[i])},${CY + OUTER_MAX_R * Math.sin(REGION_ANGLES[i])}`)
-    pts.push(`${CX + INNER_R * Math.cos(INNER_ANGLES[i])},${CY + INNER_R * Math.sin(INNER_ANGLES[i])}`)
+    pts.push(`${CX + GHOST_INNER_R * Math.cos(INNER_ANGLES[i])},${CY + GHOST_INNER_R * Math.sin(INNER_ANGLES[i])}`)
   }
   return `M ${pts.join(' L ')} Z`
 }
