@@ -222,7 +222,7 @@ function RegionBadge({ region, xp }) {
           {region.label}
         </span>
       </div>
-      <div className="font-mono text-gtl-ash mt-0.5 whitespace-nowrap" style={{ fontSize: '0.5rem', letterSpacing: '0.08em' }}>
+      <div className="font-mono text-gtl-chalk whitespace-nowrap mt-0.5" style={{ fontSize: '0.6rem', letterSpacing: '0.15em', textShadow: '0 0 6px rgba(228,176,34,0.8)' }}>
         {tier}
       </div>
     </div>
