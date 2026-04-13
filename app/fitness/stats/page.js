@@ -215,15 +215,15 @@ function RegionBadge({ region, xp }) {
   return (
     <div className="text-center">
       <div
-        className="inline-flex flex-col items-center px-2 py-0.5"
+        className="inline-flex items-baseline gap-0.5 px-2 py-0.5"
         style={{ background: '#e4b022', clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)' }}
       >
         <span className="font-display text-base leading-none text-gtl-ink" style={{ fontStyle: 'italic' }}>
           {region.label}
         </span>
-        <span className="font-mono leading-none text-gtl-ink" style={{ fontSize: '0.5rem', letterSpacing: '0.05em' }}>
-          {tier}
-        </span>
+      </div>
+      <div className="font-mono text-gtl-ash mt-0.5 whitespace-nowrap" style={{ fontSize: '0.5rem', letterSpacing: '0.08em' }}>
+        {tier}
       </div>
     </div>
   )
