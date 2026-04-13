@@ -193,7 +193,7 @@ function badgeAnchor(i) {
 // Computed from BADGE_R + small extra margin
 const BADGE_MARGIN = 28
 // Extra outward push per badge to clear the transmutation circle at each angle
-const BADGE_EXTRA = [32, -14, 20, 20, -14]
+const BADGE_EXTRA = [32, -14, 30, 30, -14]
 function badgeCSS(i) {
   const angle = REGION_ANGLES[i]
   const r = BADGE_R + BADGE_MARGIN + BADGE_EXTRA[i]
