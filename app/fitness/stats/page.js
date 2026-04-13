@@ -291,11 +291,6 @@ export default function StatsPage() {
                   style={{ width: `${xpPct}%`, clipPath: 'polygon(0 0, 100% 0, 98% 100%, 2% 100%)' }}
                 />
               </div>
-              <div className="mt-1.5">
-                <span className="font-mono text-[9px] tracking-[0.2em] uppercase text-gtl-ash">
-                  {Math.round(progress).toLocaleString()} / {threshold.toLocaleString()} XP
-                </span>
-              </div>
             </div>
 
             {/* ── Key stats ───────────────────────────────────────── */}
