@@ -213,7 +213,7 @@ function RegionBadge({ region, xp }) {
         className="inline-flex items-baseline gap-0.5 px-2 py-0.5"
         style={{ background: '#e4b022', clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)' }}
       >
-        <span className="font-display text-xs leading-none text-gtl-ink" style={{ fontStyle: 'italic' }}>
+        <span className="font-display text-base leading-none text-gtl-ink" style={{ fontStyle: 'italic' }}>
           {region.label}
         </span>
         <span className="font-mono text-[9px] leading-none text-gtl-ink" style={{ verticalAlign: 'super', fontSize: '0.55rem' }}>
