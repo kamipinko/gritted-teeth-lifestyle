@@ -241,26 +241,6 @@ function BodyStarChart({ regionXP }) {
         viewBox={`0 0 ${VW} ${VH}`}
         aria-hidden="true"
       >
-        {/* Level rings — each ring = one level threshold */}
-        {LEVEL_RING_RADII.map((r, i) => (
-          <circle key={i} cx={CX} cy={CY} r={r}
-            fill="none"
-            stroke={i === 4 ? '#3a3a3a' : '#252525'}
-            strokeWidth={i === 4 ? 1.5 : 1}
-          />
-        ))}
-
-        {/* Radial guide lines */}
-        {REGION_ANGLES.map((angle, i) => {
-          const tip = badgeAnchor(i)
-          return (
-            <line key={i}
-              x1={CX} y1={CY} x2={tip.x} y2={tip.y}
-              stroke="#2e2e2e" strokeWidth="1" strokeDasharray="4 3"
-            />
-          )
-        })}
-
         {/* Ghost star — max potential, faint outline */}
         <path d={ghostPath} fill="none" stroke="#3a3a3a" strokeWidth="1" />
 
