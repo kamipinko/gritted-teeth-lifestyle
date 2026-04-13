@@ -222,11 +222,11 @@ function RegionBadge({ region, xp, isTop }) {
         className="inline-flex items-baseline gap-0.5 px-2 py-0.5"
         style={{ background: '#e4b022', clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)' }}
       >
-        <span className={`font-display leading-none text-gtl-ink ${isTop ? 'text-xl' : 'text-base'}`} style={{ fontStyle: 'italic' }}>
+        <span className="font-display text-base leading-none text-gtl-ink" style={{ fontStyle: 'italic' }}>
           {region.label}
         </span>
       </div>
-      <div className="font-mono whitespace-nowrap" style={{ fontSize: isTop ? '0.75rem' : '0.65rem', letterSpacing: '0.18em', marginTop: '5px', marginLeft: '4px', color: '#e4b022', textShadow: '0 0 8px rgba(228,176,34,0.9), 0 0 2px rgba(0,0,0,1)' }}>
+      <div className="font-mono whitespace-nowrap" style={{ fontSize: '0.65rem', letterSpacing: '0.18em', marginTop: '5px', marginLeft: '4px', color: '#e4b022', textShadow: '0 0 8px rgba(228,176,34,0.9), 0 0 2px rgba(0,0,0,1)' }}>
         {tier}
       </div>
     </div>
