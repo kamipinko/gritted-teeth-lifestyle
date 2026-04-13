@@ -234,7 +234,6 @@ function BodyStarChart({ regionXP }) {
 
   return (
     <div className="relative mx-auto" style={{ width: '100%', maxWidth: `${VW}px`, height: `${VH}px`, perspective: '500px', transform: 'translateX(24px)' }}>
-    {/* 3D tilted — SVG only */}
     <div className="absolute inset-0" style={{ transform: 'rotateX(30deg) rotateY(20deg)', transformOrigin: 'center center' }}>
       <svg
         className="absolute inset-0 w-full h-full"
@@ -276,18 +275,18 @@ function BodyStarChart({ regionXP }) {
         {/* Small center dot */}
         <circle cx={CX} cy={CY} r={4} fill="#e4b022" />
       </svg>
-    </div>
 
-    {/* Badges — outside the 3D wrapper, face the user flat */}
-    {BODY_REGIONS.map((region, i) => (
-      <div
-        key={region.id}
-        className="absolute"
-        style={{ ...badgeCSS(i), zIndex: 10 }}
-      >
-        <RegionBadge region={region} xp={regionXP[i]} />
-      </div>
-    ))}
+      {/* Badges */}
+      {BODY_REGIONS.map((region, i) => (
+        <div
+          key={region.id}
+          className="absolute"
+          style={{ ...badgeCSS(i), zIndex: 10 }}
+        >
+          <RegionBadge region={region} xp={regionXP[i]} />
+        </div>
+      ))}
+    </div>
     </div>
   )
 }
