@@ -191,10 +191,12 @@ function badgeAnchor(i) {
 
 // Badge CSS positions — fixed outside the star regardless of XP
 // Computed from BADGE_R + small extra margin
-const BADGE_MARGIN = 32
+const BADGE_MARGIN = 28
+// Extra outward push per badge to clear the transmutation circle at each angle
+const BADGE_EXTRA = [18, 0, 20, 20, 0]
 function badgeCSS(i) {
   const angle = REGION_ANGLES[i]
-  const r = BADGE_R + BADGE_MARGIN + (i === 0 ? 12 : 0)
+  const r = BADGE_R + BADGE_MARGIN + BADGE_EXTRA[i]
   const x = CX + r * Math.cos(angle)
   const y = CY + r * Math.sin(angle)
   // Anchor point alignment per quadrant
