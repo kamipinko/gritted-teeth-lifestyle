@@ -132,7 +132,8 @@ const INNER_R     = 38   // fixed inner indent of the star
 const BADGE_R     = 138  // radius for badge anchor dots (outside max star)
 
 // 5 region angles clockwise from top (FRONT, ARMS, LEGS, CORE, BACK)
-const REGION_ANGLES = BODY_REGIONS.map((_, i) => -Math.PI / 2 + i * (2 * Math.PI / 5))
+const STAR_TILT = 0  // tilt in radians — adjust to taste
+const REGION_ANGLES = BODY_REGIONS.map((_, i) => -Math.PI / 2 + STAR_TILT + i * (2 * Math.PI / 5))
 // 5 inner angles sit halfway between outer angles
 const INNER_ANGLES = REGION_ANGLES.map(a => a + Math.PI / 5)
 
