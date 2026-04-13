@@ -234,50 +234,54 @@ function BodyStarChart({ regionXP }) {
   const ghostPath = buildGhostPath()
 
   return (
-    <div className="relative mx-auto" style={{ width: '100%', maxWidth: `${VW}px`, height: `${VH}px`, perspective: '500px', transform: 'translateX(24px)' }}>
-    <div className="absolute inset-0" style={{ transform: 'rotateX(30deg) rotateY(20deg)', transformOrigin: 'center center' }}>
-      <svg
-        className="absolute inset-0 w-full h-full"
-        viewBox={`0 0 ${VW} ${VH}`}
-        aria-hidden="true"
-      >
-        {/* Level rings — each ring = one level threshold */}
-        {LEVEL_RING_RADII.map((r, i) => (
-          <circle key={i} cx={CX} cy={CY} r={r}
-            fill="none"
-            stroke={i === 4 ? '#3a3a3a' : '#252525'}
-            strokeWidth={i === 4 ? 1.5 : 1}
-          />
-        ))}
+    <div className="relative mx-auto" style={{ width: '100%', maxWidth: `${VW}px`, height: `${VH}px`, transform: 'translateX(24px)' }}>
+      {/* Tilted star layer */}
+      <div className="absolute inset-0" style={{ perspective: '500px' }}>
+        <div className="absolute inset-0" style={{ transform: 'rotateX(30deg) rotateY(20deg)', transformOrigin: 'center center' }}>
+          <svg
+            className="absolute inset-0 w-full h-full"
+            viewBox={`0 0 ${VW} ${VH}`}
+            aria-hidden="true"
+          >
+            {/* Level rings — each ring = one level threshold */}
+            {LEVEL_RING_RADII.map((r, i) => (
+              <circle key={i} cx={CX} cy={CY} r={r}
+                fill="none"
+                stroke={i === 4 ? '#3a3a3a' : '#252525'}
+                strokeWidth={i === 4 ? 1.5 : 1}
+              />
+            ))}
 
-        {/* Radial guide lines */}
-        {REGION_ANGLES.map((angle, i) => {
-          const tip = badgeAnchor(i)
-          return (
-            <line key={i}
-              x1={CX} y1={CY} x2={tip.x} y2={tip.y}
-              stroke="#2e2e2e" strokeWidth="1" strokeDasharray="4 3"
-            />
-          )
-        })}
+            {/* Radial guide lines */}
+            {REGION_ANGLES.map((angle, i) => {
+              const tip = badgeAnchor(i)
+              return (
+                <line key={i}
+                  x1={CX} y1={CY} x2={tip.x} y2={tip.y}
+                  stroke="#2e2e2e" strokeWidth="1" strokeDasharray="4 3"
+                />
+              )
+            })}
 
-        {/* Ghost star — max potential, faint outline */}
-        <path d={ghostPath} fill="none" stroke="#3a3a3a" strokeWidth="1" />
+            {/* Ghost star — max potential, faint outline */}
+            <path d={ghostPath} fill="none" stroke="#3a3a3a" strokeWidth="1" />
 
-        {/* Filled XP star */}
-        <path d={starPath} fill="rgba(228,176,34,0.18)" stroke="#e4b022" strokeWidth="1.5" />
+            {/* Filled XP star */}
+            <path d={starPath} fill="rgba(228,176,34,0.18)" stroke="#e4b022" strokeWidth="1.5" />
 
-        {/* Gold dots at badge anchors */}
-        {REGION_ANGLES.map((_, i) => {
-          const { x, y } = badgeAnchor(i)
-          return <circle key={i} cx={x} cy={y} r={3} fill="#e4b022" />
-        })}
+            {/* Gold dots at badge anchors */}
+            {REGION_ANGLES.map((_, i) => {
+              const { x, y } = badgeAnchor(i)
+              return <circle key={i} cx={x} cy={y} r={3} fill="#e4b022" />
+            })}
 
-        {/* Small center dot */}
-        <circle cx={CX} cy={CY} r={4} fill="#e4b022" />
-      </svg>
+            {/* Small center dot */}
+            <circle cx={CX} cy={CY} r={4} fill="#e4b022" />
+          </svg>
+        </div>
+      </div>
 
-      {/* Badges */}
+      {/* Flat label layer — no tilt */}
       {BODY_REGIONS.map((region, i) => (
         <div
           key={region.id}
@@ -287,7 +291,6 @@ function BodyStarChart({ regionXP }) {
           <RegionBadge region={region} xp={regionXP[i]} />
         </div>
       ))}
-    </div>
     </div>
   )
 }
