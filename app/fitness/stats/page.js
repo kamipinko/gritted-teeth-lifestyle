@@ -221,9 +221,6 @@ function RegionBadge({ region, xp }) {
           {level}
         </span>
       </div>
-      <div className="font-mono text-[8px] tracking-[0.1em] text-gtl-ash whitespace-nowrap mt-0.5">
-        {xp > 0 ? `${Math.round(xp).toLocaleString()} XP` : '—'}
-      </div>
     </div>
   )
 }
