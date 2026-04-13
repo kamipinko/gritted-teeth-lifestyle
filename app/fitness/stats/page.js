@@ -348,6 +348,7 @@ function BodyStarChart({ regionXP }) {
 
         {/* Level rings */}
         <circle cx={CX} cy={CY} r={LEVEL_RING_RADII[2]} fill="none" stroke="#2e2e2e" strokeWidth="1" />
+        <circle cx={CX} cy={CY} r={LEVEL_RING_RADII[3]} fill="none" stroke="#2e2e2e" strokeWidth="1" />
         <circle cx={CX} cy={CY} r={LEVEL_RING_RADII[5]} fill="none" stroke="#3a3a3a" strokeWidth="1.5" />
 
         {/* Ghost star — max potential, faint outline */}
