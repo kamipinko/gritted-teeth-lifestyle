@@ -137,7 +137,13 @@ const REGION_ANGLES = BODY_REGIONS.map((_, i) => -Math.PI / 2 + i * (2 * Math.PI
 const INNER_ANGLES = REGION_ANGLES.map(a => a + Math.PI / 5)
 
 // XP thresholds for levels 1–5 per region
-const REGION_XP_LEVELS = [0, 3000, 10000, 25000, 60000]
+const REGION_XP_LEVELS = [
+     0,   1000,   3000,   7000,  15000,  // levels 1–5
+ 28000,  48000,  78000, 120000, 180000,  // levels 6–10
+265000, 385000, 550000, 775000, 1075000, // levels 11–15
+]
+
+const MAX_LEVEL = REGION_XP_LEVELS.length  // 15
 
 function getRegionLevel(xp) {
   let level = 0
@@ -145,15 +151,15 @@ function getRegionLevel(xp) {
     if (xp >= threshold) level++
     else break
   }
-  return level  // 0–5
+  return level  // 0–15
 }
 
 function levelToR(level) {
-  return INNER_R + (level / 5) * (OUTER_MAX_R - INNER_R)
+  return INNER_R + (level / MAX_LEVEL) * (OUTER_MAX_R - INNER_R)
 }
 
-// Radii for the 5 level rings (sit exactly at each level's spike length)
-const LEVEL_RING_RADII = [1, 2, 3, 4, 5].map(levelToR)
+// Radii for all 15 level rings
+const LEVEL_RING_RADII = Array.from({ length: MAX_LEVEL }, (_, i) => levelToR(i + 1))
 
 function buildStarPath(regionXP) {
   const pts = []
@@ -238,14 +244,17 @@ function BodyStarChart({ regionXP }) {
         viewBox={`0 0 ${VW} ${VH}`}
         aria-hidden="true"
       >
-        {/* Level rings — each ring = one level threshold */}
-        {LEVEL_RING_RADII.map((r, i) => (
-          <circle key={i} cx={CX} cy={CY} r={r}
-            fill="none"
-            stroke={i === 4 ? '#3a3a3a' : '#252525'}
-            strokeWidth={i === 4 ? 1.5 : 1}
-          />
-        ))}
+        {/* Level rings — faint for all 15, brighter at 5 / 10 / 15 */}
+        {LEVEL_RING_RADII.map((r, i) => {
+          const isMajor = (i + 1) % 5 === 0
+          return (
+            <circle key={i} cx={CX} cy={CY} r={r}
+              fill="none"
+              stroke={isMajor ? '#3d3d3d' : '#1e1e1e'}
+              strokeWidth={isMajor ? 1.5 : 0.75}
+            />
+          )
+        })}
 
         {/* Radial guide lines */}
         {REGION_ANGLES.map((angle, i) => {
