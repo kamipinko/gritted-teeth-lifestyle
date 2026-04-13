@@ -53,7 +53,7 @@ function loadStats() {
     let totalXP = 0
     let daysScheduled = 0
     let daysCompleted = 0
-    const muscleSessions = {}   // muscleId → count of completed sessions
+    const muscleXP = {}   // muscleId → XP earned
     const cycleStats = []
 
     for (const cycle of allCycles) {
@@ -70,8 +70,6 @@ function loadStats() {
         cycleDone++
 
         for (const muscleId of (cycle.dailyPlan[iso] || [])) {
-          muscleSessions[muscleId] = (muscleSessions[muscleId] || 0) + 1
-
           const rRaw = localStorage.getItem(pk(`ex-${cycle.id}-${iso}-${muscleId}`))
           const wRaw = localStorage.getItem(pk(`wt-${cycle.id}-${iso}-${muscleId}`))
           const rData = rRaw ? JSON.parse(rRaw) : {}
@@ -85,6 +83,7 @@ function loadStats() {
               if (reps === 0) continue
               const mult = repMult(reps)
               const earned = weight > 0 ? weight * mult * reps : reps * mult
+              muscleXP[muscleId] = (muscleXP[muscleId] || 0) + earned
               cycleXP += earned
               totalXP += earned
             }
@@ -102,13 +101,13 @@ function loadStats() {
       })
     }
 
-    // Sort muscles by sessions desc, take top 5
-    const topMuscles = Object.entries(muscleSessions)
+    // Sort muscles by XP earned desc, take top 5
+    const topMuscles = Object.entries(muscleXP)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
-      .map(([id, count]) => ({ id, label: MUSCLE_LABELS[id] || id.toUpperCase(), count }))
+      .map(([id, xp]) => ({ id, label: MUSCLE_LABELS[id] || id.toUpperCase(), xp }))
 
-    const maxMuscleCount = topMuscles[0]?.count || 1
+    const maxMuscleXP = topMuscles[0]?.xp || 1
 
     return {
       totalXP,
@@ -116,7 +115,7 @@ function loadStats() {
       daysScheduled,
       daysCompleted,
       topMuscles,
-      maxMuscleCount,
+      maxMuscleXP,
       cycleLog: cycleStats,
     }
   } catch (_) {
@@ -126,7 +125,7 @@ function loadStats() {
       daysScheduled: 0,
       daysCompleted: 0,
       topMuscles: [],
-      maxMuscleCount: 1,
+      maxMuscleXP: 1,
       cycleLog: [],
     }
   }
@@ -311,8 +310,8 @@ export default function StatsPage() {
                 </div>
 
                 <div className="space-y-3">
-                  {stats.topMuscles.map(({ id, label, count }, i) => {
-                    const pct = Math.round((count / stats.maxMuscleCount) * 100)
+                  {stats.topMuscles.map(({ id, label, xp }, i) => {
+                    const pct = Math.round((xp / stats.maxMuscleXP) * 100)
                     return (
                       <div key={id}>
                         <div className="flex items-center gap-3 mb-1">
@@ -322,12 +321,12 @@ export default function StatsPage() {
                           <span className="font-mono text-xs tracking-[0.2em] uppercase text-gtl-chalk flex-1">
                             {label}
                           </span>
-                          <span className="font-mono text-[9px] tracking-[0.15em] uppercase text-gtl-ash shrink-0">
-                            {count}×
+                          <span className="font-mono text-[9px] tracking-[0.15em] text-gtl-gold shrink-0">
+                            {Math.round(xp).toLocaleString()} XP
                           </span>
                         </div>
                         <div className="ml-7 h-1.5 bg-gtl-surface">
-                          <div className="h-full bg-gtl-red" style={{ width: `${pct}%` }} />
+                          <div className="h-full bg-gtl-gold" style={{ width: `${pct}%` }} />
                         </div>
                       </div>
                     )
