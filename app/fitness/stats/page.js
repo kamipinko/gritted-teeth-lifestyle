@@ -14,10 +14,10 @@ import { useSound } from '../../../lib/useSound'
 
 // 5 body regions — each star point represents one
 const BODY_REGIONS = [
-  { id: 'front', label: 'FRONT', muscles: ['chest', 'shoulders'] },
+  { id: 'core',  label: 'CORE',  muscles: ['abs'] },
   { id: 'arms',  label: 'ARMS',  muscles: ['biceps', 'triceps', 'forearms'] },
   { id: 'legs',  label: 'LEGS',  muscles: ['quads', 'hamstrings', 'glutes', 'calves'] },
-  { id: 'core',  label: 'CORE',  muscles: ['abs'] },
+  { id: 'front', label: 'FRONT', muscles: ['chest', 'shoulders'] },
   { id: 'back',  label: 'BACK',  muscles: ['back'] },
 ]
 
