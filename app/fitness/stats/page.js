@@ -190,6 +190,29 @@ function badgeAnchor(i) {
 // Badge CSS positions — fixed outside the star regardless of XP
 // Computed from BADGE_R + small extra margin
 const BADGE_MARGIN = 18
+const TILT_PERSPECTIVE = 500
+const TILT_ROT_X = 30 * Math.PI / 180
+const TILT_ROT_Y = 20 * Math.PI / 180
+
+// Compute a compensating scale so each badge appears the same size despite 3D tilt.
+// After rotateX(30deg) rotateY(20deg), each badge position has a z-depth that causes
+// perspective foreshortening. We invert that effect per badge.
+function badgeCompensationScale(i) {
+  const angle = REGION_ANGLES[i]
+  const r = BADGE_R + BADGE_MARGIN
+  const x = CX + r * Math.cos(angle)
+  const y = CY + r * Math.sin(angle)
+  // Local coords relative to the transform origin (center of container)
+  const xL = x - VW / 2
+  const yL = y - VH / 2
+  // z-depth after rotateY then rotateX
+  const z1 = -xL * Math.sin(TILT_ROT_Y)
+  const z2 = yL * Math.sin(TILT_ROT_X) + z1 * Math.cos(TILT_ROT_X)
+  // CSS perspective apparent scale: p / (p - z)
+  const apparentScale = TILT_PERSPECTIVE / (TILT_PERSPECTIVE - z2)
+  return 1 / apparentScale
+}
+
 function badgeCSS(i) {
   const angle = REGION_ANGLES[i]
   const r = BADGE_R + BADGE_MARGIN
@@ -205,7 +228,7 @@ function badgeCSS(i) {
   return {
     left: `${(x / VW) * 100}%`,
     top:  `${(y / VH) * 100}%`,
-    transform: `translate(${tx}, ${ty})`,
+    transform: `translate(${tx}, ${ty}) scale(${badgeCompensationScale(i).toFixed(3)})`,
   }
 }
 
