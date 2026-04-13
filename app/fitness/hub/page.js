@@ -403,6 +403,8 @@ export default function FitnessPage() {
       setTransitionConfig({ href, title: 'NEW CYCLE', intensity: 'mega' })
     } else if (href === '/fitness/load') {
       setTransitionConfig({ href, title: 'LOAD CYCLE', intensity: 'normal' })
+    } else if (href === '/fitness/stats') {
+      setTransitionConfig({ href, title: 'WAR RECORD', intensity: 'normal' })
     } else {
       setTransitionConfig({ href, title: 'GHOST CYCLE', intensity: 'normal' })
     }
@@ -515,6 +517,15 @@ export default function FitnessPage() {
             href="/fitness/ghost"
             onClick={handleSelect}
           />
+          <div className="mt-4">
+            <GhostOption
+              number="04"
+              label="WAR RECORD"
+              caption="Career stats. Level, XP, completed days, top muscles."
+              href="/fitness/stats"
+              onClick={handleSelect}
+            />
+          </div>
         </div>
 
         {/* Decorative footer slash */}
