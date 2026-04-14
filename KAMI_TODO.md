@@ -1,6 +1,30 @@
 # KAMI TODO — Gritted Teeth Lifestyle
 
+> **NEW PRIORITY: Mobile redesign is now the active focus.**
+> Read `MOBILE_BRIEF.md` before starting any task. It explains the direction, what Jordan is handling, and the rules for mobile.
+>
 > These tasks were assigned by Jordan. Complete them in the P5 visual language established throughout the fitness side of the app. Reference `.claude/commands/p5-ui.md` for the design bible and `P5_UI.md` for implementation status.
+
+---
+
+## Mobile Tasks (Current Priority)
+
+### M1. Home Page — Mobile Layout
+Make the calling card dominate the fold on mobile. The nutrition card is a second act — scrolling to it should feel intentional. Fix the dead space between elements.
+
+### M2. Profiles Page — Touch Targets
+WHO ARE YOU looks great. Make the input and ENTER button wider, taller, more satisfying to tap. Press state on ENTER should feel physical.
+
+### M3. Theatrical Navigation Flashes
+Build a lightweight P5 flash for key navigation moments (name entry → hub, cycle selection, etc.). Lighter than HeistTransition — a half-second color flood or kanji frame. Study `components/HeistTransition.jsx`.
+
+### M4. Breadcrumb Cleanup
+On mobile only, show just the current page label instead of the full path (e.g. `SCHEDULE` not `PALACE / FITNESS / NEW CYCLE / SCHEDULE`).
+
+### M5. Idle Button Animations (touch-aware)
+Carry-over from original TODO — but on mobile these must be pulse/glow patterns, not hover states. User's thumb should feel drawn to the right button.
+
+---
 
 ---
 
