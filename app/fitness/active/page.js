@@ -1355,8 +1355,8 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose, cycleId }) {
       </div>
 
       <div
-        className="relative z-10 h-full flex flex-col px-10 py-8 overflow-y-auto"
-        style={{ animation: 'focus-content-in 280ms 250ms ease-out both' }}
+        className="relative z-10 h-full flex flex-col px-10 pb-8 overflow-y-auto"
+        style={{ animation: 'focus-content-in 280ms 250ms ease-out both', paddingTop: 'max(2rem, env(safe-area-inset-top))' }}
       >
         {/* Back */}
         <button
@@ -1753,8 +1753,8 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
 
         {/* Content — delayed fade in after zoom lands */}
         <div
-          className="relative z-10 h-full flex flex-col px-10 py-8 overflow-hidden"
-          style={{ animation: 'focus-content-in 300ms 280ms ease-out both' }}
+          className="relative z-10 h-full flex flex-col px-10 pb-8 overflow-hidden"
+          style={{ animation: 'focus-content-in 300ms 280ms ease-out both', paddingTop: 'max(2rem, env(safe-area-inset-top))' }}
         >
           {/* X stamp overlay — inside content div so it can't escape overflow bounds */}
           {stamped && (
@@ -1871,7 +1871,7 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
           </div>
 
           {/* Vertical layout: compact date header + muscle slabs + exercise log */}
-          <div className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-5 py-2" style={{ touchAction: 'pan-y' }}>
+          <div className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-5 py-2" style={{ touchAction: 'pan-y', overscrollBehaviorY: 'contain' }}>
 
             {/* Compact date header */}
             <div>
@@ -2379,7 +2379,7 @@ export default function ActiveCyclePage() {
   const rows = Math.ceil(days.length / cols)
 
   return (
-    <main className="relative h-screen overflow-hidden flex flex-col bg-gtl-void">
+    <main className="relative h-[100dvh] overflow-hidden flex flex-col bg-gtl-void">
 
       {/* Atmospherics */}
       <div className="absolute inset-0 gtl-noise pointer-events-none" />
@@ -2419,7 +2419,7 @@ export default function ActiveCyclePage() {
       </div>
 
       {/* Nav */}
-      <nav className="relative z-10 shrink-0 flex items-center gap-4 px-8 py-3">
+      <nav className="relative z-10 shrink-0 flex items-center gap-4 px-8 pb-3" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
         <RetreatButton />
         <div className="w-px self-stretch bg-gtl-edge" style={{ transform: 'skewX(-12deg)' }} />
         {/* XP Bar inline in nav */}

@@ -18,6 +18,8 @@ html, body {
   font-family: 'Space Grotesk', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Prevent iOS rubber-band bounce from pulling content out of view */
+  overscroll-behavior: none;
 }
 
 /* Selection — red because of course */
