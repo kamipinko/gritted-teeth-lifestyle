@@ -97,3 +97,176 @@ When invoked, review the current task or the file/component provided and:
 
 If the user pastes a component or describes a screen, apply the above to improve it.
 If the user says `/p5-ui [component name]`, find that component in the codebase and audit + improve it.
+
+---
+
+## Gritted Teeth Lifestyle — Project-Specific Implementation Reference
+
+This section documents the *actual* tokens, patterns, and components established in this codebase. Always use these before inventing new ones.
+
+### Color Tokens (Tailwind config)
+| Token | Hex | Use |
+|---|---|---|
+| `gtl-void` | `#070708` | Page backgrounds |
+| `gtl-ink` | `#111115` | Card/panel backgrounds |
+| `gtl-surface` | `#1a1a1e` | Elevated surfaces |
+| `gtl-edge` | `#3a3a42` | Borders, dividers |
+| `gtl-smoke` | `#6a6a72` | Muted labels |
+| `gtl-ash` | `#9a9aa2` | Secondary text |
+| `gtl-chalk` | `#e8e8f0` | Primary text |
+| `gtl-paper` | `#f5f0e8` | Warm white (used on red backgrounds) |
+| `gtl-red` | `#d4181f` | Primary action, selection |
+| `gtl-red-bright` | `#ff2a36` | Hover, active states |
+| `gtl-red-deep` | `#8a0e13` | Shadow slabs |
+| `gtl-blood` | `#7a0e14` | Deep red, danger |
+| `gtl-gold` | `#e4b022` | Today indicator, XP, stats |
+
+### Standard Clip Paths
+```js
+// Parallelogram — standard button/slab shape
+clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)'
+
+// Parallelogram wider — used for larger buttons
+clipPath: 'polygon(2% 0%, 100% 0%, 98% 100%, 0% 100%)'
+
+// Parallelogram reverse (left-pointing)
+clipPath: 'polygon(0% 0%, 96% 0%, 100% 100%, 4% 100%)'
+
+// Torn paper (card) — bottom-right nick
+clipPath: 'polygon(0% 0%, 97% 0%, 100% 5%, 100% 100%, 3% 100%, 0% 95%)'
+
+// Nav button (skewed left)
+clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)'
+```
+
+### The Shadow Slab Pattern
+Every red interactive button in GTL uses a two-layer stack: a dark shadow slab offset 6px right+down, and a red face on top. On press, both translate to the same position (slam effect).
+
+```jsx
+{/* Shadow */}
+<div
+  className="absolute inset-0 bg-gtl-red-deep"
+  style={{
+    clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+    transform: pressed ? 'translate(0,0)' : 'translate(6px, 6px)',
+    transition: 'transform 80ms ease-out',
+  }}
+  aria-hidden="true"
+/>
+{/* Face */}
+<div
+  className="relative px-8 py-4"
+  style={{
+    clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+    background: pressed ? '#ff2a36' : '#d4181f',
+    transform: pressed ? 'translate(6px, 6px)' : 'translate(0,0)',
+    transition: 'transform 80ms ease-out, background 80ms ease-out',
+  }}
+>
+  <span className="font-display text-gtl-paper">LABEL</span>
+</div>
+```
+
+### Retreat / Back Button Pattern
+All sub-pages have a consistent retreat button (top-left). Behavior: plays `menu-close` sound, navigates back. In edit mode, checks `gtl-back-to-edit` localStorage flag.
+
+```jsx
+function RetreatButton() {
+  const { play } = useSound()
+  const [hovered, setHovered] = useState(false)
+  let backHref = '/previous-page'
+  try { if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit' } catch (_) {}
+  return (
+    <Link href={backHref}
+      onMouseEnter={() => { setHovered(true); play('button-hover') }}
+      onMouseLeave={() => setHovered(false)}
+      onClick={() => play('menu-close')}
+      className="group relative inline-flex items-center"
+    >
+      <div className={`absolute inset-0 -inset-x-2 transition-all duration-300 ease-out
+        ${hovered ? 'bg-gtl-red opacity-100' : 'bg-gtl-edge opacity-50'}`}
+        style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
+        aria-hidden="true" />
+      <div className="relative flex items-center gap-3 px-4 py-2">
+        <span className={`font-display text-base leading-none transition-all duration-300
+          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red'}`}>◀</span>
+        <span className={`font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300
+          ${hovered ? 'text-gtl-paper' : 'text-gtl-chalk'}`}>RETREAT</span>
+      </div>
+    </Link>
+  )
+}
+```
+
+### Page Structure Template
+Every GTL page follows this structure:
+```jsx
+<main className="relative min-h-screen overflow-hidden bg-gtl-void">
+  {/* Noise texture */}
+  <div className="absolute inset-0 gtl-noise" />
+  {/* Atmospheric gradient */}
+  <div className="absolute inset-0 pointer-events-none"
+    style={{ background: 'linear-gradient(135deg, rgba(122,14,20,0.2) 0%, transparent 40%, transparent 60%, rgba(74,10,14,0.3) 100%)' }} />
+  {/* Kanji watermark */}
+  <div className="absolute -top-12 -left-8 pointer-events-none select-none animate-flicker"
+    style={{ fontFamily: '"Noto Serif JP", serif', fontSize: '40rem', lineHeight: '0.8', color: '#ffffff', opacity: 0.04, fontWeight: 900 }}>
+    漢
+  </div>
+  {/* Nav */}
+  <nav className="relative z-10 flex items-center justify-between px-8 py-6">
+    <RetreatButton />
+    <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
+      PALACE / SECTION / PAGE
+    </div>
+  </nav>
+  {/* Content */}
+  <section className="relative z-10 px-8 pb-20 max-w-3xl mx-auto">
+    {/* Step tag */}
+    <div className="flex items-center gap-4 mb-3">
+      <div className="h-px w-16 bg-gtl-red" />
+      <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-red">STEP / 01 / LABEL</span>
+      <div className="h-px w-16 bg-gtl-red" />
+    </div>
+    {/* Headline */}
+    <h1 className="font-display text-[5rem] md:text-[7rem] leading-[0.9] text-gtl-chalk -rotate-1">
+      HEADLINE<br />
+      <span className="text-gtl-red inline-block rotate-1">EMPHASIS</span>
+    </h1>
+  </section>
+</main>
+```
+
+### Typography Rules
+- `font-display` — big headlines, button labels, ransom-note letters
+- `font-mono` — ALL CAPS labels, breadcrumbs, metadata (`tracking-[0.3em]` or wider)
+- `font-athletic font-black` — alternate display weight for ransom-note variety
+- Never use `font-sans` or `font-serif` on new GTL UI elements
+
+### Sound Hooks — Available Sounds
+All interactive elements play a sound. Use `const { play } = useSound()` and call:
+- `play('button-hover')` — on mouseEnter for buttons/slabs
+- `play('option-select')` — on click/confirm selection
+- `play('menu-close')` — on retreat/cancel/close
+- `play('card-hover')` — on hover over calling card
+- `play('card-confirm')` — on calling card click
+- `play('stamp')` — on major confirmation stamp
+- `play('transition-slash')` — fires with HeistTransition
+
+### Available Transition Components
+- `<HeistTransition active={bool} onComplete={fn} title="TEXT" intensity="normal|mega" />` — red slash wipe for major navigation
+- `<FireTransition active={bool} onComplete={fn} />` — fire wipe for cycle/fitness flow
+- `<FireFadeIn duration={900} />` — fire reveal on page enter
+
+### Key Established Components
+- `components/CallingCard.jsx` — Phantom Thieves calling card (home page fitness entry)
+- `components/HeistTransition.jsx` — full-screen slash animation overlay
+- `components/MuscleBody.jsx` — R3F 3D muscle selector with hitbox/glow system
+- `app/fitness/active/page.js` — DayFocus + ExercisePanel reference implementation
+- `app/fitness/hub/page.js` — Hub/menu screen reference implementation
+
+### Writing Voice (Gurren Lagann + Persona 5 hybrid)
+- Direct, second-person: "YOUR WEAKNESS HAS BEEN NOTED"
+- No hedging, no softening, no please/thank you
+- Short imperatives: "MARK YOUR DAYS", "WHO ARE YOU", "FORGE A NEW CYCLE"
+- Flavor text should feel earned, not generated — Joker's posture, Simon's heart
+- Labels use military/heist vocabulary: PALACE, INFILTRATE, FORGE, ETCH, RETREAT, BATTLEDAY

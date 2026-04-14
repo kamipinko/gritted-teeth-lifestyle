@@ -289,6 +289,7 @@ function MuscleSlab({ id, rot, delay, onClick }) {
   const [hovered, setHovered] = useState(false)
 
   const handleClick = (e) => {
+    console.log('[GTL] MuscleSlab button click fired:', id)
     const rect = e.currentTarget.getBoundingClientRect()
     onClick(rect)
   }
@@ -302,12 +303,23 @@ function MuscleSlab({ id, rot, delay, onClick }) {
       onMouseLeave={() => { setPressed(false); setHovered(false) }}
       onMouseEnter={() => { setHovered(true); play('button-hover') }}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(e) } }}
+      onPointerDown={(e) => {
+        if (e.pointerType !== 'touch') return
+        setPressed(true)
+        const rect = e.currentTarget.getBoundingClientRect()
+        console.log('[GTL] MuscleSlab pointerdown (touch):', id)
+        onClick(rect)
+      }}
+      onPointerUp={(e) => { if (e.pointerType === 'touch') setPressed(false) }}
+      onPointerCancel={(e) => { if (e.pointerType === 'touch') setPressed(false) }}
       className="relative cursor-pointer select-none outline-none shrink-0
         focus-visible:outline-2 focus-visible:outline-gtl-paper focus-visible:outline-offset-4"
       style={{
+        '--slab-rot': rot,
         transform: `rotate(${rot})`,
-        animation: `focus-content-in 300ms ${delay}ms ease-out both`,
+        animation: `slab-in 300ms ${delay}ms ease-out both`,
         overflow: 'visible',
+        touchAction: 'manipulation',
       }}
       aria-label={`View exercises for ${MUSCLE_LABELS[id] || id}`}
     >
@@ -1294,8 +1306,13 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose, cycleId }) {
   const handleClose = useCallback(() => {
     play('menu-close')
     setClosing(true)
-    setTimeout(onClose, 320)
-  }, [onClose, play])
+  }, [play])
+
+  useEffect(() => {
+    if (!closing) return
+    const timer = setTimeout(onClose, 320)
+    return () => clearTimeout(timer)
+  }, [closing, onClose])
 
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') handleClose() }
@@ -1685,8 +1702,8 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
           100% { transform: scale(0.08); opacity: 0; filter: blur(12px); }
         }
         @keyframes focus-content-in {
-          0%   { opacity: 0; transform: translateY(20px); }
-          100% { opacity: 1; transform: translateY(0); }
+          0%   { transform: translateY(20px); }
+          100% { transform: translateY(0); }
         }
         @keyframes stamp-slam {
           0%   { transform: scale(3) rotate(-8deg); opacity: 0; }
@@ -1695,6 +1712,10 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
           70%  { transform: scale(1.04) rotate(-5.5deg); }
           85%  { transform: scale(0.98) rotate(-6deg); }
           100% { transform: scale(1) rotate(-6deg); opacity: 1; }
+        }
+        @keyframes slab-in {
+          0%   { transform: translateY(20px) rotate(var(--slab-rot, 0deg)); }
+          100% { transform: translateY(0) rotate(var(--slab-rot, 0deg)); }
         }
       `}</style>
 
@@ -1850,7 +1871,7 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
           </div>
 
           {/* Vertical layout: compact date header + muscle slabs + exercise log */}
-          <div className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-5 py-2">
+          <div className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-5 py-2" style={{ touchAction: 'pan-y' }}>
 
             {/* Compact date header */}
             <div>
@@ -1898,7 +1919,7 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
                       id={id}
                       rot={rot}
                       delay={320 + i * 60}
-                      onClick={(rect) => { play('option-select'); setFocusMuscle(id); setFocusMuscleRect(rect) }}
+                      onClick={(rect) => { console.log('[GTL] slab clicked:', id, 'focusMuscle before:', focusMuscle); play('option-select'); setFocusMuscle(id); setFocusMuscleRect(rect) }}
                     />
                   )
                 })}
@@ -1947,14 +1968,25 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
                           key={muscleId}
                           style={{ animation: `focus-content-in 300ms ${si * 90}ms ease-out both` }}
                         >
-                          {/* Muscle name slab */}
+                          {/* Muscle name slab — clickable, reopens ExercisePanel */}
                           <div style={{ display: 'block', marginBottom: '0.5rem' }}>
-                            <div
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                const rect = e.currentTarget.getBoundingClientRect()
+                                play('option-select')
+                                setFocusMuscle(muscleId)
+                                setFocusMuscleRect(rect)
+                              }}
                               style={{
                                 display: 'inline-flex',
                                 position: 'relative',
                                 transform: `rotate(${rot})`,
                                 transformOrigin: 'left center',
+                                cursor: 'pointer',
+                                background: 'none',
+                                border: 'none',
+                                padding: 0,
                               }}
                             >
                               <div
@@ -1981,7 +2013,7 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
                                   {MUSCLE_LABELS[muscleId] || muscleId.toUpperCase()}
                                 </span>
                               </div>
-                            </div>
+                            </button>
                           </div>
 
                           {/* Exercise entries */}
