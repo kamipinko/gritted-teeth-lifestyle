@@ -348,81 +348,122 @@ export default function SchedulePage() {
           />
 
           {/* Day-of-week header row */}
-          <div className="grid grid-cols-7 gap-1 mb-1">
-            {DAY_LABELS.map((label, i) => (
-              <div
-                key={label}
-                className={`py-2 text-center font-mono text-[10px] tracking-[0.25em] uppercase
-                  ${i === 0 || i === 6 ? 'text-gtl-red/80' : 'text-gtl-ash'}`}
-                style={{ clipPath: CELL_CLIP }}
-              >
-                {label}
-              </div>
-            ))}
-          </div>
-
-          {/* Calendar grid */}
-          <div className="grid grid-cols-7 gap-1">
-            {cells.map((d, i) => {
-              if (d === null) {
-                return <div key={`pad-${i}`} className="h-20" />
-              }
-
-              const key      = isoKey(d)
-              const selected = trainingDays.has(key)
-              const todayCell = isToday(d)
-              const past     = isPast(d)
-
-              return (
+          <div className="flex gap-1 mb-1">
+            <div className="grid grid-cols-7 gap-1 flex-1">
+              {DAY_LABELS.map((label, i) => (
                 <div
-                  key={key}
-                  onClick={() => toggleDay(d)}
-                  className={`
-                    relative h-20 flex flex-col items-center justify-center gap-0.5
-                    border transition-all duration-150
-                    ${past ? 'opacity-25 cursor-not-allowed' : 'cursor-pointer'}
-                    ${selected
-                      ? 'bg-gtl-red border-gtl-red-bright'
-                      : todayCell
-                      ? 'bg-gtl-ink border-gtl-gold'
-                      : past
-                      ? 'bg-gtl-ink border-gtl-edge'
-                      : 'bg-gtl-ink border-gtl-edge hover:border-gtl-red hover:bg-gtl-surface'}
-                  `}
+                  key={label}
+                  className={`py-2 text-center font-mono text-[10px] tracking-[0.25em] uppercase
+                    ${i === 0 || i === 6 ? 'text-gtl-red/80' : 'text-gtl-ash'}`}
                   style={{ clipPath: CELL_CLIP }}
                 >
-                  {/* Top accent line for today */}
-                  {todayCell && !selected && (
-                    <div
-                      className="absolute top-0 left-0 right-0 h-0.5 bg-gtl-gold"
-                      aria-hidden="true"
-                    />
-                  )}
+                  {label}
+                </div>
+              ))}
+            </div>
+            <div className="w-10 shrink-0" aria-hidden="true" />
+          </div>
 
-                  {/* Day number */}
-                  <span
-                    className={`font-display text-3xl leading-none
-                      ${selected ? 'text-gtl-paper' : todayCell ? 'text-gtl-gold' : 'text-gtl-chalk'}`}
+          {/* Calendar grid — explicit week rows */}
+          <div className="flex flex-col gap-1">
+            {Array.from({ length: cells.length / 7 }, (_, wi) => {
+              const weekCells = cells.slice(wi * 7, wi * 7 + 7)
+              const eligibleDays = weekCells.filter((d) => d !== null && !isPast(d))
+              const allSelected =
+                eligibleDays.length > 0 &&
+                eligibleDays.every((d) => trainingDays.has(isoKey(d)))
+
+              const toggleWeek = () => {
+                if (eligibleDays.length === 0) return
+                play('option-select')
+                setTrainingDays((prev) => {
+                  const next = new Set(prev)
+                  if (allSelected) {
+                    eligibleDays.forEach((d) => next.delete(isoKey(d)))
+                  } else {
+                    eligibleDays.forEach((d) => next.add(isoKey(d)))
+                  }
+                  return next
+                })
+              }
+
+              return (
+                <div key={wi} className="flex gap-1 items-stretch">
+                  <div className="grid grid-cols-7 gap-1 flex-1">
+                    {weekCells.map((d, j) => {
+                      if (d === null) {
+                        return <div key={`pad-${wi}-${j}`} className="h-20" />
+                      }
+
+                      const key       = isoKey(d)
+                      const selected  = trainingDays.has(key)
+                      const todayCell = isToday(d)
+                      const past      = isPast(d)
+
+                      return (
+                        <div
+                          key={key}
+                          onClick={() => toggleDay(d)}
+                          className={`
+                            relative h-20 flex flex-col items-center justify-center gap-0.5
+                            border transition-all duration-150
+                            ${past ? 'opacity-25 cursor-not-allowed' : 'cursor-pointer'}
+                            ${selected
+                              ? 'bg-gtl-red border-gtl-red-bright'
+                              : todayCell
+                              ? 'bg-gtl-ink border-gtl-gold'
+                              : past
+                              ? 'bg-gtl-ink border-gtl-edge'
+                              : 'bg-gtl-ink border-gtl-edge hover:border-gtl-red hover:bg-gtl-surface'}
+                          `}
+                          style={{ clipPath: CELL_CLIP }}
+                        >
+                          {todayCell && !selected && (
+                            <div
+                              className="absolute top-0 left-0 right-0 h-0.5 bg-gtl-gold"
+                              aria-hidden="true"
+                            />
+                          )}
+                          <span
+                            className={`font-display text-3xl leading-none
+                              ${selected ? 'text-gtl-paper' : todayCell ? 'text-gtl-gold' : 'text-gtl-chalk'}`}
+                          >
+                            {d}
+                          </span>
+                          {selected && (
+                            <span
+                              className="font-display text-xs text-gtl-paper/70 leading-none -rotate-12"
+                              aria-hidden="true"
+                            >
+                              ✕
+                            </span>
+                          )}
+                          {todayCell && !selected && (
+                            <span className="font-mono text-[7px] tracking-[0.2em] uppercase text-gtl-gold leading-none">
+                              TODAY
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Week select button */}
+                  <button
+                    type="button"
+                    onClick={toggleWeek}
+                    disabled={eligibleDays.length === 0}
+                    className={`w-10 shrink-0 flex items-center justify-center font-mono text-[11px] font-bold tracking-wider border transition-colors duration-100
+                      ${eligibleDays.length === 0
+                        ? 'opacity-20 cursor-not-allowed bg-gtl-ink border-gtl-edge text-gtl-smoke'
+                        : allSelected
+                        ? 'bg-gtl-red border-gtl-red-bright text-gtl-paper cursor-pointer'
+                        : 'bg-gtl-ink border-gtl-edge text-gtl-chalk hover:border-gtl-red hover:bg-gtl-surface cursor-pointer'}`}
+                    style={{ clipPath: 'polygon(0% 0%, 80% 0%, 100% 50%, 80% 100%, 0% 100%)' }}
+                    aria-label={`Select all days in week ${wi + 1}`}
                   >
-                    {d}
-                  </span>
-
-                  {/* Selected mark */}
-                  {selected && (
-                    <span
-                      className="font-display text-xs text-gtl-paper/70 leading-none -rotate-12"
-                      aria-hidden="true"
-                    >
-                      ✕
-                    </span>
-                  )}
-
-                  {/* Today label */}
-                  {todayCell && !selected && (
-                    <span className="font-mono text-[7px] tracking-[0.2em] uppercase text-gtl-gold leading-none">
-                      TODAY
-                    </span>
-                  )}
+                    {'>>'}
+                  </button>
                 </div>
               )
             })}
