@@ -38,9 +38,6 @@ const MUSCLE_ORDER = [
 const CELL_CLIP = 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)'
 const PARA_CLIP = 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)'
 
-// The sheet's max height — used to position the floating CARVE button when
-// the sheet is closed so it snaps into the same corner position.
-const SHEET_MAX_VH = 55
 
 function parseDate(iso) {
   return new Date(iso + 'T12:00:00')
@@ -367,7 +364,7 @@ export default function SchedulePage() {
       </nav>
 
       {/* Calendar */}
-      <section className="relative z-10 px-8 pb-[65vh] max-w-[1440px] mx-auto">
+      <section className="relative z-10 px-8 pb-8 max-w-[1440px] mx-auto">
         {/* Month header */}
         <div className="flex items-end gap-6 mb-4">
           <MonthNavButton dir="prev" onClick={prevMonth} />
@@ -551,78 +548,68 @@ export default function SchedulePage() {
         </div>
       </section>
 
-      {/* Floating CARVE button — sits behind the sheet (z-30 < sheet z-40).
-          Visible when sheet is closed and at least one day is marked. */}
-      {trainingDayCount > 0 && (
-        <div className="fixed right-8 bottom-8 z-30">
+      {/* Inline assignment zone — slides in below calendar when days are selected */}
+      <div
+        className="relative z-10 px-8 max-w-[1440px] mx-auto overflow-hidden transition-all duration-300 ease-out"
+        style={{
+          maxHeight: sheetOpen ? '600px' : '0px',
+          opacity: sheetOpen ? 1 : 0,
+        }}
+      >
+        {/* Red slash divider */}
+        <div
+          className="h-[3px] bg-gtl-red mb-6"
+          style={{ transform: 'skewX(-6deg)', transformOrigin: 'left center' }}
+        />
+
+        {/* Section header */}
+        <div className="flex items-center gap-4 mb-4">
+          <div className="flex-1 min-w-0">
+            <div className="font-mono text-[9px] tracking-[0.35em] uppercase text-gtl-red mb-0.5">
+              ASSIGN SESSIONS
+            </div>
+            <div className="font-mono text-[9px] tracking-[0.2em] uppercase text-gtl-smoke">
+              {selectedDays.size} DAY{selectedDays.size !== 1 ? 'S' : ''} SELECTED — APPLIES TO ALL
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSelectedDays(new Set())}
+            className="font-mono text-[9px] tracking-[0.25em] uppercase text-gtl-ash border border-gtl-edge px-3 py-1.5 hover:text-gtl-red hover:border-gtl-red transition-colors duration-150"
+            style={{ clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)' }}
+          >
+            CLEAR ✕
+          </button>
+        </div>
+
+        {/* Muscle chips */}
+        <div className="flex flex-wrap gap-2 mb-8">
+          {chipMuscles.map((id) => {
+            const allHave = [...selectedDays].every((key) => assignments[key]?.has(id))
+            return (
+              <MuscleChip
+                key={id}
+                id={id}
+                active={allHave}
+                onClick={() => toggleMuscleForSelected(id)}
+                onHover={() => play('button-hover')}
+              />
+            )
+          })}
+        </div>
+
+        {/* CARVE — right-aligned */}
+        <div className="flex justify-end mb-8">
           <CarveStampFace
             count={trainingDayCount}
             onFire={handleCarve}
             onHover={() => play('button-hover')}
           />
         </div>
-      )}
-
-      {/* Bottom sheet — rises from below when 1+ days are selected.
-          z-40 covers the floating CARVE; CARVE inside the sheet header
-          takes over while the sheet is open. */}
-      <div
-        className="fixed bottom-0 left-0 right-0 z-40"
-        style={{
-          transform: sheetOpen ? 'translateY(0)' : 'translateY(100%)',
-          transition: 'transform 300ms ease-out',
-          background: '#070708',
-          borderTop: '2px solid #2a2a30',
-          clipPath: 'polygon(0% 5%, 4% 0%, 100% 0%, 100% 100%, 0% 100%)',
-          maxHeight: `${SHEET_MAX_VH}vh`,
-          overflowY: 'auto',
-        }}
-      >
-        <div className="px-6 pt-5 pb-6">
-          {/* Sheet header: close + CARVE */}
-          <div className="flex items-center gap-3 mb-4">
-              {/* Close sheet */}
-              <button
-                type="button"
-                onClick={() => setSelectedDays(new Set())}
-                className="font-mono text-[9px] tracking-[0.25em] uppercase text-gtl-ash border border-gtl-edge px-3 py-1.5 hover:text-gtl-red hover:border-gtl-red transition-colors"
-                style={{ clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)' }}
-              >
-                CLOSE
-              </button>
-              {/* CARVE — primary CTA inside the sheet */}
-              {trainingDayCount > 0 && (
-                <CarveStampFace
-                  count={trainingDayCount}
-                  onFire={handleCarve}
-                  onHover={() => play('button-hover')}
-                />
-              )}
-          </div>
-
-          {/* Muscle assignment — always rendered */}
-          <div className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-ash mb-3">
-            ASSIGN SESSIONS — APPLIES TO ALL SELECTED DAYS
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {chipMuscles.map((id) => {
-              const allHave = [...selectedDays].every((key) => assignments[key]?.has(id))
-              return (
-                <MuscleChip
-                  key={id}
-                  id={id}
-                  active={allHave}
-                  onClick={() => toggleMuscleForSelected(id)}
-                  onHover={() => play('button-hover')}
-                />
-              )
-            })}
-          </div>
-        </div>
       </div>
 
       {/* Footer slash */}
-      <div className="absolute bottom-6 left-0 right-0 z-10 flex items-center gap-4 px-8">
+      <div className="relative z-10 flex items-center gap-4 px-8 pb-8">
         <div className="h-px flex-1 bg-gtl-edge" />
         <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
           GRITTED TEETH LIFESTYLE / FITNESS PALACE / SCHEDULING
