@@ -364,7 +364,7 @@ export default function SchedulePage() {
       </nav>
 
       {/* Calendar */}
-      <section className="relative z-10 px-8 pb-8 max-w-[1440px] mx-auto">
+      <section className="relative z-10 px-8 pb-20 max-w-[1440px] mx-auto">
         {/* Month header */}
         <div className="flex items-end gap-6 mb-4">
           <MonthNavButton dir="prev" onClick={prevMonth} />
@@ -548,73 +548,42 @@ export default function SchedulePage() {
         </div>
       </section>
 
-      {/* Inline assignment zone — slides in below calendar when days are selected */}
+      {/* Fixed bottom action bar — slides up when any days are marked */}
       <div
-        className="relative z-10 px-8 max-w-[1440px] mx-auto overflow-hidden transition-all duration-300 ease-out"
+        className="fixed bottom-0 left-0 right-0 z-40 h-[70px] flex items-center px-8 gap-6"
         style={{
-          maxHeight: sheetOpen ? '600px' : '0px',
-          opacity: sheetOpen ? 1 : 0,
+          background: '#070708',
+          borderTop: '2px solid #d4181f',
+          transform: sheetOpen ? 'translateY(0)' : 'translateY(100%)',
+          transition: 'transform 250ms ease-out',
+          clipPath: 'polygon(0% 8%, 2% 0%, 100% 0%, 100% 100%, 0% 100%)',
         }}
       >
-        {/* Red slash divider */}
-        <div
-          className="h-[3px] bg-gtl-red mb-6"
-          style={{ transform: 'skewX(-6deg)', transformOrigin: 'left center' }}
-        />
-
-        {/* Section header */}
-        <div className="flex items-center gap-4 mb-4">
-          <div className="flex-1 min-w-0">
-            <div className="font-mono text-[9px] tracking-[0.35em] uppercase text-gtl-red mb-0.5">
-              ASSIGN SESSIONS
-            </div>
-            <div className="font-mono text-[9px] tracking-[0.2em] uppercase text-gtl-smoke">
-              {selectedDays.size} DAY{selectedDays.size !== 1 ? 'S' : ''} SELECTED — APPLIES TO ALL
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setSelectedDays(new Set())}
-            className="font-mono text-[9px] tracking-[0.25em] uppercase text-gtl-ash border border-gtl-edge px-3 py-1.5 hover:text-gtl-red hover:border-gtl-red transition-colors duration-150"
-            style={{ clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)' }}
+        {/* Count */}
+        <div className="flex-1 min-w-0">
+          <span
+            className="font-display leading-none text-gtl-chalk"
+            style={{ fontSize: 'clamp(1.1rem, 3vw, 1.6rem)', textShadow: '2px 2px 0 #070708' }}
           >
-            CLEAR ✕
-          </button>
+            {trainingDayCount > 0
+              ? `${trainingDayCount} DAY${trainingDayCount !== 1 ? 'S' : ''} CARVED OUT`
+              : 'SELECT DAYS'}
+          </span>
         </div>
 
-        {/* Muscle chips */}
-        <div className="flex flex-wrap gap-2 mb-8">
-          {chipMuscles.map((id) => {
-            const allHave = [...selectedDays].every((key) => assignments[key]?.has(id))
-            return (
-              <MuscleChip
-                key={id}
-                id={id}
-                active={allHave}
-                onClick={() => toggleMuscleForSelected(id)}
-                onHover={() => play('button-hover')}
-              />
-            )
-          })}
-        </div>
-
-        {/* CARVE — right-aligned */}
-        <div className="flex justify-end mb-8">
-          <CarveStampFace
-            count={trainingDayCount}
-            onFire={handleCarve}
-            onHover={() => play('button-hover')}
-          />
-        </div>
-      </div>
-
-      {/* Footer slash */}
-      <div className="relative z-10 flex items-center gap-4 px-8 pb-8">
-        <div className="h-px flex-1 bg-gtl-edge" />
-        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
-          GRITTED TEETH LIFESTYLE / FITNESS PALACE / SCHEDULING
-        </div>
-        <div className="h-px flex-1 bg-gtl-edge" />
+        {/* CARVE button */}
+        <button
+          type="button"
+          onClick={handleCarve}
+          onMouseEnter={() => play('button-hover')}
+          className="relative shrink-0 font-display text-xl leading-none text-gtl-paper px-8 py-3 cursor-pointer select-none"
+          style={{
+            background: '#d4181f',
+            clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+          }}
+        >
+          <span style={{ textShadow: '2px 2px 0 #8a0e13' }}>CARVE</span>
+        </button>
       </div>
 
       <FireFadeIn duration={900} />
