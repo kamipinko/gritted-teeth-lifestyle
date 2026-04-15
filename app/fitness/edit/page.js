@@ -236,7 +236,7 @@ export default function EditCyclePage() {
             number={4}
             label="DAY PLAN"
             caption="Assign muscles to each day"
-            href="/fitness/new/plan"
+            href="/fitness/new/branded"
           />
           <EditNavButton
             number={5}

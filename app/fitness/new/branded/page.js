@@ -179,7 +179,7 @@ function CarveStampFace({ count, onFire, onHover }) {
       >
         <div className="font-display text-3xl text-gtl-paper leading-none tracking-tight">CARVE</div>
         <div className="font-mono text-[8px] tracking-[0.4em] uppercase text-gtl-paper/60 mt-2 border-t border-gtl-paper/20 pt-1.5">
-          {count > 0 ? `${count} DAY${count !== 1 ? 'S' : ''} FORGED ▸` : 'MARK DAYS FIRST ▸'}
+          {count > 0 ? `${count} DAY${count !== 1 ? 'S' : ''} CARVED OUT ▸` : 'MARK DAYS FIRST ▸'}
         </div>
       </div>
     </div>
@@ -373,7 +373,7 @@ export default function SchedulePage() {
       </nav>
 
       {/* Calendar */}
-      <section className="relative z-10 px-8 pb-[60vh] max-w-[1440px] mx-auto">
+      <section className="relative z-10 px-8 pb-[65vh] max-w-[1440px] mx-auto">
         {/* Month header */}
         <div className="flex items-end gap-6 mb-4">
           <MonthNavButton dir="prev" onClick={prevMonth} />
@@ -434,28 +434,33 @@ export default function SchedulePage() {
             const handleWeekSelect = () => {
               if (eligibleDays.length === 0) return
               play('option-select')
-              // Mark all eligible days
-              setTrainingDays((prev) => {
-                const n = new Set(prev)
-                eligibleDays.forEach((d) => n.add(isoKey(d)))
-                return n
-              })
-              // Init assignments for newly marked days
-              setAssignments((prev) => {
-                const next = { ...prev }
-                eligibleDays.forEach((d) => {
-                  const k = isoKey(d)
-                  if (next[k] === undefined) next[k] = new Set()
+              if (allInSheet) {
+                // Second press: fully remove all eligible days
+                const keys = eligibleDays.map(isoKey)
+                setTrainingDays((prev) => { const n = new Set(prev); keys.forEach((k) => n.delete(k)); return n })
+                setSelectedDays((prev) => { const n = new Set(prev); keys.forEach((k) => n.delete(k)); return n })
+                setAssignments((prev) => { const next = { ...prev }; keys.forEach((k) => delete next[k]); return next })
+              } else {
+                // First press: mark, init assignments, select all eligible
+                setTrainingDays((prev) => {
+                  const n = new Set(prev)
+                  eligibleDays.forEach((d) => n.add(isoKey(d)))
+                  return n
                 })
-                return next
-              })
-              // Toggle all eligible in/out of sheet selection
-              setSelectedDays((prev) => {
-                const n = new Set(prev)
-                if (allInSheet) eligibleDays.forEach((d) => n.delete(isoKey(d)))
-                else eligibleDays.forEach((d) => n.add(isoKey(d)))
-                return n
-              })
+                setAssignments((prev) => {
+                  const next = { ...prev }
+                  eligibleDays.forEach((d) => {
+                    const k = isoKey(d)
+                    if (next[k] === undefined) next[k] = new Set()
+                  })
+                  return next
+                })
+                setSelectedDays((prev) => {
+                  const n = new Set(prev)
+                  eligibleDays.forEach((d) => n.add(isoKey(d)))
+                  return n
+                })
+              }
             }
 
             return (
