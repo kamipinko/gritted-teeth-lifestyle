@@ -44,6 +44,217 @@ function repMult(r) {
   return Math.exp(-Math.pow(r - 15, 2) / 32)
 }
 
+const MUSCLE_LABELS = {
+  chest: 'CHEST', back: 'BACK', shoulders: 'SHOULDERS', biceps: 'BICEPS',
+  triceps: 'TRICEPS', forearms: 'FOREARMS', abs: 'ABS',
+  glutes: 'GLUTES', quads: 'QUADS', hamstrings: 'HAMSTRINGS', calves: 'CALVES',
+}
+
+const DAY_SHORT = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+
+function parseDate(iso) {
+  return new Date(iso + 'T12:00:00')
+}
+
+// Builds the full set/rep log for every cycle → day → muscle → exercise
+function loadCombatLog() {
+  try {
+    const raw = localStorage.getItem(pk('cycles'))
+    const allCycles = raw ? JSON.parse(raw) : []
+
+    return allCycles.map((cycle) => {
+      const days = (cycle.days || []).sort().map((iso) => {
+        const completed = localStorage.getItem(pk(`done-${cycle.id}-${iso}`)) === 'true'
+        const muscles = (cycle.dailyPlan?.[iso] || []).map((muscleId) => {
+          const rRaw = localStorage.getItem(pk(`ex-${cycle.id}-${iso}-${muscleId}`))
+          const wRaw = localStorage.getItem(pk(`wt-${cycle.id}-${iso}-${muscleId}`))
+          const rData = rRaw ? JSON.parse(rRaw) : {}
+          const wData = wRaw ? JSON.parse(wRaw) : {}
+          const exercises = Object.keys(rData).map((name) => {
+            const rArr = Array.isArray(rData[name]) ? rData[name] : [rData[name]]
+            const wArr = Array.isArray(wData[name]) ? wData[name] : [wData[name] || 0]
+            const sets = rArr.map((reps, i) => ({ reps: reps || 0, weight: wArr[i] || 0 }))
+              .filter((s) => s.reps > 0)
+            return { name, sets }
+          }).filter((ex) => ex.sets.length > 0)
+          return { muscleId, exercises }
+        }).filter((m) => m.exercises.length > 0)
+        return { iso, completed, muscles }
+      })
+      return { id: cycle.id, name: cycle.name, createdAt: cycle.createdAt || null, days }
+    })
+  } catch (_) {
+    return []
+  }
+}
+
+function CombatLogPanel({ onClose }) {
+  const { play } = useSound()
+  const [log, setLog] = useState(null)
+
+  useEffect(() => {
+    setLog(loadCombatLog())
+  }, [])
+
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') { play('menu-close'); onClose() } }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose, play])
+
+  const hasAnyLog = log && log.some((c) => c.days.some((d) => d.muscles.length > 0))
+
+  return (
+    <div
+      className="fixed inset-0 z-[9990] flex flex-col bg-gtl-void/95"
+      style={{ backdropFilter: 'blur(4px)' }}
+      aria-modal="true"
+      role="dialog"
+    >
+      {/* Noise overlay */}
+      <div className="absolute inset-0 gtl-noise pointer-events-none" />
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: 'linear-gradient(160deg, rgba(80,10,10,0.18) 0%, transparent 50%, rgba(20,20,20,0.4) 100%)' }}
+      />
+
+      {/* Header */}
+      <div className="relative z-10 shrink-0 flex items-center justify-between px-8 py-5 border-b border-gtl-edge">
+        <div>
+          <div className="font-mono text-[9px] tracking-[0.45em] uppercase text-gtl-red/70 mb-1">
+            WAR RECORD / FULL HISTORY
+          </div>
+          <h2
+            className="font-display leading-none text-gtl-chalk"
+            style={{ fontSize: 'clamp(2rem, 6vw, 3.5rem)', textShadow: '3px 3px 0 #070708' }}
+          >
+            COMBAT LOG
+          </h2>
+        </div>
+        <button
+          type="button"
+          onClick={() => { play('menu-close'); onClose() }}
+          className="relative shrink-0 font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-ash border border-gtl-edge px-5 py-2.5 hover:text-gtl-red hover:border-gtl-red transition-colors duration-150"
+          style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
+        >
+          CLOSE ✕
+        </button>
+      </div>
+
+      {/* Scrollable body */}
+      <div className="relative z-10 flex-1 overflow-y-auto px-8 py-6">
+        {log === null && (
+          <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">LOADING...</div>
+        )}
+
+        {log !== null && !hasAnyLog && (
+          <div className="mt-24 text-center">
+            <p className="font-display text-3xl text-gtl-ash">NO SETS LOGGED</p>
+            <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke mt-4">
+              Complete a training day and log your lifts. The record keeps itself.
+            </p>
+          </div>
+        )}
+
+        {log !== null && hasAnyLog && (
+          <div className="space-y-10 max-w-3xl mx-auto">
+            {log.map((cycle) => {
+              const loggedDays = cycle.days.filter((d) => d.muscles.length > 0)
+              if (loggedDays.length === 0) return null
+              const date = cycle.createdAt
+                ? new Date(cycle.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()
+                : null
+              return (
+                <div key={cycle.id}>
+                  {/* Cycle header */}
+                  <div className="flex items-center gap-4 mb-4">
+                    <div
+                      className="font-display text-xl leading-none text-gtl-chalk px-4 py-2"
+                      style={{ background: '#1a1a1e', clipPath: 'polygon(0 0, 97% 0, 100% 100%, 3% 100%)' }}
+                    >
+                      {cycle.name}
+                    </div>
+                    {date && (
+                      <div className="font-mono text-[9px] tracking-[0.25em] uppercase text-gtl-smoke shrink-0">
+                        {date}
+                      </div>
+                    )}
+                    <div className="h-px flex-1 bg-gtl-red/30" />
+                  </div>
+
+                  {/* Days */}
+                  <div className="space-y-4 ml-2">
+                    {loggedDays.map((day) => {
+                      const d = parseDate(day.iso)
+                      const dayLabel = `${DAY_SHORT[d.getDay()]} ${d.getDate()} ${d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}`
+                      return (
+                        <div key={day.iso}>
+                          {/* Day header */}
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="w-1.5 h-1.5 bg-gtl-red shrink-0" style={{ clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' }} />
+                            <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-red font-bold">
+                              {dayLabel}
+                            </span>
+                            {day.completed && (
+                              <span className="font-mono text-[8px] tracking-[0.2em] uppercase text-gtl-red/60 border border-gtl-red/30 px-1.5 py-0.5">COMPLETED</span>
+                            )}
+                            <div className="h-px flex-1 bg-gtl-edge" />
+                          </div>
+
+                          {/* Muscles */}
+                          <div className="space-y-3 ml-4">
+                            {day.muscles.map((muscle) => (
+                              <div key={muscle.muscleId}>
+                                {/* Muscle label */}
+                                <div className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-ash mb-2">
+                                  {MUSCLE_LABELS[muscle.muscleId] ?? muscle.muscleId.toUpperCase()}
+                                </div>
+
+                                {/* Exercises */}
+                                <div className="space-y-2 ml-3">
+                                  {muscle.exercises.map((ex) => (
+                                    <div
+                                      key={ex.name}
+                                      className="bg-gtl-surface px-4 py-3"
+                                      style={{ clipPath: 'polygon(0 0, 100% 0, 99% 100%, 1% 100%)' }}
+                                    >
+                                      <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-gtl-chalk mb-2">
+                                        {ex.name}
+                                      </div>
+                                      <div className="flex flex-wrap gap-2">
+                                        {ex.sets.map((set, si) => (
+                                          <div
+                                            key={si}
+                                            className="font-mono text-[9px] tracking-[0.15em] uppercase px-2.5 py-1 border border-gtl-edge bg-gtl-ink text-gtl-chalk"
+                                            style={{ clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)' }}
+                                          >
+                                            {set.weight > 0
+                                              ? `${set.reps}r × ${set.weight}lb`
+                                              : `${set.reps} reps`}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function loadStats() {
   try {
     const raw = localStorage.getItem(pk('cycles'))
@@ -426,7 +637,9 @@ function RetreatButton() {
 
 export default function StatsPage() {
   useProfileGuard()
+  const { play } = useSound()
   const [stats, setStats] = useState(null)
+  const [logOpen, setLogOpen] = useState(false)
 
   useEffect(() => {
     setStats(loadStats())
@@ -443,6 +656,8 @@ export default function StatsPage() {
   const hasData = stats.cycles > 0
 
   return (
+    <>
+    {logOpen && <CombatLogPanel onClose={() => setLogOpen(false)} />}
     <main className="relative min-h-screen overflow-x-hidden bg-gtl-void">
       <div className="absolute inset-0 gtl-noise pointer-events-none" />
       <div
@@ -488,13 +703,24 @@ export default function StatsPage() {
               OPERATIVE FILE
             </span>
           </div>
-          <h1 className="font-display text-[4.5rem] md:text-[7rem] leading-[0.9] text-gtl-chalk -rotate-1">
-            WAR
-            <br />
-            <span className="text-gtl-red gtl-headline-shadow-soft inline-block rotate-1">
-              RECORD
-            </span>
-          </h1>
+          <div className="flex items-end justify-between gap-4">
+            <h1 className="font-display text-[4.5rem] md:text-[7rem] leading-[0.9] text-gtl-chalk -rotate-1">
+              WAR
+              <br />
+              <span className="text-gtl-red gtl-headline-shadow-soft inline-block rotate-1">
+                RECORD
+              </span>
+            </h1>
+            <button
+              type="button"
+              onClick={() => { play('option-select'); setLogOpen(true) }}
+              onMouseEnter={() => play('button-hover')}
+              className="relative shrink-0 mb-2 font-mono text-[9px] tracking-[0.3em] uppercase font-bold px-4 py-2.5 text-gtl-paper bg-gtl-red hover:bg-gtl-red-bright border border-gtl-red-bright transition-colors duration-150"
+              style={{ clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)' }}
+            >
+              COMBAT<br />LOG ▶
+            </button>
+          </div>
         </div>
 
         {!hasData ? (
@@ -632,5 +858,6 @@ export default function StatsPage() {
         </div>
       </section>
     </main>
+    </>
   )
 }
