@@ -50,6 +50,13 @@ const MUSCLE_GROUPS = [
   { id: 'calves',     label: 'CALVES',     region: 'LOWER' },
 ]
 
+// Left column: upper body | Right column: core + lower
+const LEFT_MUSCLES  = ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'forearms']
+const RIGHT_MUSCLES = ['abs', 'glutes', 'quads', 'hamstrings', 'calves']
+
+// Mobile ignition order — chest first, then left column top-to-bottom, then right
+const IGNITION_ORDER = ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'forearms', 'abs', 'glutes', 'quads', 'hamstrings', 'calves']
+
 // Available 3D models the user can switch between
 const MODEL_OPTIONS = [
   { id: 'anatomy',  label: 'ANATOMY',   subtitle: 'REFERENCE'   },
@@ -385,6 +392,122 @@ function ForgeButton({ count, onFire, onHover }) {
   )
 }
 
+/* ── Mobile muscle pill — compact P5 slab, floats in the side columns ── */
+function MobileMusclePill({ group, selected, focusedGroup, onToggle, onFocus, ignitionRevision = 0, ignitionIndex = 0 }) {
+  const { play } = useSound()
+  const [pressed, setPressed] = useState(false)
+  const [snapping, setSnapping] = useState(false)
+  const prevRevRef = useRef(0)
+  const isSelected = selected.has(group.id)
+
+  // Fire the snap animation when a new ignition cascade starts, staggered
+  // by body position. The wrapper div handles scale so the button's own
+  // pressed-state translateY is unaffected.
+  useEffect(() => {
+    if (ignitionRevision > prevRevRef.current) {
+      prevRevRef.current = ignitionRevision
+      const t = setTimeout(() => {
+        play('option-select')
+        setSnapping(true)
+        setTimeout(() => setSnapping(false), 450)
+      }, 200 + ignitionIndex * 120)
+      return () => clearTimeout(t)
+    }
+  }, [ignitionRevision, ignitionIndex, play])
+
+  const fire = () => {
+    play('option-select')
+    if (isSelected) {
+      onToggle(group.id)
+      // Only reset camera if this muscle currently owns the view
+      if (focusedGroup === group.id) onFocus(group.id)
+    } else {
+      onToggle(group.id)
+      onFocus(group.id)
+    }
+  }
+
+  return (
+    <div
+      className="shrink-0"
+      style={snapping ? { animation: 'pill-ignite 420ms cubic-bezier(0.18, 1.4, 0.4, 1) both' } : undefined}
+    >
+      <button
+        type="button"
+        onPointerDown={() => setPressed(true)}
+        onPointerUp={() => setPressed(false)}
+        onPointerCancel={() => setPressed(false)}
+        onClick={fire}
+        className="relative select-none outline-none w-full"
+        style={{
+          clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
+          background: isSelected
+            ? (pressed ? '#ff2a36' : '#d4181f')
+            : (pressed ? '#1f1f24' : 'rgba(10,10,13,0.88)'),
+          border: `1px solid ${isSelected ? '#ff2a36' : '#2a2a30'}`,
+          boxShadow: isSelected ? '0 0 16px rgba(212,24,31,0.5)' : 'none',
+          padding: '7px 14px',
+          minWidth: '108px',
+          transform: pressed ? 'translateY(2px)' : 'none',
+          transition: 'transform 60ms ease-out, background 80ms ease-out',
+          touchAction: 'manipulation',
+          WebkitTouchCallout: 'none',
+        }}
+      >
+        <div className={`font-display text-sm leading-none tracking-wide ${isSelected ? 'text-white' : 'text-gtl-ash'}`}>
+          {group.label}
+        </div>
+        <div className={`font-mono text-[7px] tracking-[0.25em] uppercase mt-0.5 ${isSelected ? 'text-white/65' : 'text-gtl-smoke'}`}>
+          {group.region}
+        </div>
+      </button>
+    </div>
+  )
+}
+
+/* ── Mobile forge stamp — compact version of the desktop FORGE CYCLE button ── */
+function MobileForgeStamp({ count, onFire }) {
+  const { play } = useSound()
+  const [pressed, setPressed] = useState(false)
+
+  const handleFire = () => { play('card-confirm'); onFire() }
+
+  return (
+    <div className="relative" style={{ animation: 'forge-slam 700ms cubic-bezier(0.2,1.2,0.4,1) forwards' }}>
+      <div
+        className="absolute inset-0 bg-gtl-red-deep"
+        style={{
+          clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
+          transform: pressed ? 'translate(0,0)' : 'translate(5px,5px)',
+          transition: 'transform 60ms ease-out',
+        }}
+        aria-hidden="true"
+      />
+      <button
+        type="button"
+        onPointerDown={e => { if (e.pointerType === 'touch') setPressed(true) }}
+        onPointerUp={e => { if (e.pointerType === 'touch') { setPressed(false); handleFire() } }}
+        onPointerCancel={() => setPressed(false)}
+        onClick={handleFire}
+        className="relative select-none outline-none block"
+        style={{
+          clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
+          background: pressed ? '#ff2a36' : '#d4181f',
+          padding: '12px 24px',
+          transform: pressed ? 'translate(5px,5px)' : 'translate(0,0)',
+          transition: 'transform 60ms ease-out, background 60ms ease-out',
+          touchAction: 'manipulation',
+        }}
+      >
+        <div className="font-display text-2xl text-white leading-none -rotate-1">FORGE</div>
+        <div className="font-mono text-[8px] tracking-[0.3em] text-white/70 mt-0.5">
+          {count} TARGET{count !== 1 ? 'S' : ''} ▸
+        </div>
+      </button>
+    </div>
+  )
+}
+
 export default function MusclesPage() {
   useProfileGuard()
   const [selected, setSelected] = useState(() => new Set())
@@ -392,9 +515,21 @@ export default function MusclesPage() {
   const [modelKey, setModelKey] = useState('goku')
   const [stampRevision, setStampRevision] = useState(0)
   const [fireActive, setFireActive] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const [mobileIgnitionRevision, setMobileIgnitionRevision] = useState(0)
+  const [shockwaveKey, setShockwaveKey] = useState(0)
+  const [bodyPulseKey, setBodyPulseKey] = useState(0)
   const { play } = useSound()
   const mainRef = useRef(null)
   const router = useRouter()
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    setIsMobile(mq.matches)
+    const handler = e => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
   useEffect(() => {
     try { if (localStorage.getItem('gtl-back-to-edit') !== '1') return } catch (_) { return }
     const handleKey = (e) => {
@@ -449,19 +584,50 @@ export default function MusclesPage() {
 
   const selectAll = () => {
     play('card-confirm')
-    setSelected(new Set())
-    setStampRevision((r) => r + 1)
-    MUSCLE_GROUPS.forEach((g, i) => {
+    if (isMobile) {
+      setSelected(new Set())
+      setFocusedGroup(null)
+      setShockwaveKey((k) => k + 1)
+      setMobileIgnitionRevision((r) => r + 1)
+      IGNITION_ORDER.forEach((id, i) => {
+        setTimeout(() => {
+          setSelected((prev) => new Set([...prev, id]))
+        }, 200 + i * 120)
+      })
+      // Body pulse fires one beat after the last muscle lights
       setTimeout(() => {
-        setSelected((prev) => new Set([...prev, g.id]))
-      }, i * 500 + 740)
-    })
+        setBodyPulseKey((k) => k + 1)
+        play('stamp')
+        if (mainRef.current) {
+          mainRef.current.animate(
+            [
+              { transform: 'translate(0, 0)' },
+              { transform: 'translate(-6px, 3px)' },
+              { transform: 'translate(5px, -5px)' },
+              { transform: 'translate(-4px, -2px)' },
+              { transform: 'translate(3px, 3px)' },
+              { transform: 'translate(-2px, 1px)' },
+              { transform: 'translate(0, 0)' },
+            ],
+            { duration: 220, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
+          )
+        }
+      }, 200 + IGNITION_ORDER.length * 120)
+    } else {
+      setSelected(new Set())
+      setStampRevision((r) => r + 1)
+      MUSCLE_GROUPS.forEach((g, i) => {
+        setTimeout(() => {
+          setSelected((prev) => new Set([...prev, g.id]))
+        }, i * 500 + 740)
+      })
+    }
   }
 
   const count = selected.size
 
   return (
-    <main ref={mainRef} className="relative min-h-screen overflow-hidden bg-gtl-void">
+    <main ref={mainRef} className={`relative overflow-hidden bg-gtl-void ${isMobile ? 'h-[100dvh] flex flex-col' : 'min-h-screen'}`}>
       {/* Background atmospherics */}
       <div className="absolute inset-0 gtl-noise" />
       <div
@@ -488,13 +654,124 @@ export default function MusclesPage() {
         肉
       </div>
 
-      {/* Top nav */}
-      <nav className="relative z-10 flex items-center justify-between px-8 py-6">
+      {/* Top nav — responsive */}
+      <nav
+        className={`relative z-20 shrink-0 flex items-center justify-between ${isMobile ? 'px-4 pb-2' : 'px-8 py-6'}`}
+        style={isMobile ? { paddingTop: 'max(0.75rem, env(safe-area-inset-top))' } : undefined}
+      >
         <RetreatButton />
         <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-          PALACE / FITNESS / NEW CYCLE / TARGETS
+          {isMobile ? 'TARGETS' : 'PALACE / FITNESS / NEW CYCLE / TARGETS'}
         </div>
       </nav>
+
+      {/* ── MOBILE LAYOUT — gacha style: canvas fills screen, pills float on sides ── */}
+      {isMobile && (
+        <div className="relative flex-1 overflow-hidden">
+          {/* Canvas fills the full area */}
+          <div className="absolute inset-0 bg-gtl-void">
+            <Suspense fallback={<div className="w-full h-full flex items-center justify-center font-mono text-gtl-ash text-xs tracking-widest uppercase animate-flicker">LOADING VESSEL…</div>}>
+              <MuscleBody
+                onFocus={handleFocus}
+                focusedGroup={focusedGroup}
+                modelKey={modelKey}
+              />
+            </Suspense>
+            {/* Shockwave ring — fires at the start of mobile ALL ignition */}
+            {shockwaveKey > 0 && (
+              <div
+                key={shockwaveKey}
+                className="absolute inset-0 pointer-events-none flex items-center justify-center z-10"
+              >
+                <div style={{
+                  width: '96px', height: '96px', borderRadius: '50%',
+                  borderStyle: 'solid', borderColor: '#d4181f',
+                  animation: 'shockwave 900ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards',
+                }} />
+              </div>
+            )}
+            {/* Body pulse — radial bloom once all muscles are lit */}
+            {bodyPulseKey > 0 && (
+              <div
+                key={bodyPulseKey}
+                className="absolute inset-0 pointer-events-none z-10"
+                style={{
+                  background: 'radial-gradient(ellipse at center, rgba(212,24,31,0.55) 0%, rgba(212,24,31,0.18) 45%, transparent 70%)',
+                  animation: 'body-pulse 700ms cubic-bezier(0.3, 0, 0.5, 1) forwards',
+                }}
+              />
+            )}
+          </div>
+
+          {/* Left column — upper body */}
+          <div className="absolute left-1.5 inset-y-0 z-20 flex flex-col justify-between py-3 pointer-events-none">
+            {LEFT_MUSCLES.map(id => {
+              const group = MUSCLE_GROUPS.find(g => g.id === id)
+              return (
+                <div key={id} className="pointer-events-auto">
+                  <MobileMusclePill group={group} selected={selected} focusedGroup={focusedGroup} onToggle={toggle} onFocus={handleFocus} ignitionRevision={mobileIgnitionRevision} ignitionIndex={IGNITION_ORDER.indexOf(id)} />
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Right column — core + lower */}
+          <div className="absolute right-1.5 inset-y-0 z-20 flex flex-col justify-between py-3 pointer-events-none">
+            {RIGHT_MUSCLES.map(id => {
+              const group = MUSCLE_GROUPS.find(g => g.id === id)
+              return (
+                <div key={id} className="pointer-events-auto">
+                  <MobileMusclePill group={group} selected={selected} focusedGroup={focusedGroup} onToggle={toggle} onFocus={handleFocus} ignitionRevision={mobileIgnitionRevision} ignitionIndex={IGNITION_ORDER.indexOf(id)} />
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Bottom bar — count + all/none + forge */}
+          <div
+            className="absolute bottom-0 left-0 right-0 z-20 flex items-end justify-between px-4 pt-3"
+            style={{
+              paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
+              background: 'linear-gradient(to top, rgba(7,7,8,0.96) 70%, transparent)',
+            }}
+          >
+            <div className="flex items-end gap-3">
+              <div>
+                <div className="font-display text-4xl text-gtl-chalk leading-none">
+                  {String(count).padStart(2, '0')}
+                  <span className="font-mono text-[9px] tracking-[0.2em] text-gtl-smoke ml-2">/ 11</span>
+                </div>
+                <div className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-ash mt-0.5">
+                  {count === 0 ? 'NO TARGETS' : count === 11 ? 'FULL BODY' : `TARGET${count !== 1 ? 'S' : ''}`}
+                </div>
+              </div>
+              <div className="flex flex-col gap-1 mb-0.5">
+                <button type="button" onClick={selectAll}
+                  className="font-mono text-[8px] tracking-[0.2em] uppercase text-gtl-ash border border-gtl-edge px-2 py-0.5 active:text-gtl-red active:border-gtl-red transition-colors"
+                  style={{ touchAction: 'manipulation' }}>
+                  ALL
+                </button>
+                <button type="button" onClick={clearAll}
+                  className="font-mono text-[8px] tracking-[0.2em] uppercase text-gtl-ash border border-gtl-edge px-2 py-0.5 active:text-gtl-red active:border-gtl-red transition-colors"
+                  style={{ touchAction: 'manipulation' }}>
+                  NONE
+                </button>
+              </div>
+            </div>
+
+            {count > 0 && (
+              <MobileForgeStamp count={count} onFire={() => {
+                try { localStorage.setItem(pk('muscle-targets'), JSON.stringify([...selected])) } catch (_) {}
+                setFireActive(true)
+              }} />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── DESKTOP LAYOUT — unchanged ── */}
+      {!isMobile && (
+      <>
 
       {/* Headline */}
       <section className="relative z-10 px-8 pt-4 pb-6 max-w-7xl mx-auto">
@@ -686,12 +963,6 @@ export default function MusclesPage() {
         </div>
       )}
 
-      {/* Fire transition — erupts on mouseup, navigates on complete */}
-      <FireTransition
-        active={fireActive}
-        onComplete={() => router.push('/fitness/new/branded')}
-      />
-
       {/* Footer slash */}
       <div className="absolute bottom-6 left-0 right-0 z-10 flex items-center gap-4 px-8">
         <div className="h-px flex-1 bg-gtl-edge" />
@@ -700,6 +971,15 @@ export default function MusclesPage() {
         </div>
         <div className="h-px flex-1 bg-gtl-edge" />
       </div>
+
+      </>
+      )}
+
+      {/* Fire transition — erupts on confirm, navigates on complete */}
+      <FireTransition
+        active={fireActive}
+        onComplete={() => router.push('/fitness/new/branded')}
+      />
 
       {/* Fire fade-in — picks up where FireTransition left off so the
           source-to-destination cut feels continuous. */}

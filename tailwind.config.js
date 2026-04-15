@@ -340,6 +340,26 @@ module.exports = {
           '91%':  { transform: 'scale(0.88) rotate(0deg)', opacity: '1', filter: 'blur(0)' },
           '100%': { transform: 'scale(1) rotate(0deg)',    opacity: '1', filter: 'blur(0)' },
         },
+        // Mobile pill ignition — percussive strike: scale snap + X/Y shake.
+        // Runs on a wrapper div so the button's own pressed-state translateY is
+        // unaffected. Feels like each muscle is being struck individually.
+        'pill-ignite': {
+          '0%':   { transform: 'scale(1) translate(0, 0)' },
+          '8%':   { transform: 'scale(1.22) translate(-4px, -4px)' },
+          '18%':  { transform: 'scale(0.84) translate(4px, 3px)' },
+          '32%':  { transform: 'scale(1.10) translate(-3px, -2px)' },
+          '46%':  { transform: 'scale(0.94) translate(2px, 1px)' },
+          '62%':  { transform: 'scale(1.04) translate(-1px, -1px)' },
+          '78%':  { transform: 'scale(0.98) translate(1px, 0)' },
+          '100%': { transform: 'scale(1) translate(0, 0)' },
+        },
+        // Body pulse — radial red bloom that fires once all muscles are lit
+        'body-pulse': {
+          '0%':   { opacity: '0', transform: 'scale(0.7)' },
+          '25%':  { opacity: '1', transform: 'scale(1.0)' },
+          '65%':  { opacity: '0.6', transform: 'scale(1.1)' },
+          '100%': { opacity: '0', transform: 'scale(1.3)' },
+        },
       },
       animation: {
         'slash-wipe': 'slash-wipe 700ms cubic-bezier(0.7, 0, 0.2, 1) forwards',
@@ -368,6 +388,8 @@ module.exports = {
         'flicker':        'flicker 4s ease-in-out infinite',
         'checkbox-stamp': 'checkbox-stamp 1000ms cubic-bezier(0.18, 1.4, 0.4, 1) both',
         'row-wobble':     'row-wobble 400ms cubic-bezier(0.4, 0, 0.6, 1) forwards',
+        'pill-ignite':    'pill-ignite 420ms cubic-bezier(0.18, 1.4, 0.4, 1) both',
+        'body-pulse':     'body-pulse 700ms cubic-bezier(0.3, 0, 0.5, 1) forwards',
         'forge-entry':    'forge-entry 650ms cubic-bezier(0.15, 0, 0.1, 1) forwards',
         'forge-slam':     'forge-slam 700ms cubic-bezier(0.2, 1.2, 0.4, 1) forwards',
         'neon-flicker':   'neon-flicker 3s linear infinite',
