@@ -261,7 +261,7 @@ export default function SchedulePage() {
   }
 
   // Tapping an unmarked day marks it and selects it for the sheet.
-  // Tapping a marked day toggles its sheet-selection only — the mark stays.
+  // Tapping an already-marked day unmarks it and removes it from the sheet.
   const toggleDay = (d) => {
     if (isPast(d)) return
     play('option-select')
@@ -271,12 +271,9 @@ export default function SchedulePage() {
       setSelectedDays((prev) => { const n = new Set(prev); n.add(key); return n })
       setAssignments((prev) => prev[key] !== undefined ? prev : { ...prev, [key]: new Set() })
     } else {
-      setSelectedDays((prev) => {
-        const n = new Set(prev)
-        if (n.has(key)) n.delete(key)
-        else n.add(key)
-        return n
-      })
+      setTrainingDays((prev) => { const n = new Set(prev); n.delete(key); return n })
+      setSelectedDays((prev) => { const n = new Set(prev); n.delete(key); return n })
+      setAssignments((prev) => { const next = { ...prev }; delete next[key]; return next })
     }
   }
 
@@ -324,7 +321,11 @@ export default function SchedulePage() {
     return `${DAY_SHORT[date.getDay()]} ${date.getDate()}`
   })
 
-  const sortedTargets = [...targets].sort((a, b) => MUSCLE_ORDER.indexOf(a) - MUSCLE_ORDER.indexOf(b))
+  // If no targets were stored from step 02, fall back to all muscles so the
+  // session planner is always usable.
+  const chipMuscles = (targets.length > 0 ? targets : MUSCLE_ORDER)
+    .slice()
+    .sort((a, b) => MUSCLE_ORDER.indexOf(a) - MUSCLE_ORDER.indexOf(b))
 
   // ── Render ──────────────────────────────────────────────────────────────
   return (
@@ -370,26 +371,6 @@ export default function SchedulePage() {
           PALACE / FITNESS / NEW CYCLE / SCHEDULE
         </div>
       </nav>
-
-      {/* Headline */}
-      <section className="relative z-10 px-8 pb-6 max-w-[1440px] mx-auto">
-        <div className="flex items-center gap-4 mb-3">
-          <div className="h-0.5 w-16 bg-gtl-red" />
-          <span className="font-mono text-xs tracking-[0.4em] uppercase text-gtl-red font-bold">
-            STEP / 03 / SCHEDULE
-          </span>
-          <div className="h-0.5 w-16 bg-gtl-red" />
-        </div>
-        <h1 className="font-display text-6xl md:text-7xl text-gtl-chalk leading-none -rotate-1">
-          MARK YOUR
-          <span className="text-gtl-red gtl-headline-shadow-soft inline-block rotate-2 ml-4">
-            DAYS
-          </span>
-        </h1>
-        <p className="font-mono text-[11px] tracking-[0.25em] uppercase text-gtl-ash mt-4 max-w-xl">
-          Tap any day to mark it. Tap a marked day to select it and assign sessions in the panel below.
-        </p>
-      </section>
 
       {/* Calendar */}
       <section className="relative z-10 px-8 pb-[60vh] max-w-[1440px] mx-auto">
@@ -630,32 +611,24 @@ export default function SchedulePage() {
             </div>
           </div>
 
-          {/* Muscle assignment */}
-          {sortedTargets.length > 0 ? (
-            <>
-              <div className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-ash mb-3">
-                ASSIGN SESSIONS — APPLIES TO ALL SELECTED DAYS
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {sortedTargets.map((id) => {
-                  const allHave = [...selectedDays].every((key) => assignments[key]?.has(id))
-                  return (
-                    <MuscleChip
-                      key={id}
-                      id={id}
-                      active={allHave}
-                      onClick={() => toggleMuscleForSelected(id)}
-                      onHover={() => play('button-hover')}
-                    />
-                  )
-                })}
-              </div>
-            </>
-          ) : (
-            <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-gtl-smoke">
-              NO TARGETS SET — COMPLETE STEP 02 FIRST
-            </div>
-          )}
+          {/* Muscle assignment — always rendered */}
+          <div className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-ash mb-3">
+            ASSIGN SESSIONS — APPLIES TO ALL SELECTED DAYS
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {chipMuscles.map((id) => {
+              const allHave = [...selectedDays].every((key) => assignments[key]?.has(id))
+              return (
+                <MuscleChip
+                  key={id}
+                  id={id}
+                  active={allHave}
+                  onClick={() => toggleMuscleForSelected(id)}
+                  onHover={() => play('button-hover')}
+                />
+              )
+            })}
+          </div>
         </div>
       </div>
 
