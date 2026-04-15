@@ -382,8 +382,8 @@ function ForgeButton({ count, onFire, onHover }) {
           transition: 'transform 80ms ease-out, background 80ms ease-out',
         }}
       >
-        <div className="font-display text-5xl text-gtl-paper leading-none tracking-tight">FORGE</div>
-        <div className="font-display text-5xl text-gtl-paper leading-none tracking-tight">CYCLE</div>
+        <div className="font-display text-5xl text-gtl-paper leading-none tracking-tight">HONE</div>
+        <div className="font-display text-5xl text-gtl-paper leading-none tracking-tight">TARGETS</div>
         <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-paper/60 mt-3 border-t border-gtl-paper/20 pt-2">
           {count} TARGET{count !== 1 ? 'S' : ''} LOCKED ▸
         </div>
@@ -499,7 +499,7 @@ function MobileForgeStamp({ count, onFire }) {
           touchAction: 'manipulation',
         }}
       >
-        <div className="font-display text-2xl text-white leading-none -rotate-1">FORGE</div>
+        <div className="font-display text-2xl text-white leading-none -rotate-1">HONE</div>
         <div className="font-mono text-[8px] tracking-[0.3em] text-white/70 mt-0.5">
           {count} TARGET{count !== 1 ? 'S' : ''} ▸
         </div>
@@ -690,7 +690,7 @@ export default function MusclesPage() {
                 }} />
               </div>
             )}
-            {/* Body pulse — radial bloom once all muscles are lit */}
+            {/* Body pulse — entrance flash once all muscles are lit */}
             {bodyPulseKey > 0 && (
               <div
                 key={bodyPulseKey}
@@ -701,10 +701,24 @@ export default function MusclesPage() {
                 }}
               />
             )}
+            {/* Persistent full-body glow — held while all 11 muscles are selected.
+                Delayed fade-in so it rises as the entrance pulse fades out.
+                Fades out immediately when any muscle is deselected. */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                zIndex: 8,
+                background: 'radial-gradient(ellipse at center, rgba(212,24,31,0.32) 0%, rgba(212,24,31,0.10) 50%, transparent 72%)',
+                opacity: count === 11 ? 1 : 0,
+                transition: count === 11
+                  ? 'opacity 700ms ease-in 500ms'
+                  : 'opacity 500ms ease-out',
+              }}
+            />
           </div>
 
           {/* Left column — upper body */}
-          <div className="absolute left-1.5 inset-y-0 z-20 flex flex-col justify-between py-3 pointer-events-none">
+          <div className="absolute left-1.5 top-0 bottom-0 z-20 flex flex-col justify-between pt-3 pb-24 pointer-events-none">
             {LEFT_MUSCLES.map(id => {
               const group = MUSCLE_GROUPS.find(g => g.id === id)
               return (
@@ -716,7 +730,7 @@ export default function MusclesPage() {
           </div>
 
           {/* Right column — core + lower */}
-          <div className="absolute right-1.5 inset-y-0 z-20 flex flex-col justify-between py-3 pointer-events-none">
+          <div className="absolute right-1.5 top-0 bottom-0 z-20 flex flex-col justify-between pt-3 pb-24 pointer-events-none">
             {RIGHT_MUSCLES.map(id => {
               const group = MUSCLE_GROUPS.find(g => g.id === id)
               return (
