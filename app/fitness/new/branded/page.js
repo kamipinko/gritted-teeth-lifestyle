@@ -315,12 +315,6 @@ export default function SchedulePage() {
     setFireActive(true)
   }
 
-  // Sorted selected day labels for the sheet header
-  const selectedDaysList = [...selectedDays].sort().map((key) => {
-    const date = parseDate(key)
-    return `${DAY_SHORT[date.getDay()]} ${date.getDate()}`
-  })
-
   // If no targets were stored from step 02, fall back to all muscles so the
   // session planner is always usable.
   const chipMuscles = (targets.length > 0 ? targets : MUSCLE_ORDER)
@@ -585,17 +579,8 @@ export default function SchedulePage() {
         }}
       >
         <div className="px-6 pt-5 pb-6">
-          {/* Sheet header: selected days + close + CARVE */}
-          <div className="flex items-start gap-4 mb-4">
-            <div className="flex-1 min-w-0">
-              <div className="font-mono text-[9px] tracking-[0.35em] uppercase text-gtl-red mb-1.5">
-                SELECTED DAYS
-              </div>
-              <div className="font-mono text-sm tracking-[0.12em] uppercase text-gtl-chalk leading-relaxed break-words">
-                {selectedDaysList.join(' · ')}
-              </div>
-            </div>
-            <div className="shrink-0 flex items-center gap-3">
+          {/* Sheet header: close + CARVE */}
+          <div className="flex items-center gap-3 mb-4">
               {/* Close sheet */}
               <button
                 type="button"
@@ -613,7 +598,6 @@ export default function SchedulePage() {
                   onHover={() => play('button-hover')}
                 />
               )}
-            </div>
           </div>
 
           {/* Muscle assignment — always rendered */}
