@@ -368,10 +368,7 @@ export default function SchedulePage() {
     setSelectedDays(new Set())
   }
 
-  // Grid stays open while any selected day has no muscles assigned.
-  // Hides when no days selected OR every selected day has ≥1 muscle.
-  const sheetOpen = selectedDays.size > 0 &&
-    [...selectedDays].some((k) => !(assignments[k]?.size > 0))
+  const sheetOpen = selectedDays.size > 0
   const daysWithMuscles = Object.values(assignments).filter((s) => s.size > 0).length
   const carveEnabled = daysWithMuscles > 0
 
