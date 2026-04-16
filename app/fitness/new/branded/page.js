@@ -38,6 +38,12 @@ const SHEET_MUSCLES = [
 const MUSCLE_ORDER = SHEET_MUSCLES.map((m) => m.id)
 const MUSCLE_KANJI = Object.fromEntries(SHEET_MUSCLES.map((m) => [m.id, m.kanji]))
 
+// Japanese month names for decorative empty slots
+const MONTH_KANJI = [
+  '一月', '二月', '三月', '四月', '五月', '六月',
+  '七月', '八月', '九月', '十月', '十一月', '十二月',
+]
+
 const CELL_CLIP = 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)'
 const PARA_CLIP = 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)'
 const ROW_H = 95
@@ -124,29 +130,29 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex flex-col items-center justify-center py-1.5 px-1 border transition-colors duration-150
+      className={`relative flex items-center justify-between px-3 py-1 border transition-colors duration-150
         ${active
           ? 'bg-gtl-red border-gtl-red-bright shadow-red-glow'
           : 'bg-gtl-ink border-gtl-edge'}`}
       style={{ clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)', transform: 'skewX(-2deg)' }}
     >
       <span
+        className={`font-mono text-[11px] tracking-[0.1em] uppercase leading-none
+          ${active ? 'text-gtl-paper' : 'text-gtl-ash'}`}
+        style={{ transform: 'skewX(2deg)' }}
+      >
+        {label}
+      </span>
+      <span
         className={`leading-none font-bold ${active ? 'text-gtl-paper' : 'text-gtl-chalk'}`}
         style={{
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-          fontSize: '1.15rem',
+          fontSize: '1.25rem',
           textShadow: active ? '1px 1px 0 #070708' : 'none',
           transform: 'skewX(2deg)',
         }}
       >
         {kanji}
-      </span>
-      <span
-        className={`font-mono text-[7px] tracking-[0.12em] uppercase leading-none mt-0.5
-          ${active ? 'text-gtl-paper/80' : 'text-gtl-ash'}`}
-        style={{ transform: 'skewX(2deg)' }}
-      >
-        {label}
       </span>
     </button>
   )
@@ -263,20 +269,33 @@ export default function SchedulePage() {
     })
   }, [year, month, today])
 
-  // Touch handlers for swipe-to-select
+  // Touch handlers for swipe-to-select.
+  // touchstart: record origin, do NOT select yet (that's onClick's job for taps).
+  // touchmove: if finger moved, begin drag mode and select days under finger.
+  // touchend: clear drag state.
+  const touchOriginRef = useRef(null)
+
   const handleTouchStart = useCallback((e) => {
     const touch = e.touches[0]
-    const el = document.elementFromPoint(touch.clientX, touch.clientY)
-    const dayEl = el?.closest('[data-day]')
-    if (dayEl) {
-      dragRef.current = true
-      selectDay(Number(dayEl.dataset.day))
-    }
-  }, [selectDay])
+    touchOriginRef.current = { x: touch.clientX, y: touch.clientY }
+    dragRef.current = false
+  }, [])
 
   const handleTouchMove = useCallback((e) => {
-    if (!dragRef.current) return
     const touch = e.touches[0]
+    const origin = touchOriginRef.current
+    // Activate drag only after finger moves ≥8px (avoids false activation on taps)
+    if (!dragRef.current && origin) {
+      const dx = touch.clientX - origin.x
+      const dy = touch.clientY - origin.y
+      if (dx * dx + dy * dy < 64) return // 8px threshold
+      dragRef.current = true
+      // Select the origin day too
+      const startEl = document.elementFromPoint(origin.x, origin.y)?.closest('[data-day]')
+      if (startEl) selectDay(Number(startEl.dataset.day))
+    }
+    if (!dragRef.current) return
+    e.preventDefault() // prevent click from firing after swipe
     const el = document.elementFromPoint(touch.clientX, touch.clientY)
     const dayEl = el?.closest('[data-day]')
     if (dayEl) selectDay(Number(dayEl.dataset.day))
@@ -284,6 +303,7 @@ export default function SchedulePage() {
 
   const handleTouchEnd = useCallback(() => {
     dragRef.current = false
+    touchOriginRef.current = null
   }, [])
 
   // Additive-first toggle
@@ -345,6 +365,19 @@ export default function SchedulePage() {
     return MUSCLE_ORDER.filter((m) => set.has(m))
   }
 
+  // Decorative month kanji for empty calendar slots
+  const monthChars = [...MONTH_KANJI[month]]
+  const emptyIndices = cells.map((c, i) => c === null ? i : -1).filter((i) => i >= 0)
+  // Center the characters within the empty slots
+  const startOffset = Math.max(0, Math.floor((emptyIndices.length - monthChars.length) / 2))
+  const emptyKanji = {} // { cellIndex: character }
+  monthChars.forEach((ch, ci) => {
+    const slotIdx = startOffset + ci
+    if (slotIdx < emptyIndices.length) {
+      emptyKanji[emptyIndices[slotIdx]] = ch
+    }
+  })
+
   // ── Render ──────────────────────────────────────────────────────────────
   return (
     <main className="relative h-screen flex flex-col overflow-hidden bg-gtl-void">
@@ -403,7 +436,27 @@ export default function SchedulePage() {
           onTouchEnd={handleTouchEnd}
         >
           {cells.map((d, i) => {
-            if (d === null) return <div key={`pad-${i}`} />
+            if (d === null) {
+              const ch = emptyKanji[i]
+              return (
+                <div key={`pad-${i}`} className="relative overflow-hidden border border-transparent" style={{ clipPath: CELL_CLIP, height: `${ROW_H}px` }}>
+                  {ch && (
+                    <span
+                      className="absolute inset-0 flex items-center justify-center select-none pointer-events-none"
+                      style={{
+                        fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
+                        fontSize: '2.2rem',
+                        opacity: 0.08,
+                        color: '#d4181f',
+                      }}
+                      aria-hidden="true"
+                    >
+                      {ch}
+                    </span>
+                  )}
+                </div>
+              )
+            }
 
             const key        = isoKey(d)
             const selected   = selectedDays.has(key)
