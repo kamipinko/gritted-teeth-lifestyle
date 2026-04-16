@@ -199,8 +199,8 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
   const fire = () => {
     if (!enabled || phase > 0) return
     setPhase(1) // Render halves at initial position
-    setTimeout(() => { if (mountedRef.current) setPhase(3) }, 1600)  // Fade
-    setTimeout(() => { if (mountedRef.current) onFire() }, 2100)     // Navigate
+    setTimeout(() => { if (mountedRef.current) setPhase(3) }, 800)   // Fade
+    setTimeout(() => { if (mountedRef.current) onFire() }, 1200)     // Navigate
   }
 
   const goldBg = enabled ? '#e4b022' : '#2a2a30'
@@ -243,11 +243,11 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
           clipPath: phase >= 1 ? 'polygon(0 0, 100% 0, 0 100%)' : 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
           background: goldBg,
           transform: phase >= 2
-            ? 'translate(-3px,-2px) rotate(1.5deg)'
+            ? 'translate(-2px,-1px) rotate(0.5deg)'
             : pressed ? 'translate(4px,4px)' : 'translate(0,0)',
           opacity: phase >= 3 ? 0 : 1,
           transition: phase >= 1
-            ? 'transform 1600ms cubic-bezier(0.45,0,0.55,1), opacity 400ms ease-out'
+            ? 'transform 800ms cubic-bezier(0.25,0,0.5,1), opacity 300ms ease-out'
             : 'transform 80ms ease-out',
         }}>
         <CarveContent enabled={enabled} />
@@ -266,11 +266,11 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
             clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
             background: goldBg,
             transform: phase >= 2
-              ? 'translate(16px,12px) rotate(-4deg) scale(0.97)'
+              ? 'translate(20px,6px) rotate(-1.5deg) scale(0.98)'
               : 'translate(0,0) rotate(0) scale(1)',
             opacity: phase >= 3 ? 0 : 1,
             transition: phase >= 2
-              ? 'transform 1600ms 80ms cubic-bezier(0.45,0,0.55,1), opacity 400ms ease-out'
+              ? 'transform 800ms 50ms cubic-bezier(0.25,0,0.5,1), opacity 300ms ease-out'
               : 'none',
           }}>
           <CarveContent enabled={enabled} />
