@@ -297,14 +297,6 @@ export default function SchedulePage() {
     setFireActive(true)
   }
 
-  // Render the active day's header label (e.g. "THU 16")
-  const activeDayLabel = activeDay
-    ? (() => {
-        const d = parseDate(activeDay)
-        return `${DAY_SHORT[d.getDay()]} ${d.getDate()}`
-      })()
-    : ''
-
   const activeMuscles = activeDay ? (assignments[activeDay] || new Set()) : new Set()
 
   // Order muscles in canonical order for a given day
@@ -372,7 +364,7 @@ export default function SchedulePage() {
       </nav>
 
       {/* ── Calendar ────────────────────────────────────────────────────── */}
-      <section className="relative z-10 px-3 pt-3 pb-2">
+      <section className="relative z-10 px-3 pt-3 pb-0">
         {/* Red slash divider */}
         <div
           className="h-[2px] bg-gtl-red mb-2"
@@ -478,18 +470,6 @@ export default function SchedulePage() {
           })}
         </div>
 
-        {/* Count strip */}
-        <div className="mt-3 flex items-center gap-3 px-1">
-          <div className="h-px flex-1 bg-gtl-edge" />
-          <div className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-smoke">
-            {trainingDayCount === 0
-              ? 'MARK YOUR BATTLEDAYS'
-              : allAssigned
-              ? `${trainingDayCount} READY TO CARVE`
-              : `${trainingDayCount} DAY${trainingDayCount !== 1 ? 'S' : ''} · ASSIGN MUSCLES TO CARVE`}
-          </div>
-          <div className="h-px flex-1 bg-gtl-edge" />
-        </div>
       </section>
 
       {/* ── Bottom sheet ───────────────────────────────────────────────── */}
@@ -499,9 +479,9 @@ export default function SchedulePage() {
           transform: sheetOpen ? 'translateY(0)' : 'translateY(100%)',
           transition: 'transform 280ms cubic-bezier(0.2, 0.8, 0.3, 1)',
           borderTop: '2px solid #d4181f',
-          clipPath: 'polygon(0% 6%, 3% 0%, 100% 0%, 100% 100%, 0% 100%)',
-          height: '44vh',
-          minHeight: '340px',
+          clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+          height: '46vh',
+          minHeight: '360px',
           boxShadow: '0 -20px 40px rgba(0,0,0,0.6)',
         }}
         aria-hidden={!sheetOpen}
@@ -510,21 +490,11 @@ export default function SchedulePage() {
         <div className="absolute inset-0 gtl-noise opacity-40 pointer-events-none" />
 
         <div className="relative h-full flex flex-col px-4 pt-3 pb-4">
-          {/* Top strip — DAY · N LOCKED · ✕ */}
+          {/* Top strip — N LOCKED + ✕ */}
           <div className="flex items-center gap-3 mb-2">
-            <div
-              className="flex-1 min-w-0 flex items-baseline gap-3 bg-gtl-ink border border-gtl-edge px-4 py-1.5"
-              style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)' }}
-            >
-              <span className="font-display text-lg leading-none text-gtl-chalk tracking-tight truncate">
-                {activeDayLabel}
-              </span>
-              <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-red/70">·</span>
-              <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-ash">
-                {activeMuscles.size} LOCKED
-              </span>
-            </div>
-
+            <span className="font-mono text-[9px] tracking-[0.35em] uppercase text-gtl-red font-bold flex-1">
+              {activeMuscles.size} LOCKED
+            </span>
             <button
               type="button"
               onClick={closeSheet}
@@ -536,7 +506,7 @@ export default function SchedulePage() {
           </div>
 
           {/* 2-col grid: 11 muscles + CARVE in slot 12 */}
-          <div className="grid grid-cols-2 gap-2 flex-1">
+          <div className="grid grid-cols-2 grid-rows-6 gap-2">
             {SHEET_MUSCLES.map((m) => (
               <SheetMuscleButton
                 key={m.id}
