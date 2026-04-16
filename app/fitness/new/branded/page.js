@@ -179,7 +179,7 @@ function CarveContent({ enabled }) {
 
 function SheetCarveButton({ count, enabled, onFire, onHover }) {
   const [pressed, setPressed] = useState(false)
-  const [phase, setPhase] = useState(0) // 0=idle, 1=cut, 2=separate, 3=fade
+  const [phase, setPhase] = useState(0) // 0=idle, 1=split-start, 2=split-go, 3=fade
   const mountedRef = useRef(true)
   const dayLabel = count === 1 ? '1 DAY' : count > 1 ? `${count} DAYS` : '—'
 
@@ -188,10 +188,18 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
     return () => { mountedRef.current = false }
   }, [])
 
+  // When phase hits 1, wait one frame then apply final transforms (phase 2)
+  useEffect(() => {
+    if (phase !== 1) return
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { if (mountedRef.current) setPhase(2) })
+    })
+  }, [phase])
+
   const fire = () => {
     if (!enabled || phase > 0) return
-    setPhase(1) // Begin separation
-    setTimeout(() => { if (mountedRef.current) setPhase(2) }, 1600)  // Fade
+    setPhase(1) // Render halves at initial position
+    setTimeout(() => { if (mountedRef.current) setPhase(3) }, 1600)  // Fade
     setTimeout(() => { if (mountedRef.current) onFire() }, 2100)     // Navigate
   }
 
@@ -224,7 +232,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
       {phase >= 1 && (
         <div className="absolute inset-0 z-0" style={{
           background: '#d4181f', filter: 'blur(6px)',
-          opacity: phase >= 2 ? 0 : 0.9,
+          opacity: phase >= 3 ? 0 : 0.9,
           transition: 'opacity 400ms ease-out',
         }} />
       )}
@@ -234,10 +242,13 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         style={{
           clipPath: phase >= 1 ? 'polygon(0 0, 100% 0, 0 100%)' : 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
           background: goldBg,
-          animation: phase >= 1 ? 'carve-hold 1600ms cubic-bezier(0.1,0,0.3,1) forwards' : 'none',
-          transform: phase < 1 ? (pressed ? 'translate(4px,4px)' : 'translate(0,0)') : undefined,
-          opacity: phase >= 2 ? 0 : 1,
-          transition: phase < 1 ? 'transform 80ms ease-out' : 'opacity 400ms ease-out',
+          transform: phase >= 2
+            ? 'translate(-3px,-2px) rotate(1.5deg)'
+            : pressed ? 'translate(4px,4px)' : 'translate(0,0)',
+          opacity: phase >= 3 ? 0 : 1,
+          transition: phase >= 1
+            ? 'transform 1600ms cubic-bezier(0.45,0,0.55,1), opacity 400ms ease-out'
+            : 'transform 80ms ease-out',
         }}>
         <CarveContent enabled={enabled} />
         {phase < 1 && (
@@ -254,9 +265,13 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
           style={{
             clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
             background: goldBg,
-            animation: 'carve-fall 1600ms cubic-bezier(0.1,0,0.3,1) forwards',
-            opacity: phase >= 2 ? 0 : 1,
-            transition: 'opacity 400ms ease-out',
+            transform: phase >= 2
+              ? 'translate(16px,12px) rotate(-4deg) scale(0.97)'
+              : 'translate(0,0) rotate(0) scale(1)',
+            opacity: phase >= 3 ? 0 : 1,
+            transition: phase >= 2
+              ? 'transform 1600ms 80ms cubic-bezier(0.45,0,0.55,1), opacity 400ms ease-out'
+              : 'none',
           }}>
           <CarveContent enabled={enabled} />
         </div>
@@ -478,17 +493,6 @@ export default function SchedulePage() {
           100% { transform: scale(1.0); opacity: 1; }
         }
         .kanji-stamp { animation: kanji-stamp 150ms ease-out both; }
-        @keyframes carve-hold {
-          0%   { transform: translate(0,0) rotate(0); }
-          30%  { transform: translate(-0.5px,-0.3px) rotate(0.2deg); }
-          100% { transform: translate(-3px,-2px) rotate(1.5deg); }
-        }
-        @keyframes carve-fall {
-          0%   { transform: translate(0,0) rotate(0) scale(1); }
-          30%  { transform: translate(2px,1.5px) rotate(-0.5deg) scale(1); }
-          60%  { transform: translate(6px,4px) rotate(-1.5deg) scale(0.99); }
-          100% { transform: translate(16px,12px) rotate(-4deg) scale(0.97); }
-        }
         @keyframes carve-pulse {
           0%, 100% { box-shadow: 0 0 8px rgba(228,176,34,0.4); }
           50%      { box-shadow: 0 0 20px rgba(228,176,34,0.8), 0 0 40px rgba(228,176,34,0.3); }
