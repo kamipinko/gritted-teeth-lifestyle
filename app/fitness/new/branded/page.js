@@ -520,26 +520,12 @@ export default function SchedulePage() {
                   relative overflow-hidden border transition-colors duration-150
                   ${past ? 'opacity-25 cursor-not-allowed' : ''}
                   ${selected
-                    ? 'border-gtl-red-bright'
-                    : hasMuscles
-                    ? 'border-gtl-red/50'
+                    ? 'bg-gtl-red/30 border-gtl-red-bright'
                     : todayCell
-                    ? 'border-gtl-gold'
-                    : 'border-gtl-edge'}
+                    ? 'bg-gtl-ink border-gtl-gold'
+                    : 'bg-gtl-ink border-gtl-edge'}
                 `}
-                style={{
-                  clipPath: CELL_CLIP,
-                  height: `${ROW_H}px`,
-                  background: selected
-                    ? 'rgba(212,24,31,0.3)'
-                    : badges.length >= 5
-                    ? 'rgba(212,24,31,0.25)'
-                    : badges.length >= 3
-                    ? 'rgba(212,24,31,0.15)'
-                    : badges.length >= 1
-                    ? 'rgba(212,24,31,0.08)'
-                    : todayCell ? '#1a1a1e' : '#1a1a1e',
-                }}
+                style={{ clipPath: CELL_CLIP, height: `${ROW_H}px` }}
               >
                 {todayCell && !hasMuscles && !selected && (
                   <div className="absolute top-0 left-0 right-0 h-0.5 bg-gtl-gold" aria-hidden="true" />
