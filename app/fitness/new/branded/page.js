@@ -171,7 +171,11 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
       onMouseEnter={enabled ? onHover : undefined}
       disabled={!enabled}
       className={`relative ${enabled ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
-      style={{ transform: 'skewX(-2deg)' }}
+      style={{
+        transform: 'skewX(-2deg)',
+        animation: enabled ? 'carve-pulse 3s ease-in-out infinite' : 'none',
+        borderRadius: '2px',
+      }}
     >
       {/* Shadow slab */}
       <div
@@ -195,9 +199,20 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         }}
       >
         <span
+          style={{
+            fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
+            fontSize: '1.1rem',
+            fontWeight: 400,
+            color: enabled ? '#070708' : '#555',
+            transform: 'skewX(2deg)',
+          }}
+        >
+          刻
+        </span>
+        <span
           className="font-display leading-none tracking-wide"
           style={{
-            fontSize: '1rem',
+            fontSize: '0.9rem',
             fontWeight: 900,
             color: enabled ? '#070708' : '#555',
             textShadow: enabled ? '1px 1px 0 rgba(228,176,34,0.5)' : 'none',
@@ -424,6 +439,10 @@ export default function SchedulePage() {
           100% { transform: scale(1.0); opacity: 1; }
         }
         .kanji-stamp { animation: kanji-stamp 150ms ease-out both; }
+        @keyframes carve-pulse {
+          0%, 100% { box-shadow: 0 0 8px rgba(228,176,34,0.4); }
+          50%      { box-shadow: 0 0 20px rgba(228,176,34,0.8), 0 0 40px rgba(228,176,34,0.3); }
+        }
       `}</style>
       {/* Atmospherics */}
       <div className="absolute inset-0 gtl-noise" />
@@ -489,8 +508,9 @@ export default function SchedulePage() {
                       className="absolute inset-0 flex items-center justify-center select-none pointer-events-none"
                       style={{
                         fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-                        fontSize: '2.8rem',
-                        color: 'rgba(180, 40, 40, 0.55)',
+                        fontSize: '4rem',
+                        color: 'rgba(212, 24, 31, 0.7)',
+                        fontWeight: 700,
                       }}
                       aria-hidden="true"
                     >
@@ -568,10 +588,19 @@ export default function SchedulePage() {
                       </div>
                     )
                   }
-                  // 4+ → 2-column dense grid filling the tile
+                  // 4-6 → 2-column at 22px
+                  if (count <= 6) {
+                    return (
+                      <div className="absolute inset-0 z-10 grid grid-cols-2 gap-x-3 gap-y-0 justify-items-center content-center px-1 select-none pointer-events-none"
+                        style={{ fontFamily: serif, fontSize: '1.4rem', lineHeight: '1.25', color: kanjiColor, textShadow: shadow }} aria-hidden="true">
+                        {badges.map((m) => <span key={m} className="kanji-stamp">{MUSCLE_KANJI[m]}</span>)}
+                      </div>
+                    )
+                  }
+                  // 7+ → 2-column compact
                   return (
-                    <div className="absolute inset-0 z-10 grid grid-cols-2 gap-x-3 gap-y-0 justify-items-center content-center px-1 select-none pointer-events-none"
-                      style={{ fontFamily: serif, fontSize: '1.4rem', lineHeight: '1.25', color: kanjiColor, textShadow: shadow }} aria-hidden="true">
+                    <div className="absolute inset-0 z-10 grid grid-cols-2 gap-x-2 gap-y-0 justify-items-center content-center px-0.5 select-none pointer-events-none"
+                      style={{ fontFamily: serif, fontSize: '0.9rem', lineHeight: '1.2', color: kanjiColor, textShadow: shadow }} aria-hidden="true">
                       {badges.map((m) => <span key={m} className="kanji-stamp">{MUSCLE_KANJI[m]}</span>)}
                     </div>
                   )
