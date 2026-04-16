@@ -178,7 +178,6 @@ function CarveContent({ enabled }) {
 }
 
 function SheetCarveButton({ count, enabled, onFire, onHover }) {
-  const [pressed, setPressed] = useState(false)
   const [phase, setPhase] = useState(0) // 0=idle, 1=split-start, 2=split-go, 3=fade
   const mountedRef = useRef(true)
   const dayLabel = count === 1 ? '1 DAY' : count > 1 ? `${count} DAYS` : '—'
@@ -210,9 +209,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
     <button
       type="button"
       aria-label="Carve cycle"
-      onMouseDown={() => enabled && !active && setPressed(true)}
-      onMouseUp={() => { setPressed(false); fire() }}
-      onMouseLeave={() => setPressed(false)}
+      onClick={fire}
       onMouseEnter={enabled && !active ? onHover : undefined}
       disabled={!enabled}
       className={`relative ${enabled ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
@@ -225,7 +222,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
       {/* Shadow slab */}
       <div className="absolute inset-0 -z-10"
         style={{ clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)', background: '#8a6612',
-          transform: pressed || active ? 'translate(0,0)' : 'translate(4px,4px)', transition: 'transform 80ms ease-out' }}
+          transform: active ? 'translate(0,0)' : 'translate(4px,4px)', transition: 'transform 80ms ease-out' }}
         aria-hidden="true" />
 
       {/* Red glow between halves */}
@@ -244,7 +241,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
           background: goldBg,
           transform: phase >= 2
             ? 'translate(-2px,-1px) rotate(0.5deg)'
-            : pressed ? 'translate(4px,4px)' : 'translate(0,0)',
+            : 'translate(0,0)',
           opacity: phase >= 3 ? 0 : 1,
           transition: phase >= 1
             ? 'transform 800ms cubic-bezier(0.25,0,0.5,1), opacity 300ms ease-out'
