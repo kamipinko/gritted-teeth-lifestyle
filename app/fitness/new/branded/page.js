@@ -1,12 +1,12 @@
 'use client'
 /*
- * /fitness/new/branded — Combined Schedule + Muscle Assignment (mobile).
+ * /fitness/new/branded — Schedule + Muscle Assignment (mobile).
  *
- * Tap a calendar day → becomes the active day, bottom sheet rises covering
- * the decorative zone below the calendar. User toggles muscles in the sheet;
- * kanji badges appear beneath the day tile live. ◀ ▶ in the sheet cycle
- * through all marked days. CARVE commits when every marked day has ≥1
- * muscle and routes to /fitness/new/summary.
+ * Multi-day batch editing: tap multiple days to select them, then toggle
+ * muscles in the grid below. Toggles are additive-first: if ANY selected
+ * day is missing a muscle, tapping adds it to all; only removes when all
+ * already have it. Kanji overlay on tiles shows assigned muscles; date
+ * number renders as a large semi-transparent watermark behind.
  */
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
@@ -22,9 +22,7 @@ const MONTH_NAMES = [
   'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER',
 ]
 const DAY_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
-const DAY_SHORT  = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 
-/* Muscle order for the sheet — canonical order, kanji paired. */
 const SHEET_MUSCLES = [
   { id: 'chest',      kanji: '胸', label: 'CHEST' },
   { id: 'shoulders',  kanji: '肩', label: 'SHOULDERS' },
@@ -43,10 +41,6 @@ const MUSCLE_KANJI = Object.fromEntries(SHEET_MUSCLES.map((m) => [m.id, m.kanji]
 
 const CELL_CLIP = 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)'
 const PARA_CLIP = 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)'
-
-function parseDate(iso) {
-  return new Date(iso + 'T12:00:00')
-}
 
 function RetreatButton() {
   const { play } = useSound()
@@ -95,23 +89,23 @@ function MonthNavButton({ dir, onClick }) {
   )
 }
 
-/* Muscle button inside the sheet — kanji + English label */
+/* Muscle button — vertical kanji + label, ~44px tall */
 function SheetMuscleButton({ kanji, label, active, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex items-center justify-center gap-1.5 py-1 px-2 border transition-colors duration-150
+      className={`relative flex flex-col items-center justify-center py-1.5 px-1 border transition-colors duration-150
         ${active
           ? 'bg-gtl-red border-gtl-red-bright shadow-red-glow'
           : 'bg-gtl-ink border-gtl-edge'}`}
       style={{ clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)', transform: 'skewX(-2deg)' }}
     >
       <span
-        className={`leading-none ${active ? 'text-gtl-paper' : 'text-gtl-chalk'}`}
+        className={`leading-none font-bold ${active ? 'text-gtl-paper' : 'text-gtl-chalk'}`}
         style={{
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-          fontSize: '1rem',
+          fontSize: '1.15rem',
           textShadow: active ? '1px 1px 0 #070708' : 'none',
           transform: 'skewX(2deg)',
         }}
@@ -119,7 +113,7 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
         {kanji}
       </span>
       <span
-        className={`font-mono text-[7px] tracking-[0.12em] uppercase leading-none
+        className={`font-mono text-[7px] tracking-[0.12em] uppercase leading-none mt-0.5
           ${active ? 'text-gtl-paper/80' : 'text-gtl-ash'}`}
         style={{ transform: 'skewX(2deg)' }}
       >
@@ -129,8 +123,8 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
   )
 }
 
-/* CARVE button sized to fill the 12th grid slot next to ABS */
-function SheetCarveButton({ enabled, onFire, onHover }) {
+/* CARVE button — 12th grid slot, shows total days count */
+function SheetCarveButton({ count, enabled, onFire, onHover }) {
   return (
     <button
       type="button"
@@ -138,7 +132,7 @@ function SheetCarveButton({ enabled, onFire, onHover }) {
       onClick={() => { if (enabled) onFire() }}
       onMouseEnter={enabled ? onHover : undefined}
       disabled={!enabled}
-      className={`relative flex items-center justify-center gap-1.5 py-1 px-2 border transition-colors duration-150
+      className={`relative flex flex-col items-center justify-center py-1.5 px-1 border transition-colors duration-150
         ${enabled
           ? 'bg-gtl-red border-gtl-red-bright shadow-red-glow cursor-pointer'
           : 'bg-gtl-ink border-gtl-edge cursor-not-allowed opacity-40'}`}
@@ -146,9 +140,16 @@ function SheetCarveButton({ enabled, onFire, onHover }) {
     >
       <span
         className={`font-display leading-none ${enabled ? 'text-gtl-paper' : 'text-gtl-smoke'}`}
-        style={{ fontSize: '1rem', textShadow: enabled ? '1px 1px 0 #8a0e13' : 'none', transform: 'skewX(2deg)' }}
+        style={{ fontSize: '0.85rem', textShadow: enabled ? '1px 1px 0 #8a0e13' : 'none', transform: 'skewX(2deg)' }}
       >
-        CARVE ▸
+        CARVE
+      </span>
+      <span
+        className={`font-mono text-[7px] tracking-[0.12em] uppercase leading-none mt-0.5
+          ${enabled ? 'text-gtl-paper/70' : 'text-gtl-ash'}`}
+        style={{ transform: 'skewX(2deg)' }}
+      >
+        {count > 0 ? `${count} DAY${count !== 1 ? 'S' : ''}` : 'NO DAYS'}
       </span>
     </button>
   )
@@ -166,10 +167,8 @@ export default function SchedulePage() {
     return d
   })
 
-  // trainingDays = set of isoKeys that are marked on the calendar
-  const [trainingDays, setTrainingDays] = useState(new Set())
-  // activeDay = single isoKey currently focused in the sheet (null = sheet closed)
-  const [activeDay,    setActiveDay]    = useState(null)
+  // selectedDays = set of isoKeys currently in the editing batch
+  const [selectedDays, setSelectedDays] = useState(new Set())
   // assignments = { [isoKey]: Set<muscleId> }
   const [assignments,  setAssignments]  = useState({})
   const [fireActive,   setFireActive]   = useState(false)
@@ -188,10 +187,10 @@ export default function SchedulePage() {
   // Play stamp sound once when the sheet first opens
   const prevOpenRef = useRef(false)
   useEffect(() => {
-    const open = activeDay !== null
+    const open = selectedDays.size > 0
     if (open && !prevOpenRef.current) play('stamp')
     prevOpenRef.current = open
-  }, [activeDay, play])
+  }, [selectedDays.size, play])
 
   // ── Calendar math ──────────────────────────────────────────────────────
   const year  = displayDate.getFullYear()
@@ -217,80 +216,77 @@ export default function SchedulePage() {
     return cellDate < todayFlat
   }
 
-  // Tap logic:
-  //   unmarked → mark + activate
-  //   marked & not active → activate
-  //   active → unmark + clear muscles + close sheet
+  // Tap: toggle in/out of the selection batch. Keep assigned muscles on deselect.
   const tapDay = (d) => {
     if (isPast(d)) return
     play('option-select')
     const key = isoKey(d)
-    if (!trainingDays.has(key)) {
-      setTrainingDays((prev) => { const n = new Set(prev); n.add(key); return n })
-      setAssignments((prev) => prev[key] !== undefined ? prev : { ...prev, [key]: new Set() })
-      setActiveDay(key)
-    } else if (activeDay !== key) {
-      setActiveDay(key)
-    } else {
-      setTrainingDays((prev) => { const n = new Set(prev); n.delete(key); return n })
-      setAssignments((prev) => { const next = { ...prev }; delete next[key]; return next })
-      setActiveDay(null)
-    }
+    setSelectedDays((prev) => {
+      const n = new Set(prev)
+      if (n.has(key)) n.delete(key)
+      else n.add(key)
+      return n
+    })
   }
 
-  // Toggle a muscle for the active day. If the day isn't marked yet,
-  // auto-mark it so battleday + assignment happen in a single tap.
+  // Additive-first toggle: if ANY selected day is missing this muscle, add to ALL.
+  // Only remove when ALL selected days already have it.
   const toggleMuscle = (muscleId) => {
-    if (!activeDay) return
+    if (selectedDays.size === 0) return
     play('option-select')
+    const keys = [...selectedDays]
+    const allHave = keys.every((k) => (assignments[k] || new Set()).has(muscleId))
     setAssignments((prev) => {
       const next = { ...prev }
-      const s = new Set(next[activeDay] || [])
-      if (s.has(muscleId)) s.delete(muscleId)
-      else s.add(muscleId)
-      next[activeDay] = s
+      keys.forEach((k) => {
+        const s = new Set(next[k] || [])
+        if (allHave) s.delete(muscleId)
+        else s.add(muscleId)
+        next[k] = s
+      })
       return next
     })
-    if (!trainingDays.has(activeDay)) {
-      setTrainingDays((prev) => { const n = new Set(prev); n.add(activeDay); return n })
-    }
   }
 
   const prevMonth = () => {
     setDisplayDate((prev) => { const d = new Date(prev); d.setMonth(d.getMonth() - 1); return d })
-    setActiveDay(null)
+    setSelectedDays(new Set())
   }
   const nextMonth = () => {
     setDisplayDate((prev) => { const d = new Date(prev); d.setMonth(d.getMonth() + 1); return d })
-    setActiveDay(null)
+    setSelectedDays(new Set())
   }
 
-  const trainingDayCount = trainingDays.size
-  const sheetOpen        = activeDay !== null
+  const sheetOpen = selectedDays.size > 0
 
-  // Sorted list of all marked days (kept for other consumers)
-  const sortedMarked = [...trainingDays].sort()
-
-  // CARVE: enabled only when every marked day has ≥1 muscle
-  const allAssigned =
-    trainingDayCount > 0 &&
-    sortedMarked.every((k) => (assignments[k]?.size ?? 0) > 0)
+  // Total days with ≥1 muscle (across entire calendar, not just selection)
+  const daysWithMuscles = Object.values(assignments).filter((s) => s.size > 0).length
+  const carveEnabled = daysWithMuscles > 0
 
   const handleCarve = () => {
-    if (!allAssigned) return
+    if (!carveEnabled) return
     play('card-confirm')
     try {
-      localStorage.setItem(pk('training-days'), JSON.stringify([...trainingDays]))
+      const trainingDays = Object.entries(assignments)
+        .filter(([_, s]) => s.size > 0)
+        .map(([iso]) => iso)
+      localStorage.setItem(pk('training-days'), JSON.stringify(trainingDays))
       const serialized = {}
-      Object.entries(assignments).forEach(([iso, set]) => { serialized[iso] = [...set] })
+      Object.entries(assignments).forEach(([iso, set]) => {
+        if (set.size > 0) serialized[iso] = [...set]
+      })
       localStorage.setItem(pk('daily-plan'), JSON.stringify(serialized))
     } catch (_) {}
     setFireActive(true)
   }
 
-  const activeMuscles = activeDay ? (assignments[activeDay] || new Set()) : new Set()
+  // For the muscle grid: a button is "active" when ALL selected days have it
+  const batchMuscleState = (muscleId) => {
+    if (selectedDays.size === 0) return false
+    return [...selectedDays].every((k) => (assignments[k] || new Set()).has(muscleId))
+  }
 
-  // Order muscles in canonical order for a given day
+  // Kanji badges for a day tile (canonical order)
   const badgeMuscles = (key) => {
     const set = assignments[key]
     if (!set || set.size === 0) return []
@@ -335,9 +331,7 @@ export default function SchedulePage() {
       </div>
 
       {/* ── Compact header ──────────────────────────────────────────────── */}
-      <nav
-        className="relative z-10 flex items-center gap-3 px-4 h-12 border-b border-gtl-edge/40 shrink-0"
-      >
+      <nav className="relative z-10 flex items-center gap-3 px-4 h-12 border-b border-gtl-edge/40 shrink-0">
         <RetreatButton />
         <MonthNavButton dir="prev" onClick={prevMonth} />
         <div className="flex-1 min-w-0 flex items-baseline gap-2 justify-center">
@@ -347,9 +341,6 @@ export default function SchedulePage() {
           <span className="font-mono text-[10px] tracking-[0.3em] text-gtl-red font-bold">
             {year}
           </span>
-          <span className="font-mono text-[9px] tracking-[0.25em] uppercase text-gtl-ash hidden sm:inline">
-            · {trainingDayCount > 0 ? `${trainingDayCount} DAY${trainingDayCount !== 1 ? 'S' : ''}` : 'NO DAYS'}
-          </span>
         </div>
         <MonthNavButton dir="next" onClick={nextMonth} />
       </nav>
@@ -358,16 +349,16 @@ export default function SchedulePage() {
       <section className="relative z-10 px-3 pt-2 pb-0 flex-1 flex flex-col overflow-hidden">
         {/* Red slash divider */}
         <div
-          className="h-[2px] bg-gtl-red mb-2"
+          className="h-[2px] bg-gtl-red mb-1 shrink-0"
           style={{ transform: 'skewX(-6deg)', transformOrigin: 'left center' }}
         />
 
         {/* Day-of-week header */}
-        <div className="grid grid-cols-7 gap-1 mb-1">
+        <div className="grid grid-cols-7 gap-1 mb-1 shrink-0">
           {DAY_LABELS.map((label, i) => (
             <div
               key={label}
-              className={`py-1 text-center font-mono text-[9px] tracking-[0.2em] uppercase
+              className={`py-0.5 text-center font-mono text-[9px] tracking-[0.2em] uppercase
                 ${i === 0 || i === 6 ? 'text-gtl-red/80' : 'text-gtl-ash'}`}
               style={{ clipPath: CELL_CLIP }}
             >
@@ -376,19 +367,19 @@ export default function SchedulePage() {
           ))}
         </div>
 
-        {/* Day grid */}
+        {/* Day grid — fills remaining calendar space */}
         <div className="grid grid-cols-7 gap-1 flex-1">
           {cells.map((d, i) => {
             if (d === null) return <div key={`pad-${i}`} />
 
-            const key           = isoKey(d)
-            const marked        = trainingDays.has(key)
-            const isActive      = activeDay === key
-            const todayCell     = isToday(d)
-            const past          = isPast(d)
-            const badges        = marked ? badgeMuscles(key) : []
+            const key         = isoKey(d)
+            const selected    = selectedDays.has(key)
+            const todayCell   = isToday(d)
+            const past        = isPast(d)
+            const badges      = badgeMuscles(key)
+            const hasMuscles  = badges.length > 0
             const visibleBadges = badges.slice(0, 3)
-            const overflow      = badges.length - visibleBadges.length
+            const overflow    = badges.length - visibleBadges.length
 
             return (
               <button
@@ -397,46 +388,45 @@ export default function SchedulePage() {
                 onClick={() => tapDay(d)}
                 disabled={past}
                 className={`
-                  relative flex flex-col items-center justify-start pt-1 pb-1.5 gap-0.5
-                  border transition-colors duration-150
+                  relative overflow-hidden border transition-colors duration-150
                   ${past ? 'opacity-25 cursor-not-allowed' : ''}
-                  ${isActive
-                    ? 'bg-gtl-red border-gtl-red-bright shadow-red-glow'
-                    : marked
-                    ? 'bg-gtl-red/20 border-gtl-red/60'
+                  ${selected
+                    ? 'bg-gtl-red/30 border-gtl-red-bright'
+                    : hasMuscles
+                    ? 'bg-gtl-red/10 border-gtl-red/50'
                     : todayCell
                     ? 'bg-gtl-ink border-gtl-gold'
                     : 'bg-gtl-ink border-gtl-edge'}
                 `}
                 style={{ clipPath: CELL_CLIP }}
               >
-                {todayCell && !marked && (
+                {todayCell && !hasMuscles && !selected && (
                   <div className="absolute top-0 left-0 right-0 h-0.5 bg-gtl-gold" aria-hidden="true" />
                 )}
+
+                {/* Date number watermark — large, semi-transparent, centered */}
                 <span
-                  className={`font-display text-2xl leading-none
-                    ${isActive ? 'text-gtl-paper'
-                      : marked ? 'text-gtl-red-bright'
-                      : todayCell ? 'text-gtl-gold'
-                      : 'text-gtl-chalk'}`}
+                  className="absolute inset-0 flex items-center justify-center font-display leading-none select-none pointer-events-none"
+                  style={{
+                    fontSize: 'clamp(2rem, 5vw, 3rem)',
+                    opacity: hasMuscles ? 0.12 : (selected ? 0.25 : 0.2),
+                    color: selected ? '#f5f0e8' : todayCell ? '#e4b022' : '#c8c0b0',
+                  }}
+                  aria-hidden="true"
                 >
                   {d}
                 </span>
 
-                {/* Today label if not marked */}
-                {todayCell && !marked && (
-                  <span className="font-mono text-[7px] tracking-[0.2em] uppercase text-gtl-gold leading-none">TODAY</span>
-                )}
-
-                {/* Kanji badges — stacked vertically, one per line */}
-                {visibleBadges.length > 0 && (
+                {/* Kanji overlay — stacked from top, full opacity */}
+                {hasMuscles && (
                   <div
-                    className="flex flex-col items-center leading-none select-none mt-0.5"
+                    className="relative z-10 flex flex-col items-center pt-1 leading-none select-none"
                     style={{
                       fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-                      fontSize: '11px',
-                      lineHeight: '1.15',
-                      color: isActive ? 'rgba(245,240,232,0.95)' : 'rgba(212,24,31,0.85)',
+                      fontSize: '13px',
+                      lineHeight: '1.3',
+                      color: selected ? '#f5f0e8' : '#d4181f',
+                      textShadow: '1px 1px 0 rgba(0,0,0,0.5)',
                     }}
                     aria-hidden="true"
                   >
@@ -445,22 +435,26 @@ export default function SchedulePage() {
                     ))}
                     {overflow > 0 && (
                       <span className="font-mono text-[8px] tracking-normal mt-0.5"
-                        style={{ color: isActive ? 'rgba(245,240,232,0.75)' : 'rgba(212,24,31,0.7)' }}>
+                        style={{ color: selected ? 'rgba(245,240,232,0.7)' : 'rgba(212,24,31,0.7)' }}>
                         +{overflow}
                       </span>
                     )}
                   </div>
                 )}
 
-                {/* Active indicator when no muscles yet */}
-                {isActive && badges.length === 0 && (
-                  <span className="font-display text-[10px] text-gtl-paper/70 leading-none -rotate-12 mt-0.5" aria-hidden="true">✕</span>
+                {/* Selected indicator when no muscles yet */}
+                {selected && !hasMuscles && (
+                  <span className="relative z-10 font-display text-sm text-gtl-paper/70 leading-none -rotate-12" aria-hidden="true">✕</span>
+                )}
+
+                {/* TODAY label */}
+                {todayCell && !hasMuscles && !selected && (
+                  <span className="absolute bottom-1 left-0 right-0 text-center font-mono text-[6px] tracking-[0.2em] uppercase text-gtl-gold leading-none">TODAY</span>
                 )}
               </button>
             )
           })}
         </div>
-
       </section>
 
       {/* ── Muscle grid ─────────────────────────────────────────────── */}
@@ -478,12 +472,13 @@ export default function SchedulePage() {
                 key={m.id}
                 kanji={m.kanji}
                 label={m.label}
-                active={activeMuscles.has(m.id)}
+                active={batchMuscleState(m.id)}
                 onClick={() => toggleMuscle(m.id)}
               />
             ))}
             <SheetCarveButton
-              enabled={allAssigned}
+              count={daysWithMuscles}
+              enabled={carveEnabled}
               onFire={handleCarve}
               onHover={() => play('button-hover')}
             />
