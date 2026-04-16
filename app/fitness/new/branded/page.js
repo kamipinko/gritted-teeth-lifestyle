@@ -190,9 +190,9 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
 
   const fire = () => {
     if (!enabled || phase > 0) return
-    setPhase(1) // Immediate separation
-    setTimeout(() => { if (mountedRef.current) setPhase(2) }, 1000)  // Fade
-    setTimeout(() => { if (mountedRef.current) onFire() }, 1300)     // Navigate
+    setPhase(1) // Begin separation
+    setTimeout(() => { if (mountedRef.current) setPhase(2) }, 1600)  // Fade
+    setTimeout(() => { if (mountedRef.current) onFire() }, 2100)     // Navigate
   }
 
   const goldBg = enabled ? '#e4b022' : '#2a2a30'
@@ -220,12 +220,12 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
           transform: pressed || active ? 'translate(0,0)' : 'translate(4px,4px)', transition: 'transform 80ms ease-out' }}
         aria-hidden="true" />
 
-      {/* Red glow between halves — the blade visible through the wound */}
+      {/* Red glow between halves */}
       {phase >= 1 && (
         <div className="absolute inset-0 z-0" style={{
           background: '#d4181f', filter: 'blur(6px)',
           opacity: phase >= 2 ? 0 : 0.9,
-          transition: 'opacity 300ms ease-out',
+          transition: 'opacity 400ms ease-out',
         }} />
       )}
 
@@ -234,11 +234,10 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         style={{
           clipPath: phase >= 1 ? 'polygon(0 0, 100% 0, 0 100%)' : 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
           background: goldBg,
-          transform: phase >= 1 ? 'translate(-3px, -2px) rotate(1.5deg)' : pressed ? 'translate(4px,4px)' : 'translate(0,0)',
+          animation: phase >= 1 ? 'carve-hold 1600ms cubic-bezier(0.1,0,0.3,1) forwards' : 'none',
+          transform: phase < 1 ? (pressed ? 'translate(4px,4px)' : 'translate(0,0)') : undefined,
           opacity: phase >= 2 ? 0 : 1,
-          transition: phase >= 1
-            ? 'transform 1000ms cubic-bezier(0.25,0.1,0.25,1), opacity 300ms ease-out'
-            : 'transform 80ms ease-out',
+          transition: phase < 1 ? 'transform 80ms ease-out' : 'opacity 400ms ease-out',
         }}>
         <CarveContent enabled={enabled} />
         {phase < 1 && (
@@ -255,9 +254,9 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
           style={{
             clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
             background: goldBg,
-            transform: 'translate(16px, 12px) rotate(-4deg) scale(0.97)',
+            animation: 'carve-fall 1600ms cubic-bezier(0.1,0,0.3,1) forwards',
             opacity: phase >= 2 ? 0 : 1,
-            transition: 'transform 1000ms 80ms cubic-bezier(0.25,0.1,0.25,1), opacity 300ms ease-out',
+            transition: 'opacity 400ms ease-out',
           }}>
           <CarveContent enabled={enabled} />
         </div>
@@ -479,6 +478,17 @@ export default function SchedulePage() {
           100% { transform: scale(1.0); opacity: 1; }
         }
         .kanji-stamp { animation: kanji-stamp 150ms ease-out both; }
+        @keyframes carve-hold {
+          0%   { transform: translate(0,0) rotate(0); }
+          30%  { transform: translate(-0.5px,-0.3px) rotate(0.2deg); }
+          100% { transform: translate(-3px,-2px) rotate(1.5deg); }
+        }
+        @keyframes carve-fall {
+          0%   { transform: translate(0,0) rotate(0) scale(1); }
+          30%  { transform: translate(2px,1.5px) rotate(-0.5deg) scale(1); }
+          60%  { transform: translate(6px,4px) rotate(-1.5deg) scale(0.99); }
+          100% { transform: translate(16px,12px) rotate(-4deg) scale(0.97); }
+        }
         @keyframes carve-pulse {
           0%, 100% { box-shadow: 0 0 8px rgba(228,176,34,0.4); }
           50%      { box-shadow: 0 0 20px rgba(228,176,34,0.8), 0 0 40px rgba(228,176,34,0.3); }
