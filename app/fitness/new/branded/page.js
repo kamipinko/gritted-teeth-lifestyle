@@ -275,11 +275,6 @@ export default function SchedulePage() {
   // Sorted list of all marked days (kept for other consumers)
   const sortedMarked = [...trainingDays].sort()
 
-  const closeSheet = () => {
-    play('menu-close')
-    setActiveDay(null)
-  }
-
   // CARVE: enabled only when every marked day has ≥1 muscle
   const allAssigned =
     trainingDayCount > 0 &&
@@ -480,8 +475,8 @@ export default function SchedulePage() {
           transition: 'transform 280ms cubic-bezier(0.2, 0.8, 0.3, 1)',
           borderTop: '2px solid #d4181f',
           clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
-          height: '46vh',
-          minHeight: '360px',
+          height: '49vh',
+          minHeight: '390px',
           boxShadow: '0 -20px 40px rgba(0,0,0,0.6)',
         }}
         aria-hidden={!sheetOpen}
@@ -489,24 +484,9 @@ export default function SchedulePage() {
         {/* Noise on sheet */}
         <div className="absolute inset-0 gtl-noise opacity-40 pointer-events-none" />
 
-        <div className="relative h-full flex flex-col px-4 pt-3 pb-4">
-          {/* Top strip — N LOCKED + ✕ */}
-          <div className="flex items-center gap-3 mb-2">
-            <span className="font-mono text-[9px] tracking-[0.35em] uppercase text-gtl-red font-bold flex-1">
-              {activeMuscles.size} LOCKED
-            </span>
-            <button
-              type="button"
-              onClick={closeSheet}
-              className="shrink-0 font-mono text-[10px] text-gtl-ash border border-gtl-edge px-2.5 py-1.5 hover:text-gtl-red hover:border-gtl-red transition-colors"
-              aria-label="Close sheet"
-            >
-              ✕
-            </button>
-          </div>
-
+        <div className="relative h-full flex flex-col px-3 pt-1 pb-2">
           {/* 2-col grid: 11 muscles + CARVE in slot 12 */}
-          <div className="grid grid-cols-2 grid-rows-6 gap-2">
+          <div className="grid grid-cols-2 grid-rows-6 gap-1.5 flex-1">
             {SHEET_MUSCLES.map((m) => (
               <SheetMuscleButton
                 key={m.id}
