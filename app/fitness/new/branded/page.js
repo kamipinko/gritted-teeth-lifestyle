@@ -137,17 +137,18 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
       style={{ clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)', transform: 'skewX(-2deg)' }}
     >
       <span
-        className={`font-mono text-[11px] tracking-[0.1em] uppercase leading-none
-          ${active ? 'text-gtl-paper' : 'text-gtl-ash'}`}
+        className={`font-mono text-[12px] tracking-[0.08em] uppercase leading-none font-bold
+          ${active ? 'text-gtl-paper' : 'text-gtl-chalk'}`}
         style={{ transform: 'skewX(2deg)' }}
       >
         {label}
       </span>
       <span
-        className={`leading-none font-bold ${active ? 'text-gtl-paper' : 'text-gtl-chalk'}`}
+        className={`leading-none ${active ? 'text-gtl-paper' : 'text-gtl-chalk/70'}`}
         style={{
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '1.25rem',
+          fontWeight: 400,
           textShadow: active ? '1px 1px 0 #070708' : 'none',
           transform: 'skewX(2deg)',
         }}
@@ -166,24 +167,30 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
       onClick={() => { if (enabled) onFire() }}
       onMouseEnter={enabled ? onHover : undefined}
       disabled={!enabled}
-      className={`relative flex flex-col items-center justify-center py-1.5 px-1 border transition-colors duration-150
+      className={`relative flex items-center justify-center gap-2 px-3 py-1 transition-colors duration-150
         ${enabled
-          ? 'bg-gtl-red border-gtl-red-bright shadow-red-glow cursor-pointer'
-          : 'bg-gtl-ink border-gtl-edge cursor-not-allowed opacity-40'}`}
-      style={{ clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)', transform: 'skewX(-2deg)' }}
+          ? 'cursor-pointer'
+          : 'cursor-not-allowed opacity-30'}`}
+      style={{
+        clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)',
+        transform: 'skewX(-3deg)',
+        background: enabled ? '#d4181f' : 'transparent',
+        border: enabled ? '2px solid #ff2a36' : '2px dashed #3a3a42',
+        boxShadow: enabled ? '0 0 12px rgba(212,24,31,0.4), inset 0 0 8px rgba(255,42,54,0.2)' : 'none',
+      }}
     >
       <span
-        className={`font-display leading-none ${enabled ? 'text-gtl-paper' : 'text-gtl-smoke'}`}
-        style={{ fontSize: '0.85rem', textShadow: enabled ? '1px 1px 0 #8a0e13' : 'none', transform: 'skewX(2deg)' }}
+        className={`font-display leading-none tracking-wide ${enabled ? 'text-gtl-paper' : 'text-gtl-smoke'}`}
+        style={{ fontSize: '1rem', fontWeight: 900, textShadow: enabled ? '2px 2px 0 #8a0e13' : 'none', transform: 'skewX(3deg)' }}
       >
         CARVE
       </span>
       <span
-        className={`font-mono text-[7px] tracking-[0.12em] uppercase leading-none mt-0.5
-          ${enabled ? 'text-gtl-paper/70' : 'text-gtl-ash'}`}
-        style={{ transform: 'skewX(2deg)' }}
+        className={`font-mono text-[8px] tracking-[0.15em] uppercase leading-none
+          ${enabled ? 'text-gtl-paper/80' : 'text-gtl-ash'}`}
+        style={{ transform: 'skewX(3deg)' }}
       >
-        {count > 0 ? `${count} DAY${count !== 1 ? 'S' : ''}` : 'NO DAYS'}
+        {count > 0 ? `${count} DAY${count !== 1 ? 'S' : ''}` : '—'}
       </span>
     </button>
   )
@@ -257,53 +264,60 @@ export default function SchedulePage() {
     })
   }, [year, month, today, play])
 
-  // Swipe-select: add only (never deselect mid-drag)
-  const selectDay = useCallback((d) => {
+  // Swipe helpers: add or remove based on mode
+  const swipeApply = useCallback((d, mode) => {
     if (isPast(d)) return
     const key = isoKey(d)
     setSelectedDays((prev) => {
-      if (prev.has(key)) return prev
       const n = new Set(prev)
-      n.add(key)
+      if (mode === 'add') n.add(key)
+      else n.delete(key)
       return n
     })
   }, [year, month, today])
 
-  // Touch handlers for swipe-to-select.
-  // touchstart: record origin, do NOT select yet (that's onClick's job for taps).
-  // touchmove: if finger moved, begin drag mode and select days under finger.
-  // touchend: clear drag state.
+  // Touch handlers for swipe-to-select/deselect.
+  // Mode determined by first tile: start on unselected = add, start on selected = remove.
   const touchOriginRef = useRef(null)
+  const swipeModeRef = useRef(null) // 'add' | 'remove'
 
   const handleTouchStart = useCallback((e) => {
     const touch = e.touches[0]
     touchOriginRef.current = { x: touch.clientX, y: touch.clientY }
     dragRef.current = false
+    swipeModeRef.current = null
   }, [])
 
   const handleTouchMove = useCallback((e) => {
     const touch = e.touches[0]
     const origin = touchOriginRef.current
-    // Activate drag only after finger moves ≥8px (avoids false activation on taps)
     if (!dragRef.current && origin) {
       const dx = touch.clientX - origin.x
       const dy = touch.clientY - origin.y
       if (dx * dx + dy * dy < 64) return // 8px threshold
       dragRef.current = true
-      // Select the origin day too
+      // Determine mode from origin tile
       const startEl = document.elementFromPoint(origin.x, origin.y)?.closest('[data-day]')
-      if (startEl) selectDay(Number(startEl.dataset.day))
+      if (startEl) {
+        const dayNum = Number(startEl.dataset.day)
+        const key = isoKey(dayNum)
+        swipeModeRef.current = selectedDays.has(key) ? 'remove' : 'add'
+        swipeApply(dayNum, swipeModeRef.current)
+      }
     }
     if (!dragRef.current) return
-    e.preventDefault() // prevent click from firing after swipe
+    e.preventDefault()
     const el = document.elementFromPoint(touch.clientX, touch.clientY)
     const dayEl = el?.closest('[data-day]')
-    if (dayEl) selectDay(Number(dayEl.dataset.day))
-  }, [selectDay])
+    if (dayEl && swipeModeRef.current) {
+      swipeApply(Number(dayEl.dataset.day), swipeModeRef.current)
+    }
+  }, [swipeApply, selectedDays, isoKey])
 
   const handleTouchEnd = useCallback(() => {
     dragRef.current = false
     touchOriginRef.current = null
+    swipeModeRef.current = null
   }, [])
 
   // Additive-first toggle
@@ -365,16 +379,15 @@ export default function SchedulePage() {
     return MUSCLE_ORDER.filter((m) => set.has(m))
   }
 
-  // Decorative month kanji for empty calendar slots
+  // Decorative month kanji — only in row 1 empty slots
   const monthChars = [...MONTH_KANJI[month]]
-  const emptyIndices = cells.map((c, i) => c === null ? i : -1).filter((i) => i >= 0)
-  // Center the characters within the empty slots
-  const startOffset = Math.max(0, Math.floor((emptyIndices.length - monthChars.length) / 2))
+  const row1Empty = cells.slice(0, 7).map((c, i) => c === null ? i : -1).filter((i) => i >= 0)
+  const startOffset = Math.max(0, Math.floor((row1Empty.length - monthChars.length) / 2))
   const emptyKanji = {} // { cellIndex: character }
   monthChars.forEach((ch, ci) => {
     const slotIdx = startOffset + ci
-    if (slotIdx < emptyIndices.length) {
-      emptyKanji[emptyIndices[slotIdx]] = ch
+    if (slotIdx < row1Empty.length) {
+      emptyKanji[row1Empty[slotIdx]] = ch
     }
   })
 
@@ -446,8 +459,7 @@ export default function SchedulePage() {
                       style={{
                         fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
                         fontSize: '2.2rem',
-                        opacity: 0.08,
-                        color: '#d4181f',
+                        color: 'rgba(200, 60, 60, 0.35)',
                       }}
                       aria-hidden="true"
                     >
@@ -503,24 +515,37 @@ export default function SchedulePage() {
                   {d}
                 </span>
 
-                {/* 2-column kanji overlay — absolute, from top */}
-                {hasMuscles && (
-                  <div
-                    className="absolute inset-0 z-10 grid grid-cols-2 gap-x-0.5 gap-y-0 justify-items-center content-start pt-1 px-0.5 select-none pointer-events-none"
-                    style={{
-                      fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-                      fontSize: '12px',
-                      lineHeight: '1.35',
-                      color: selected ? '#f5f0e8' : '#d4181f',
-                      textShadow: '1px 1px 0 rgba(0,0,0,0.5)',
-                    }}
-                    aria-hidden="true"
-                  >
-                    {badges.map((m) => (
-                      <span key={m}>{MUSCLE_KANJI[m]}</span>
-                    ))}
-                  </div>
-                )}
+                {/* Kanji overlay — progressive sizing based on count */}
+                {hasMuscles && (() => {
+                  const count = badges.length
+                  const kanjiColor = selected ? '#f5f0e8' : '#d4181f'
+                  const shadow = '1px 1px 0 rgba(0,0,0,0.5)'
+                  const serif = '"Noto Serif JP", "Yu Mincho", serif'
+                  if (count === 1) {
+                    return (
+                      <span className="absolute inset-0 z-10 flex items-center justify-center select-none pointer-events-none"
+                        style={{ fontFamily: serif, fontSize: '3.5rem', color: kanjiColor, textShadow: shadow, lineHeight: 1 }} aria-hidden="true">
+                        {MUSCLE_KANJI[badges[0]]}
+                      </span>
+                    )
+                  }
+                  if (count <= 3) {
+                    const sz = count === 2 ? '2.2rem' : '1.6rem'
+                    return (
+                      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center select-none pointer-events-none"
+                        style={{ fontFamily: serif, fontSize: sz, color: kanjiColor, textShadow: shadow, lineHeight: 1.2, gap: '2px' }} aria-hidden="true">
+                        {badges.map((m) => <span key={m}>{MUSCLE_KANJI[m]}</span>)}
+                      </div>
+                    )
+                  }
+                  // 4+ → 2-column compact grid
+                  return (
+                    <div className="absolute inset-0 z-10 grid grid-cols-2 gap-x-0.5 gap-y-0 justify-items-center content-start pt-1 px-0.5 select-none pointer-events-none"
+                      style={{ fontFamily: serif, fontSize: '13px', lineHeight: '1.35', color: kanjiColor, textShadow: shadow }} aria-hidden="true">
+                      {badges.map((m) => <span key={m}>{MUSCLE_KANJI[m]}</span>)}
+                    </div>
+                  )
+                })()}
 
                 {/* Selected indicator — no muscles yet */}
                 {selected && !hasMuscles && (
