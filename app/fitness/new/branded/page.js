@@ -130,7 +130,7 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex items-center justify-between px-3 py-1 border transition-colors duration-150
+      className={`relative flex items-center justify-between px-3 py-2.5 border transition-colors duration-150
         ${active
           ? 'bg-gtl-red border-gtl-red-bright shadow-red-glow'
           : 'bg-gtl-ink border-gtl-edge'}`}
@@ -160,38 +160,59 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
 }
 
 function SheetCarveButton({ count, enabled, onFire, onHover }) {
+  const [pressed, setPressed] = useState(false)
   return (
     <button
       type="button"
       aria-label="Carve cycle"
-      onClick={() => { if (enabled) onFire() }}
+      onMouseDown={() => enabled && setPressed(true)}
+      onMouseUp={() => { setPressed(false); if (enabled) onFire() }}
+      onMouseLeave={() => setPressed(false)}
       onMouseEnter={enabled ? onHover : undefined}
       disabled={!enabled}
-      className={`relative flex items-center justify-center gap-2 px-3 py-1 transition-colors duration-150
-        ${enabled
-          ? 'cursor-pointer'
-          : 'cursor-not-allowed opacity-30'}`}
-      style={{
-        clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)',
-        transform: 'skewX(-3deg)',
-        background: enabled ? '#d4181f' : 'transparent',
-        border: enabled ? '2px solid #ff2a36' : '2px dashed #3a3a42',
-        boxShadow: enabled ? '0 0 12px rgba(212,24,31,0.4), inset 0 0 8px rgba(255,42,54,0.2)' : 'none',
-      }}
+      className={`relative ${enabled ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
+      style={{ transform: 'skewX(-2deg)' }}
     >
-      <span
-        className={`font-display leading-none tracking-wide ${enabled ? 'text-gtl-paper' : 'text-gtl-smoke'}`}
-        style={{ fontSize: '1rem', fontWeight: 900, textShadow: enabled ? '2px 2px 0 #8a0e13' : 'none', transform: 'skewX(3deg)' }}
+      {/* Shadow slab */}
+      <div
+        className="absolute inset-0"
+        style={{
+          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+          background: '#8a6612',
+          transform: pressed ? 'translate(0,0)' : 'translate(3px,3px)',
+          transition: 'transform 80ms ease-out',
+        }}
+        aria-hidden="true"
+      />
+      {/* Gold face */}
+      <div
+        className="relative flex items-center justify-center gap-2 px-3 py-2.5"
+        style={{
+          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+          background: enabled ? '#e4b022' : '#2a2a30',
+          transform: pressed ? 'translate(3px,3px)' : 'translate(0,0)',
+          transition: 'transform 80ms ease-out',
+        }}
       >
-        CARVE
-      </span>
-      <span
-        className={`font-mono text-[8px] tracking-[0.15em] uppercase leading-none
-          ${enabled ? 'text-gtl-paper/80' : 'text-gtl-ash'}`}
-        style={{ transform: 'skewX(3deg)' }}
-      >
-        {count > 0 ? `${count} DAY${count !== 1 ? 'S' : ''}` : '—'}
-      </span>
+        <span
+          className="font-display leading-none tracking-wide"
+          style={{
+            fontSize: '1rem',
+            fontWeight: 900,
+            color: enabled ? '#070708' : '#555',
+            textShadow: enabled ? '1px 1px 0 rgba(228,176,34,0.5)' : 'none',
+            transform: 'skewX(2deg)',
+          }}
+        >
+          CARVE
+        </span>
+        <span
+          className="font-mono text-[8px] tracking-[0.15em] uppercase leading-none"
+          style={{ color: enabled ? '#070708' : '#555', opacity: 0.7, transform: 'skewX(2deg)' }}
+        >
+          {count > 0 ? `${count} DAY${count !== 1 ? 'S' : ''}` : '—'}
+        </span>
+      </div>
     </button>
   )
 }
@@ -323,9 +344,9 @@ export default function SchedulePage() {
   // Additive-first toggle
   const toggleMuscle = (muscleId) => {
     if (selectedDays.size === 0) return
-    play('option-select')
     const keys = [...selectedDays]
     const allHave = keys.every((k) => (assignments[k] || new Set()).has(muscleId))
+    play(allHave ? 'option-select' : 'stamp')
     setAssignments((prev) => {
       const next = { ...prev }
       keys.forEach((k) => {
@@ -379,21 +400,31 @@ export default function SchedulePage() {
     return MUSCLE_ORDER.filter((m) => set.has(m))
   }
 
-  // Decorative month kanji — only in row 1 empty slots
+  // Decorative month kanji — row 1 if ≥2 empty slots, else row 5
   const monthChars = [...MONTH_KANJI[month]]
   const row1Empty = cells.slice(0, 7).map((c, i) => c === null ? i : -1).filter((i) => i >= 0)
-  const startOffset = Math.max(0, Math.floor((row1Empty.length - monthChars.length) / 2))
-  const emptyKanji = {} // { cellIndex: character }
+  const row5Empty = cells.slice(28, 35).map((c, i) => c === null ? i + 28 : -1).filter((i) => i >= 0)
+  const targetSlots = row1Empty.length >= 2 ? row1Empty : row5Empty
+  const startOffset = Math.max(0, Math.floor((targetSlots.length - monthChars.length) / 2))
+  const emptyKanji = {}
   monthChars.forEach((ch, ci) => {
     const slotIdx = startOffset + ci
-    if (slotIdx < row1Empty.length) {
-      emptyKanji[row1Empty[slotIdx]] = ch
+    if (slotIdx < targetSlots.length) {
+      emptyKanji[targetSlots[slotIdx]] = ch
     }
   })
 
   // ── Render ──────────────────────────────────────────────────────────────
   return (
     <main className="relative h-screen flex flex-col overflow-hidden bg-gtl-void">
+      {/* Kanji stamp animation */}
+      <style>{`
+        @keyframes kanji-stamp {
+          0%   { transform: scale(1.3); opacity: 0; }
+          100% { transform: scale(1.0); opacity: 1; }
+        }
+        .kanji-stamp { animation: kanji-stamp 150ms ease-out both; }
+      `}</style>
       {/* Atmospherics */}
       <div className="absolute inset-0 gtl-noise" />
       <div className="absolute inset-0 pointer-events-none"
@@ -489,14 +520,26 @@ export default function SchedulePage() {
                   relative overflow-hidden border transition-colors duration-150
                   ${past ? 'opacity-25 cursor-not-allowed' : ''}
                   ${selected
-                    ? 'bg-gtl-red/30 border-gtl-red-bright'
+                    ? 'border-gtl-red-bright'
                     : hasMuscles
-                    ? 'bg-gtl-red/10 border-gtl-red/50'
+                    ? 'border-gtl-red/50'
                     : todayCell
-                    ? 'bg-gtl-ink border-gtl-gold'
-                    : 'bg-gtl-ink border-gtl-edge'}
+                    ? 'border-gtl-gold'
+                    : 'border-gtl-edge'}
                 `}
-                style={{ clipPath: CELL_CLIP, height: `${ROW_H}px` }}
+                style={{
+                  clipPath: CELL_CLIP,
+                  height: `${ROW_H}px`,
+                  background: selected
+                    ? 'rgba(212,24,31,0.3)'
+                    : badges.length >= 5
+                    ? 'rgba(212,24,31,0.25)'
+                    : badges.length >= 3
+                    ? 'rgba(212,24,31,0.15)'
+                    : badges.length >= 1
+                    ? 'rgba(212,24,31,0.08)'
+                    : todayCell ? '#1a1a1e' : '#1a1a1e',
+                }}
               >
                 {todayCell && !hasMuscles && !selected && (
                   <div className="absolute top-0 left-0 right-0 h-0.5 bg-gtl-gold" aria-hidden="true" />
@@ -523,7 +566,8 @@ export default function SchedulePage() {
                   const serif = '"Noto Serif JP", "Yu Mincho", serif'
                   if (count === 1) {
                     return (
-                      <span className="absolute inset-0 z-10 flex items-center justify-center select-none pointer-events-none"
+                      <span className="absolute inset-0 z-10 flex items-center justify-center select-none pointer-events-none kanji-stamp"
+                        key={badges[0]}
                         style={{ fontFamily: serif, fontSize: '3.5rem', color: kanjiColor, textShadow: shadow, lineHeight: 1 }} aria-hidden="true">
                         {MUSCLE_KANJI[badges[0]]}
                       </span>
@@ -534,15 +578,15 @@ export default function SchedulePage() {
                     return (
                       <div className="absolute inset-0 z-10 flex flex-col items-center justify-center select-none pointer-events-none"
                         style={{ fontFamily: serif, fontSize: sz, color: kanjiColor, textShadow: shadow, lineHeight: 1.2, gap: '2px' }} aria-hidden="true">
-                        {badges.map((m) => <span key={m}>{MUSCLE_KANJI[m]}</span>)}
+                        {badges.map((m) => <span key={m} className="kanji-stamp">{MUSCLE_KANJI[m]}</span>)}
                       </div>
                     )
                   }
-                  // 4+ → 2-column compact grid
+                  // 4+ → 2-column dense grid filling the tile
                   return (
-                    <div className="absolute inset-0 z-10 grid grid-cols-2 gap-x-0.5 gap-y-0 justify-items-center content-start pt-1 px-0.5 select-none pointer-events-none"
-                      style={{ fontFamily: serif, fontSize: '13px', lineHeight: '1.35', color: kanjiColor, textShadow: shadow }} aria-hidden="true">
-                      {badges.map((m) => <span key={m}>{MUSCLE_KANJI[m]}</span>)}
+                    <div className="absolute inset-0 z-10 grid grid-cols-2 gap-0 justify-items-center content-center px-1 select-none pointer-events-none"
+                      style={{ fontFamily: serif, fontSize: '1.4rem', lineHeight: '1.25', color: kanjiColor, textShadow: shadow }} aria-hidden="true">
+                      {badges.map((m) => <span key={m} className="kanji-stamp">{MUSCLE_KANJI[m]}</span>)}
                     </div>
                   )
                 })()}
