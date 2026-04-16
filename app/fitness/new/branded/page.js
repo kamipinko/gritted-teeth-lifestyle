@@ -101,25 +101,27 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex items-center justify-center gap-2 py-2 px-2 border transition-colors duration-150
+      className={`relative flex items-center justify-center gap-1.5 py-1 px-2 border transition-colors duration-150
         ${active
           ? 'bg-gtl-red border-gtl-red-bright shadow-red-glow'
-          : 'bg-gtl-ink border-gtl-edge hover:border-gtl-red'}`}
-      style={{ clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)' }}
+          : 'bg-gtl-ink border-gtl-edge'}`}
+      style={{ clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)', transform: 'skewX(-2deg)' }}
     >
       <span
         className={`leading-none ${active ? 'text-gtl-paper' : 'text-gtl-chalk'}`}
         style={{
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-          fontSize: '1.25rem',
-          textShadow: active ? '2px 2px 0 #070708' : 'none',
+          fontSize: '1rem',
+          textShadow: active ? '1px 1px 0 #070708' : 'none',
+          transform: 'skewX(2deg)',
         }}
       >
         {kanji}
       </span>
       <span
-        className={`font-mono text-[8px] tracking-[0.15em] uppercase leading-none
+        className={`font-mono text-[7px] tracking-[0.12em] uppercase leading-none
           ${active ? 'text-gtl-paper/80' : 'text-gtl-ash'}`}
+        style={{ transform: 'skewX(2deg)' }}
       >
         {label}
       </span>
@@ -136,23 +138,17 @@ function SheetCarveButton({ enabled, onFire, onHover }) {
       onClick={() => { if (enabled) onFire() }}
       onMouseEnter={enabled ? onHover : undefined}
       disabled={!enabled}
-      className={`relative flex items-center justify-center gap-2 py-2 px-2 border transition-colors duration-150
+      className={`relative flex items-center justify-center gap-1.5 py-1 px-2 border transition-colors duration-150
         ${enabled
-          ? 'bg-gtl-red border-gtl-red-bright shadow-red-glow cursor-pointer hover:bg-gtl-red-bright'
+          ? 'bg-gtl-red border-gtl-red-bright shadow-red-glow cursor-pointer'
           : 'bg-gtl-ink border-gtl-edge cursor-not-allowed opacity-40'}`}
-      style={{ clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)' }}
+      style={{ clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)', transform: 'skewX(-2deg)' }}
     >
       <span
         className={`font-display leading-none ${enabled ? 'text-gtl-paper' : 'text-gtl-smoke'}`}
-        style={{ fontSize: '1.3rem', textShadow: enabled ? '2px 2px 0 #8a0e13' : 'none' }}
+        style={{ fontSize: '1rem', textShadow: enabled ? '1px 1px 0 #8a0e13' : 'none', transform: 'skewX(2deg)' }}
       >
         CARVE ▸
-      </span>
-      <span
-        className={`font-mono text-[8px] tracking-[0.2em] uppercase leading-none mt-0.5
-          ${enabled ? 'text-gtl-paper/80' : 'text-gtl-ash'}`}
-      >
-        {enabled ? 'READY' : 'ASSIGN ALL DAYS'}
       </span>
     </button>
   )
@@ -410,7 +406,7 @@ export default function SchedulePage() {
                     ? 'bg-gtl-red/20 border-gtl-red/60'
                     : todayCell
                     ? 'bg-gtl-ink border-gtl-gold'
-                    : 'bg-gtl-ink border-gtl-edge active:bg-gtl-surface'}
+                    : 'bg-gtl-ink border-gtl-edge'}
                 `}
                 style={{ clipPath: CELL_CLIP }}
               >
@@ -418,7 +414,7 @@ export default function SchedulePage() {
                   <div className="absolute top-0 left-0 right-0 h-0.5 bg-gtl-gold" aria-hidden="true" />
                 )}
                 <span
-                  className={`font-display text-xl leading-none
+                  className={`font-display text-2xl leading-none
                     ${isActive ? 'text-gtl-paper'
                       : marked ? 'text-gtl-red-bright'
                       : todayCell ? 'text-gtl-gold'
@@ -475,8 +471,8 @@ export default function SchedulePage() {
           transition: 'transform 280ms cubic-bezier(0.2, 0.8, 0.3, 1)',
           borderTop: '2px solid #d4181f',
           clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
-          height: '49vh',
-          minHeight: '390px',
+          height: '46vh',
+          minHeight: '350px',
           boxShadow: '0 -20px 40px rgba(0,0,0,0.6)',
         }}
         aria-hidden={!sheetOpen}
@@ -486,7 +482,7 @@ export default function SchedulePage() {
 
         <div className="relative h-full flex flex-col px-3 pt-1 pb-2">
           {/* 2-col grid: 11 muscles + CARVE in slot 12 */}
-          <div className="grid grid-cols-2 grid-rows-6 gap-1.5 flex-1">
+          <div className="grid grid-cols-2 grid-rows-6 gap-1">
             {SHEET_MUSCLES.map((m) => (
               <SheetMuscleButton
                 key={m.id}
