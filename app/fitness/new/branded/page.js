@@ -177,9 +177,9 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         borderRadius: '2px',
       }}
     >
-      {/* Shadow slab */}
+      {/* Shadow slab — absolute, no layout impact */}
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 -z-10"
         style={{
           clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
           background: '#8a6612',
@@ -190,7 +190,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
       />
       {/* Gold face */}
       <div
-        className="relative flex items-center justify-center gap-2 px-3 py-2.5"
+        className="flex items-center justify-center gap-1.5 px-2 py-1"
         style={{
           clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
           background: enabled ? '#e4b022' : '#2a2a30',
@@ -199,9 +199,10 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         }}
       >
         <span
+          className="leading-none"
           style={{
             fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-            fontSize: '1.1rem',
+            fontSize: '1rem',
             fontWeight: 400,
             color: enabled ? '#070708' : '#555',
             transform: 'skewX(2deg)',
@@ -212,20 +213,19 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         <span
           className="font-display leading-none tracking-wide"
           style={{
-            fontSize: '0.9rem',
+            fontSize: '0.8rem',
             fontWeight: 900,
             color: enabled ? '#070708' : '#555',
-            textShadow: enabled ? '1px 1px 0 rgba(228,176,34,0.5)' : 'none',
             transform: 'skewX(2deg)',
           }}
         >
           CARVE
         </span>
         <span
-          className="font-mono text-[8px] tracking-[0.15em] uppercase leading-none"
+          className="font-mono text-[7px] tracking-[0.1em] uppercase leading-none"
           style={{ color: enabled ? '#070708' : '#555', opacity: 0.7, transform: 'skewX(2deg)' }}
         >
-          {count > 0 ? `${count} DAY${count !== 1 ? 'S' : ''}` : '—'}
+          {count > 0 ? `${count}D` : '—'}
         </span>
       </div>
     </button>
