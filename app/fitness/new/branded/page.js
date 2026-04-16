@@ -179,7 +179,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         style={{
           clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
           background: '#8a6612',
-          transform: pressed ? 'translate(0,0)' : 'translate(3px,3px)',
+          transform: pressed ? 'translate(0,0)' : 'translate(4px,4px)',
           transition: 'transform 80ms ease-out',
         }}
         aria-hidden="true"
@@ -190,7 +190,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         style={{
           clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
           background: enabled ? '#e4b022' : '#2a2a30',
-          transform: pressed ? 'translate(3px,3px)' : 'translate(0,0)',
+          transform: pressed ? 'translate(4px,4px)' : 'translate(0,0)',
           transition: 'transform 80ms ease-out',
         }}
       >
@@ -489,8 +489,8 @@ export default function SchedulePage() {
                       className="absolute inset-0 flex items-center justify-center select-none pointer-events-none"
                       style={{
                         fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-                        fontSize: '2.2rem',
-                        color: 'rgba(200, 60, 60, 0.35)',
+                        fontSize: '2.8rem',
+                        color: 'rgba(180, 40, 40, 0.55)',
                       }}
                       aria-hidden="true"
                     >
@@ -570,7 +570,7 @@ export default function SchedulePage() {
                   }
                   // 4+ → 2-column dense grid filling the tile
                   return (
-                    <div className="absolute inset-0 z-10 grid grid-cols-2 gap-0 justify-items-center content-center px-1 select-none pointer-events-none"
+                    <div className="absolute inset-0 z-10 grid grid-cols-2 gap-x-3 gap-y-0 justify-items-center content-center px-1 select-none pointer-events-none"
                       style={{ fontFamily: serif, fontSize: '1.4rem', lineHeight: '1.25', color: kanjiColor, textShadow: shadow }} aria-hidden="true">
                       {badges.map((m) => <span key={m} className="kanji-stamp">{MUSCLE_KANJI[m]}</span>)}
                     </div>
