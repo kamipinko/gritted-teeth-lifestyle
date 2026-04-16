@@ -299,7 +299,7 @@ export default function SchedulePage() {
 
   // ── Render ──────────────────────────────────────────────────────────────
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-gtl-void">
+    <main className="relative h-screen flex flex-col overflow-hidden bg-gtl-void">
       {/* Atmospherics */}
       <div className="absolute inset-0 gtl-noise" />
       <div
@@ -336,7 +336,7 @@ export default function SchedulePage() {
 
       {/* ── Compact header ──────────────────────────────────────────────── */}
       <nav
-        className="relative z-10 flex items-center gap-3 px-4 h-12 border-b border-gtl-edge/40"
+        className="relative z-10 flex items-center gap-3 px-4 h-12 border-b border-gtl-edge/40 shrink-0"
       >
         <RetreatButton />
         <MonthNavButton dir="prev" onClick={prevMonth} />
@@ -355,7 +355,7 @@ export default function SchedulePage() {
       </nav>
 
       {/* ── Calendar ────────────────────────────────────────────────────── */}
-      <section className="relative z-10 px-3 pt-3 pb-0">
+      <section className="relative z-10 px-3 pt-2 pb-0 flex-1 flex flex-col overflow-hidden">
         {/* Red slash divider */}
         <div
           className="h-[2px] bg-gtl-red mb-2"
@@ -377,9 +377,9 @@ export default function SchedulePage() {
         </div>
 
         {/* Day grid */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-1 flex-1">
           {cells.map((d, i) => {
-            if (d === null) return <div key={`pad-${i}`} className="min-h-16" />
+            if (d === null) return <div key={`pad-${i}`} />
 
             const key           = isoKey(d)
             const marked        = trainingDays.has(key)
@@ -397,7 +397,7 @@ export default function SchedulePage() {
                 onClick={() => tapDay(d)}
                 disabled={past}
                 className={`
-                  relative min-h-16 flex flex-col items-center justify-start pt-1 pb-1.5 gap-0.5
+                  relative flex flex-col items-center justify-start pt-1 pb-1.5 gap-0.5
                   border transition-colors duration-150
                   ${past ? 'opacity-25 cursor-not-allowed' : ''}
                   ${isActive
@@ -463,25 +463,15 @@ export default function SchedulePage() {
 
       </section>
 
-      {/* ── Bottom sheet ───────────────────────────────────────────────── */}
+      {/* ── Muscle grid ─────────────────────────────────────────────── */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-40 bg-gtl-void"
+        className="relative z-10 shrink-0 overflow-hidden transition-all duration-200 ease-out"
         style={{
-          transform: sheetOpen ? 'translateY(0)' : 'translateY(100%)',
-          transition: 'transform 280ms cubic-bezier(0.2, 0.8, 0.3, 1)',
-          borderTop: '2px solid #d4181f',
-          clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
-          height: '46vh',
-          minHeight: '350px',
-          boxShadow: '0 -20px 40px rgba(0,0,0,0.6)',
+          maxHeight: sheetOpen ? '300px' : '0px',
+          borderTop: sheetOpen ? '2px solid #d4181f' : '2px solid transparent',
         }}
-        aria-hidden={!sheetOpen}
       >
-        {/* Noise on sheet */}
-        <div className="absolute inset-0 gtl-noise opacity-40 pointer-events-none" />
-
-        <div className="relative h-full flex flex-col px-3 pt-1 pb-2">
-          {/* 2-col grid: 11 muscles + CARVE in slot 12 */}
+        <div className="px-3 pt-1 pb-1">
           <div className="grid grid-cols-2 grid-rows-6 gap-1">
             {SHEET_MUSCLES.map((m) => (
               <SheetMuscleButton
