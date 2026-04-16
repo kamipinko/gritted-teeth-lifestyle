@@ -161,19 +161,26 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
 
 function SheetCarveButton({ count, enabled, onFire, onHover }) {
   const [pressed, setPressed] = useState(false)
+  const [slashing, setSlashing] = useState(false)
+  const fire = () => {
+    if (!enabled || slashing) return
+    setSlashing(true)
+    setTimeout(() => onFire(), 280)
+  }
+  const dayLabel = count === 1 ? '1 DAY' : count > 1 ? `${count} DAYS` : '—'
   return (
     <button
       type="button"
       aria-label="Carve cycle"
       onMouseDown={() => enabled && setPressed(true)}
-      onMouseUp={() => { setPressed(false); if (enabled) onFire() }}
+      onMouseUp={() => { setPressed(false); fire() }}
       onMouseLeave={() => setPressed(false)}
       onMouseEnter={enabled ? onHover : undefined}
       disabled={!enabled}
       className={`relative ${enabled ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
       style={{
         transform: 'skewX(-2deg)',
-        animation: enabled ? 'carve-pulse 3s ease-in-out infinite' : 'none',
+        animation: enabled && !slashing ? 'carve-pulse 3s ease-in-out infinite' : 'none',
         borderRadius: '2px',
       }}
     >
@@ -190,43 +197,41 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
       />
       {/* Gold face */}
       <div
-        className="flex items-center justify-center gap-1.5 px-2 py-1"
+        className="relative overflow-hidden flex flex-col items-center justify-center px-2"
         style={{
           clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
           background: enabled ? '#e4b022' : '#2a2a30',
           transform: pressed ? 'translate(4px,4px)' : 'translate(0,0)',
           transition: 'transform 80ms ease-out',
+          height: '100%',
         }}
       >
-        <span
-          className="leading-none"
-          style={{
-            fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-            fontSize: '1rem',
-            fontWeight: 400,
-            color: enabled ? '#070708' : '#555',
-            transform: 'skewX(2deg)',
-          }}
-        >
-          刻
+        {/* Line 1: 刻 CARVE */}
+        <div className="flex items-center gap-1.5" style={{ transform: 'skewX(2deg)' }}>
+          <span className="leading-none"
+            style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '0.95rem', fontWeight: 400, color: enabled ? '#070708' : '#555' }}>
+            刻
+          </span>
+          <span className="font-display leading-none tracking-wide"
+            style={{ fontSize: '0.75rem', fontWeight: 900, color: enabled ? '#070708' : '#555' }}>
+            CARVE
+          </span>
+        </div>
+        {/* Line 2: N DAY(S) */}
+        <span className="font-mono leading-none mt-0.5"
+          style={{ fontSize: '8px', letterSpacing: '0.1em', color: enabled ? '#070708' : '#555', opacity: 0.6, transform: 'skewX(2deg)' }}>
+          {dayLabel}
         </span>
-        <span
-          className="font-display leading-none tracking-wide"
-          style={{
-            fontSize: '0.8rem',
-            fontWeight: 900,
-            color: enabled ? '#070708' : '#555',
-            transform: 'skewX(2deg)',
-          }}
-        >
-          CARVE
-        </span>
-        <span
-          className="font-mono text-[7px] tracking-[0.1em] uppercase leading-none"
-          style={{ color: enabled ? '#070708' : '#555', opacity: 0.7, transform: 'skewX(2deg)' }}
-        >
-          {count > 0 ? `${count}D` : '—'}
-        </span>
+        {/* Slash overlay */}
+        {slashing && (
+          <div
+            className="absolute inset-0 z-20 pointer-events-none"
+            style={{
+              background: 'linear-gradient(135deg, transparent 45%, #d4181f 48%, #d4181f 52%, transparent 55%)',
+              animation: 'carve-slash 250ms ease-out forwards',
+            }}
+          />
+        )}
       </div>
     </button>
   )
@@ -439,6 +444,11 @@ export default function SchedulePage() {
           100% { transform: scale(1.0); opacity: 1; }
         }
         .kanji-stamp { animation: kanji-stamp 150ms ease-out both; }
+        @keyframes carve-slash {
+          0%   { clip-path: inset(0 100% 0 0); opacity: 0; }
+          20%  { opacity: 1; }
+          100% { clip-path: inset(0 0 0 0); opacity: 1; }
+        }
         @keyframes carve-pulse {
           0%, 100% { box-shadow: 0 0 8px rgba(228,176,34,0.4); }
           50%      { box-shadow: 0 0 20px rgba(228,176,34,0.8), 0 0 40px rgba(228,176,34,0.3); }
