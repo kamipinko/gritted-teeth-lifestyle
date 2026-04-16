@@ -27,12 +27,12 @@ const DAY_SHORT  = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 /* Muscle order for the sheet — canonical order, kanji paired. */
 const SHEET_MUSCLES = [
   { id: 'chest',      kanji: '胸', label: 'CHEST' },
-  { id: 'shoulders',  kanji: '肩', label: 'SHOULDER' },
+  { id: 'shoulders',  kanji: '肩', label: 'SHOULDERS' },
   { id: 'back',       kanji: '背', label: 'BACK' },
   { id: 'forearms',   kanji: '腕', label: 'FOREARMS' },
-  { id: 'quads',      kanji: '腰', label: 'QUADS' },
+  { id: 'quads',      kanji: '腿', label: 'QUADS' },
   { id: 'hamstrings', kanji: '裏', label: 'HAMSTRINGS' },
-  { id: 'calves',     kanji: '脫', label: 'CALVES' },
+  { id: 'calves',     kanji: '脛', label: 'CALVES' },
   { id: 'biceps',     kanji: '二', label: 'BICEPS' },
   { id: 'triceps',    kanji: '三', label: 'TRICEPS' },
   { id: 'glutes',     kanji: '尻', label: 'GLUTES' },

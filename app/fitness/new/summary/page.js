@@ -367,6 +367,11 @@ export default function SummaryPage() {
 
   const plannedSessions = days.filter((iso) => (dailyPlan[iso] || []).length > 0).length
 
+  // Unique muscle groups locked across every scheduled day
+  const uniqueMuscles = new Set()
+  days.forEach((iso) => (dailyPlan[iso] || []).forEach((m) => uniqueMuscles.add(m)))
+  const targetsLocked = uniqueMuscles.size || targets.length
+
   const cols = days.length <= 5 ? days.length
              : days.length <= 10 ? Math.ceil(days.length / 2)
              : Math.ceil(days.length / 3)
@@ -478,7 +483,7 @@ export default function SummaryPage() {
             <div className="w-1 h-full min-h-[5rem] bg-gtl-red" style={{ transform: 'skewX(-12deg)' }} />
           </div>
 
-          <StatBlock number={targets.length}    label="TARGETS LOCKED" />
+          <StatBlock number={targetsLocked}     label="TARGETS LOCKED" />
 
           <div className="self-stretch flex items-center">
             <div className="w-1 h-full min-h-[5rem] bg-gtl-red" style={{ transform: 'skewX(-12deg)' }} />
