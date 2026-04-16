@@ -159,15 +159,34 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
   )
 }
 
+function CarveContent({ enabled }) {
+  const dayColor = enabled ? '#070708' : '#555'
+  return (
+    <>
+      <div className="flex items-center gap-1.5" style={{ transform: 'skewX(2deg)' }}>
+        <span className="leading-none"
+          style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '0.95rem', fontWeight: 400, color: dayColor }}>
+          刻
+        </span>
+        <span className="font-display leading-none tracking-wide"
+          style={{ fontSize: '0.75rem', fontWeight: 900, color: dayColor }}>
+          CARVE
+        </span>
+      </div>
+    </>
+  )
+}
+
 function SheetCarveButton({ count, enabled, onFire, onHover }) {
   const [pressed, setPressed] = useState(false)
-  const [slashing, setSlashing] = useState(false)
-  const fire = () => {
-    if (!enabled || slashing) return
-    setSlashing(true)
-    setTimeout(() => onFire(), 280)
-  }
+  const [splitting, setSplitting] = useState(false)
   const dayLabel = count === 1 ? '1 DAY' : count > 1 ? `${count} DAYS` : '—'
+  const fire = () => {
+    if (!enabled || splitting) return
+    setSplitting(true)
+    setTimeout(() => onFire(), 420)
+  }
+  const goldBg = enabled ? '#e4b022' : '#2a2a30'
   return (
     <button
       type="button"
@@ -180,59 +199,60 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
       className={`relative ${enabled ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
       style={{
         transform: 'skewX(-2deg)',
-        animation: enabled && !slashing ? 'carve-pulse 3s ease-in-out infinite' : 'none',
+        animation: enabled && !splitting ? 'carve-pulse 3s ease-in-out infinite' : 'none',
         borderRadius: '2px',
       }}
     >
-      {/* Shadow slab — absolute, no layout impact */}
-      <div
-        className="absolute inset-0 -z-10"
-        style={{
-          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
-          background: '#8a6612',
-          transform: pressed ? 'translate(0,0)' : 'translate(4px,4px)',
-          transition: 'transform 80ms ease-out',
-        }}
-        aria-hidden="true"
-      />
-      {/* Gold face */}
-      <div
-        className="relative overflow-hidden flex flex-col items-center justify-center px-2"
-        style={{
-          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
-          background: enabled ? '#e4b022' : '#2a2a30',
-          transform: pressed ? 'translate(4px,4px)' : 'translate(0,0)',
-          transition: 'transform 80ms ease-out',
-          height: '100%',
-        }}
-      >
-        {/* Line 1: 刻 CARVE */}
-        <div className="flex items-center gap-1.5" style={{ transform: 'skewX(2deg)' }}>
-          <span className="leading-none"
-            style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '0.95rem', fontWeight: 400, color: enabled ? '#070708' : '#555' }}>
-            刻
-          </span>
-          <span className="font-display leading-none tracking-wide"
-            style={{ fontSize: '0.75rem', fontWeight: 900, color: enabled ? '#070708' : '#555' }}>
-            CARVE
+      {/* Shadow slab */}
+      <div className="absolute inset-0 -z-10"
+        style={{ clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)', background: '#8a6612',
+          transform: pressed || splitting ? 'translate(0,0)' : 'translate(4px,4px)', transition: 'transform 80ms ease-out' }}
+        aria-hidden="true" />
+
+      {/* Normal face — hidden during split */}
+      {!splitting && (
+        <div className="flex flex-col items-center justify-center px-2" style={{ clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)', background: goldBg,
+          transform: pressed ? 'translate(4px,4px)' : 'translate(0,0)', transition: 'transform 80ms ease-out', height: '100%' }}>
+          <CarveContent enabled={enabled} />
+          <span className="font-mono leading-none mt-0.5"
+            style={{ fontSize: '8px', letterSpacing: '0.1em', color: enabled ? '#070708' : '#555', opacity: 0.6, transform: 'skewX(2deg)' }}>
+            {dayLabel}
           </span>
         </div>
-        {/* Line 2: N DAY(S) */}
-        <span className="font-mono leading-none mt-0.5"
-          style={{ fontSize: '8px', letterSpacing: '0.1em', color: enabled ? '#070708' : '#555', opacity: 0.6, transform: 'skewX(2deg)' }}>
-          {dayLabel}
-        </span>
-        {/* Slash overlay */}
-        {slashing && (
-          <div
-            className="absolute inset-0 z-20 pointer-events-none"
+      )}
+
+      {/* Split halves — shown during split animation */}
+      {splitting && (
+        <>
+          {/* Red glow line in the gap */}
+          <div className="absolute inset-0 z-0" style={{ background: '#d4181f', filter: 'blur(4px)', opacity: 0.8 }} />
+          {/* Top-left half */}
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-2"
             style={{
-              background: 'linear-gradient(135deg, transparent 45%, #d4181f 48%, #d4181f 52%, transparent 55%)',
-              animation: 'carve-slash 250ms ease-out forwards',
-            }}
-          />
-        )}
-      </div>
+              clipPath: 'polygon(0 0, 100% 0, 0 100%)',
+              background: goldBg,
+              transform: 'translate(-12px, -8px)',
+              transition: 'transform 300ms ease-out',
+            }}>
+            <CarveContent enabled={enabled} />
+          </div>
+          {/* Bottom-right half */}
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-2"
+            style={{
+              clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
+              background: goldBg,
+              transform: 'translate(12px, 8px)',
+              transition: 'transform 300ms ease-out',
+            }}>
+            <CarveContent enabled={enabled} />
+          </div>
+          {/* Invisible spacer to maintain button height */}
+          <div className="invisible flex flex-col items-center justify-center px-2" style={{ height: '100%' }}>
+            <CarveContent enabled={enabled} />
+            <span className="font-mono leading-none mt-0.5" style={{ fontSize: '8px' }}>{dayLabel}</span>
+          </div>
+        </>
+      )}
     </button>
   )
 }
@@ -444,11 +464,6 @@ export default function SchedulePage() {
           100% { transform: scale(1.0); opacity: 1; }
         }
         .kanji-stamp { animation: kanji-stamp 150ms ease-out both; }
-        @keyframes carve-slash {
-          0%   { clip-path: inset(0 100% 0 0); opacity: 0; }
-          20%  { opacity: 1; }
-          100% { clip-path: inset(0 0 0 0); opacity: 1; }
-        }
         @keyframes carve-pulse {
           0%, 100% { box-shadow: 0 0 8px rgba(228,176,34,0.4); }
           50%      { box-shadow: 0 0 20px rgba(228,176,34,0.8), 0 0 40px rgba(228,176,34,0.3); }
