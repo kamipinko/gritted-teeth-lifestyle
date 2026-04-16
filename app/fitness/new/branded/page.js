@@ -179,80 +179,109 @@ function CarveContent({ enabled }) {
 
 function SheetCarveButton({ count, enabled, onFire, onHover }) {
   const [pressed, setPressed] = useState(false)
-  const [splitting, setSplitting] = useState(false)
+  const [phase, setPhase] = useState(0) // 0=idle, 1=cut, 2=separate, 3=fade
+  const mountedRef = useRef(true)
   const dayLabel = count === 1 ? '1 DAY' : count > 1 ? `${count} DAYS` : '—'
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
+
   const fire = () => {
-    if (!enabled || splitting) return
-    setSplitting(true)
-    setTimeout(() => onFire(), 420)
+    if (!enabled || phase > 0) return
+    setPhase(1) // Phase 1: the cut
+    setTimeout(() => { if (mountedRef.current) setPhase(2) }, 800)   // Phase 2: separate
+    setTimeout(() => { if (mountedRef.current) setPhase(3) }, 1400)  // Phase 3: fade
+    setTimeout(() => { if (mountedRef.current) onFire() }, 1800)     // Navigate
   }
+
   const goldBg = enabled ? '#e4b022' : '#2a2a30'
+  const active = phase > 0
+
   return (
     <button
       type="button"
       aria-label="Carve cycle"
-      onMouseDown={() => enabled && setPressed(true)}
+      onMouseDown={() => enabled && !active && setPressed(true)}
       onMouseUp={() => { setPressed(false); fire() }}
       onMouseLeave={() => setPressed(false)}
-      onMouseEnter={enabled ? onHover : undefined}
+      onMouseEnter={enabled && !active ? onHover : undefined}
       disabled={!enabled}
       className={`relative ${enabled ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
       style={{
         transform: 'skewX(-2deg)',
-        animation: enabled && !splitting ? 'carve-pulse 3s ease-in-out infinite' : 'none',
+        animation: enabled && !active ? 'carve-pulse 3s ease-in-out infinite' : 'none',
         borderRadius: '2px',
       }}
     >
       {/* Shadow slab */}
       <div className="absolute inset-0 -z-10"
         style={{ clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)', background: '#8a6612',
-          transform: pressed || splitting ? 'translate(0,0)' : 'translate(4px,4px)', transition: 'transform 80ms ease-out' }}
+          transform: pressed || active ? 'translate(0,0)' : 'translate(4px,4px)', transition: 'transform 80ms ease-out' }}
         aria-hidden="true" />
 
-      {/* Normal face — hidden during split */}
-      {!splitting && (
-        <div className="flex flex-col items-center justify-center px-2" style={{ clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)', background: goldBg,
-          transform: pressed ? 'translate(4px,4px)' : 'translate(0,0)', transition: 'transform 80ms ease-out', height: '100%' }}>
-          <CarveContent enabled={enabled} />
+      {/* Red glow in the gap — visible during phase 2+ */}
+      {phase >= 2 && (
+        <div className="absolute inset-0 z-0" style={{
+          background: '#d4181f', filter: 'blur(6px)',
+          opacity: phase >= 3 ? 0 : 0.9,
+          transition: 'opacity 400ms ease-out',
+        }} />
+      )}
+
+      {/* Top-left half */}
+      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-2"
+        style={{
+          clipPath: phase >= 1 ? 'polygon(0 0, 100% 0, 0 100%)' : 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+          background: goldBg,
+          transform: phase >= 2 ? 'translate(-3px, -2px) rotate(1.5deg)' : pressed ? 'translate(4px,4px)' : 'translate(0,0)',
+          opacity: phase >= 3 ? 0 : 1,
+          transition: phase >= 2 ? 'transform 600ms ease-out, opacity 400ms 200ms ease-out' : 'transform 80ms ease-out',
+        }}>
+        <CarveContent enabled={enabled} />
+        {phase < 1 && (
           <span className="font-mono leading-none mt-0.5"
             style={{ fontSize: '8px', letterSpacing: '0.1em', color: enabled ? '#070708' : '#555', opacity: 0.6, transform: 'skewX(2deg)' }}>
             {dayLabel}
           </span>
+        )}
+      </div>
+
+      {/* Bottom-right half — only during split */}
+      {phase >= 1 && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-2"
+          style={{
+            clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
+            background: goldBg,
+            transform: phase >= 2 ? 'translate(16px, 12px) rotate(-4deg) scale(0.97)' : 'translate(0,0)',
+            opacity: phase >= 3 ? 0 : 1,
+            transition: phase >= 2 ? 'transform 600ms 80ms ease-out, opacity 400ms 200ms ease-out' : 'none',
+          }}>
+          <CarveContent enabled={enabled} />
         </div>
       )}
 
-      {/* Split halves — shown during split animation */}
-      {splitting && (
-        <>
-          {/* Red glow line in the gap */}
-          <div className="absolute inset-0 z-0" style={{ background: '#d4181f', filter: 'blur(4px)', opacity: 0.8 }} />
-          {/* Top-left half */}
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-2"
-            style={{
-              clipPath: 'polygon(0 0, 100% 0, 0 100%)',
-              background: goldBg,
-              transform: 'translate(-12px, -8px)',
-              transition: 'transform 300ms ease-out',
-            }}>
-            <CarveContent enabled={enabled} />
-          </div>
-          {/* Bottom-right half */}
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-2"
-            style={{
-              clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
-              background: goldBg,
-              transform: 'translate(12px, 8px)',
-              transition: 'transform 300ms ease-out',
-            }}>
-            <CarveContent enabled={enabled} />
-          </div>
-          {/* Invisible spacer to maintain button height */}
-          <div className="invisible flex flex-col items-center justify-center px-2" style={{ height: '100%' }}>
-            <CarveContent enabled={enabled} />
-            <span className="font-mono leading-none mt-0.5" style={{ fontSize: '8px' }}>{dayLabel}</span>
-          </div>
-        </>
+      {/* Blade line — phase 1 only */}
+      {phase >= 1 && phase < 2 && (
+        <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+          <div style={{
+            position: 'absolute', top: '-10%', left: '-10%',
+            width: '140%', height: '3px',
+            background: 'linear-gradient(90deg, transparent 0%, #ff2a36 30%, #ffffff 50%, #ff2a36 70%, transparent 100%)',
+            transformOrigin: 'left center',
+            transform: 'rotate(38deg)',
+            animation: 'carve-blade 800ms linear forwards',
+            boxShadow: '0 0 8px #ff2a36, 0 0 16px #d4181f',
+          }} />
+        </div>
       )}
+
+      {/* Invisible spacer */}
+      <div className="invisible flex flex-col items-center justify-center px-2" style={{ height: '100%' }}>
+        <CarveContent enabled={enabled} />
+        <span className="font-mono leading-none mt-0.5" style={{ fontSize: '8px' }}>{dayLabel}</span>
+      </div>
     </button>
   )
 }
@@ -464,6 +493,10 @@ export default function SchedulePage() {
           100% { transform: scale(1.0); opacity: 1; }
         }
         .kanji-stamp { animation: kanji-stamp 150ms ease-out both; }
+        @keyframes carve-blade {
+          0%   { transform: rotate(38deg) translateX(-100%); }
+          100% { transform: rotate(38deg) translateX(30%); }
+        }
         @keyframes carve-pulse {
           0%, 100% { box-shadow: 0 0 8px rgba(228,176,34,0.4); }
           50%      { box-shadow: 0 0 20px rgba(228,176,34,0.8), 0 0 40px rgba(228,176,34,0.3); }
