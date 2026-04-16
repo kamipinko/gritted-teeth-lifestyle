@@ -219,10 +219,10 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         borderRadius: '2px',
       }}
     >
-      {/* Shadow slab */}
+      {/* Shadow slab — static offset, no press reaction */}
       <div className="absolute inset-0 -z-10"
         style={{ clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)', background: '#8a6612',
-          transform: active ? 'translate(0,0)' : 'translate(4px,4px)', transition: 'transform 80ms ease-out' }}
+          transform: 'translate(4px,4px)' }}
         aria-hidden="true" />
 
       {/* Red glow between halves */}
@@ -237,15 +237,13 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
       {/* Top-left half */}
       <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-2"
         style={{
-          clipPath: phase >= 1 ? 'polygon(0 0, 100% 0, 0 100%)' : 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+          clipPath: phase >= 2 ? 'polygon(0 0, 100% 0, 0 100%)' : 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
           background: goldBg,
-          transform: phase >= 2
-            ? 'translate(-2px,-1px) rotate(0.5deg)'
-            : 'translate(0,0)',
+          transform: phase >= 2 ? 'translate(-2px,-1px) rotate(0.5deg)' : 'translate(0,0)',
           opacity: phase >= 3 ? 0 : 1,
-          transition: phase >= 1
-            ? 'transform 800ms cubic-bezier(0.25,0,0.5,1), opacity 300ms ease-out'
-            : 'transform 80ms ease-out',
+          transition: phase >= 2
+            ? 'transform 800ms cubic-bezier(0.25,0,0.5,1), clip-path 0ms, opacity 300ms ease-out'
+            : 'none',
         }}>
         <CarveContent enabled={enabled} />
         {phase < 1 && (
@@ -257,7 +255,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
       </div>
 
       {/* Bottom-right half */}
-      {phase >= 1 && (
+      {phase >= 2 && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-2"
           style={{
             clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
