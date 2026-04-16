@@ -127,45 +127,33 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
   )
 }
 
-/* CARVE stamp used inside the sheet top strip */
+/* CARVE button sized to fill the 12th grid slot next to ABS */
 function SheetCarveButton({ enabled, onFire, onHover }) {
-  const [pressed, setPressed] = useState(false)
-  const fire = () => { if (enabled) onFire() }
   return (
     <button
       type="button"
       aria-label="Carve cycle"
-      onMouseDown={() => enabled && setPressed(true)}
-      onMouseUp={() => { setPressed(false); fire() }}
-      onMouseLeave={() => setPressed(false)}
+      onClick={() => { if (enabled) onFire() }}
       onMouseEnter={enabled ? onHover : undefined}
-      onClick={fire}
       disabled={!enabled}
-      className={`relative shrink-0 select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-red focus-visible:outline-offset-4
-        ${enabled ? 'cursor-pointer' : 'cursor-not-allowed opacity-40'}`}
-      style={{ transform: 'rotate(-1deg)', transformOrigin: 'center center' }}
+      className={`relative flex flex-col items-center justify-center gap-0.5 py-2.5 border transition-colors duration-150
+        ${enabled
+          ? 'bg-gtl-red border-gtl-red-bright shadow-red-glow cursor-pointer hover:bg-gtl-red-bright'
+          : 'bg-gtl-ink border-gtl-edge cursor-not-allowed opacity-40'}`}
+      style={{ clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)' }}
     >
-      <div
-        className="absolute inset-0 bg-gtl-red-deep"
-        style={{
-          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
-          transform: pressed ? 'translate(0,0)' : 'translate(4px,4px)',
-          transition: 'transform 80ms ease-out',
-        }}
-        aria-hidden="true"
-      />
-      <div
-        className="relative px-5 py-2.5 flex items-center gap-2"
-        style={{
-          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
-          background: pressed ? '#ff2a36' : '#d4181f',
-          transform: pressed ? 'translate(4px,4px)' : 'translate(0,0)',
-          transition: 'transform 80ms ease-out, background 80ms ease-out',
-        }}
+      <span
+        className={`font-display leading-none ${enabled ? 'text-gtl-paper' : 'text-gtl-smoke'}`}
+        style={{ fontSize: '1.3rem', textShadow: enabled ? '2px 2px 0 #8a0e13' : 'none' }}
       >
-        <span className="font-display text-xl text-gtl-paper leading-none">CARVE</span>
-        <span className="font-display text-lg text-gtl-paper/70 leading-none">▸</span>
-      </div>
+        CARVE ▸
+      </span>
+      <span
+        className={`font-mono text-[8px] tracking-[0.2em] uppercase leading-none mt-0.5
+          ${enabled ? 'text-gtl-paper/80' : 'text-gtl-ash'}`}
+      >
+        {enabled ? 'READY' : 'ASSIGN ALL DAYS'}
+      </span>
     </button>
   )
 }
@@ -254,7 +242,8 @@ export default function SchedulePage() {
     }
   }
 
-  // Toggle a muscle for the active day only
+  // Toggle a muscle for the active day. If the day isn't marked yet,
+  // auto-mark it so battleday + assignment happen in a single tap.
   const toggleMuscle = (muscleId) => {
     if (!activeDay) return
     play('option-select')
@@ -266,25 +255,47 @@ export default function SchedulePage() {
       next[activeDay] = s
       return next
     })
+    if (!trainingDays.has(activeDay)) {
+      setTrainingDays((prev) => { const n = new Set(prev); n.add(activeDay); return n })
+    }
   }
 
-  const prevMonth = () =>
+  const prevMonth = () => {
     setDisplayDate((prev) => { const d = new Date(prev); d.setMonth(d.getMonth() - 1); return d })
-  const nextMonth = () =>
+    setActiveDay(null)
+  }
+  const nextMonth = () => {
     setDisplayDate((prev) => { const d = new Date(prev); d.setMonth(d.getMonth() + 1); return d })
+    setActiveDay(null)
+  }
 
   const trainingDayCount = trainingDays.size
   const sheetOpen        = activeDay !== null
 
-  // Sorted list of all marked days (for ◀ ▶ cycling)
+  // Sorted list of all marked days (kept for other consumers)
   const sortedMarked = [...trainingDays].sort()
-  const activeIndex  = activeDay ? sortedMarked.indexOf(activeDay) : -1
+
+  // Arrow navigation: step through every day of the displayed month.
+  // Skip past days (can't schedule in the past). Disable at month edges.
+  const todayFlat = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const activeDate = activeDay ? parseDate(activeDay) : null
+
+  const neighbourIso = (dir) => {
+    if (!activeDate) return null
+    const nxt = new Date(activeDate)
+    nxt.setDate(activeDate.getDate() + dir)
+    if (nxt.getMonth() !== month || nxt.getFullYear() !== year) return null
+    if (nxt < todayFlat) return null
+    return `${nxt.getFullYear()}-${String(nxt.getMonth()+1).padStart(2,'0')}-${String(nxt.getDate()).padStart(2,'0')}`
+  }
+  const prevIso = neighbourIso(-1)
+  const nextIso = neighbourIso(1)
 
   const cycleDay = (dir) => {
-    if (sortedMarked.length === 0) return
+    const target = dir < 0 ? prevIso : nextIso
+    if (!target) return
     play('button-hover')
-    const next = (activeIndex + dir + sortedMarked.length) % sortedMarked.length
-    setActiveDay(sortedMarked[next])
+    setActiveDay(target)
   }
 
   const closeSheet = () => {
@@ -408,7 +419,7 @@ export default function SchedulePage() {
         {/* Day grid */}
         <div className="grid grid-cols-7 gap-1">
           {cells.map((d, i) => {
-            if (d === null) return <div key={`pad-${i}`} className="h-16" />
+            if (d === null) return <div key={`pad-${i}`} className="min-h-16" />
 
             const key           = isoKey(d)
             const marked        = trainingDays.has(key)
@@ -426,7 +437,7 @@ export default function SchedulePage() {
                 onClick={() => tapDay(d)}
                 disabled={past}
                 className={`
-                  relative h-16 flex flex-col items-center justify-start pt-1 gap-0.5
+                  relative min-h-16 flex flex-col items-center justify-start pt-1 pb-1.5 gap-0.5
                   border transition-colors duration-150
                   ${past ? 'opacity-25 cursor-not-allowed' : ''}
                   ${isActive
@@ -457,14 +468,15 @@ export default function SchedulePage() {
                   <span className="font-mono text-[7px] tracking-[0.2em] uppercase text-gtl-gold leading-none">TODAY</span>
                 )}
 
-                {/* Kanji badges */}
+                {/* Kanji badges — stacked vertically, one per line */}
                 {visibleBadges.length > 0 && (
                   <div
-                    className="flex items-center justify-center gap-0.5 leading-none select-none"
+                    className="flex flex-col items-center leading-none select-none mt-0.5"
                     style={{
                       fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-                      fontSize: '10px',
-                      color: isActive ? 'rgba(245,240,232,0.9)' : 'rgba(212,24,31,0.85)',
+                      fontSize: '11px',
+                      lineHeight: '1.15',
+                      color: isActive ? 'rgba(245,240,232,0.95)' : 'rgba(212,24,31,0.85)',
                     }}
                     aria-hidden="true"
                   >
@@ -472,7 +484,8 @@ export default function SchedulePage() {
                       <span key={m}>{MUSCLE_KANJI[m]}</span>
                     ))}
                     {overflow > 0 && (
-                      <span className="font-mono text-[8px] tracking-normal ml-0.5">
+                      <span className="font-mono text-[8px] tracking-normal mt-0.5"
+                        style={{ color: isActive ? 'rgba(245,240,232,0.75)' : 'rgba(212,24,31,0.7)' }}>
                         +{overflow}
                       </span>
                     )}
@@ -481,7 +494,7 @@ export default function SchedulePage() {
 
                 {/* Active indicator when no muscles yet */}
                 {isActive && badges.length === 0 && (
-                  <span className="font-display text-[10px] text-gtl-paper/70 leading-none -rotate-12" aria-hidden="true">✕</span>
+                  <span className="font-display text-[10px] text-gtl-paper/70 leading-none -rotate-12 mt-0.5" aria-hidden="true">✕</span>
                 )}
               </button>
             )
@@ -510,8 +523,8 @@ export default function SchedulePage() {
           transition: 'transform 280ms cubic-bezier(0.2, 0.8, 0.3, 1)',
           borderTop: '2px solid #d4181f',
           clipPath: 'polygon(0% 6%, 3% 0%, 100% 0%, 100% 100%, 0% 100%)',
-          height: '42vh',
-          minHeight: '320px',
+          height: '60vh',
+          minHeight: '500px',
           boxShadow: '0 -20px 40px rgba(0,0,0,0.6)',
         }}
         aria-hidden={!sheetOpen}
@@ -519,17 +532,16 @@ export default function SchedulePage() {
         {/* Noise on sheet */}
         <div className="absolute inset-0 gtl-noise opacity-40 pointer-events-none" />
 
-        <div className="relative h-full flex flex-col px-4 pt-4 pb-4">
-          {/* Top strip — day switcher + CARVE */}
+        <div className="relative h-full flex flex-col px-4 pt-3 pb-4">
+          {/* Top strip — ◀ DAY ▶  ·  N LOCKED  ·  ✕ */}
           <div className="flex items-center gap-3 mb-3">
-            {/* Day switcher */}
             <div className="flex-1 min-w-0 flex items-center gap-1 bg-gtl-ink border border-gtl-edge"
               style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)' }}
             >
               <button
                 type="button"
                 onClick={() => cycleDay(-1)}
-                disabled={sortedMarked.length < 2}
+                disabled={!prevIso}
                 className="shrink-0 px-3 py-2 font-display text-base leading-none text-gtl-red disabled:text-gtl-edge"
                 aria-label="Previous day"
               >
@@ -540,13 +552,13 @@ export default function SchedulePage() {
                   {activeDayLabel}
                 </div>
                 <div className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-ash mt-0.5">
-                  {activeIndex + 1} / {sortedMarked.length}
+                  {activeMuscles.size} LOCKED
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => cycleDay(1)}
-                disabled={sortedMarked.length < 2}
+                disabled={!nextIso}
                 className="shrink-0 px-3 py-2 font-display text-base leading-none text-gtl-red disabled:text-gtl-edge"
                 aria-label="Next day"
               >
@@ -554,45 +566,32 @@ export default function SchedulePage() {
               </button>
             </div>
 
-            {/* CARVE */}
-            <SheetCarveButton
-              enabled={allAssigned}
-              onFire={handleCarve}
-              onHover={() => play('button-hover')}
-            />
-
-            {/* Close */}
             <button
               type="button"
               onClick={closeSheet}
-              className="shrink-0 font-mono text-[10px] text-gtl-ash border border-gtl-edge px-2 py-1.5 hover:text-gtl-red hover:border-gtl-red transition-colors"
+              className="shrink-0 font-mono text-[10px] text-gtl-ash border border-gtl-edge px-2.5 py-2 hover:text-gtl-red hover:border-gtl-red transition-colors"
               aria-label="Close sheet"
             >
               ✕
             </button>
           </div>
 
-          {/* Active day hint */}
-          <div className="font-mono text-[8px] tracking-[0.35em] uppercase text-gtl-red/70 mb-2">
-            ASSIGN MUSCLES FOR {activeDayLabel}
-            {activeMuscles.size > 0 && (
-              <span className="text-gtl-ash ml-2">· {activeMuscles.size} LOCKED</span>
-            )}
-          </div>
-
-          {/* 2-col muscle grid — scroll if needed */}
-          <div className="flex-1 overflow-y-auto -mx-1 px-1">
-            <div className="grid grid-cols-2 gap-2">
-              {SHEET_MUSCLES.map((m) => (
-                <SheetMuscleButton
-                  key={m.id}
-                  kanji={m.kanji}
-                  label={m.label}
-                  active={activeMuscles.has(m.id)}
-                  onClick={() => toggleMuscle(m.id)}
-                />
-              ))}
-            </div>
+          {/* 2-col grid: 11 muscles + CARVE in slot 12 */}
+          <div className="grid grid-cols-2 gap-2 flex-1">
+            {SHEET_MUSCLES.map((m) => (
+              <SheetMuscleButton
+                key={m.id}
+                kanji={m.kanji}
+                label={m.label}
+                active={activeMuscles.has(m.id)}
+                onClick={() => toggleMuscle(m.id)}
+              />
+            ))}
+            <SheetCarveButton
+              enabled={allAssigned}
+              onFire={handleCarve}
+              onHover={() => play('button-hover')}
+            />
           </div>
         </div>
       </div>
