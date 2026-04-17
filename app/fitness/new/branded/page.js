@@ -196,9 +196,9 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
   const fire = () => {
     if (!enabled || phase > 0) return
     setPhase(1) // slash line
-    setTimeout(() => { if (mountedRef.current) setPhase(2) }, 400)   // render halves
-    setTimeout(() => { if (mountedRef.current) setPhase(4) }, 900)   // fade
-    setTimeout(() => { if (mountedRef.current) onFire() }, 1200)     // navigate
+    setTimeout(() => { if (mountedRef.current) setPhase(2) }, 300)   // render halves
+    setTimeout(() => { if (mountedRef.current) setPhase(4) }, 675)   // fade
+    setTimeout(() => { if (mountedRef.current) onFire() }, 900)      // navigate
   }
 
   const goldBg = enabled ? '#e4b022' : '#2a2a30'
@@ -239,7 +239,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
           transform: phase >= 3 ? 'translate(-2px,-1px) rotate(0.5deg)' : 'none',
           opacity: phase >= 4 ? 0 : 1,
           transition: phase >= 3
-            ? 'transform 500ms cubic-bezier(0.25,0,0.5,1), opacity 300ms ease-out'
+            ? 'transform 375ms cubic-bezier(0.25,0,0.5,1), opacity 225ms ease-out'
             : 'none',
         }}>
         <CarveContent enabled={enabled} />
@@ -260,7 +260,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
             transform: phase >= 3 ? 'translate(20px,6px) rotate(-1.5deg) scale(0.98)' : 'none',
             opacity: phase >= 4 ? 0 : 1,
             transition: phase >= 3
-              ? 'transform 500ms 50ms cubic-bezier(0.25,0,0.5,1), opacity 300ms ease-out'
+              ? 'transform 375ms 50ms cubic-bezier(0.25,0,0.5,1), opacity 225ms ease-out'
               : 'none',
           }}>
           <CarveContent enabled={enabled} />
@@ -275,7 +275,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
           <div style={{
             position: 'absolute', inset: 0,
             background: 'linear-gradient(to bottom right, transparent calc(50% - 2px), #ff2a36 calc(50% - 1px), #ffffff 50%, #ff2a36 calc(50% + 1px), transparent calc(50% + 2px))',
-            animation: 'carve-blade 400ms linear forwards',
+            animation: 'carve-blade 300ms linear forwards',
             boxShadow: '0 0 8px rgba(255,42,54,0.6)',
           }} />
         </div>
