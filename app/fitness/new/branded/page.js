@@ -212,10 +212,11 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
       onClick={fire}
       onMouseEnter={enabled && !active ? onHover : undefined}
       disabled={!enabled}
-      className={`relative overflow-hidden ${enabled ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
+      className={`relative ${enabled ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
       style={{
         transform: 'skewX(-2deg)',
-        clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+        clipPath: slicing ? 'none' : 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+        overflow: slicing ? 'visible' : 'hidden',
         background: 'transparent',
         border: 'none',
         animation: enabled && !active ? 'carve-pulse 3s ease-in-out infinite' : 'none',
@@ -233,7 +234,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
       )}
 
       {/* Gold face — full during idle + slash, splits at phase 2+ */}
-      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-2"
+      <div className={`absolute inset-0 flex flex-col items-center justify-center px-2 ${slicing ? 'z-50' : 'z-10'}`}
         style={{
           clipPath: phase >= 3 ? 'polygon(0 0, 100% 0, 0 100%)' : undefined,
           background: goldBg,
@@ -254,7 +255,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
 
       {/* Bottom-right half */}
       {phase >= 2 && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-2"
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center px-2"
           style={{
             clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
             background: goldBg,
@@ -270,7 +271,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
 
       {/* Slash line — sweeps along the split diagonal (top-right to bottom-left) */}
       {phase >= 1 && phase < 2 && (
-        <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 z-50 pointer-events-none">
           {/* Line sits on the diagonal from (100%,0) to (0,100%).
               We use a gradient background on the full area to draw the line. */}
           <div style={{
@@ -709,7 +710,7 @@ export default function SchedulePage() {
         {/* Muscle grid — slides in when days selected */}
         {sheetOpen && (
           <div className="px-3 pt-1 pb-1">
-            <div className="grid grid-cols-2 grid-rows-6 gap-1">
+            <div className="grid grid-cols-2 grid-rows-6 gap-1" style={{ overflow: 'visible' }}>
               {SHEET_MUSCLES.map((m) => (
                 <SheetMuscleButton
                   key={m.id}
