@@ -242,7 +242,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
           transform: phase >= 3 ? 'translate(-32px,-20px) rotate(0.5deg)' : 'none',
           opacity: phase >= 3 ? 0 : 1,
           transition: phase >= 3
-            ? 'transform 200ms cubic-bezier(0.4,0,1,1), opacity 500ms 280ms ease-out'
+            ? 'transform 780ms cubic-bezier(0.4,0,1,1), opacity 500ms 280ms ease-out'
             : 'none',
         }}>
         <CarveContent enabled={enabled} />
@@ -263,7 +263,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
             transform: phase >= 3 ? 'translate(130px,44px) rotate(-1.5deg) scale(0.98)' : 'none',
             opacity: phase >= 3 ? 0 : 1,
             transition: phase >= 3
-              ? 'transform 200ms 50ms cubic-bezier(0.4,0,1,1), opacity 500ms 330ms ease-out'
+              ? 'transform 830ms 50ms cubic-bezier(0.4,0,1,1), opacity 500ms 330ms ease-out'
               : 'none',
           }}>
           <CarveContent enabled={enabled} />
