@@ -210,9 +210,12 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
       onClick={fire}
       onMouseEnter={enabled && !slicing ? onHover : undefined}
       disabled={!enabled}
-      className={`relative ${enabled ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
+      className={`relative overflow-hidden ${enabled ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
       style={{
         transform: 'skewX(-2deg)',
+        clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+        background: 'transparent',
+        border: 'none',
         animation: enabled && !slicing ? 'carve-pulse 3s ease-in-out infinite' : 'none',
         WebkitTapHighlightColor: 'transparent',
         outline: 'none',
