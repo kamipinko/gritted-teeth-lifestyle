@@ -239,7 +239,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         style={{
           clipPath: phase >= 3 ? 'polygon(0 0, 100% 0, 0 100%)' : undefined,
           background: goldBg,
-          transform: phase >= 3 ? 'translate(-16px,-10px) rotate(0.5deg)' : 'none',
+          transform: phase >= 3 ? 'translate(-32px,-20px) rotate(0.5deg)' : 'none',
           opacity: phase >= 3 ? 0 : 1,
           transition: phase >= 3
             ? 'transform 200ms cubic-bezier(0.4,0,1,1), opacity 500ms 280ms ease-out'
@@ -260,7 +260,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
           style={{
             clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
             background: goldBg,
-            transform: phase >= 3 ? 'translate(65px,22px) rotate(-1.5deg) scale(0.98)' : 'none',
+            transform: phase >= 3 ? 'translate(130px,44px) rotate(-1.5deg) scale(0.98)' : 'none',
             opacity: phase >= 3 ? 0 : 1,
             transition: phase >= 3
               ? 'transform 200ms 50ms cubic-bezier(0.4,0,1,1), opacity 500ms 330ms ease-out'
