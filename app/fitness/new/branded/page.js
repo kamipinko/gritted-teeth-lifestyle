@@ -217,12 +217,15 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         transform: 'skewX(-2deg)',
         animation: enabled && !active ? 'carve-pulse 3s ease-in-out infinite' : 'none',
         borderRadius: '2px',
+        transition: 'none',
+        WebkitTapHighlightColor: 'transparent',
+        outline: 'none',
       }}
     >
       {/* Shadow slab — static offset, no press reaction */}
       <div className="absolute inset-0 -z-10"
         style={{ clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)', background: '#8a6612',
-          transform: 'translate(4px,4px)' }}
+          transform: 'translate(4px,4px)', transition: 'none' }}
         aria-hidden="true" />
 
       {/* Red glow between halves */}
@@ -230,7 +233,6 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         <div className="absolute inset-0 z-0" style={{
           background: '#d4181f', filter: 'blur(6px)',
           opacity: phase >= 3 ? 0 : 0.9,
-          transition: 'opacity 400ms ease-out',
         }} />
       )}
 
