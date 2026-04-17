@@ -198,7 +198,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
     setPhase(1) // slash line
     setTimeout(() => { if (mountedRef.current) setPhase(2) }, 300)   // render halves
     // No separate fade phase — opacity fades during separation via transition delay
-    setTimeout(() => { if (mountedRef.current) onFire() }, 900)      // navigate
+    setTimeout(() => { if (mountedRef.current) onFire() }, 950)      // navigate
   }
 
   const goldBg = enabled ? '#e4b022' : '#2a2a30'
@@ -237,10 +237,10 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         style={{
           clipPath: phase >= 3 ? 'polygon(0 0, 100% 0, 0 100%)' : undefined,
           background: goldBg,
-          transform: phase >= 3 ? 'translate(-2px,-1px) rotate(0.5deg)' : 'none',
+          transform: phase >= 3 ? 'translate(-3px,-1.5px) rotate(0.5deg)' : 'none',
           opacity: phase >= 3 ? 0 : 1,
           transition: phase >= 3
-            ? 'transform 375ms cubic-bezier(0.25,0,0.5,1), opacity 135ms 240ms ease-out'
+            ? 'transform 525ms cubic-bezier(0.25,0,0.5,1), opacity 185ms 340ms ease-out'
             : 'none',
         }}>
         <CarveContent enabled={enabled} />
@@ -258,10 +258,10 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
           style={{
             clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
             background: goldBg,
-            transform: phase >= 3 ? 'translate(20px,6px) rotate(-1.5deg) scale(0.98)' : 'none',
+            transform: phase >= 3 ? 'translate(28px,9px) rotate(-1.5deg) scale(0.98)' : 'none',
             opacity: phase >= 3 ? 0 : 1,
             transition: phase >= 3
-              ? 'transform 375ms 50ms cubic-bezier(0.25,0,0.5,1), opacity 135ms 290ms ease-out'
+              ? 'transform 525ms 50ms cubic-bezier(0.25,0,0.5,1), opacity 185ms 390ms ease-out'
               : 'none',
           }}>
           <CarveContent enabled={enabled} />
