@@ -178,16 +178,13 @@ function CarveContent({ enabled }) {
 }
 
 function SheetCarveButton({ count, enabled, onFire, onHover }) {
-  const [phase, setPhase] = useState(0) // 0=idle, 1=split-start, 2=split-go, 3=fade
+  const [phase, setPhase] = useState(0) // 0=idle, 1=render-halves, 2=separate, 3=fade
   const mountedRef = useRef(true)
   const dayLabel = count === 1 ? '1 DAY' : count > 1 ? `${count} DAYS` : '—'
 
-  useEffect(() => {
-    mountedRef.current = true
-    return () => { mountedRef.current = false }
-  }, [])
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false } }, [])
 
-  // When phase hits 1, wait one frame then apply final transforms (phase 2)
+  // Phase 1 → 2: wait one frame so halves render at initial position before transition kicks in
   useEffect(() => {
     if (phase !== 1) return
     requestAnimationFrame(() => {
@@ -197,58 +194,49 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
 
   const fire = () => {
     if (!enabled || phase > 0) return
-    setPhase(1) // Render halves at initial position
-    setTimeout(() => { if (mountedRef.current) setPhase(3) }, 800)   // Fade
-    setTimeout(() => { if (mountedRef.current) onFire() }, 1200)     // Navigate
+    setPhase(1)
+    setTimeout(() => { if (mountedRef.current) setPhase(3) }, 800)
+    setTimeout(() => { if (mountedRef.current) onFire() }, 1200)
   }
 
   const goldBg = enabled ? '#e4b022' : '#2a2a30'
-  const active = phase > 0
+  const slicing = phase > 0
 
   return (
     <button
       type="button"
       aria-label="Carve cycle"
       onClick={fire}
-      onMouseEnter={enabled && !active ? onHover : undefined}
+      onMouseEnter={enabled && !slicing ? onHover : undefined}
       disabled={!enabled}
       className={`relative ${enabled ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
       style={{
         transform: 'skewX(-2deg)',
-        animation: enabled && !active ? 'carve-pulse 3s ease-in-out infinite' : 'none',
-        borderRadius: '2px',
-        transition: 'none',
+        animation: enabled && !slicing ? 'carve-pulse 3s ease-in-out infinite' : 'none',
         WebkitTapHighlightColor: 'transparent',
         outline: 'none',
       }}
     >
-      {/* Shadow slab — static offset, no press reaction */}
-      <div className="absolute inset-0 -z-10"
-        style={{ clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)', background: '#8a6612',
-          transform: 'translate(4px,4px)', transition: 'none' }}
-        aria-hidden="true" />
-
-      {/* Red glow between halves */}
-      {phase >= 1 && (
+      {/* Red glow between halves — visible during slice */}
+      {slicing && (
         <div className="absolute inset-0 z-0" style={{
-          background: '#d4181f', filter: 'blur(6px)',
-          opacity: phase >= 3 ? 0 : 0.9,
+          background: '#d4181f', filter: 'blur(6px)', opacity: phase >= 3 ? 0 : 0.9,
         }} />
       )}
 
-      {/* Top-left half */}
+      {/* Top-left half (or full face when idle) */}
       <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-2"
         style={{
           clipPath: phase >= 2 ? 'polygon(0 0, 100% 0, 0 100%)' : 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
           background: goldBg,
-          transform: phase >= 2 ? 'translate(-2px,-1px) rotate(0.5deg)' : 'translate(0,0)',
+          transform: phase >= 2 ? 'translate(-2px,-1px) rotate(0.5deg)' : undefined,
           opacity: phase >= 3 ? 0 : 1,
           transition: phase >= 2
-            ? 'transform 800ms cubic-bezier(0.25,0,0.5,1), clip-path 0ms, opacity 300ms ease-out'
-            : 'none',
+            ? 'transform 800ms cubic-bezier(0.25,0,0.5,1), opacity 300ms ease-out'
+            : undefined,
         }}>
         <CarveContent enabled={enabled} />
-        {phase < 1 && (
+        {!slicing && (
           <span className="font-mono leading-none mt-0.5"
             style={{ fontSize: '8px', letterSpacing: '0.1em', color: enabled ? '#070708' : '#555', opacity: 0.6, transform: 'skewX(2deg)' }}>
             {dayLabel}
@@ -256,25 +244,23 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         )}
       </div>
 
-      {/* Bottom-right half */}
-      {phase >= 2 && (
+      {/* Bottom-right half — only rendered during slice */}
+      {phase >= 1 && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-2"
           style={{
             clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
             background: goldBg,
-            transform: phase >= 2
-              ? 'translate(20px,6px) rotate(-1.5deg) scale(0.98)'
-              : 'translate(0,0) rotate(0) scale(1)',
+            transform: phase >= 2 ? 'translate(20px,6px) rotate(-1.5deg) scale(0.98)' : undefined,
             opacity: phase >= 3 ? 0 : 1,
             transition: phase >= 2
               ? 'transform 800ms 50ms cubic-bezier(0.25,0,0.5,1), opacity 300ms ease-out'
-              : 'none',
+              : undefined,
           }}>
           <CarveContent enabled={enabled} />
         </div>
       )}
 
-      {/* Invisible spacer */}
+      {/* Invisible spacer for height */}
       <div className="invisible flex flex-col items-center justify-center px-2" style={{ height: '100%' }}>
         <CarveContent enabled={enabled} />
         <span className="font-mono leading-none mt-0.5" style={{ fontSize: '8px' }}>{dayLabel}</span>
