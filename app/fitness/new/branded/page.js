@@ -188,9 +188,11 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
   // Phase 2→3: one-frame delay so halves render at initial position before transition
   useEffect(() => {
     if (phase !== 2) return
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => { if (mountedRef.current) setPhase(3) })
+    let id1, id2
+    id1 = requestAnimationFrame(() => {
+      id2 = requestAnimationFrame(() => { if (mountedRef.current) setPhase(3) })
     })
+    return () => { cancelAnimationFrame(id1); if (id2) cancelAnimationFrame(id2) }
   }, [phase])
 
   const fire = () => {
@@ -215,8 +217,8 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
       className={`relative ${enabled ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
       style={{
         transform: 'skewX(-2deg)',
-        clipPath: slicing ? 'none' : 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
-        overflow: slicing ? 'visible' : 'hidden',
+        clipPath: active ? 'none' : 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+        overflow: active ? 'visible' : 'hidden',
         background: 'transparent',
         border: 'none',
         animation: enabled && !active ? 'carve-pulse 3s ease-in-out infinite' : 'none',
@@ -234,7 +236,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
       )}
 
       {/* Gold face — full during idle + slash, splits at phase 2+ */}
-      <div className={`absolute inset-0 flex flex-col items-center justify-center px-2 ${slicing ? 'z-50' : 'z-10'}`}
+      <div className={`absolute inset-0 flex flex-col items-center justify-center px-2 ${active ? 'z-50' : 'z-10'}`}
         style={{
           clipPath: phase >= 3 ? 'polygon(0 0, 100% 0, 0 100%)' : undefined,
           background: goldBg,
