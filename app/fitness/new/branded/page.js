@@ -178,29 +178,31 @@ function CarveContent({ enabled }) {
 }
 
 function SheetCarveButton({ count, enabled, onFire, onHover }) {
-  const [phase, setPhase] = useState(0) // 0=idle, 1=render-halves, 2=separate, 3=fade
+  // 0=idle, 1=slash, 2=render-halves, 3=separate, 4=fade
+  const [phase, setPhase] = useState(0)
   const mountedRef = useRef(true)
   const dayLabel = count === 1 ? '1 DAY' : count > 1 ? `${count} DAYS` : '—'
 
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false } }, [])
 
-  // Phase 1 → 2: wait one frame so halves render at initial position before transition kicks in
+  // Phase 2→3: one-frame delay so halves render at initial position before transition
   useEffect(() => {
-    if (phase !== 1) return
+    if (phase !== 2) return
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => { if (mountedRef.current) setPhase(2) })
+      requestAnimationFrame(() => { if (mountedRef.current) setPhase(3) })
     })
   }, [phase])
 
   const fire = () => {
     if (!enabled || phase > 0) return
-    setPhase(1)
-    setTimeout(() => { if (mountedRef.current) setPhase(3) }, 800)
-    setTimeout(() => { if (mountedRef.current) onFire() }, 1200)
+    setPhase(1) // slash line
+    setTimeout(() => { if (mountedRef.current) setPhase(2) }, 400)   // render halves
+    setTimeout(() => { if (mountedRef.current) setPhase(4) }, 900)   // fade
+    setTimeout(() => { if (mountedRef.current) onFire() }, 1200)     // navigate
   }
 
   const goldBg = enabled ? '#e4b022' : '#2a2a30'
-  const slicing = phase > 0
+  const active = phase > 0
 
   return (
     <button
@@ -208,7 +210,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
       aria-label="Carve cycle"
       data-carve=""
       onClick={fire}
-      onMouseEnter={enabled && !slicing ? onHover : undefined}
+      onMouseEnter={enabled && !active ? onHover : undefined}
       disabled={!enabled}
       className={`relative overflow-hidden ${enabled ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
       style={{
@@ -216,32 +218,32 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
         background: 'transparent',
         border: 'none',
-        animation: enabled && !slicing ? 'carve-pulse 3s ease-in-out infinite' : 'none',
+        animation: enabled && !active ? 'carve-pulse 3s ease-in-out infinite' : 'none',
         WebkitTapHighlightColor: 'transparent',
         outline: 'none',
         transition: 'none',
       }}
     >
-      {/* Red glow between halves — visible during slice */}
-      {slicing && (
+      {/* Red glow between halves */}
+      {phase >= 2 && (
         <div className="absolute inset-0 z-0" style={{
-          background: '#d4181f', filter: 'blur(6px)', opacity: phase >= 3 ? 0 : 0.9,
+          background: '#d4181f', filter: 'blur(6px)', opacity: phase >= 4 ? 0 : 0.9,
         }} />
       )}
 
-      {/* Top-left half (or full face when idle) */}
+      {/* Gold face — full during idle + slash, splits at phase 2+ */}
       <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-2"
         style={{
-          clipPath: phase >= 2 ? 'polygon(0 0, 100% 0, 0 100%)' : 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+          clipPath: phase >= 3 ? 'polygon(0 0, 100% 0, 0 100%)' : undefined,
           background: goldBg,
-          transform: phase >= 2 ? 'translate(-2px,-1px) rotate(0.5deg)' : 'none',
-          opacity: phase >= 3 ? 0 : 1,
-          transition: phase >= 2
-            ? 'transform 800ms cubic-bezier(0.25,0,0.5,1), opacity 300ms ease-out'
+          transform: phase >= 3 ? 'translate(-2px,-1px) rotate(0.5deg)' : 'none',
+          opacity: phase >= 4 ? 0 : 1,
+          transition: phase >= 3
+            ? 'transform 500ms cubic-bezier(0.25,0,0.5,1), opacity 300ms ease-out'
             : 'none',
         }}>
         <CarveContent enabled={enabled} />
-        {!slicing && (
+        {phase < 1 && (
           <span className="font-mono leading-none mt-0.5"
             style={{ fontSize: '8px', letterSpacing: '0.1em', color: enabled ? '#070708' : '#555', opacity: 0.6, transform: 'skewX(2deg)' }}>
             {dayLabel}
@@ -249,23 +251,38 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         )}
       </div>
 
-      {/* Bottom-right half — only rendered during slice */}
-      {phase >= 1 && (
+      {/* Bottom-right half */}
+      {phase >= 2 && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-2"
           style={{
             clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
             background: goldBg,
-            transform: phase >= 2 ? 'translate(20px,6px) rotate(-1.5deg) scale(0.98)' : 'none',
-            opacity: phase >= 3 ? 0 : 1,
-            transition: phase >= 2
-              ? 'transform 800ms 50ms cubic-bezier(0.25,0,0.5,1), opacity 300ms ease-out'
+            transform: phase >= 3 ? 'translate(20px,6px) rotate(-1.5deg) scale(0.98)' : 'none',
+            opacity: phase >= 4 ? 0 : 1,
+            transition: phase >= 3
+              ? 'transform 500ms 50ms cubic-bezier(0.25,0,0.5,1), opacity 300ms ease-out'
               : 'none',
           }}>
           <CarveContent enabled={enabled} />
         </div>
       )}
 
-      {/* Invisible spacer for height */}
+      {/* Slash line — sweeps across during phase 1 */}
+      {phase >= 1 && phase < 2 && (
+        <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+          <div style={{
+            position: 'absolute',
+            top: '-20%', left: '-20%',
+            width: '160%', height: '3px',
+            background: 'linear-gradient(90deg, transparent, #ff2a36 20%, #ffffff 50%, #ff2a36 80%, transparent)',
+            transform: 'rotate(33deg)',
+            animation: 'carve-blade 400ms linear forwards',
+            boxShadow: '0 0 6px #ff2a36, 0 0 12px #d4181f',
+          }} />
+        </div>
+      )}
+
+      {/* Invisible spacer */}
       <div className="invisible flex flex-col items-center justify-center px-2" style={{ height: '100%' }}>
         <CarveContent enabled={enabled} />
         <span className="font-mono leading-none mt-0.5" style={{ fontSize: '8px' }}>{dayLabel}</span>
@@ -481,6 +498,10 @@ export default function SchedulePage() {
           100% { transform: scale(1.0); opacity: 1; }
         }
         .kanji-stamp { animation: kanji-stamp 150ms ease-out both; }
+        @keyframes carve-blade {
+          0%   { transform: rotate(33deg) translateX(-120%); }
+          100% { transform: rotate(33deg) translateX(40%); }
+        }
         button[data-carve]:active,
         button[data-carve]:focus {
           transform: skewX(-2deg) !important;
