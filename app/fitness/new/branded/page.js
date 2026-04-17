@@ -198,9 +198,8 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
   const fire = () => {
     if (!enabled || phase > 0) return
     setPhase(1) // slash line
-    setTimeout(() => { if (mountedRef.current) setPhase(2) }, 300)   // render halves
-    // No separate fade phase — opacity fades during separation via transition delay
-    setTimeout(() => { if (mountedRef.current) onFire() }, 950)      // navigate
+    setTimeout(() => { if (mountedRef.current) setPhase(2) }, 220)   // render halves
+    setTimeout(() => { if (mountedRef.current) onFire() }, 1100)     // navigate
   }
 
   const goldBg = enabled ? '#e4b022' : '#2a2a30'
@@ -240,10 +239,10 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         style={{
           clipPath: phase >= 3 ? 'polygon(0 0, 100% 0, 0 100%)' : undefined,
           background: goldBg,
-          transform: phase >= 3 ? 'translate(-12px,-8px) rotate(0.5deg)' : 'none',
+          transform: phase >= 3 ? 'translate(-16px,-10px) rotate(0.5deg)' : 'none',
           opacity: phase >= 3 ? 0 : 1,
           transition: phase >= 3
-            ? 'transform 525ms cubic-bezier(0.4,0,1,1), opacity 185ms 340ms ease-out'
+            ? 'transform 400ms cubic-bezier(0.4,0,1,1), opacity 500ms 280ms ease-out'
             : 'none',
         }}>
         <CarveContent enabled={enabled} />
@@ -261,10 +260,10 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
           style={{
             clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
             background: goldBg,
-            transform: phase >= 3 ? 'translate(55px,18px) rotate(-1.5deg) scale(0.98)' : 'none',
+            transform: phase >= 3 ? 'translate(65px,22px) rotate(-1.5deg) scale(0.98)' : 'none',
             opacity: phase >= 3 ? 0 : 1,
             transition: phase >= 3
-              ? 'transform 525ms 50ms cubic-bezier(0.4,0,1,1), opacity 185ms 390ms ease-out'
+              ? 'transform 400ms 50ms cubic-bezier(0.4,0,1,1), opacity 500ms 330ms ease-out'
               : 'none',
           }}>
           <CarveContent enabled={enabled} />
@@ -279,7 +278,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
           <div style={{
             position: 'absolute', inset: 0,
             background: 'linear-gradient(to bottom right, transparent calc(50% - 2px), #ff2a36 calc(50% - 1px), #ffffff 50%, #ff2a36 calc(50% + 1px), transparent calc(50% + 2px))',
-            animation: 'carve-blade 300ms linear forwards',
+            animation: 'carve-blade 220ms linear forwards',
             boxShadow: '0 0 8px rgba(255,42,54,0.6)',
           }} />
         </div>
