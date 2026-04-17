@@ -185,14 +185,11 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
 
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false } }, [])
 
-  // Phase 2→3: one-frame delay so halves render at initial position before transition
+  // Phase 2→3: schedule via setTimeout to avoid setState-during-render
   useEffect(() => {
     if (phase !== 2) return
-    let id1, id2
-    id1 = requestAnimationFrame(() => {
-      id2 = requestAnimationFrame(() => { if (mountedRef.current) setPhase(3) })
-    })
-    return () => { cancelAnimationFrame(id1); if (id2) cancelAnimationFrame(id2) }
+    const id = setTimeout(() => { if (mountedRef.current) setPhase(3) }, 16)
+    return () => clearTimeout(id)
   }, [phase])
 
   const fire = () => {
@@ -239,7 +236,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         style={{
           clipPath: phase >= 3 ? 'polygon(0 0, 100% 0, 0 100%)' : undefined,
           background: goldBg,
-          transform: phase >= 3 ? 'translate(-32px,-20px) rotate(0.5deg)' : 'none',
+          transform: phase >= 3 ? 'translate(-120px,-80px) rotate(1.5deg)' : 'none',
           opacity: phase >= 3 ? 0 : 1,
           transition: phase >= 3
             ? 'transform 780ms cubic-bezier(0.4,0,1,1), opacity 500ms 280ms ease-out'
@@ -260,7 +257,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
           style={{
             clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
             background: goldBg,
-            transform: phase >= 3 ? 'translate(130px,44px) rotate(-1.5deg) scale(0.98)' : 'none',
+            transform: phase >= 3 ? 'translate(500px,170px) rotate(-3deg) scale(0.95)' : 'none',
             opacity: phase >= 3 ? 0 : 1,
             transition: phase >= 3
               ? 'transform 830ms 50ms cubic-bezier(0.4,0,1,1), opacity 500ms 330ms ease-out'
