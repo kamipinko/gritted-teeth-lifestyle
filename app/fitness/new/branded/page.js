@@ -194,9 +194,9 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
 
   const fire = () => {
     if (!enabled || phase > 0) return
-    setPhase(1) // slash line
-    setTimeout(() => { if (mountedRef.current) setPhase(2) }, 108)   // render halves
-    setTimeout(() => { if (mountedRef.current) onFire() }, 540)      // navigate
+    setPhase(1) // slash line (108ms sweep + ~170ms gap)
+    setTimeout(() => { if (mountedRef.current) setPhase(2) }, 280)   // render halves after slash gone
+    setTimeout(() => { if (mountedRef.current) onFire() }, 720)      // navigate
   }
 
   const goldBg = enabled ? '#e4b022' : '#2a2a30'
@@ -234,7 +234,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
       {/* Gold face — full during idle + slash, splits at phase 2+ */}
       <div className={`absolute inset-0 flex flex-col items-center justify-center px-2 ${active ? 'z-50' : 'z-10'}`}
         style={{
-          clipPath: phase >= 3 ? 'polygon(0 0, 100% 0, 0 100%)' : undefined,
+          clipPath: phase >= 3 ? 'polygon(0 0, 100% 0, 0 100%)' : 'none',
           background: goldBg,
           transform: phase >= 3 ? 'translate(-120px,-80px) rotate(1.5deg)' : 'none',
           opacity: phase >= 3 ? 0 : 1,
@@ -267,11 +267,13 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         </div>
       )}
 
-      {/* Slash line — sweeps along the split diagonal (top-right to bottom-left) */}
-      {phase >= 1 && phase < 2 && (
-        <div className="absolute inset-0 z-50 pointer-events-none">
-          {/* Line sits on the diagonal from (100%,0) to (0,100%).
-              We use a gradient background on the full area to draw the line. */}
+      {/* Slash line — sweeps then fades before halves separate */}
+      {phase >= 1 && phase < 3 && (
+        <div className="absolute inset-0 z-50 pointer-events-none"
+          style={{
+            opacity: phase >= 2 ? 0 : 1,
+            transition: 'opacity 80ms ease-out',
+          }}>
           <div style={{
             position: 'absolute', inset: 0,
             background: 'linear-gradient(to bottom right, transparent calc(50% - 5px), #ff2a36 calc(50% - 3px), #ffffff 50%, #ff2a36 calc(50% + 3px), transparent calc(50% + 5px))',
