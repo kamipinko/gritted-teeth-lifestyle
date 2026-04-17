@@ -197,7 +197,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
     if (!enabled || phase > 0) return
     setPhase(1) // slash line
     setTimeout(() => { if (mountedRef.current) setPhase(2) }, 300)   // render halves
-    setTimeout(() => { if (mountedRef.current) setPhase(4) }, 675)   // fade
+    // No separate fade phase — opacity fades during separation via transition delay
     setTimeout(() => { if (mountedRef.current) onFire() }, 900)      // navigate
   }
 
@@ -227,7 +227,8 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
       {/* Red glow between halves */}
       {phase >= 2 && (
         <div className="absolute inset-0 z-0" style={{
-          background: '#d4181f', filter: 'blur(6px)', opacity: phase >= 4 ? 0 : 0.9,
+          background: '#d4181f', filter: 'blur(6px)', opacity: phase >= 3 ? 0 : 0.9,
+          transition: 'opacity 200ms 200ms ease-out',
         }} />
       )}
 
@@ -237,9 +238,9 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
           clipPath: phase >= 3 ? 'polygon(0 0, 100% 0, 0 100%)' : undefined,
           background: goldBg,
           transform: phase >= 3 ? 'translate(-2px,-1px) rotate(0.5deg)' : 'none',
-          opacity: phase >= 4 ? 0 : 1,
+          opacity: phase >= 3 ? 0 : 1,
           transition: phase >= 3
-            ? 'transform 375ms cubic-bezier(0.25,0,0.5,1), opacity 225ms ease-out'
+            ? 'transform 375ms cubic-bezier(0.25,0,0.5,1), opacity 135ms 240ms ease-out'
             : 'none',
         }}>
         <CarveContent enabled={enabled} />
@@ -258,9 +259,9 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
             clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
             background: goldBg,
             transform: phase >= 3 ? 'translate(20px,6px) rotate(-1.5deg) scale(0.98)' : 'none',
-            opacity: phase >= 4 ? 0 : 1,
+            opacity: phase >= 3 ? 0 : 1,
             transition: phase >= 3
-              ? 'transform 375ms 50ms cubic-bezier(0.25,0,0.5,1), opacity 225ms ease-out'
+              ? 'transform 375ms 50ms cubic-bezier(0.25,0,0.5,1), opacity 135ms 290ms ease-out'
               : 'none',
           }}>
           <CarveContent enabled={enabled} />
