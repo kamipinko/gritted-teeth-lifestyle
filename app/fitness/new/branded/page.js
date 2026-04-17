@@ -274,7 +274,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
               We use a gradient background on the full area to draw the line. */}
           <div style={{
             position: 'absolute', inset: 0,
-            background: 'linear-gradient(to bottom left, transparent calc(50% - 2px), #ff2a36 calc(50% - 1px), #ffffff 50%, #ff2a36 calc(50% + 1px), transparent calc(50% + 2px))',
+            background: 'linear-gradient(to bottom right, transparent calc(50% - 2px), #ff2a36 calc(50% - 1px), #ffffff 50%, #ff2a36 calc(50% + 1px), transparent calc(50% + 2px))',
             animation: 'carve-blade 400ms linear forwards',
             boxShadow: '0 0 8px rgba(255,42,54,0.6)',
           }} />
