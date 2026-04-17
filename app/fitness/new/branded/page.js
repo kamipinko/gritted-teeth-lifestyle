@@ -267,17 +267,16 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         </div>
       )}
 
-      {/* Slash line — sweeps across during phase 1 */}
+      {/* Slash line — sweeps along the split diagonal (top-right to bottom-left) */}
       {phase >= 1 && phase < 2 && (
         <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+          {/* Line sits on the diagonal from (100%,0) to (0,100%).
+              We use a gradient background on the full area to draw the line. */}
           <div style={{
-            position: 'absolute',
-            top: '-20%', left: '-20%',
-            width: '160%', height: '3px',
-            background: 'linear-gradient(90deg, transparent, #ff2a36 20%, #ffffff 50%, #ff2a36 80%, transparent)',
-            transform: 'rotate(33deg)',
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(to bottom left, transparent calc(50% - 2px), #ff2a36 calc(50% - 1px), #ffffff 50%, #ff2a36 calc(50% + 1px), transparent calc(50% + 2px))',
             animation: 'carve-blade 400ms linear forwards',
-            boxShadow: '0 0 6px #ff2a36, 0 0 12px #d4181f',
+            boxShadow: '0 0 8px rgba(255,42,54,0.6)',
           }} />
         </div>
       )}
@@ -499,8 +498,9 @@ export default function SchedulePage() {
         }
         .kanji-stamp { animation: kanji-stamp 150ms ease-out both; }
         @keyframes carve-blade {
-          0%   { transform: rotate(33deg) translateX(-120%); }
-          100% { transform: rotate(33deg) translateX(40%); }
+          0%   { clip-path: inset(0 0 100% 100%); opacity: 0; }
+          5%   { opacity: 1; }
+          100% { clip-path: inset(0 0 0 0); opacity: 1; }
         }
         button[data-carve]:active,
         button[data-carve]:focus {
