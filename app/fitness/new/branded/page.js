@@ -206,6 +206,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
     <button
       type="button"
       aria-label="Carve cycle"
+      data-carve=""
       onClick={fire}
       onMouseEnter={enabled && !slicing ? onHover : undefined}
       disabled={!enabled}
@@ -215,6 +216,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         animation: enabled && !slicing ? 'carve-pulse 3s ease-in-out infinite' : 'none',
         WebkitTapHighlightColor: 'transparent',
         outline: 'none',
+        transition: 'none',
       }}
     >
       {/* Red glow between halves — visible during slice */}
@@ -229,11 +231,11 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         style={{
           clipPath: phase >= 2 ? 'polygon(0 0, 100% 0, 0 100%)' : 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
           background: goldBg,
-          transform: phase >= 2 ? 'translate(-2px,-1px) rotate(0.5deg)' : undefined,
+          transform: phase >= 2 ? 'translate(-2px,-1px) rotate(0.5deg)' : 'none',
           opacity: phase >= 3 ? 0 : 1,
           transition: phase >= 2
             ? 'transform 800ms cubic-bezier(0.25,0,0.5,1), opacity 300ms ease-out'
-            : undefined,
+            : 'none',
         }}>
         <CarveContent enabled={enabled} />
         {!slicing && (
@@ -250,11 +252,11 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
           style={{
             clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
             background: goldBg,
-            transform: phase >= 2 ? 'translate(20px,6px) rotate(-1.5deg) scale(0.98)' : undefined,
+            transform: phase >= 2 ? 'translate(20px,6px) rotate(-1.5deg) scale(0.98)' : 'none',
             opacity: phase >= 3 ? 0 : 1,
             transition: phase >= 2
               ? 'transform 800ms 50ms cubic-bezier(0.25,0,0.5,1), opacity 300ms ease-out'
-              : undefined,
+              : 'none',
           }}>
           <CarveContent enabled={enabled} />
         </div>
@@ -476,6 +478,10 @@ export default function SchedulePage() {
           100% { transform: scale(1.0); opacity: 1; }
         }
         .kanji-stamp { animation: kanji-stamp 150ms ease-out both; }
+        button[data-carve]:active,
+        button[data-carve]:focus {
+          transform: skewX(-2deg) !important;
+        }
         @keyframes carve-pulse {
           0%, 100% { box-shadow: 0 0 8px rgba(228,176,34,0.4); }
           50%      { box-shadow: 0 0 20px rgba(228,176,34,0.8), 0 0 40px rgba(228,176,34,0.3); }
