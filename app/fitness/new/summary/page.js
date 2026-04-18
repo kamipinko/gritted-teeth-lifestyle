@@ -104,22 +104,31 @@ function qBez(p0, cp, p1, t) {
   return { x: u*u*p0.x + 2*u*t*cp.x + t*t*p1.x, y: u*u*p0.y + 2*u*t*cp.y + t*t*p1.y }
 }
 
-// Build a smooth SVG path from an array of {x,y}
-function smoothPath(pts) {
-  if (pts.length < 2) return ''
+// Build SVG path string from array of {x,y} points
+function ptsToPath(pts) {
   return 'M ' + pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L ')
 }
 
-// Hamon: wavy line inside the blade near the ha edge
-function buildHamon(haTop, haCp, haTip, steps = 40) {
+// Generate hamon (temper line): wavy sine path offset inward from the ha edge
+function buildHamon(haTop, haCp, haTip, inset, steps = 50) {
   const pts = []
   for (let i = 0; i <= steps; i++) {
     const t = i / steps
     const p = qBez(haTop, haCp, haTip, t)
-    const wave = Math.sin(t * Math.PI * 8 + 1.2) * 2.5 + Math.sin(t * Math.PI * 5) * 1.5
-    pts.push({ x: p.x - 9 + wave, y: p.y })
+    const wave = Math.sin(t * Math.PI * 9 + 0.7) * 3 + Math.sin(t * Math.PI * 5.5 + 2) * 2
+    pts.push({ x: p.x - inset + wave, y: p.y })
   }
-  return smoothPath(pts)
+  return ptsToPath(pts)
+}
+
+// Sample the mune (spine) as a path for textPath inscription
+function buildMunePath(muneTop, muneCp, muneTip, steps = 30) {
+  const pts = []
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps
+    pts.push(qBez(muneTop, muneCp, muneTip, t))
+  }
+  return ptsToPath(pts)
 }
 
 function CycleBlade({ days, dailyPlan }) {
@@ -132,33 +141,31 @@ function CycleBlade({ days, dailyPlan }) {
     ? `${MONTH_SHORT[first.getMonth()]} ${first.getDate()} — ${MONTH_SHORT[last.getMonth()]} ${last.getDate()}`
     : ''
 
-  // ── Per-weapon dimensions ──
+  // ── Dimensions: WIDE blades, TALL weapons ──
   const cfg = {
-    knife:     { svgW: 380, bladeLen: 320, bladeW: 22, handleLen: 100, muneCurve: 0,  haCurve: 0,  tsubaR: 0  },
-    wakizashi: { svgW: 400, bladeLen: 440, bladeW: 26, handleLen: 120, muneCurve: 14, haCurve: 28, tsubaR: 30 },
-    katana:    { svgW: 420, bladeLen: 600, bladeW: 30, handleLen: 150, muneCurve: 24, haCurve: 48, tsubaR: 38 },
+    knife:     { svgW: 400, bladeLen: 340, bladeW: 20, handleLen: 110, muneCurve: 0,  haCurve: 0,  tsubaR: 0  },
+    wakizashi: { svgW: 420, bladeLen: 460, bladeW: 22, handleLen: 130, muneCurve: 18, haCurve: 35, tsubaR: 25 },
+    katana:    { svgW: 440, bladeLen: 620, bladeW: 24, handleLen: 160, muneCurve: 30, haCurve: 55, tsubaR: 30 },
   }[type]
 
   const { svgW, bladeLen, bladeW, handleLen, muneCurve, haCurve, tsubaR } = cfg
   const cx = svgW / 2
-  const handleTop = 30
+  const handleTop = 36
   const handleBot = handleTop + handleLen
-  const tsubaY = handleBot + 4
-  const tsubaH = tsubaR > 0 ? tsubaR * 2 : 0
-  const bladeTop = tsubaY + (tsubaR > 0 ? tsubaR + 6 : 4)
+  const tsubaCy = handleBot + (tsubaR > 0 ? tsubaR + 8 : 0)
+  const bladeTop = tsubaR > 0 ? tsubaCy + tsubaR + 4 : handleBot + 6
   const tipY = bladeTop + bladeLen
-  const svgH = tipY + 24
+  const svgH = tipY + 28
 
-  // ── Blade geometry ──
+  // ── Blade Bezier geometry ──
   const muneTop = { x: cx - bladeW / 2, y: bladeTop }
-  const muneCp  = { x: cx - bladeW / 2 + muneCurve * 0.6, y: bladeTop + bladeLen * 0.5 }
-  const muneTip = { x: cx + (muneCurve + haCurve) * 0.18 - 2, y: tipY }
+  const muneCp  = { x: cx - bladeW / 2 + muneCurve * 0.5, y: bladeTop + bladeLen * 0.5 }
+  const muneTip = { x: cx + (muneCurve + haCurve) * 0.15 - 2, y: tipY }
   const haTop   = { x: cx + bladeW / 2, y: bladeTop }
-  const haCp    = { x: cx + bladeW / 2 + haCurve * 0.8, y: bladeTop + bladeLen * 0.42 }
-  const haTip   = { x: cx + (muneCurve + haCurve) * 0.18 + 2, y: tipY }
-  const tipPt   = { x: cx + (muneCurve + haCurve) * 0.18, y: tipY + 14 }
+  const haCp    = { x: cx + bladeW / 2 + haCurve * 0.85, y: bladeTop + bladeLen * 0.4 }
+  const haTip   = { x: cx + (muneCurve + haCurve) * 0.15 + 2, y: tipY }
+  const tipPt   = { x: cx + (muneCurve + haCurve) * 0.15, y: tipY + 16 }
 
-  // Blade outline (unfilled — line art only)
   const bladeOutline = [
     `M ${muneTop.x} ${muneTop.y}`,
     `Q ${muneCp.x} ${muneCp.y} ${muneTip.x} ${muneTip.y}`,
@@ -168,203 +175,230 @@ function CycleBlade({ days, dailyPlan }) {
     'Z',
   ].join(' ')
 
-  // Mune (spine) path for text inscription
-  const munePath = `M ${muneTop.x} ${muneTop.y} Q ${muneCp.x} ${muneCp.y} ${muneTip.x} ${muneTip.y}`
-
-  // Ha edge path for glow
   const haEdge = `M ${haTop.x} ${haTop.y} Q ${haCp.x} ${haCp.y} ${haTip.x} ${haTip.y} L ${tipPt.x} ${tipPt.y}`
 
-  // Hamon
-  const hamon = haCurve > 0 ? buildHamon(haTop, haCp, { x: haTip.x, y: haTip.y - 15 }) : null
+  // Hamon (all weapons get one — even knife gets a straight one)
+  const hamonInset = bladeW * 0.5
+  const hamon = buildHamon(haTop, haCp, { x: haTip.x, y: haTip.y - 10 }, hamonInset)
 
-  // Handle diamond wrap lines
+  // Mune path for textPath inscription
+  const muneSpinePath = buildMunePath(
+    { x: muneTop.x + 3, y: muneTop.y + 10 },
+    { x: muneCp.x + 3, y: muneCp.y },
+    { x: muneTip.x + 2, y: muneTip.y - 20 }
+  )
+
+  // Handle wrap diamonds (dense — 8+ crossings)
   const wraps = []
-  for (let y = handleTop + 10; y < handleBot - 6; y += 10) wraps.push(y)
+  const wrapH = bladeW * 0.4
+  for (let y = handleTop + 8; y < handleBot - 4; y += 8) wraps.push(y)
 
-  // Ornamental rays behind weapon
-  const rayCount = 12
-  const rayR = type === 'katana' ? 200 : type === 'wakizashi' ? 160 : 120
-  const rayCy = bladeTop + bladeLen * 0.35
+  // Halo center
+  const haloCy = bladeTop + bladeLen * 0.3
+  const haloR = type === 'katana' ? 180 : type === 'wakizashi' ? 140 : 100
 
-  // Day inscription text: "17 THU  胸  肩" format
-  const inscriptions = days.map((iso) => {
-    const date = parseDate(iso)
-    const num = String(date.getDate()).padStart(2, '0')
-    const dow = DAY_SHORT[date.getDay()]
+  // Day inscription along the spine
+  const inscription = days.map((iso) => {
+    const d = parseDate(iso)
+    const num = String(d.getDate()).padStart(2, '0')
+    const dow = DAY_SHORT[d.getDay()]
     const muscles = dailyPlan[iso] || []
-    const hasWork = muscles.length > 0
-    const kanji = hasWork
-      ? muscles.slice(0, 3).map((m) => MUSCLE_KANJI[m] || '?').join(' ')
-      : '休'
-    return { text: `${num} ${dow}`, kanji, hasWork }
-  })
+    if (muscles.length === 0) return `${num}·${dow}·休`
+    const kanji = muscles.slice(0, 3).map((m) => MUSCLE_KANJI[m] || '?').join('')
+    return `${num}·${dow}·${kanji}`
+  }).join('  ◆  ')
 
-  // Day positions along the blade for side labels
-  const dayPositions = days.map((_, i) => {
+  // Day positions for side labels
+  const dayPos = days.map((_, i) => {
     const t = (i + 0.5) / days.length
-    const muneP = qBez(muneTop, muneCp, muneTip, t)
-    const haP = qBez(haTop, haCp, haTip, t)
-    return { y: (muneP.y + haP.y) / 2, midX: (muneP.x + haP.x) / 2, muneX: muneP.x, haX: haP.x }
+    const mp = qBez(muneTop, muneCp, muneTip, t)
+    const hp = qBez(haTop, haCp, haTip, t)
+    return { y: (mp.y + hp.y) / 2, muneX: mp.x, haX: hp.x }
   })
 
   return (
-    <section className="relative z-10 flex justify-center py-8 px-2">
-      <svg
-        width={svgW}
-        height={svgH}
-        viewBox={`0 0 ${svgW} ${svgH}`}
-        className="block mx-auto"
-      >
+    <section className="relative z-10 flex justify-center py-6 px-2">
+      <svg width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} className="block mx-auto">
         <defs>
-          {/* Red neon glow */}
-          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
+          <filter id="neon" x="-60%" y="-20%" width="220%" height="140%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
-          <filter id="glow-wide" x="-80%" y="-30%" width="260%" height="160%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="6" />
+          <filter id="glow-soft" x="-80%" y="-30%" width="260%" height="160%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="8" />
           </filter>
-          {/* Mune path for textPath */}
-          <path id="mune-path" d={munePath} />
+          <filter id="glow-med" x="-50%" y="-20%" width="200%" height="140%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="4" />
+          </filter>
+          <path id="spine-text-path" d={muneSpinePath} />
         </defs>
 
-        {/* ── Ornamental radial lines (background halo) ── */}
-        <g opacity="0.08">
-          {Array.from({ length: rayCount }, (_, i) => {
-            const angle = (i / rayCount) * Math.PI * 2
-            return (
-              <line key={i}
-                x1={cx} y1={rayCy}
-                x2={cx + Math.cos(angle) * rayR} y2={rayCy + Math.sin(angle) * rayR}
-                stroke="#ff2a36" strokeWidth="0.5"
-              />
-            )
+        {/* ══════ ALCHEMICAL HALO ══════ */}
+        <g opacity="0.12">
+          {/* Concentric arc segments (incomplete circles) */}
+          {[0.35, 0.55, 0.75, 0.95].map((r, ri) => (
+            <g key={ri}>
+              <path d={`M ${cx + haloR * r} ${haloCy} A ${haloR * r} ${haloR * r} 0 0 1 ${cx - haloR * r * 0.7} ${haloCy + haloR * r * 0.7}`}
+                fill="none" stroke="#ff2a36" strokeWidth={ri === 3 ? '1.2' : '0.6'} />
+              <path d={`M ${cx - haloR * r * 0.5} ${haloCy - haloR * r * 0.85} A ${haloR * r} ${haloR * r} 0 0 1 ${cx + haloR * r * 0.85} ${haloCy - haloR * r * 0.2}`}
+                fill="none" stroke="#ff2a36" strokeWidth="0.5" />
+            </g>
+          ))}
+          {/* Radial rays — 16 fine lines */}
+          {Array.from({ length: 16 }, (_, i) => {
+            const a = (i / 16) * Math.PI * 2
+            const r1 = haloR * 0.3, r2 = haloR * 0.95
+            return <line key={i} x1={cx + Math.cos(a) * r1} y1={haloCy + Math.sin(a) * r1}
+              x2={cx + Math.cos(a) * r2} y2={haloCy + Math.sin(a) * r2}
+              stroke="#ff2a36" strokeWidth="0.4" />
           })}
-          <circle cx={cx} cy={rayCy} r={rayR * 0.4} fill="none" stroke="#ff2a36" strokeWidth="0.5" />
-          <circle cx={cx} cy={rayCy} r={rayR * 0.7} fill="none" stroke="#ff2a36" strokeWidth="0.3" />
+          {/* Geometric symbols at cardinal points */}
+          {[0, 90, 180, 270].map((deg) => {
+            const a = deg * Math.PI / 180
+            const sx = cx + Math.cos(a) * haloR * 0.85, sy = haloCy + Math.sin(a) * haloR * 0.85
+            return <polygon key={deg}
+              points={`${sx},${sy - 4} ${sx + 3.5},${sy + 2.5} ${sx - 3.5},${sy + 2.5}`}
+              fill="none" stroke="#ff2a36" strokeWidth="0.5" />
+          })}
+          {/* Diagonal crosses at ordinal points */}
+          {[45, 135, 225, 315].map((deg) => {
+            const a = deg * Math.PI / 180
+            const sx = cx + Math.cos(a) * haloR * 0.8, sy = haloCy + Math.sin(a) * haloR * 0.8
+            return <g key={deg}>
+              <line x1={sx - 3} y1={sy - 3} x2={sx + 3} y2={sy + 3} stroke="#ff2a36" strokeWidth="0.4" />
+              <line x1={sx + 3} y1={sy - 3} x2={sx - 3} y2={sy + 3} stroke="#ff2a36" strokeWidth="0.4" />
+            </g>
+          })}
         </g>
 
-        {/* ── Kashira (pommel) ── */}
-        <rect x={cx - bladeW/2 - 3} y={handleTop - 4} width={bladeW + 6} height={8} rx={2}
-          fill="none" stroke="#ff2a36" strokeWidth="1.5" opacity="0.7" />
+        {/* ══════ KASHIRA (pommel cap) ══════ */}
+        <rect x={cx - bladeW/2 - 5} y={handleTop - 6} width={bladeW + 10} height={10} rx={3}
+          fill="none" stroke="#ff2a36" strokeWidth="1.5" opacity="0.8" />
+        <line x1={cx - bladeW/2 + 2} y1={handleTop - 1} x2={cx + bladeW/2 - 2} y2={handleTop - 1}
+          stroke="#e8e6e0" strokeWidth="0.5" opacity="0.3" />
 
-        {/* ── Tsuka (handle) outline ── */}
-        <rect x={cx - bladeW/2 - 1} y={handleTop} width={bladeW + 2} height={handleLen} rx={1}
-          fill="none" stroke="#ff2a36" strokeWidth="1" opacity="0.5" />
-        {/* Diamond ito wrapping */}
-        {wraps.map((wy, i) => (
-          <g key={i}>
-            <line x1={cx - bladeW/2} y1={wy} x2={cx + bladeW/2} y2={wy + 5}
-              stroke="#e8e6e0" strokeWidth="0.5" opacity="0.2" />
-            <line x1={cx + bladeW/2} y1={wy} x2={cx - bladeW/2} y2={wy + 5}
-              stroke="#e8e6e0" strokeWidth="0.5" opacity="0.2" />
+        {/* ══════ TSUKA (handle) ══════ */}
+        <rect x={cx - bladeW/2 - 2} y={handleTop} width={bladeW + 4} height={handleLen} rx={2}
+          fill="none" stroke="#ff2a36" strokeWidth="1.2" opacity="0.6" />
+        {/* Dense diamond ito wrap */}
+        {wraps.map((wy, wi) => (
+          <g key={wi}>
+            <line x1={cx - bladeW/2 - 1} y1={wy} x2={cx + bladeW/2 + 1} y2={wy + wrapH}
+              stroke="#e8e6e0" strokeWidth="0.7" opacity="0.35" />
+            <line x1={cx + bladeW/2 + 1} y1={wy} x2={cx - bladeW/2 - 1} y2={wy + wrapH}
+              stroke="#e8e6e0" strokeWidth="0.7" opacity="0.35" />
           </g>
         ))}
+        {/* Menuki (handle ornament) */}
+        <circle cx={cx} cy={handleTop + handleLen * 0.4} r={3}
+          fill="none" stroke="#e8e6e0" strokeWidth="0.5" opacity="0.25" />
+        <circle cx={cx} cy={handleTop + handleLen * 0.65} r={3}
+          fill="none" stroke="#e8e6e0" strokeWidth="0.5" opacity="0.25" />
 
-        {/* ── Tsuba (guard) — alchemical circle ornament ── */}
+        {/* ══════ TSUBA (guard) — alchemical ornament ══════ */}
         {tsubaR > 0 && (
           <g>
-            {/* Outer glow ring */}
-            <circle cx={cx} cy={tsubaY + tsubaR} r={tsubaR}
-              fill="none" stroke="#ff2a36" strokeWidth="1.5" opacity="0.15" filter="url(#glow-wide)" />
-            {/* Main ring */}
-            <circle cx={cx} cy={tsubaY + tsubaR} r={tsubaR}
-              fill="none" stroke="#ff2a36" strokeWidth="1.5" opacity="0.8" />
+            {/* Wide glow */}
+            <circle cx={cx} cy={tsubaCy} r={tsubaR + 4}
+              fill="none" stroke="#ff2a36" strokeWidth="2" opacity="0.1" filter="url(#glow-soft)" />
+            {/* Outer ring */}
+            <circle cx={cx} cy={tsubaCy} r={tsubaR}
+              fill="none" stroke="#ff2a36" strokeWidth="1.8" opacity="0.85" />
             {/* Inner ring */}
-            <circle cx={cx} cy={tsubaY + tsubaR} r={tsubaR * 0.6}
-              fill="none" stroke="#ff2a36" strokeWidth="0.8" opacity="0.4" />
-            {/* Radial spokes */}
-            {[0, 60, 120, 180, 240, 300].map((deg) => {
-              const rad = deg * Math.PI / 180
-              return (
-                <line key={deg}
-                  x1={cx + Math.cos(rad) * tsubaR * 0.6} y1={tsubaY + tsubaR + Math.sin(rad) * tsubaR * 0.6}
-                  x2={cx + Math.cos(rad) * tsubaR * 0.9} y2={tsubaY + tsubaR + Math.sin(rad) * tsubaR * 0.9}
-                  stroke="#ff2a36" strokeWidth="0.6" opacity="0.5"
-                />
-              )
+            <circle cx={cx} cy={tsubaCy} r={tsubaR * 0.55}
+              fill="none" stroke="#ff2a36" strokeWidth="1" opacity="0.5" />
+            {/* Innermost ring */}
+            <circle cx={cx} cy={tsubaCy} r={tsubaR * 0.25}
+              fill="none" stroke="#ff2a36" strokeWidth="0.6" opacity="0.3" />
+            {/* 8 radial spokes between inner and outer */}
+            {Array.from({ length: 8 }, (_, si) => {
+              const a = (si / 8) * Math.PI * 2
+              return <line key={si}
+                x1={cx + Math.cos(a) * tsubaR * 0.55} y1={tsubaCy + Math.sin(a) * tsubaR * 0.55}
+                x2={cx + Math.cos(a) * tsubaR * 0.92} y2={tsubaCy + Math.sin(a) * tsubaR * 0.92}
+                stroke="#ff2a36" strokeWidth="0.6" opacity="0.45" />
             })}
-            {/* Center kanji */}
-            <text x={cx} y={tsubaY + tsubaR + 5} textAnchor="middle"
-              style={{ fontFamily: '"Noto Serif JP", serif', fontSize: '14px', fill: '#ff2a36', opacity: 0.7 }}>
+            {/* Diamond (hishi) points at 4 cardinal positions */}
+            {[0, 90, 180, 270].map((deg) => {
+              const a = deg * Math.PI / 180
+              const dx = cx + Math.cos(a) * tsubaR, dy = tsubaCy + Math.sin(a) * tsubaR
+              return <polygon key={deg}
+                points={`${dx},${dy - 3.5} ${dx + 2.5},${dy} ${dx},${dy + 3.5} ${dx - 2.5},${dy}`}
+                fill="none" stroke="#ff2a36" strokeWidth="0.7" opacity="0.6" />
+            })}
+            {/* Center kanji 刻 */}
+            <text x={cx} y={tsubaCy + 5} textAnchor="middle"
+              style={{ fontFamily: '"Noto Serif JP", serif', fontSize: '13px', fill: '#ff2a36', opacity: 0.75 }}>
               刻
             </text>
           </g>
         )}
 
-        {/* ── Blade outline — line art, no fill ── */}
-        {/* Glow layer */}
-        <path d={bladeOutline} fill="none" stroke="#ff2a36" strokeWidth="3" opacity="0.15" filter="url(#glow-wide)" />
-        {/* Sharp line */}
+        {/* Habaki (blade collar) */}
+        <rect x={cx - bladeW/2 - 1} y={bladeTop - 4} width={bladeW + 2} height={7} rx={1}
+          fill="none" stroke="#e4b022" strokeWidth="0.8" opacity="0.5" />
+
+        {/* ══════ BLADE — unfilled line art with neon glow ══════ */}
+        {/* Outermost soft glow */}
+        <path d={bladeOutline} fill="none" stroke="#ff2a36" strokeWidth="5" opacity="0.08" filter="url(#glow-soft)" />
+        {/* Medium glow */}
+        <path d={bladeOutline} fill="none" stroke="#ff2a36" strokeWidth="3" opacity="0.2" filter="url(#glow-med)" />
+        {/* Sharp outline */}
         <path d={bladeOutline} fill="none" stroke="#ff2a36" strokeWidth="1.5" opacity="0.9" />
 
-        {/* Ha edge extra glow */}
-        <path d={haEdge} fill="none" stroke="#ff2a36" strokeWidth="2" opacity="0.2" filter="url(#glow)" />
+        {/* Ha edge extra brightness */}
+        <path d={haEdge} fill="none" stroke="#ff2a36" strokeWidth="2.5" opacity="0.15" filter="url(#glow-med)" />
 
-        {/* Hamon temper line — delicate white wave */}
-        {hamon && (
-          <path d={hamon} fill="none" stroke="#e8e6e0" strokeWidth="0.8" opacity="0.5" />
-        )}
+        {/* ══════ HAMON temper line ══════ */}
+        <path d={hamon} fill="none" stroke="#e8e6e0" strokeWidth="1" opacity="0.7" />
 
-        {/* ── Day inscriptions along blade spine ── */}
-        {dayPositions.map(({ y, muneX, haX }, i) => {
+        {/* ══════ INSCRIPTION along blade spine (textPath) ══════ */}
+        <text style={{ fontFamily: 'Georgia, serif', fontSize: '8px', letterSpacing: '0.12em', fill: '#e8e6e0', opacity: 0.4 }}>
+          <textPath href="#spine-text-path" startOffset="2%">
+            {inscription}
+          </textPath>
+        </text>
+
+        {/* ══════ DAY LABELS beside the blade ══════ */}
+        {dayPos.map(({ y, muneX, haX }, i) => {
           const iso = days[i]
-          const date = parseDate(iso)
-          const dayNum = String(date.getDate()).padStart(2, '0')
-          const dayName = DAY_SHORT[date.getDay()]
+          const d = parseDate(iso)
+          const num = String(d.getDate()).padStart(2, '0')
+          const dow = DAY_SHORT[d.getDay()]
           const muscles = dailyPlan[iso] || []
           const hasWork = muscles.length > 0
           const isLeft = i % 2 === 0
           const kanjiList = muscles.slice(0, 3).map((m) => MUSCLE_KANJI[m] || '?')
 
-          const edgeX = isLeft ? muneX - 6 : haX + 6
-          const textX = isLeft ? edgeX - 14 : edgeX + 14
+          const edgeX = isLeft ? muneX - 8 : haX + 8
+          const textX = isLeft ? edgeX - 18 : edgeX + 18
           const anchor = isLeft ? 'end' : 'start'
 
           return (
             <g key={iso}>
-              {/* Connector — thin red line */}
-              <line x1={edgeX} y1={y} x2={textX + (isLeft ? 4 : -4)} y2={y}
-                stroke="#ff2a36" strokeWidth="0.4" opacity="0.3" />
-
-              {/* Day number */}
+              <line x1={edgeX} y1={y} x2={textX + (isLeft ? 6 : -6)} y2={y}
+                stroke="#ff2a36" strokeWidth="0.5" opacity="0.25" />
               <text x={textX} y={y + 2} textAnchor={anchor}
-                style={{
-                  fontFamily: 'Georgia, "Cormorant Garamond", serif',
-                  fontSize: '20px', fontWeight: 300, letterSpacing: '0.05em',
-                  fill: hasWork ? '#e8e6e0' : 'rgba(200,200,200,0.2)',
-                }}>
-                {dayNum}
+                style={{ fontFamily: 'Georgia, serif', fontSize: '20px', fontWeight: 300, letterSpacing: '0.05em',
+                  fill: hasWork ? '#e8e6e0' : 'rgba(200,200,200,0.2)' }}>
+                {num}
               </text>
-
-              {/* Day of week */}
               <text x={textX} y={y + 13} textAnchor={anchor}
-                style={{
-                  fontFamily: 'JetBrains Mono, monospace',
-                  fontSize: '6.5px', letterSpacing: '0.2em',
-                  fill: hasWork ? '#5a5a62' : '#2a2a32',
-                }}>
-                {dayName}
+                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '6.5px', letterSpacing: '0.2em',
+                  fill: hasWork ? '#5a5a62' : '#2a2a32' }}>
+                {dow}
               </text>
-
-              {/* Muscle kanji or 休 */}
-              <text x={textX} y={y + 32} textAnchor={anchor}
-                style={{
-                  fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-                  fontSize: '22px', fontWeight: 400,
-                  fill: hasWork ? '#e8e6e0' : '#e4b022',
-                }}>
+              <text x={textX} y={y + 34} textAnchor={anchor}
+                style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '22px', fontWeight: 400,
+                  fill: hasWork ? '#e8e6e0' : '#e4b022' }}>
                 {hasWork ? kanjiList.join('  ') : '休'}
               </text>
             </g>
           )
         })}
 
-        {/* Date range near the handle */}
-        <text x={cx} y={handleTop - 12} textAnchor="middle"
+        {/* Date range */}
+        <text x={cx} y={handleTop - 14} textAnchor="middle"
           style={{ fontFamily: 'Georgia, serif', fontSize: '10px', letterSpacing: '0.2em', fill: '#5a5a62' }}>
           {dateRange}
         </text>
