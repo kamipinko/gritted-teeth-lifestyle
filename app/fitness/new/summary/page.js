@@ -94,164 +94,272 @@ function DayCard({ iso, muscles, index }) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   THE BLADE — vertical katana for cycles < 7 days
+   THE BLADE — SVG weapon for cycles < 7 days
+   1-2 days: KNIFE (tanto)  |  3-4 days: WAKIZASHI  |  5-6 days: KATANA
    ══════════════════════════════════════════════════════════════════════════ */
+
+// Generate a wavy hamon line path along the blade edge
+function hamonPath(cx, bladeW, startY, endY, curve, steps = 20) {
+  const pts = []
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps
+    const y = startY + (endY - startY) * t
+    // Base x follows the blade edge curve
+    const edgeX = cx + bladeW / 2 + curve * Math.sin(t * Math.PI * 0.8) * 0.7
+    // Hamon wave offset inward from edge
+    const wave = Math.sin(t * Math.PI * 6 + 1.5) * 3 + Math.sin(t * Math.PI * 3.5) * 2
+    pts.push(`${edgeX - 8 + wave},${y}`)
+  }
+  return 'M ' + pts.join(' L ')
+}
+
 function CycleBlade({ days, dailyPlan }) {
+  const count = days.length
+  const type = count <= 2 ? 'knife' : count <= 4 ? 'wakizashi' : 'katana'
+
   const first = days[0] ? parseDate(days[0]) : null
   const last  = days[days.length - 1] ? parseDate(days[days.length - 1]) : null
   const dateRange = first && last
     ? `${MONTH_SHORT[first.getMonth()]} ${first.getDate()} — ${MONTH_SHORT[last.getMonth()]} ${last.getDate()}`
     : ''
 
-  // Blade height scales with day count: min 360px for 1 day, +100px per additional day
-  const bladeH = Math.max(360, 260 + days.length * 100)
+  // Dimensions per weapon type
+  const cfg = {
+    knife:     { svgW: 340, bladeLen: 280, bladeW: 24, curve: 0,  handleLen: 100, guardW: 0,  guardH: 0,  perspective: 'perspective(1400px) rotateY(-10deg) rotateZ(-2deg)' },
+    wakizashi: { svgW: 360, bladeLen: 400, bladeW: 28, curve: 18, handleLen: 120, guardW: 60, guardH: 14, perspective: 'perspective(1400px) rotateY(-14deg) rotateZ(-2deg)' },
+    katana:    { svgW: 380, bladeLen: 560, bladeW: 32, curve: 28, handleLen: 150, guardW: 72, guardH: 16, perspective: 'perspective(1400px) rotateY(-14deg) rotateZ(-2deg)' },
+  }[type]
+
+  const { svgW, bladeLen, bladeW, curve, handleLen, guardW, guardH } = cfg
+  const cx = svgW / 2
+  const handleTop = 20
+  const handleBot = handleTop + handleLen
+  const guardY = handleBot
+  const bladeTop = guardY + guardH
+  const bladeBot = bladeTop + bladeLen
+  const svgH = bladeBot + 30 // extra space for tip
+
+  // Blade path with Bezier curve (mune=back/left, ha=edge/right)
+  const muneTopX = cx - bladeW / 2
+  const haTopX   = cx + bladeW / 2
+  // Control points for the curve
+  const muneCpX = cx - bladeW / 2 + curve * 0.2
+  const muneCpY = bladeTop + bladeLen * 0.55
+  const haCpX   = cx + bladeW / 2 + curve * 0.75
+  const haCpY   = bladeTop + bladeLen * 0.45
+  // Tip (kissaki) — offset by curve
+  const tipX = cx + curve * 0.35
+  const tipY = bladeBot + 15
+
+  const bladePath = [
+    `M ${muneTopX} ${bladeTop}`,
+    `Q ${muneCpX} ${muneCpY} ${tipX - 3} ${tipY - 8}`,
+    `L ${tipX} ${tipY}`,
+    `L ${tipX + 3} ${tipY - 8}`,
+    `Q ${haCpX} ${haCpY} ${haTopX} ${bladeTop}`,
+    'Z',
+  ].join(' ')
+
+  // Handle wrapping diamond pattern
+  const handleWraps = []
+  const wrapSpacing = 14
+  for (let y = handleTop + 10; y < handleBot - 5; y += wrapSpacing) {
+    handleWraps.push(y)
+  }
+
+  // Hamon line
+  const hamon = hamonPath(cx, bladeW, bladeTop + 20, bladeBot - 30, curve)
+
+  // Day positions along the blade — distribute evenly
+  const dayPositions = days.map((_, i) => {
+    const t = (i + 0.5) / days.length
+    const y = bladeTop + 20 + (bladeLen - 50) * t
+    // X offset follows the blade curve
+    const xOff = curve * Math.sin(t * Math.PI * 0.8) * 0.5
+    return { y, xOff }
+  })
 
   return (
-    <section className="relative z-10 flex justify-center py-12 px-8">
-      {/* 3D wrapper */}
+    <section className="relative z-10 flex justify-center py-8 px-4">
       <div
         className="relative"
-        style={{
-          transform: 'perspective(1200px) rotateY(-6deg) rotateZ(-1.5deg)',
-          transformStyle: 'preserve-3d',
-        }}
+        style={{ transform: cfg.perspective, transformStyle: 'preserve-3d' }}
       >
-        {/* ── Crossguard (tsuba) ── */}
-        <div
-          className="relative z-10 mx-auto flex items-center justify-center gap-3 px-6 py-2"
-          style={{
-            width: '180px',
-            background: 'linear-gradient(90deg, #2a2a30, #4a4a52, #3a3a42, #4a4a52, #2a2a30)',
-            borderTop: '2px solid #5a5a62',
-            borderBottom: '2px solid #3a3a42',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-          }}
-        >
-          <span className="font-mono text-[8px] tracking-[0.25em] uppercase text-gtl-ash leading-none">
+        {/* Date range label */}
+        <div className="text-center mb-3">
+          <span className="font-mono text-[9px] tracking-[0.35em] uppercase text-gtl-ash">
             {dateRange}
           </span>
         </div>
 
-        {/* ── Blade body ── */}
-        <div
-          className="relative mx-auto overflow-visible"
-          style={{
-            width: '120px',
-            height: `${bladeH}px`,
-            clipPath: 'polygon(10% 0%, 90% 0%, 85% 94%, 50% 100%, 15% 94%)',
-            background: 'linear-gradient(180deg, #1e1e22 0%, #3a3a42 30%, #2e2e34 50%, #3a3a42 70%, #1e1e22 100%)',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-          }}
+        <svg
+          width={svgW}
+          height={svgH}
+          viewBox={`0 0 ${svgW} ${svgH}`}
+          className="block mx-auto"
+          style={{ filter: 'drop-shadow(0 12px 24px rgba(0,0,0,0.5))' }}
         >
-          {/* Red edge glow — left */}
-          <div
-            className="absolute left-0 top-0 bottom-0 w-[3px] pointer-events-none"
-            style={{
-              background: 'linear-gradient(180deg, transparent 2%, #ff2a36 10%, #ff2a36 90%, transparent 98%)',
-              opacity: 0.3,
-              filter: 'blur(4px)',
-            }}
+          <defs>
+            {/* Steel gradient — cold blue-tint */}
+            <linearGradient id="steel" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#2a2e34" />
+              <stop offset="25%" stopColor="#4a5058" />
+              <stop offset="40%" stopColor="#6a7078" />
+              <stop offset="50%" stopColor="#8a9098" />
+              <stop offset="60%" stopColor="#6a7078" />
+              <stop offset="75%" stopColor="#4a5058" />
+              <stop offset="100%" stopColor="#2a2e34" />
+            </linearGradient>
+            {/* Handle gradient */}
+            <linearGradient id="handle-grad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#1a1a1e" />
+              <stop offset="50%" stopColor="#2a2a30" />
+              <stop offset="100%" stopColor="#1a1a1e" />
+            </linearGradient>
+            {/* Red edge glow filter */}
+            <filter id="edge-glow" x="-50%" y="-10%" width="200%" height="120%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="3" />
+            </filter>
+          </defs>
+
+          {/* ── Handle (tsuka) ── */}
+          <rect
+            x={cx - bladeW / 2 - 2} y={handleTop}
+            width={bladeW + 4} height={handleLen}
+            rx={3}
+            fill="url(#handle-grad)"
+            stroke="#3a3a42" strokeWidth="1"
           />
-          {/* Red edge glow — right */}
-          <div
-            className="absolute right-0 top-0 bottom-0 w-[3px] pointer-events-none"
-            style={{
-              background: 'linear-gradient(180deg, transparent 2%, #ff2a36 10%, #ff2a36 90%, transparent 98%)',
-              opacity: 0.3,
-              filter: 'blur(4px)',
-            }}
+          {/* Diamond wrap pattern */}
+          {handleWraps.map((wy, i) => (
+            <g key={i}>
+              <line
+                x1={cx - bladeW / 2 - 1} y1={wy}
+                x2={cx + bladeW / 2 + 1} y2={wy + wrapSpacing / 2}
+                stroke="#3a3a42" strokeWidth="0.8"
+              />
+              <line
+                x1={cx + bladeW / 2 + 1} y1={wy}
+                x2={cx - bladeW / 2 - 1} y2={wy + wrapSpacing / 2}
+                stroke="#3a3a42" strokeWidth="0.8"
+              />
+            </g>
+          ))}
+          {/* Kashira (pommel cap) */}
+          <rect
+            x={cx - bladeW / 2 - 3} y={handleTop - 4}
+            width={bladeW + 6} height={8}
+            rx={2}
+            fill="#3a3a42" stroke="#5a5a62" strokeWidth="0.5"
           />
 
-          {/* Blood groove (fuller) — thin dark stripe down center */}
-          <div
-            className="absolute left-1/2 top-[4%] bottom-[8%] w-[2px] -translate-x-1/2 pointer-events-none"
-            style={{ background: 'rgba(0,0,0,0.4)' }}
+          {/* ── Tsuba (guard) — only for wakizashi/katana ── */}
+          {guardW > 0 && (
+            <ellipse
+              cx={cx} cy={guardY + guardH / 2}
+              rx={guardW / 2} ry={guardH / 2 + 2}
+              fill="#2e2e34" stroke="#5a5a62" strokeWidth="1"
+            />
+          )}
+
+          {/* ── Blade ── */}
+          <path d={bladePath} fill="url(#steel)" stroke="#5a5a62" strokeWidth="0.5" />
+
+          {/* Red edge glow along ha (cutting edge) */}
+          <path
+            d={`M ${haTopX} ${bladeTop} Q ${haCpX} ${haCpY} ${tipX + 3} ${tipY - 8} L ${tipX} ${tipY}`}
+            fill="none" stroke="#ff2a36" strokeWidth="2" opacity="0.3"
+            filter="url(#edge-glow)"
+          />
+
+          {/* Hamon line */}
+          <path
+            d={hamon}
+            fill="none" stroke="rgba(180,190,200,0.25)" strokeWidth="1.5"
+            strokeDasharray="none"
+          />
+
+          {/* Highlight line down the center */}
+          <line
+            x1={cx + curve * 0.1} y1={bladeTop + 10}
+            x2={tipX - 1} y2={tipY - 20}
+            stroke="rgba(200,210,220,0.12)" strokeWidth="1"
           />
 
           {/* ── Days etched along the blade ── */}
-          <div className="relative z-10 flex flex-col items-center pt-6 pb-12 h-full justify-between px-3">
-            {days.map((iso, i) => {
-              const date     = parseDate(iso)
-              const dayNum   = date.getDate()
-              const dayName  = DAY_SHORT[date.getDay()]
-              const muscles  = dailyPlan[iso] || []
-              const hasWork  = muscles.length > 0
-              const isLeft   = i % 2 === 0
+          {days.map((iso, i) => {
+            const date    = parseDate(iso)
+            const dayNum  = date.getDate()
+            const dayName = DAY_SHORT[date.getDay()]
+            const muscles = dailyPlan[iso] || []
+            const hasWork = muscles.length > 0
+            const isLeft  = i % 2 === 0
+            const { y, xOff } = dayPositions[i]
+            const textX = isLeft ? cx - bladeW - 20 + xOff : cx + bladeW + 20 + xOff
+            const anchor = isLeft ? 'end' : 'start'
 
-              // Get kanji for assigned muscles (up to 3)
-              const kanjiList = muscles.slice(0, 3).map((m) => MUSCLE_KANJI[m] || '?')
+            const kanjiList = muscles.slice(0, 3).map((m) => MUSCLE_KANJI[m] || '?')
 
-              return (
-                <div
-                  key={iso}
-                  className={`flex flex-col ${isLeft ? 'items-start' : 'items-end'} w-full`}
+            return (
+              <g key={iso}>
+                {/* Connector line from blade to text */}
+                <line
+                  x1={isLeft ? cx - bladeW / 2 + xOff : cx + bladeW / 2 + xOff}
+                  y1={y}
+                  x2={textX + (isLeft ? 8 : -8)}
+                  y2={y}
+                  stroke="rgba(255,42,54,0.15)" strokeWidth="0.5"
+                />
+                {/* Day number */}
+                <text
+                  x={textX} y={y}
+                  textAnchor={anchor}
+                  className="font-display"
+                  style={{
+                    fontSize: '38px',
+                    fill: hasWork ? '#f5f0e8' : 'rgba(200,200,200,0.3)',
+                    textShadow: hasWork ? '2px 2px 0 #070708' : 'none',
+                  }}
                 >
-                  {/* Day number */}
-                  <div
-                    className={`font-display leading-none ${hasWork ? 'text-gtl-paper' : 'text-gtl-ash/60'}`}
-                    style={{
-                      fontSize: '48px',
-                      textShadow: hasWork ? '2px 2px 0 #070708' : 'none',
-                    }}
-                  >
-                    {String(dayNum).padStart(2, '0')}
-                  </div>
+                  {String(dayNum).padStart(2, '0')}
+                </text>
+                {/* Day of week */}
+                <text
+                  x={textX} y={y + 16}
+                  textAnchor={anchor}
+                  style={{
+                    fontSize: '9px',
+                    fontFamily: 'JetBrains Mono, monospace',
+                    letterSpacing: '0.3em',
+                    fill: hasWork ? '#6a6a72' : '#3a3a42',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {dayName}
+                </text>
+                {/* Muscle kanji or 休 */}
+                <text
+                  x={textX} y={y + 42}
+                  textAnchor={anchor}
+                  style={{
+                    fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
+                    fontSize: '28px',
+                    fontWeight: 400,
+                    fill: hasWork ? '#ff2a36' : '#e4b022',
+                    transform: `rotate(${isLeft ? -3 : 3}deg)`,
+                    transformOrigin: `${textX}px ${y + 42}px`,
+                  }}
+                >
+                  {hasWork ? kanjiList.join('  ') : '休'}
+                </text>
+              </g>
+            )
+          })}
+        </svg>
 
-                  {/* Day of week */}
-                  <div
-                    className="font-mono uppercase leading-none mt-0.5"
-                    style={{
-                      fontSize: '10px',
-                      letterSpacing: '0.3em',
-                      color: hasWork ? '#6a6a72' : '#3a3a42',
-                    }}
-                  >
-                    {dayName}
-                  </div>
-
-                  {/* Muscle kanji (training) or 休 (rest) */}
-                  <div
-                    className="mt-1 leading-none"
-                    style={{
-                      fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-                      fontSize: '32px',
-                      fontWeight: 400,
-                      transform: `rotate(${isLeft ? '-3deg' : '3deg'})`,
-                      color: hasWork ? '#ff2a36' : '#e4b022',
-                      textShadow: hasWork
-                        ? '0 0 8px rgba(255,42,54,0.5)'
-                        : '0 0 8px rgba(228,176,34,0.5)',
-                    }}
-                  >
-                    {hasWork
-                      ? kanjiList.join('')
-                      : '休'}
-                  </div>
-
-                  {/* Subtle engraving line */}
-                  <div
-                    className="mt-2 w-full"
-                    style={{
-                      height: '1px',
-                      background: 'linear-gradient(90deg, transparent, rgba(255,42,54,0.2), transparent)',
-                    }}
-                  />
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Floating shadow underneath */}
-        <div
-          className="mx-auto mt-4"
-          style={{
-            width: '80px',
-            height: '8px',
-            background: 'radial-gradient(ellipse, rgba(0,0,0,0.4) 0%, transparent 70%)',
-            filter: 'blur(4px)',
-          }}
-        />
+        {/* Floating shadow */}
+        <div className="mx-auto mt-2"
+          style={{ width: '100px', height: '10px', background: 'radial-gradient(ellipse, rgba(0,0,0,0.35) 0%, transparent 70%)', filter: 'blur(6px)' }} />
       </div>
     </section>
   )
@@ -494,6 +602,11 @@ export default function SummaryPage() {
         完
       </div>
 
+      {/* Cycle designation — top right */}
+      <div className="absolute top-4 right-6 z-10 font-mono text-[8px] tracking-[0.4em] uppercase text-gtl-smoke/40">
+        CYCLE DESIGNATION: AUTHORIZED
+      </div>
+
       {/* ── HERO — cycle name (no red slab) ── */}
       <section className="relative z-10 overflow-hidden">
         <div className="relative px-8 pt-8 pb-14">
@@ -527,12 +640,7 @@ export default function SummaryPage() {
             {cycleName}
           </h1>
 
-          <div
-            className="font-mono text-[10px] tracking-[0.5em] uppercase text-gtl-smoke/50 mt-4"
-            style={{ transform: 'rotate(0.8deg)' }}
-          >
-            CYCLE DESIGNATION / AUTHORIZED
-          </div>
+          {/* CYCLE DESIGNATION moved to top-right corner */}
         </div>
       </section>
 
