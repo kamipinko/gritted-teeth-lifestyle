@@ -178,25 +178,33 @@ function CarveContent({ enabled }) {
 }
 
 function SheetCarveButton({ count, enabled, onFire, onHover }) {
-  // 0=idle, 1=slash, 2=render-halves, 3=separate
+  // 0=idle, 1=slash-sweep, 2=slash-fade, 3=render-halves, 4=separate
   const [phase, setPhase] = useState(0)
   const mountedRef = useRef(true)
   const dayLabel = count === 1 ? '1 DAY' : count > 1 ? `${count} DAYS` : '—'
 
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false } }, [])
 
-  // Phase 2→3: schedule via setTimeout to avoid setState-during-render
+  // Phase 3→4: one-frame delay so halves render at initial position before transition
   useEffect(() => {
-    if (phase !== 2) return
-    const id = setTimeout(() => { if (mountedRef.current) setPhase(3) }, 16)
+    if (phase !== 3) return
+    const id = setTimeout(() => { if (mountedRef.current) setPhase(4) }, 16)
     return () => clearTimeout(id)
   }, [phase])
 
+  // Timeline:
+  //   0ms      phase 1  slash sweep starts (108ms)
+  //   108ms    phase 2  slash begins fading (70ms)
+  //   178ms             slash fully gone
+  //   228ms    phase 3  halves render at initial position (50ms gap after slash gone)
+  //   ~244ms   phase 4  halves start separating (via 16ms setTimeout)
+  //   ~660ms            navigate
   const fire = () => {
     if (!enabled || phase > 0) return
-    setPhase(1) // slash line (108ms sweep + ~170ms gap)
-    setTimeout(() => { if (mountedRef.current) setPhase(2) }, 280)   // render halves after slash gone
-    setTimeout(() => { if (mountedRef.current) onFire() }, 720)      // navigate
+    setPhase(1)
+    setTimeout(() => { if (mountedRef.current) setPhase(2) }, 108)   // slash fade
+    setTimeout(() => { if (mountedRef.current) setPhase(3) }, 228)   // render halves
+    setTimeout(() => { if (mountedRef.current) onFire() }, 660)      // navigate
   }
 
   const goldBg = enabled ? '#e4b022' : '#2a2a30'
@@ -224,20 +232,20 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
       }}
     >
       {/* Red glow between halves */}
-      {phase >= 2 && (
+      {phase >= 3 && (
         <div className="absolute inset-0 z-0" style={{
           background: '#d4181f', filter: 'blur(8px)', opacity: 0.95,
         }} />
       )}
 
-      {/* Gold face — full during idle + slash, splits at phase 2+ */}
+      {/* Gold face — full during idle + slash, splits at phase 3+ */}
       <div className={`absolute inset-0 flex flex-col items-center justify-center px-2 ${active ? 'z-50' : 'z-10'}`}
         style={{
-          clipPath: phase >= 3 ? 'polygon(0 0, 100% 0, 0 100%)' : 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+          clipPath: phase >= 4 ? 'polygon(0 0, 100% 0, 0 100%)' : 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
           background: goldBg,
-          transform: phase >= 3 ? 'translate(-120px,-80px) rotate(1.5deg)' : 'none',
-          opacity: phase >= 3 ? 0 : 1,
-          transition: phase >= 3
+          transform: phase >= 4 ? 'translate(-120px,-80px) rotate(1.5deg)' : 'none',
+          opacity: phase >= 4 ? 0 : 1,
+          transition: phase >= 4
             ? 'transform 382ms cubic-bezier(0.4,0,1,1), opacity 245ms 137ms ease-out'
             : 'none',
         }}>
@@ -251,14 +259,14 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
       </div>
 
       {/* Bottom-right half */}
-      {phase >= 2 && (
+      {phase >= 3 && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center px-2"
           style={{
             clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
             background: goldBg,
-            transform: phase >= 3 ? 'translate(500px,170px) rotate(-3deg) scale(0.95)' : 'none',
-            opacity: phase >= 3 ? 0 : 1,
-            transition: phase >= 3
+            transform: phase >= 4 ? 'translate(500px,170px) rotate(-3deg) scale(0.95)' : 'none',
+            opacity: phase >= 4 ? 0 : 1,
+            transition: phase >= 4
               ? 'transform 407ms 25ms cubic-bezier(0.4,0,1,1), opacity 245ms 162ms ease-out'
               : 'none',
           }}>
@@ -266,12 +274,12 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
         </div>
       )}
 
-      {/* Slash line — sweeps then fades before halves separate */}
+      {/* Slash line — sweeps (phase 1), fades (phase 2), gone before phase 3 */}
       {phase >= 1 && phase < 3 && (
         <div className="absolute inset-0 z-50 pointer-events-none"
           style={{
             opacity: phase >= 2 ? 0 : 1,
-            transition: 'opacity 80ms ease-out',
+            transition: 'opacity 70ms ease-out',
           }}>
           <div style={{
             position: 'absolute', inset: 0,
