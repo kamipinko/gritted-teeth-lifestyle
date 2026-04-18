@@ -733,7 +733,7 @@ export default function SchedulePage() {
                 enabled={carveEnabled}
                 onFire={handleCarve}
                 onHover={() => play('button-hover')}
-                onSlash={() => play('slash')}
+                onSlash={() => play(Math.random() < 0.2 ? 'slash-alt' : 'slash')}
               />
             </div>
           </div>
