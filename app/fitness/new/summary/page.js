@@ -1,12 +1,9 @@
 'use client'
 /*
- * /fitness/new/summary — Mission Briefing. The payoff screen.
+ * /fitness/new/summary — Mission Briefing.
  *
- * The user named their cycle, picked their targets, carved their schedule,
- * and assigned every session. This page makes them feel it. The cycle name
- * dominates the hero band in white on red. Stats flash in gold. Muscle
- * targets are stamped in big rotated parallelogram slabs. Day cards are
- * tilted dossiers. BEGIN is the final contract.
+ * For short cycles (<7 days): THE BLADE — a vertical katana with days
+ * etched along it. For longer cycles (>=7 days): classic day card grid.
  */
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
@@ -23,38 +20,22 @@ const MUSCLE_LABELS = {
   abs: 'ABS', glutes: 'GLUTES', quads: 'QUADS',
   hamstrings: 'HAMSTRINGS', calves: 'CALVES',
 }
+const MUSCLE_KANJI = {
+  chest: '胸', shoulders: '肩', back: '背', biceps: '二', triceps: '三',
+  forearms: '腕', quads: '腿', hamstrings: '裏', calves: '脛', glutes: '尻', abs: '腹',
+}
 
 const DAY_SHORT   = ['SUN','MON','TUE','WED','THU','FRI','SAT']
 const MONTH_SHORT = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
 
-// Alternating slab rotations — varied enough to feel handmade
-const SLAB_ROTATIONS = ['-1.5deg','1deg','-0.8deg','1.5deg','-1.2deg','0.8deg','-1.8deg','1.2deg','-0.6deg','1.4deg','-1deg']
 const CARD_ROTATIONS = ['-0.8deg','0.6deg','-0.5deg','0.9deg','-0.7deg','0.4deg','-1deg','0.7deg','-0.6deg','0.8deg']
+const SLAB_ROTATIONS = ['-1.5deg','1deg','-0.8deg','1.5deg','-1.2deg','0.8deg','-1.8deg','1.2deg','-0.6deg','1.4deg','-1deg']
 
 function parseDate(iso) {
   return new Date(iso + 'T12:00:00')
 }
 
-/* ── Muscle slab — big stamped parallelogram ── */
-function MuscleSlab({ id, index }) {
-  const rot = SLAB_ROTATIONS[index % SLAB_ROTATIONS.length]
-  return (
-    <div
-      className="px-6 py-3 bg-gtl-red border-2 border-gtl-red-bright shadow-red-glow shrink-0"
-      style={{
-        clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
-        transform: `rotate(${rot})`,
-        transformOrigin: 'center center',
-      }}
-    >
-      <div className="font-display text-2xl text-gtl-paper leading-none tracking-wide whitespace-nowrap">
-        {MUSCLE_LABELS[id] || id.toUpperCase()}
-      </div>
-    </div>
-  )
-}
-
-/* ── Compact muscle chip — mini slab, same energy as the top ones ── */
+/* ── Compact muscle chip ── */
 function MuscleChip({ id, index = 0 }) {
   const rot = SLAB_ROTATIONS[index % SLAB_ROTATIONS.length]
   return (
@@ -73,7 +54,7 @@ function MuscleChip({ id, index = 0 }) {
   )
 }
 
-/* ── Day dossier card ── */
+/* ── Day dossier card (used for >= 7 day cycles) ── */
 function DayCard({ iso, muscles, index }) {
   const date    = parseDate(iso)
   const dayName = DAY_SHORT[date.getDay()]
@@ -88,7 +69,6 @@ function DayCard({ iso, muscles, index }) {
         ${hasWork ? 'border-l-gtl-red border-t-gtl-edge border-r-gtl-edge border-b-gtl-edge' : 'border-l-gtl-smoke border-t-gtl-edge border-r-gtl-edge border-b-gtl-edge'}`}
       style={{ transform: `rotate(${rot})`, transformOrigin: 'center top', overflow: 'visible' }}
     >
-      {/* Date block */}
       <div className="px-4 pt-4 pb-3">
         <div className={`font-display text-3xl leading-none tracking-widest ${hasWork ? 'text-gtl-red' : 'text-gtl-smoke'}`}>
           {dayName}
@@ -101,13 +81,9 @@ function DayCard({ iso, muscles, index }) {
           <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">{mon}</span>
         </div>
       </div>
-
-      {/* Red slash divider — only on active days */}
       {hasWork && (
         <div className="mx-4 mb-3 h-0.5 bg-gtl-red" style={{ transform: 'skewX(-8deg)' }} />
       )}
-
-      {/* Muscles */}
       <div className="px-4 pb-6 pt-1 flex flex-wrap gap-x-3 gap-y-4 min-h-[2rem]" style={{ overflow: 'visible' }}>
         {hasWork
           ? muscles.map((id, i) => <MuscleChip key={id} id={id} index={i} />)
@@ -117,28 +93,171 @@ function DayCard({ iso, muscles, index }) {
   )
 }
 
-/* ── Stat block — gold number + mono label ── */
-function StatBlock({ number, label }) {
+/* ══════════════════════════════════════════════════════════════════════════
+   THE BLADE — vertical katana for cycles < 7 days
+   ══════════════════════════════════════════════════════════════════════════ */
+function CycleBlade({ days, dailyPlan }) {
+  const first = days[0] ? parseDate(days[0]) : null
+  const last  = days[days.length - 1] ? parseDate(days[days.length - 1]) : null
+  const dateRange = first && last
+    ? `${MONTH_SHORT[first.getMonth()]} ${first.getDate()} — ${MONTH_SHORT[last.getMonth()]} ${last.getDate()}`
+    : ''
+
+  // Blade height scales with day count: min 360px for 1 day, +100px per additional day
+  const bladeH = Math.max(360, 260 + days.length * 100)
+
   return (
-    <div className="flex flex-col items-start">
+    <section className="relative z-10 flex justify-center py-12 px-8">
+      {/* 3D wrapper */}
       <div
-        className="font-display leading-none"
+        className="relative"
         style={{
-          fontSize: 'clamp(4rem, 8vw, 7rem)',
-          color: '#e4b022',
-          textShadow: '3px 3px 0 #8a6612, 5px 5px 0 #070708',
+          transform: 'perspective(1200px) rotateY(-6deg) rotateZ(-1.5deg)',
+          transformStyle: 'preserve-3d',
         }}
       >
-        {String(number).padStart(2, '0')}
+        {/* ── Crossguard (tsuba) ── */}
+        <div
+          className="relative z-10 mx-auto flex items-center justify-center gap-3 px-6 py-2"
+          style={{
+            width: '180px',
+            background: 'linear-gradient(90deg, #2a2a30, #4a4a52, #3a3a42, #4a4a52, #2a2a30)',
+            borderTop: '2px solid #5a5a62',
+            borderBottom: '2px solid #3a3a42',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+          }}
+        >
+          <span className="font-mono text-[8px] tracking-[0.25em] uppercase text-gtl-ash leading-none">
+            {dateRange}
+          </span>
+        </div>
+
+        {/* ── Blade body ── */}
+        <div
+          className="relative mx-auto overflow-visible"
+          style={{
+            width: '120px',
+            height: `${bladeH}px`,
+            clipPath: 'polygon(10% 0%, 90% 0%, 85% 94%, 50% 100%, 15% 94%)',
+            background: 'linear-gradient(180deg, #1e1e22 0%, #3a3a42 30%, #2e2e34 50%, #3a3a42 70%, #1e1e22 100%)',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+          }}
+        >
+          {/* Red edge glow — left */}
+          <div
+            className="absolute left-0 top-0 bottom-0 w-[3px] pointer-events-none"
+            style={{
+              background: 'linear-gradient(180deg, transparent 2%, #ff2a36 10%, #ff2a36 90%, transparent 98%)',
+              opacity: 0.3,
+              filter: 'blur(4px)',
+            }}
+          />
+          {/* Red edge glow — right */}
+          <div
+            className="absolute right-0 top-0 bottom-0 w-[3px] pointer-events-none"
+            style={{
+              background: 'linear-gradient(180deg, transparent 2%, #ff2a36 10%, #ff2a36 90%, transparent 98%)',
+              opacity: 0.3,
+              filter: 'blur(4px)',
+            }}
+          />
+
+          {/* Blood groove (fuller) — thin dark stripe down center */}
+          <div
+            className="absolute left-1/2 top-[4%] bottom-[8%] w-[2px] -translate-x-1/2 pointer-events-none"
+            style={{ background: 'rgba(0,0,0,0.4)' }}
+          />
+
+          {/* ── Days etched along the blade ── */}
+          <div className="relative z-10 flex flex-col items-center pt-6 pb-12 h-full justify-between px-3">
+            {days.map((iso, i) => {
+              const date     = parseDate(iso)
+              const dayNum   = date.getDate()
+              const dayName  = DAY_SHORT[date.getDay()]
+              const muscles  = dailyPlan[iso] || []
+              const hasWork  = muscles.length > 0
+              const isLeft   = i % 2 === 0
+
+              // Get kanji for assigned muscles (up to 3)
+              const kanjiList = muscles.slice(0, 3).map((m) => MUSCLE_KANJI[m] || '?')
+
+              return (
+                <div
+                  key={iso}
+                  className={`flex flex-col ${isLeft ? 'items-start' : 'items-end'} w-full`}
+                >
+                  {/* Day number */}
+                  <div
+                    className={`font-display leading-none ${hasWork ? 'text-gtl-paper' : 'text-gtl-ash/60'}`}
+                    style={{
+                      fontSize: '48px',
+                      textShadow: hasWork ? '2px 2px 0 #070708' : 'none',
+                    }}
+                  >
+                    {String(dayNum).padStart(2, '0')}
+                  </div>
+
+                  {/* Day of week */}
+                  <div
+                    className="font-mono uppercase leading-none mt-0.5"
+                    style={{
+                      fontSize: '10px',
+                      letterSpacing: '0.3em',
+                      color: hasWork ? '#6a6a72' : '#3a3a42',
+                    }}
+                  >
+                    {dayName}
+                  </div>
+
+                  {/* Muscle kanji (training) or 休 (rest) */}
+                  <div
+                    className="mt-1 leading-none"
+                    style={{
+                      fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
+                      fontSize: '32px',
+                      fontWeight: 400,
+                      transform: `rotate(${isLeft ? '-3deg' : '3deg'})`,
+                      color: hasWork ? '#ff2a36' : '#e4b022',
+                      textShadow: hasWork
+                        ? '0 0 8px rgba(255,42,54,0.5)'
+                        : '0 0 8px rgba(228,176,34,0.5)',
+                    }}
+                  >
+                    {hasWork
+                      ? kanjiList.join('')
+                      : '休'}
+                  </div>
+
+                  {/* Subtle engraving line */}
+                  <div
+                    className="mt-2 w-full"
+                    style={{
+                      height: '1px',
+                      background: 'linear-gradient(90deg, transparent, rgba(255,42,54,0.2), transparent)',
+                    }}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Floating shadow underneath */}
+        <div
+          className="mx-auto mt-4"
+          style={{
+            width: '80px',
+            height: '8px',
+            background: 'radial-gradient(ellipse, rgba(0,0,0,0.4) 0%, transparent 70%)',
+            filter: 'blur(4px)',
+          }}
+        />
       </div>
-      <div className="font-mono text-[10px] tracking-[0.35em] uppercase text-gtl-ash mt-1">
-        {label}
-      </div>
-    </div>
+    </section>
   )
 }
 
-/* ── EXPORT — print/save as PDF ── */
+/* ── EXPORT ── */
 function ExportButton() {
   const [hovered, setHovered] = useState(false)
   return (
@@ -151,7 +270,6 @@ function ExportButton() {
       style={{ transform: 'rotate(0.7deg)', transformOrigin: 'center center' }}
       aria-label="Export cycle summary as PDF"
     >
-      {/* Shadow */}
       <div
         className="absolute inset-0 bg-gtl-edge"
         style={{
@@ -161,7 +279,6 @@ function ExportButton() {
         }}
         aria-hidden="true"
       />
-      {/* Face */}
       <div
         className="relative flex items-center gap-6 px-10 py-4"
         style={{
@@ -172,21 +289,15 @@ function ExportButton() {
           transition: 'transform 80ms ease-out, background 80ms ease-out',
         }}
       >
-        <div className="font-display text-2xl text-gtl-ash leading-none tracking-tight">
-          EXPORT
-        </div>
-        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
-          SAVE AS PDF / PRINT
-        </div>
-        <div className="font-display text-xl text-gtl-smoke/50 leading-none select-none ml-auto">
-          ⬇
-        </div>
+        <div className="font-display text-2xl text-gtl-ash leading-none tracking-tight">EXPORT</div>
+        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">SAVE AS PDF / PRINT</div>
+        <div className="font-display text-xl text-gtl-smoke/50 leading-none select-none ml-auto">⬇</div>
       </div>
     </button>
   )
 }
 
-/* ── BEGIN — the final contract ── */
+/* ── BEGIN ── */
 function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
   const [pressed, setPressed] = useState(false)
   return (
@@ -199,11 +310,9 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
       onMouseLeave={() => setPressed(false)}
       onMouseEnter={onHover}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onFire() } }}
-      className="relative w-full cursor-pointer select-none outline-none
-        focus-visible:outline-2 focus-visible:outline-gtl-red focus-visible:outline-offset-4"
+      className="relative w-full cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-red focus-visible:outline-offset-4"
       style={{ transform: 'rotate(-1.5deg)', transformOrigin: 'center center' }}
     >
-      {/* Shadow slab */}
       <div
         className="absolute inset-0 bg-gtl-red-deep"
         style={{
@@ -213,7 +322,6 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
         }}
         aria-hidden="true"
       />
-      {/* Face */}
       <div
         className="relative flex items-center justify-between px-12 py-8"
         style={{
@@ -224,16 +332,12 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
         }}
       >
         <div>
-          <div className="font-display text-8xl text-gtl-paper leading-none tracking-tight">
-            {label}
-          </div>
+          <div className="font-display text-8xl text-gtl-paper leading-none tracking-tight">{label}</div>
           <div className="font-mono text-[10px] tracking-[0.5em] uppercase text-gtl-paper/50 mt-2">
             LAUNCH THE FORGE / THE CYCLE STARTS NOW
           </div>
         </div>
-        <div className="font-display text-6xl text-gtl-paper/30 leading-none select-none">
-          ▸
-        </div>
+        <div className="font-display text-6xl text-gtl-paper/30 leading-none select-none">▸</div>
       </div>
     </div>
   )
@@ -242,7 +346,7 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
 function RetreatButton() {
   const { play } = useSound()
   const [hovered, setHovered] = useState(false)
-  let backHref = '/fitness/new/plan'
+  let backHref = '/fitness/new/branded'
   try { if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit' } catch (_) {}
   return (
     <Link
@@ -306,27 +410,19 @@ export default function SummaryPage() {
 
   const handleBegin = () => {
     play('card-confirm')
-    // Save or update the cycle in the persistent list
     try {
       const existing  = JSON.parse(localStorage.getItem(pk('cycles')) || '[]')
       const editingId = localStorage.getItem(pk('editing-cycle-id'))
       if (editingId) {
-        // Update the existing cycle in place, preserve original createdAt
         const updated = existing.map((c) =>
-          c.id === editingId
-            ? { ...c, name: cycleName, targets, days, dailyPlan }
-            : c
+          c.id === editingId ? { ...c, name: cycleName, targets, days, dailyPlan } : c
         )
         localStorage.setItem(pk('cycles'), JSON.stringify(updated))
         localStorage.removeItem(pk('editing-cycle-id'))
       } else {
-        // Brand-new cycle
         const cycle = {
           id: Date.now().toString(),
-          name: cycleName,
-          targets,
-          days,
-          dailyPlan,
+          name: cycleName, targets, days, dailyPlan,
           createdAt: new Date().toISOString(),
         }
         localStorage.setItem(pk('cycles'), JSON.stringify([cycle, ...existing]))
@@ -334,11 +430,9 @@ export default function SummaryPage() {
     } catch (_) {}
     setStampVisible(true)
 
-    // Impact fires at 70% through the 950ms slam animation = ~665ms
     setTimeout(() => {
       play('stamp')
       setStampLanded(true)
-      // Violent screen shake at impact
       if (mainRef.current) {
         mainRef.current.animate(
           [
@@ -358,19 +452,9 @@ export default function SummaryPage() {
       }
     }, 665)
 
-    // Second stamp sound for extra weight
     setTimeout(() => play('stamp'), 750)
-
-    // Fire transition after the stamp has been seen
     setTimeout(() => setFireActive(true), 1900)
   }
-
-  const plannedSessions = days.filter((iso) => (dailyPlan[iso] || []).length > 0).length
-
-  // Unique muscle groups locked across every scheduled day
-  const uniqueMuscles = new Set()
-  days.forEach((iso) => (dailyPlan[iso] || []).forEach((m) => uniqueMuscles.add(m)))
-  const targetsLocked = uniqueMuscles.size || targets.length
 
   const cols = days.length <= 5 ? days.length
              : days.length <= 10 ? Math.ceil(days.length / 2)
@@ -379,27 +463,24 @@ export default function SummaryPage() {
   return (
     <main ref={mainRef} className="relative min-h-screen overflow-x-hidden bg-gtl-void">
 
-      {/* ── Print styles ────────────────────────────────────────────── */}
+      {/* ── Print styles ── */}
       <style>{`
         @media print {
           @page { margin: 0.6in; size: portrait; }
           body { background: #ffffff !important; }
-          /* Hide decorative / interactive layers */
           .no-print { display: none !important; }
           .gtl-noise { display: none !important; }
-          /* Stamp overlay and fire transitions sit in fixed position — never print */
           .fixed { display: none !important; }
-          /* Force color preservation so red slabs and gold numbers survive */
           * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
         }
       `}</style>
 
-      {/* ── Atmospherics ────────────────────────────────────────────── */}
+      {/* ── Atmospherics ── */}
       <div className="absolute inset-0 gtl-noise pointer-events-none" />
       <div className="absolute inset-0 pointer-events-none"
         style={{ background: 'linear-gradient(160deg, rgba(122,14,20,0.18) 0%, transparent 45%, rgba(74,10,14,0.28) 100%)' }} />
 
-      {/* Kanji watermark — 完 (complete) — stronger than usual */}
+      {/* 完 kanji watermark */}
       <div
         className="absolute -top-16 -right-24 pointer-events-none select-none"
         aria-hidden="true"
@@ -413,43 +494,26 @@ export default function SummaryPage() {
         完
       </div>
 
-      {/* ── HERO BAND — cycle name on full-width red ──────────────── */}
+      {/* ── HERO — cycle name (no red slab) ── */}
       <section className="relative z-10 overflow-hidden">
-        {/* The red band itself — skewed so it bleeds off both edges */}
-        <div
-          className="absolute inset-0 bg-gtl-red"
-          style={{ transform: 'skewY(-1.5deg)', transformOrigin: 'top left' }}
-          aria-hidden="true"
-        />
-
-        {/* "FORGED" ghost text on the band — big, rotated, proud */}
-        <div
-          className="absolute right-4 top-2 font-display text-[10rem] leading-none select-none pointer-events-none"
-          aria-hidden="true"
-          style={{ color: 'rgba(0,0,0,0.18)', transform: 'rotate(6deg)', transformOrigin: 'right top' }}
-        >
-          FORGED
-        </div>
-
-        {/* Content on top of red band */}
         <div className="relative px-8 pt-8 pb-14">
-          {/* Nav row: retreat + breadcrumb */}
+          {/* Nav row */}
           <div className="flex items-center gap-4 mb-6">
             <RetreatButton />
-            <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-paper/40 overflow-hidden truncate">
+            <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke/60 overflow-hidden truncate">
               PALACE / FITNESS / NEW CYCLE / MISSION BRIEF
             </div>
           </div>
 
-          {/* Step tag — counter-rotated */}
+          {/* Step tag */}
           <div className="inline-flex items-center gap-3 mb-4" style={{ transform: 'rotate(1deg)' }}>
-            <div className="h-0.5 w-10 bg-gtl-paper/40" />
-            <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-paper/70 font-bold">
+            <div className="h-0.5 w-10 bg-gtl-red/40" />
+            <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-red/70 font-bold">
               STEP 05 / REVIEW
             </span>
           </div>
 
-          {/* THE CYCLE NAME — the whole reason we're here */}
+          {/* THE CYCLE NAME */}
           <h1
             className="font-display text-gtl-paper leading-none"
             style={{
@@ -463,9 +527,8 @@ export default function SummaryPage() {
             {cycleName}
           </h1>
 
-          {/* "CYCLE DESIGNATION" label below name — counter-rotated for tension */}
           <div
-            className="font-mono text-[10px] tracking-[0.5em] uppercase text-gtl-paper/50 mt-4"
+            className="font-mono text-[10px] tracking-[0.5em] uppercase text-gtl-smoke/50 mt-4"
             style={{ transform: 'rotate(0.8deg)' }}
           >
             CYCLE DESIGNATION / AUTHORIZED
@@ -473,43 +536,13 @@ export default function SummaryPage() {
         </div>
       </section>
 
-      {/* ── STATS ROW — gold numbers, earned ────────────────────────── */}
-      <section className="relative z-10 px-8 py-10">
-        <div className="flex items-start gap-4 md:gap-8 flex-wrap">
-          <StatBlock number={days.length}       label="BATTLEDAYS" />
+      {/* ── THE BLADE (< 7 days) or DAY CARDS (>= 7 days) ── */}
+      {days.length > 0 && days.length < 7 && (
+        <CycleBlade days={days} dailyPlan={dailyPlan} />
+      )}
 
-          {/* Red slash separator */}
-          <div className="self-stretch flex items-center">
-            <div className="w-1 h-full min-h-[5rem] bg-gtl-red" style={{ transform: 'skewX(-12deg)' }} />
-          </div>
-
-          <StatBlock number={targetsLocked}     label="TARGETS LOCKED" />
-
-          <div className="self-stretch flex items-center">
-            <div className="w-1 h-full min-h-[5rem] bg-gtl-red" style={{ transform: 'skewX(-12deg)' }} />
-          </div>
-
-          <StatBlock number={plannedSessions}   label="SESSIONS MAPPED" />
-        </div>
-      </section>
-
-      {/* Red slash divider */}
-      <div className="relative z-10 mx-8 mb-10 h-[3px] bg-gtl-red"
-           style={{ transform: 'skewX(-6deg)', transformOrigin: 'left center' }} />
-
-      {/* ── SCHEDULE — tilted day dossiers ───────────────────────────── */}
-      <section className="relative z-10 px-8 mb-12">
-        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-ash mb-8 flex items-center gap-4">
-          <span>BATTLE SCHEDULE</span>
-          <div className="h-px flex-1 bg-gtl-edge" />
-          <span className="text-gtl-red">{days.length} DAY{days.length !== 1 ? 'S' : ''} FORGED</span>
-        </div>
-
-        {days.length === 0 ? (
-          <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-gtl-smoke">
-            NO DAYS SCHEDULED
-          </div>
-        ) : (
+      {days.length >= 7 && (
+        <section className="relative z-10 px-8 mb-12">
           <div
             className="grid gap-4"
             style={{ gridTemplateColumns: `repeat(${Math.min(cols, days.length)}, 1fr)` }}
@@ -523,10 +556,18 @@ export default function SummaryPage() {
               />
             ))}
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
-      {/* ── EXPORT + BEGIN ───────────────────────────────────────────── */}
+      {days.length === 0 && (
+        <section className="relative z-10 px-8 py-12">
+          <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-gtl-smoke">
+            NO DAYS SCHEDULED
+          </div>
+        </section>
+      )}
+
+      {/* ── EXPORT + BEGIN ── */}
       <section className="relative z-10 px-8 pb-20 pt-4 flex flex-col gap-4 no-print">
         <ExportButton />
         <BeginButton
@@ -536,7 +577,7 @@ export default function SummaryPage() {
         />
       </section>
 
-      {/* ── DEADLINE STAMP OVERLAY ───────────────────────────────── */}
+      {/* ── DEADLINE STAMP OVERLAY ── */}
       {stampVisible && days.length > 0 && (() => {
         const lastDay  = days[days.length - 1]
         const date     = parseDate(lastDay)
@@ -570,92 +611,42 @@ export default function SummaryPage() {
               }
             `}</style>
 
-            {/* White flash on impact */}
             {stampLanded && (
-              <div
-                className="absolute inset-0 bg-white"
-                style={{ animation: 'deadline-flash 500ms cubic-bezier(0.3, 0, 0.5, 1) forwards', mixBlendMode: 'screen' }}
-              />
+              <div className="absolute inset-0 bg-white"
+                style={{ animation: 'deadline-flash 500ms cubic-bezier(0.3, 0, 0.5, 1) forwards', mixBlendMode: 'screen' }} />
             )}
 
-            {/* Shockwave rings — 3 staggered, expand from stamp center */}
             {stampLanded && [0, 90, 180].map((delay, i) => (
-              <div
-                key={i}
-                className="absolute rounded-full border-gtl-red"
+              <div key={i} className="absolute rounded-full border-gtl-red"
                 style={{
-                  left: '50%', top: '50%',
-                  width: '120px', height: '120px',
+                  left: '50%', top: '50%', width: '120px', height: '120px',
                   borderColor: i === 0 ? '#ffffff' : i === 1 ? '#ff2a36' : '#d4181f',
                   animation: `deadline-ring 900ms cubic-bezier(0.2, 0.8, 0.3, 1) ${delay}ms forwards`,
                   mixBlendMode: 'screen',
-                }}
-              />
+                }} />
             ))}
 
-            {/* The stamp itself */}
             <div style={{ animation: 'deadline-slam 950ms cubic-bezier(0.18, 1.2, 0.35, 1) forwards' }}>
               <div className="relative">
-                {/* Hard shadow slab */}
-                <div
-                  className="absolute inset-0 bg-gtl-red-deep"
-                  style={{
-                    transform: 'translate(18px, 18px)',
-                    clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)',
-                  }}
-                  aria-hidden="true"
-                />
-
-                {/* Stamp face */}
-                <div
-                  className="relative px-8 md:px-14 py-10 bg-gtl-red border-4 border-gtl-red-deep"
-                  style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)' }}
-                >
-                  {/* Top label */}
-                  <div
-                    className="font-mono text-[11px] tracking-[0.6em] uppercase text-gtl-paper/50 mb-2"
-                    style={{ letterSpacing: '0.6em' }}
-                  >
-                    ◼ DEADLINE ◼
-                  </div>
-
-                  {/* Month */}
-                  <div
-                    className="font-display text-3xl md:text-5xl text-gtl-paper leading-none"
-                    style={{ textShadow: '3px 3px 0 #070708' }}
-                  >
-                    {month}
-                  </div>
-
-                  {/* Day number + logo side by side */}
+                <div className="absolute inset-0 bg-gtl-red-deep"
+                  style={{ transform: 'translate(18px, 18px)', clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)' }}
+                  aria-hidden="true" />
+                <div className="relative px-8 md:px-14 py-10 bg-gtl-red border-4 border-gtl-red-deep"
+                  style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)' }}>
+                  <div className="font-mono text-[11px] tracking-[0.6em] uppercase text-gtl-paper/50 mb-2"
+                    style={{ letterSpacing: '0.6em' }}>◼ DEADLINE ◼</div>
+                  <div className="font-display text-3xl md:text-5xl text-gtl-paper leading-none"
+                    style={{ textShadow: '3px 3px 0 #070708' }}>{month}</div>
                   <div className="flex items-center gap-16">
-                    <div
-                      className="font-display text-gtl-paper leading-none"
-                      style={{
-                        fontSize: 'clamp(6rem, 16vw, 13rem)',
-                        textShadow: '6px 6px 0 #070708, 12px 12px 0 rgba(0,0,0,0.4)',
-                        lineHeight: '0.85',
-                      }}
-                    >
+                    <div className="font-display text-gtl-paper leading-none"
+                      style={{ fontSize: 'clamp(6rem, 16vw, 13rem)', textShadow: '6px 6px 0 #070708, 12px 12px 0 rgba(0,0,0,0.4)', lineHeight: '0.85' }}>
                       {String(dayNum).padStart(2, '0')}
                     </div>
-                    <img
-                      src="/logo.png"
-                      alt="Gritted Teeth"
-                      className="-rotate-12 opacity-90"
-                      style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
-                    />
+                    <img src="/logo.png" alt="Gritted Teeth" className="-rotate-12 opacity-90"
+                      style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                   </div>
-
-                  {/* Day of week + year */}
-                  <div
-                    className="font-display text-3xl text-gtl-paper/80 leading-none mt-3"
-                    style={{ textShadow: '2px 2px 0 #070708' }}
-                  >
-                    {dayName} · {year}
-                  </div>
-
-                  {/* Bottom border line */}
+                  <div className="font-display text-3xl text-gtl-paper/80 leading-none mt-3"
+                    style={{ textShadow: '2px 2px 0 #070708' }}>{dayName} · {year}</div>
                   <div className="mt-6 h-0.5 bg-gtl-paper/30" />
                   <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-paper/40 mt-2">
                     GRITTED TEETH LIFESTYLE / YOUR FINAL BATTLEDAY
