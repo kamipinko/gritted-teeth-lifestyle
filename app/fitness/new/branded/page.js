@@ -177,7 +177,7 @@ function CarveContent({ enabled }) {
   )
 }
 
-function SheetCarveButton({ count, enabled, onFire, onHover, onSliceStart }) {
+function SheetCarveButton({ count, enabled, onFire, onHover }) {
   // 0=idle, 1=slash, 2=render-halves, 3=separate
   const [phase, setPhase] = useState(0)
   const mountedRef = useRef(true)
@@ -195,7 +195,6 @@ function SheetCarveButton({ count, enabled, onFire, onHover, onSliceStart }) {
   const fire = () => {
     if (!enabled || phase > 0) return
     setPhase(1) // slash line (108ms sweep + ~170ms gap)
-    if (onSliceStart) onSliceStart()
     setTimeout(() => { if (mountedRef.current) setPhase(2) }, 280)   // render halves after slash gone
     setTimeout(() => { if (mountedRef.current) onFire() }, 720)      // navigate
   }
@@ -227,15 +226,14 @@ function SheetCarveButton({ count, enabled, onFire, onHover, onSliceStart }) {
       {/* Red glow between halves */}
       {phase >= 2 && (
         <div className="absolute inset-0 z-0" style={{
-          background: '#d4181f', filter: 'blur(6px)', opacity: phase >= 3 ? 0 : 0.9,
-          transition: 'opacity 200ms 200ms ease-out',
+          background: '#d4181f', filter: 'blur(8px)', opacity: 0.95,
         }} />
       )}
 
       {/* Gold face — full during idle + slash, splits at phase 2+ */}
       <div className={`absolute inset-0 flex flex-col items-center justify-center px-2 ${active ? 'z-50' : 'z-10'}`}
         style={{
-          clipPath: phase >= 3 ? 'polygon(0 0, 100% 0, 0 100%)' : 'none',
+          clipPath: phase >= 3 ? 'polygon(0 0, 100% 0, 0 100%)' : 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
           background: goldBg,
           transform: phase >= 3 ? 'translate(-120px,-80px) rotate(1.5deg)' : 'none',
           opacity: phase >= 3 ? 0 : 1,
@@ -308,7 +306,6 @@ export default function SchedulePage() {
   const [selectedDays, setSelectedDays] = useState(new Set())
   const [assignments,  setAssignments]  = useState({})
   const [fireActive,   setFireActive]   = useState(false)
-  const [carveSlicing, setCarveSlicing] = useState(false)
   const dragRef = useRef(false) // true during swipe-select
   const gridRef = useRef(null)
 
@@ -722,35 +719,12 @@ export default function SchedulePage() {
                   onClick={() => toggleMuscle(m.id)}
                 />
               ))}
-              {/* CARVE slot wrapper — relative so the kanji reveal positions correctly */}
-              <div className="relative">
-                <SheetCarveButton
-                  count={daysWithMuscles}
-                  enabled={carveEnabled}
-                  onFire={handleCarve}
-                  onHover={() => play('button-hover')}
-                  onSliceStart={() => setCarveSlicing(true)}
-                />
-                {/* 刻 kanji reveal — behind the button, revealed when sliced */}
-                <div
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
-                  style={{
-                    zIndex: 5,
-                    opacity: carveSlicing ? 1 : 0,
-                    transform: carveSlicing ? 'scale(1.1)' : 'scale(0.8)',
-                    transition: 'opacity 120ms ease-out, transform 150ms ease-out',
-                    fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-                    fontSize: '72px',
-                    fontWeight: 900,
-                    color: '#ff2a36',
-                    textShadow: '0 0 20px #ff2a36, 0 0 40px rgba(255,42,54,0.6)',
-                    lineHeight: 1,
-                  }}
-                  aria-hidden="true"
-                >
-                  刻
-                </div>
-              </div>
+              <SheetCarveButton
+                count={daysWithMuscles}
+                enabled={carveEnabled}
+                onFire={handleCarve}
+                onHover={() => play('button-hover')}
+              />
             </div>
           </div>
         )}
