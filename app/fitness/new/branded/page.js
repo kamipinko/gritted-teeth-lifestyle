@@ -177,7 +177,7 @@ function CarveContent({ enabled }) {
   )
 }
 
-function SheetCarveButton({ count, enabled, onFire, onHover }) {
+function SheetCarveButton({ count, enabled, onFire, onHover, onSlash }) {
   // 0=idle, 1=slash-sweep, 2=slash-fade, 3=render-halves, 4=separate
   const [phase, setPhase] = useState(0)
   const mountedRef = useRef(true)
@@ -202,6 +202,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover }) {
   const fire = () => {
     if (!enabled || phase > 0) return
     setPhase(1)
+    if (onSlash) onSlash()
     setTimeout(() => { if (mountedRef.current) setPhase(2) }, 108)   // slash fade
     setTimeout(() => { if (mountedRef.current) setPhase(3) }, 228)   // render halves
     setTimeout(() => { if (mountedRef.current) onFire() }, 530)      // navigate
@@ -732,6 +733,7 @@ export default function SchedulePage() {
                 enabled={carveEnabled}
                 onFire={handleCarve}
                 onHover={() => play('button-hover')}
+                onSlash={() => play('slash')}
               />
             </div>
           </div>
