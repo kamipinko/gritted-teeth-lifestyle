@@ -142,10 +142,10 @@ function CycleBlade({ days, dailyPlan }) {
           aria-hidden="true"
         >
           <defs>
-            <path id="blade-spine" d="M 1290,300 L 965,1580" />
-            {/* Blade silhouette clip polygon — traced from debug markers.
-                Mune (spine) runs upper-left, ha (cutting edge) runs lower-right,
-                converging at kissaki tip. */}
+            {/* Text route: centered between mune and ha (midline of blade steel).
+                Computed by averaging mune/ha debug marker pairs. */}
+            <path id="blade-center" d="M 1335,290 L 1265,620 L 1185,970 L 1090,1340 L 957,1655" fill="none" stroke="none" />
+            {/* Blade silhouette clip polygon — safety net */}
             <clipPath id="blade-clip">
               <polygon points="
                 1290,260
@@ -166,20 +166,21 @@ function CycleBlade({ days, dailyPlan }) {
           <g clipPath="url(#blade-clip)">
             {dayLabels.map(({ num, hasWork, kanjiStr, iso }, i) => {
               const t = (i + 0.5) / dayLabels.length
-              const offset = 5 + t * 90  // 5% → 95% along spine
+              const offset = 5 + t * 90  // 5% → 95% along path
               return (
                 <text
                   key={iso}
+                  dominantBaseline="central"
                   style={{
                     fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif',
-                    fontSize: '44px',
-                    fontWeight: 400,
-                    letterSpacing: '0.12em',
-                    fill: hasWork ? '#8a8070' : '#e4b022',
-                    opacity: hasWork ? 0.6 : 0.8,
+                    fontSize: '48px',
+                    fontWeight: 600,
+                    letterSpacing: '0.1em',
+                    fill: hasWork ? '#b0a898' : '#e4b022',
+                    opacity: hasWork ? 0.8 : 0.9,
                   }}
                 >
-                  <textPath href="#blade-spine" startOffset={`${offset}%`} textAnchor="middle">
+                  <textPath href="#blade-center" startOffset={`${offset}%`} textAnchor="middle">
                     {num}  {kanjiStr}
                   </textPath>
                 </text>
