@@ -144,7 +144,7 @@ function CycleBlade({ days, dailyPlan }) {
           <defs>
             {/* Face center path: midline between spine and cutting edge.
                 Calibrated from debug markers on actual blade edges. */}
-            <path id="blade-face-center" d="M 1320,280 L 1250,610 L 1170,960 L 1072,1330 L 995,1550 L 925,1655" fill="none" stroke="none" />
+            <path id="blade-face-center" d="M 1354,288 L 1286,619 L 1208,970 L 1109,1339 L 1027,1557 L 945,1660" fill="none" stroke="none" />
             {/* Blade silhouette clip — spine edge + ha edge */}
             <clipPath id="blade-clip">
               <polygon points="
