@@ -143,28 +143,49 @@ function CycleBlade({ days, dailyPlan }) {
         >
           <defs>
             <path id="blade-spine" d="M 1290,300 L 965,1580" />
+            {/* Blade silhouette clip polygon — traced from debug markers.
+                Mune (spine) runs upper-left, ha (cutting edge) runs lower-right,
+                converging at kissaki tip. */}
+            <clipPath id="blade-clip">
+              <polygon points="
+                1290,260
+                1210,600
+                1120,960
+                1030,1320
+                970,1560
+                955,1650
+                960,1660
+                1060,1560
+                1150,1360
+                1250,980
+                1320,640
+                1380,320
+              " />
+            </clipPath>
           </defs>
-          {dayLabels.map(({ num, hasWork, kanjiStr, iso }, i) => {
-            const t = (i + 0.5) / dayLabels.length
-            const offset = 5 + t * 90  // 5% → 95% along spine
-            return (
-              <text
-                key={iso}
-                style={{
-                  fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif',
-                  fontSize: '44px',
-                  fontWeight: 400,
-                  letterSpacing: '0.12em',
-                  fill: hasWork ? '#8a8070' : '#e4b022',
-                  opacity: hasWork ? 0.6 : 0.8,
-                }}
-              >
-                <textPath href="#blade-spine" startOffset={`${offset}%`} textAnchor="middle">
-                  {num}  {kanjiStr}
-                </textPath>
-              </text>
-            )
-          })}
+          <g clipPath="url(#blade-clip)">
+            {dayLabels.map(({ num, hasWork, kanjiStr, iso }, i) => {
+              const t = (i + 0.5) / dayLabels.length
+              const offset = 5 + t * 90  // 5% → 95% along spine
+              return (
+                <text
+                  key={iso}
+                  style={{
+                    fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif',
+                    fontSize: '44px',
+                    fontWeight: 400,
+                    letterSpacing: '0.12em',
+                    fill: hasWork ? '#8a8070' : '#e4b022',
+                    opacity: hasWork ? 0.6 : 0.8,
+                  }}
+                >
+                  <textPath href="#blade-spine" startOffset={`${offset}%`} textAnchor="middle">
+                    {num}  {kanjiStr}
+                  </textPath>
+                </text>
+              )
+            })}
+          </g>
         </svg>
       </div>
     </section>
