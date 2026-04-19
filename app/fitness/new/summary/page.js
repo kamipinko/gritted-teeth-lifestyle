@@ -142,31 +142,22 @@ function CycleBlade({ days, dailyPlan }) {
           aria-hidden="true"
         >
           <defs>
-            {/* Text route: centered between mune and ha (midline of blade steel).
-                Computed by averaging mune/ha debug marker pairs. */}
-            <path id="blade-center" d="M 1335,290 L 1265,620 L 1185,970 L 1090,1340 L 957,1655" fill="none" stroke="none" />
-            {/* Blade silhouette clip polygon — safety net */}
+            {/* Face center path: midline between spine and cutting edge.
+                Calibrated from debug markers on actual blade edges. */}
+            <path id="blade-face-center" d="M 1320,280 L 1250,610 L 1170,960 L 1072,1330 L 995,1550 L 925,1655" fill="none" stroke="none" />
+            {/* Blade silhouette clip — spine edge + ha edge */}
             <clipPath id="blade-clip">
               <polygon points="
-                1290,260
-                1210,600
-                1120,960
-                1030,1320
-                970,1560
-                955,1650
-                960,1660
-                1060,1560
-                1150,1360
-                1250,980
-                1320,640
-                1380,320
+                1180,180 1100,520 1010,880 920,1240 860,1490 840,1600
+                925,1655
+                1010,1710 1130,1610 1225,1420 1330,1040 1400,700 1460,380
               " />
             </clipPath>
           </defs>
           <g clipPath="url(#blade-clip)">
             {dayLabels.map(({ num, hasWork, kanjiStr, iso }, i) => {
               const t = (i + 0.5) / dayLabels.length
-              const offset = 5 + t * 90  // 5% → 95% along path
+              const offset = 8 + t * 84  // 8% → 92% along path
               return (
                 <text
                   key={iso}
@@ -180,7 +171,7 @@ function CycleBlade({ days, dailyPlan }) {
                     opacity: hasWork ? 0.8 : 0.9,
                   }}
                 >
-                  <textPath href="#blade-center" startOffset={`${offset}%`} textAnchor="middle">
+                  <textPath href="#blade-face-center" startOffset={`${offset}%`} textAnchor="middle">
                     {num}  {kanjiStr}
                   </textPath>
                 </text>
