@@ -105,9 +105,9 @@ function CycleBlade({ days, dailyPlan }) {
     ? `${MONTH_SHORT[first.getMonth()]} ${first.getDate()} — ${MONTH_SHORT[last.getMonth()]} ${last.getDate()}`
     : ''
 
-  // Day labels positioned alongside the vertical blade.
-  // After rotation the blade runs top-to-bottom. Hilt at top (~18%), tip at bottom (~88%).
-  // Labels sit to the LEFT of the blade spine.
+  // Day labels positioned along the diagonal blade.
+  // At -45deg rotation, the blade runs from upper-right (hilt ~62%,18%)
+  // to lower-left (tip ~18%,82%). Labels sit above-left of the spine.
   const dayLabels = days.map((iso, i) => {
     const d = parseDate(iso)
     const num = String(d.getDate()).padStart(2, '0')
@@ -116,9 +116,10 @@ function CycleBlade({ days, dailyPlan }) {
     const hasWork = muscles.length > 0
     const kanjiList = muscles.slice(0, 3).map((m) => MUSCLE_KANJI[m] || '?')
     const t = (i + 0.5) / days.length
-    // Vertical blade: labels spaced from top to bottom, left of center
-    const yPct = 22 + t * 62   // ~22% → ~84%
-    return { num, dow, hasWork, kanjiList, yPct, iso }
+    // Lerp along diagonal from hilt to tip
+    const xPct = 58 - t * 36   // ~58% → ~22%
+    const yPct = 22 + t * 56   // ~22% → ~78%
+    return { num, dow, hasWork, kanjiList, xPct, yPct, iso }
   })
 
   return (
@@ -130,7 +131,7 @@ function CycleBlade({ days, dailyPlan }) {
       </div>
 
       <div className="relative mx-auto" style={{ width: '100%', maxWidth: '600px' }}>
-        {/* Potrace-traced wakizashi — rotated to vertical in the SVG itself */}
+        {/* Potrace-traced wakizashi — rotated -45deg in the SVG (hilt upper-right, tip lower-left) */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/reference/wakizashi_styled.svg"
@@ -139,15 +140,15 @@ function CycleBlade({ days, dailyPlan }) {
           style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))' }}
         />
 
-        {/* Day labels to the left of the blade */}
-        {dayLabels.map(({ num, dow, hasWork, kanjiList, yPct, iso }) => (
+        {/* Day labels along the diagonal blade */}
+        {dayLabels.map(({ num, dow, hasWork, kanjiList, xPct, yPct, iso }) => (
           <div
             key={iso}
             className="absolute"
             style={{
-              right: '62%',
+              left: `${xPct}%`,
               top: `${yPct}%`,
-              transform: 'translateY(-50%)',
+              transform: 'translate(-100%, -50%)',
             }}
           >
             {/* Day number + weekday */}
