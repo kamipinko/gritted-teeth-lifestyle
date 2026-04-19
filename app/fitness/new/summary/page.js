@@ -125,8 +125,8 @@ function CycleBlade({ days, dailyPlan }) {
         </span>
       </div>
 
-      <div className="relative mx-auto" style={{ width: '100%', maxWidth: '1200px' }}>
-        {/* Potrace-traced wakizashi — rotated -45deg in the SVG (hilt upper-right, tip lower-left) */}
+      <div className="relative mx-auto" style={{ width: '100%', maxWidth: '550px' }}>
+        {/* Potrace-traced wakizashi — rotated -45deg, tight viewBox 668,-635,1136,2642 */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/reference/wakizashi_styled.svg"
@@ -135,16 +135,16 @@ function CycleBlade({ days, dailyPlan }) {
           style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))' }}
         />
 
-        {/* Engraved day labels along the blade spine */}
+        {/* Engraved day labels along the blade spine — same viewBox as weapon SVG */}
         <svg
-          viewBox="0 0 1000 1000"
+          viewBox="668 -635 1136 2642"
           className="absolute inset-0 w-full h-full pointer-events-none"
           aria-hidden="true"
         >
           <defs>
-            {/* Path following the blade spine from habaki (upper-right) to kissaki (lower-left).
-                Coordinates calibrated to the weapon img at 1200px max-width, 1:1 aspect. */}
-            <path id="blade-spine" d="M 580,395 Q 475,555 330,775" />
+            {/* Path following the blade spine (mune) in weapon-SVG coordinates.
+                Habaki ~(1350,300) to kissaki ~(880,1700) in the rotated frame. */}
+            <path id="blade-spine" d="M 1340,340 Q 1150,900 870,1700" />
           </defs>
           {dayLabels.map(({ num, hasWork, kanjiStr, iso }, i) => {
             const t = (i + 0.5) / dayLabels.length
@@ -154,11 +154,11 @@ function CycleBlade({ days, dailyPlan }) {
                 key={iso}
                 style={{
                   fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif',
-                  fontSize: '18px',
+                  fontSize: '52px',
                   fontWeight: 400,
-                  letterSpacing: '0.15em',
+                  letterSpacing: '0.12em',
                   fill: hasWork ? '#8a8070' : '#e4b022',
-                  opacity: hasWork ? 0.65 : 0.8,
+                  opacity: hasWork ? 0.6 : 0.8,
                 }}
               >
                 <textPath href="#blade-spine" startOffset={`${offset}%`} textAnchor="middle">
