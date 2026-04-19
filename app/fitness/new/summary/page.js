@@ -94,301 +94,158 @@ function DayCard({ iso, muscles, index }) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   THE BLADE — SVG weapon for cycles < 7 days
-   1-2 days: KNIFE (tanto)  |  3-4 days: WAKIZASHI  |  5-6 days: KATANA
-   ══════════════════════════════════════════════════════════════════════════ */
-
-// Quadratic Bezier point at t
-function qBez(p0, cp, p1, t) {
-  const u = 1 - t
-  return { x: u*u*p0.x + 2*u*t*cp.x + t*t*p1.x, y: u*u*p0.y + 2*u*t*cp.y + t*t*p1.y }
-}
-
-// Array of {x,y} → SVG path
-function ptsPath(pts) {
-  return 'M ' + pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L ')
-}
-
-// Sample a Bezier curve into a path string
-function sampleBez(p0, cp, p1, steps = 30) {
-  const pts = []
-  for (let i = 0; i <= steps; i++) pts.push(qBez(p0, cp, p1, i / steps))
-  return ptsPath(pts)
-}
-
-// Hamon: wavy path offset inward from the ha edge
-function buildHamon(haTop, haCp, haTip, inset, steps = 50) {
-  const pts = []
-  for (let i = 0; i <= steps; i++) {
-    const t = i / steps
-    const p = qBez(haTop, haCp, haTip, t)
-    const wave = Math.sin(t * Math.PI * 8.5 + 0.7) * 2.5 + Math.sin(t * Math.PI * 5 + 2) * 1.8
-    pts.push({ x: p.x - inset + wave, y: p.y })
-  }
-  return ptsPath(pts)
-}
-
-// Shinogi: ridge line offset inward from mune
-function buildShinogi(muneTop, muneCp, muneTip, offset, steps = 30) {
-  const pts = []
-  for (let i = 0; i <= steps; i++) {
-    const t = i / steps
-    const p = qBez(muneTop, muneCp, muneTip, t)
-    pts.push({ x: p.x + offset, y: p.y })
-  }
-  return ptsPath(pts)
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   THE BLADE — line-art SVG weapons traced from reference wakizashi.
-   Oriented vertically: handle at top, kissaki tip at bottom.
-   1-2 days = knife (tanto), 3-4 = wakizashi, 5-6 = katana.
+   THE BLADE — hand-traced wakizashi SVG for cycles < 7 days.
+   Single weapon for all 1-6 day cycles. Diagonal pose: hilt upper-right,
+   tip lower-left. Traced from reference wakizashi illustration.
+   Single wakizashi for all 1-6 day cycles.
+   Diagonal pose: hilt upper-right, tip lower-left.
+   Hand-traced from reference illustration.
    ══════════════════════════════════════════════════════════════════════════ */
 function CycleBlade({ days, dailyPlan }) {
-  const count = days.length
-  const type = count <= 2 ? 'knife' : count <= 4 ? 'wakizashi' : 'katana'
-
   const first = days[0] ? parseDate(days[0]) : null
   const last  = days[days.length - 1] ? parseDate(days[days.length - 1]) : null
   const dateRange = first && last
     ? `${MONTH_SHORT[first.getMonth()]} ${first.getDate()} — ${MONTH_SHORT[last.getMonth()]} ${last.getDate()}`
     : ''
 
-  // ── Weapon dimensions (vertical: handle top, tip bottom) ──
-  //   bladeW = visual width, sori = how far ha bows rightward
-  const cfg = {
-    knife:     { svgW: 400, bladeLen: 220, bladeW: 20, sori: 0,  handleLen: 100, tsubaR: 0  },
-    wakizashi: { svgW: 420, bladeLen: 340, bladeW: 22, sori: 30, handleLen: 120, tsubaR: 25 },
-    katana:    { svgW: 440, bladeLen: 560, bladeW: 24, sori: 50, handleLen: 150, tsubaR: 32 },
-  }[type]
+  // Hand-traced wakizashi. Diagonal pose: kashira upper-right, kissaki lower-left.
+  // viewBox 700x420. All coordinates placed by hand to match reference proportions.
+  const ST = '#c8c0b0'  // warm chalk stroke on dark background
+  const SW = 2.2        // main stroke width
 
-  const { svgW, bladeLen, bladeW, sori, handleLen, tsubaR } = cfg
-  const cx = svgW / 2
-  const S = '#ff2a36'  // stroke color
-  const IV = '#e8e6e0' // ivory
-
-  // ── Layout positions ──
-  const kasTop = 30                                 // kashira top
-  const kasH = 12
-  const hTop = kasTop + kasH + 2                    // handle top
-  const hBot = hTop + handleLen                     // handle bottom
-  const tsubaCy = tsubaR > 0 ? hBot + tsubaR + 6 : hBot + 2
-  const habTop = tsubaR > 0 ? tsubaCy + tsubaR + 3 : hBot + 4
-  const habH = 8
-  const bTop = habTop + habH + 2                    // blade top
-  const bBot = bTop + bladeLen                      // blade bottom (before tip)
-  const tipY = bBot + 18                            // kissaki point
-  const svgH = tipY + 30                            // sageo cord space above kashira
-
-  // ── Blade Bezier: mune (spine/left, less curve), ha (edge/right, more curve) ──
-  const muneTop = { x: cx - bladeW / 2,       y: bTop }
-  const muneCp  = { x: cx - bladeW / 2 + sori * 0.15, y: bTop + bladeLen * 0.5 }
-  const muneTip = { x: cx + sori * 0.12 - 2,  y: bBot }
-  const haTop   = { x: cx + bladeW / 2,       y: bTop }
-  const haCp    = { x: cx + bladeW / 2 + sori, y: bTop + bladeLen * 0.38 }
-  const haTip   = { x: cx + sori * 0.12 + 2,  y: bBot }
-  const tipPt   = { x: cx + sori * 0.12,      y: tipY }
-
-  // Blade outline path
-  const blade = [
-    `M ${muneTop.x} ${muneTop.y}`,
-    `Q ${muneCp.x} ${muneCp.y} ${muneTip.x} ${muneTip.y}`,
-    `L ${tipPt.x} ${tipPt.y}`,
-    `L ${haTip.x} ${haTip.y}`,
-    `Q ${haCp.x} ${haCp.y} ${haTop.x} ${haTop.y}`,
-    'Z',
-  ].join(' ')
-
-  // Shinogi (ridge line) — offset from mune by ~35% blade width
-  const shinogiOff = bladeW * 0.35
-  const shinogi = buildShinogi(muneTop, muneCp, muneTip, shinogiOff)
-
-  // Hamon (temper line near ha edge)
-  const hamonInset = bladeW * 0.4
-  const hamon = buildHamon(haTop, haCp, { x: haTip.x, y: haTip.y - 8 }, hamonInset)
-
-  // Mune path for textPath inscription
-  const spinePath = sampleBez(
-    { x: muneTop.x + 4, y: muneTop.y + 12 },
-    { x: muneCp.x + 4, y: muneCp.y },
-    { x: muneTip.x + 3, y: muneTip.y - 15 }
-  )
-
-  // Handle wrapping: dense diamonds — 10+ crossings
-  const wrapSpacing = 9
-  const wraps = []
-  for (let y = hTop + 6; y < hBot - 4; y += wrapSpacing) wraps.push(y)
-  const wrapDy = wrapSpacing * 0.7
-  const hLeft = cx - bladeW / 2 - 3
-  const hRight = cx + bladeW / 2 + 3
-
-  // Day inscription text
-  const inscription = days.map((iso) => {
+  // Day labels positioned along the mune (spine)
+  const dayLabels = days.map((iso, i) => {
     const d = parseDate(iso)
     const num = String(d.getDate()).padStart(2, '0')
     const dow = DAY_SHORT[d.getDay()]
     const muscles = dailyPlan[iso] || []
-    if (muscles.length === 0) return `${num} ${dow} 休`
-    return `${num} ${dow} ${muscles.slice(0, 3).map((m) => MUSCLE_KANJI[m] || '?').join(' ')}`
-  }).join('  ◆  ')
-
-  // Day label positions along blade
-  const dayPos = days.map((_, i) => {
+    const hasWork = muscles.length > 0
+    const kanjiList = muscles.slice(0, 3).map((m) => MUSCLE_KANJI[m] || '?')
+    // Positions spaced along mune from habaki end toward tip
     const t = (i + 0.5) / days.length
-    const mp = qBez(muneTop, muneCp, muneTip, t)
-    const hp = qBez(haTop, haCp, haTip, t)
-    return { y: (mp.y + hp.y) / 2, muneX: mp.x, haX: hp.x }
+    // Mune runs from ~(370,172) to ~(80,314) — lerp
+    const x = 370 - t * 290
+    const y = 172 + t * 142
+    return { num, dow, hasWork, kanjiList, x: x - 35, y: y - 22, iso }
   })
 
   return (
-    <section className="relative z-10 flex justify-center py-6 px-2">
-      <svg width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} className="block mx-auto">
-        <defs>
-          <filter id="neon-glow" x="-50%" y="-10%" width="200%" height="120%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
-            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
-          <filter id="soft-glow" x="-80%" y="-20%" width="260%" height="140%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="8" />
-          </filter>
-          <path id="spine-path" d={spinePath} />
-        </defs>
-
-        {/* ════ DATE RANGE ════ */}
-        <text x={cx} y={kasTop - 10} textAnchor="middle"
-          style={{ fontFamily: 'Georgia, serif', fontSize: '10px', letterSpacing: '0.2em', fill: '#5a5a62' }}>
+    <section className="relative z-10 py-6 px-2">
+      <div className="text-center mb-2">
+        <span style={{ fontFamily: 'Georgia, serif', fontSize: '11px', letterSpacing: '0.2em', color: '#5a5a62' }}>
           {dateRange}
-        </text>
+        </span>
+      </div>
 
-        {/* ════ SAGEO (cord/tassel) ════ */}
-        <path d={`M ${cx - 6} ${kasTop + 4} C ${cx - 20} ${kasTop - 20} ${cx - 35} ${kasTop + 10} ${cx - 28} ${kasTop + 35}
-                  C ${cx - 22} ${kasTop + 50} ${cx - 30} ${kasTop + 60} ${cx - 25} ${kasTop + 72}`}
-          fill="none" stroke={S} strokeWidth="1.2" opacity="0.5" />
-        <path d={`M ${cx + 6} ${kasTop + 4} C ${cx + 18} ${kasTop - 18} ${cx + 32} ${kasTop + 15} ${cx + 26} ${kasTop + 40}
-                  C ${cx + 20} ${kasTop + 55} ${cx + 28} ${kasTop + 65} ${cx + 22} ${kasTop + 75}`}
-          fill="none" stroke={S} strokeWidth="1.2" opacity="0.5" />
+      <svg viewBox="0 0 700 420" className="block mx-auto w-full max-w-[700px]" style={{ height: 'auto' }}>
+        {/* ── SAGEO (cord/tassel) ── two flowing S-curves from kashira */}
+        <path d="M 608,78 C 620,95 630,115 624,138 C 618,158 626,175 620,195 C 616,208 622,220 616,232"
+          fill="none" stroke={ST} strokeWidth="1.5" opacity="0.45" strokeLinecap="round" />
+        <path d="M 614,74 C 628,88 640,108 636,128 C 630,150 638,168 632,188 C 628,200 634,215 626,228"
+          fill="none" stroke={ST} strokeWidth="1.5" opacity="0.45" strokeLinecap="round" />
 
-        {/* ════ KASHIRA (pommel cap) ════ */}
-        <rect x={hLeft - 2} y={kasTop} width={hRight - hLeft + 4} height={kasH} rx={4}
-          fill="none" stroke={S} strokeWidth="1.8" opacity="0.85" />
-        {/* Interior texture lines */}
-        <line x1={hLeft + 2} y1={kasTop + 4} x2={hRight - 2} y2={kasTop + 4}
-          stroke={IV} strokeWidth="0.4" opacity="0.2" />
-        <line x1={hLeft + 2} y1={kasTop + 7} x2={hRight - 2} y2={kasTop + 7}
-          stroke={IV} strokeWidth="0.4" opacity="0.15" />
+        {/* ── KASHIRA (pommel cap) ── rounded rectangle, rotated to match handle angle */}
+        <path d="M 607,44 L 568,64 L 572,78 L 611,58 Z"
+          fill="none" stroke={ST} strokeWidth={SW} strokeLinejoin="round" />
+        {/* Kashira interior horizontal texture lines */}
+        <line x1="598" y1="52" x2="576" y2="63" stroke={ST} strokeWidth="0.8" opacity="0.35" />
+        <line x1="601" y1="56" x2="578" y2="67" stroke={ST} strokeWidth="0.8" opacity="0.3" />
+        <line x1="604" y1="60" x2="580" y2="71" stroke={ST} strokeWidth="0.8" opacity="0.25" />
 
-        {/* ════ TSUKA (handle) ════ */}
-        {/* Outline — slightly tapered (wider at middle) */}
-        <path d={`M ${hLeft} ${hTop} L ${hLeft - 1} ${hTop + handleLen * 0.5} L ${hLeft} ${hBot}
-                  L ${hRight} ${hBot} L ${hRight + 1} ${hTop + handleLen * 0.5} L ${hRight} ${hTop} Z`}
-          fill="none" stroke={S} strokeWidth="1.3" opacity="0.65" />
-        {/* Dense diamond ito wrap — 10+ crossings, thicker lines */}
-        {wraps.map((wy, wi) => (
-          <g key={wi}>
-            <line x1={hLeft} y1={wy} x2={hRight} y2={wy + wrapDy}
-              stroke={IV} strokeWidth="1" opacity="0.5" />
-            <line x1={hRight} y1={wy} x2={hLeft} y2={wy + wrapDy}
-              stroke={IV} strokeWidth="1" opacity="0.5" />
-          </g>
-        ))}
-        {/* Menuki ornaments */}
-        <circle cx={cx - 3} cy={hTop + handleLen * 0.35} r={2.5}
-          fill="none" stroke={IV} strokeWidth="0.6" opacity="0.35" />
-        <circle cx={cx + 3} cy={hTop + handleLen * 0.65} r={2.5}
-          fill="none" stroke={IV} strokeWidth="0.6" opacity="0.35" />
+        {/* ── TSUKA (handle) ── parallelogram outline, slightly barrel-shaped */}
+        <path d="M 568,64 C 562,66 430,134 422,140 L 428,164 C 436,158 570,90 574,78 Z"
+          fill="none" stroke={ST} strokeWidth={SW} />
 
-        {/* ════ TSUBA (guard disc) ════ */}
-        {tsubaR > 0 && (
-          <g>
-            {/* Glow */}
-            <circle cx={cx} cy={tsubaCy} r={tsubaR + 3}
-              fill="none" stroke={S} strokeWidth="2" opacity="0.1" filter="url(#soft-glow)" />
-            {/* Outer ring */}
-            <circle cx={cx} cy={tsubaCy} r={tsubaR}
-              fill="none" stroke={S} strokeWidth="2" opacity="0.9" />
-            {/* Inner ring (shows disc thickness) */}
-            <circle cx={cx} cy={tsubaCy} r={tsubaR * 0.7}
-              fill="none" stroke={S} strokeWidth="0.8" opacity="0.4" />
-            {/* Blade hole (nakago-ana) */}
-            <rect x={cx - bladeW / 2 - 1} y={tsubaCy - 5} width={bladeW + 2} height={10} rx={1}
-              fill="none" stroke={S} strokeWidth="0.6" opacity="0.3" />
-            {/* 刻 */}
-            <text x={cx + tsubaR * 0.35} y={tsubaCy + 4} textAnchor="middle"
-              style={{ fontFamily: '"Noto Serif JP", serif', fontSize: '10px', fill: S, opacity: 0.6 }}>
-              刻
-            </text>
-          </g>
-        )}
-
-        {/* ════ HABAKI (blade collar) ════ */}
-        <path d={`M ${cx - bladeW/2 - 3} ${habTop} L ${cx - bladeW/2} ${habTop + habH}
-                  L ${cx + bladeW/2} ${habTop + habH} L ${cx + bladeW/2 + 3} ${habTop} Z`}
-          fill="none" stroke="#e4b022" strokeWidth="1" opacity="0.6" />
-        <line x1={cx - bladeW/2 + 1} y1={habTop + 3} x2={cx + bladeW/2 - 1} y2={habTop + 3}
-          stroke="#e4b022" strokeWidth="0.4" opacity="0.3" />
-
-        {/* ════ BLADE ════ */}
-        {/* Soft glow */}
-        <path d={blade} fill="none" stroke={S} strokeWidth="5" opacity="0.06" filter="url(#soft-glow)" />
-        {/* Neon glow */}
-        <path d={blade} fill="none" stroke={S} strokeWidth="2.5" opacity="0.25" filter="url(#neon-glow)" />
-        {/* Sharp outline */}
-        <path d={blade} fill="none" stroke={S} strokeWidth="1.8" opacity="0.95" />
-
-        {/* Shinogi (ridge line) */}
-        <path d={shinogi} fill="none" stroke={S} strokeWidth="0.6" opacity="0.25" />
-
-        {/* Hamon (temper line) — clearly visible ivory wave */}
-        <path d={hamon} fill="none" stroke={IV} strokeWidth="1" opacity="0.7" />
-
-        {/* Ha edge extra glow */}
-        <path d={`M ${haTop.x} ${haTop.y} Q ${haCp.x} ${haCp.y} ${haTip.x} ${haTip.y}`}
-          fill="none" stroke={S} strokeWidth="3" opacity="0.12" filter="url(#neon-glow)" />
-
-        {/* ════ INSCRIPTION along spine (textPath) ════ */}
-        <text style={{ fontFamily: 'Georgia, serif', fontSize: '7.5px', letterSpacing: '0.1em', fill: IV, opacity: 0.35 }}>
-          <textPath href="#spine-path" startOffset="2%">
-            {inscription}
-          </textPath>
-        </text>
-
-        {/* ════ DAY LABELS beside blade ════ */}
-        {dayPos.map(({ y, muneX, haX }, i) => {
-          const iso = days[i]
-          const d = parseDate(iso)
-          const num = String(d.getDate()).padStart(2, '0')
-          const dow = DAY_SHORT[d.getDay()]
-          const muscles = dailyPlan[iso] || []
-          const hasWork = muscles.length > 0
-          const isLeft = i % 2 === 0
-          const kanjiList = muscles.slice(0, 3).map((m) => MUSCLE_KANJI[m] || '?')
-
-          const edgeX = isLeft ? muneX - 10 : haX + 10
-          const textX = isLeft ? edgeX - 20 : edgeX + 20
-          const anchor = isLeft ? 'end' : 'start'
-
+        {/* ── Diamond ito wrap ── alternating filled/unfilled rhombus shapes */}
+        {Array.from({ length: 11 }, (_, i) => {
+          const t = (i + 0.5) / 11
+          // Center point along handle midline
+          const cx = 568 - t * 145
+          const cy = 64 + t * 76 + 9
+          // Diamond axes: along handle (~-0.47 slope) and perpendicular
+          const ax = 6.5, ay = 3.2  // along-axis half-extent
+          const px = 4.5, py = -9   // perp-axis half-extent
+          const pts = `${cx-ax},${cy-ay} ${cx+px},${cy+py} ${cx+ax},${cy+ay} ${cx-px},${cy-py}`
           return (
-            <g key={iso}>
-              <line x1={edgeX} y1={y} x2={textX + (isLeft ? 6 : -6)} y2={y}
-                stroke={S} strokeWidth="0.5" opacity="0.2" />
-              <text x={textX} y={y + 2} textAnchor={anchor}
-                style={{ fontFamily: 'Georgia, serif', fontSize: '20px', fontWeight: 300, letterSpacing: '0.05em',
-                  fill: hasWork ? IV : 'rgba(200,200,200,0.18)' }}>
-                {num}
-              </text>
-              <text x={textX} y={y + 13} textAnchor={anchor}
-                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '6.5px', letterSpacing: '0.2em',
-                  fill: hasWork ? '#5a5a62' : '#2a2a32' }}>
-                {dow}
-              </text>
-              <text x={textX} y={y + 34} textAnchor={anchor}
-                style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '22px', fontWeight: 400,
-                  fill: hasWork ? IV : '#e4b022' }}>
-                {hasWork ? kanjiList.join('  ') : '休'}
-              </text>
-            </g>
+            <polygon key={i} points={pts}
+              fill={i % 2 === 0 ? ST : 'none'}
+              fillOpacity={i % 2 === 0 ? 0.12 : 0}
+              stroke={ST} strokeWidth="0.9" opacity="0.6" />
           )
         })}
+
+        {/* ── FUCHI (handle ring at tsuba) ── */}
+        <path d="M 422,140 L 416,143 L 420,157 L 426,154 Z"
+          fill="none" stroke={ST} strokeWidth={SW * 0.8} />
+
+        {/* ── TSUBA (guard disc) ── two concentric ellipses showing rim depth */}
+        <ellipse cx="405" cy="155" rx="36" ry="18"
+          fill="none" stroke={ST} strokeWidth={SW + 0.3}
+          transform="rotate(-26, 405, 155)" />
+        <ellipse cx="405" cy="155" rx="30" ry="14"
+          fill="none" stroke={ST} strokeWidth="1" opacity="0.35"
+          transform="rotate(-26, 405, 155)" />
+
+        {/* ── HABAKI (blade collar) ── trapezoid with diagonal hatching */}
+        <path d="M 390,158 L 374,170 L 378,188 L 394,176 Z"
+          fill="none" stroke={ST} strokeWidth={SW * 0.9} />
+        {/* Diagonal hatch lines inside habaki */}
+        {[1,2,3,4,5].map((i) => {
+          const t = i / 6
+          return <line key={i}
+            x1={390 - t * 16 + 1} y1={158 + t * 12 + 3}
+            x2={394 - t * 16 + 1} y2={176 + t * 12 - 5}
+            stroke={ST} strokeWidth="0.7" opacity="0.3" />
+        })}
+
+        {/* ── BLADE ── thick, curved, the main event */}
+        {/* Mune (spine/upper edge): fairly straight from habaki to near-tip */}
+        {/* Ha (cutting edge/lower edge): bows away with sori then curves back */}
+        {/* Blade is ~50px wide at habaki, tapering to kissaki */}
+        <path d={[
+          'M 376,172',                           // mune start at habaki
+          'Q 230,242 82,316',                    // mune curves gently down-left
+          'L 55,340',                            // kissaki transition zone
+          'L 48,346',                            // kissaki tip point
+          'L 56,342',                            // kissaki turn (back edge)
+          'C 100,328 180,296 280,250',           // ha sweeps back — THIS is the sori curve
+          'Q 350,216 386,188',                   // ha continues to habaki
+          'Z',
+        ].join(' ')}
+          fill="none" stroke={ST} strokeWidth={SW + 0.3} strokeLinejoin="round" />
+
+        {/* Shinogi (ridge line) — runs ~1/3 from mune inside blade */}
+        <path d="M 380,177 Q 235,246 88,320 L 60,338"
+          fill="none" stroke={ST} strokeWidth="0.8" opacity="0.3" />
+
+        {/* Hamon (temper line) — wavy path near ha edge */}
+        <path d="M 382,185 Q 370,194 348,208 T 305,232 T 265,250 T 225,264 T 185,278 T 145,292 T 105,308 T 72,325 T 56,336"
+          fill="none" stroke={ST} strokeWidth="1" opacity="0.35" />
+
+        {/* Yokote (line separating kissaki from blade body) */}
+        <line x1="80" y1="318" x2="92" y2="310"
+          stroke={ST} strokeWidth="0.8" opacity="0.4" />
+
+        {/* ── DAY LABELS along the mune ── */}
+        {dayLabels.map(({ num, dow, hasWork, kanjiList, x, y, iso }) => (
+          <g key={iso}>
+            <text x={x} y={y} textAnchor="end"
+              style={{ fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 300,
+                letterSpacing: '0.05em', fill: hasWork ? '#e8e6e0' : 'rgba(200,200,200,0.18)' }}>
+              {num}
+            </text>
+            <text x={x} y={y + 12} textAnchor="end"
+              style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '6px',
+                letterSpacing: '0.2em', fill: hasWork ? '#5a5a62' : '#2a2a32' }}>
+              {dow}
+            </text>
+            <text x={x} y={y + 28} textAnchor="end"
+              style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '16px',
+                fontWeight: 400, fill: hasWork ? '#e8e6e0' : '#e4b022' }}>
+              {hasWork ? kanjiList.join('  ') : '休'}
+            </text>
+          </g>
+        ))}
       </svg>
     </section>
   )
