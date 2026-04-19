@@ -105,21 +105,16 @@ function CycleBlade({ days, dailyPlan }) {
     ? `${MONTH_SHORT[first.getMonth()]} ${first.getDate()} — ${MONTH_SHORT[last.getMonth()]} ${last.getDate()}`
     : ''
 
-  // Day labels positioned along the diagonal blade.
-  // At -45deg rotation, the blade runs from upper-right (hilt ~62%,18%)
-  // to lower-left (tip ~18%,82%). Labels sit above-left of the spine.
+  // Day labels engraved along the blade spine via SVG textPath.
   const dayLabels = days.map((iso, i) => {
     const d = parseDate(iso)
     const num = String(d.getDate()).padStart(2, '0')
-    const dow = DAY_SHORT[d.getDay()]
     const muscles = dailyPlan[iso] || []
     const hasWork = muscles.length > 0
-    const kanjiList = muscles.slice(0, 3).map((m) => MUSCLE_KANJI[m] || '?')
-    const t = (i + 0.5) / days.length
-    // Lerp along diagonal from hilt to tip
-    const xPct = 58 - t * 36   // ~58% → ~22%
-    const yPct = 22 + t * 56   // ~22% → ~78%
-    return { num, dow, hasWork, kanjiList, xPct, yPct, iso }
+    const kanjiStr = hasWork
+      ? muscles.slice(0, 3).map((m) => MUSCLE_KANJI[m] || '?').join('')
+      : '休'
+    return { num, hasWork, kanjiStr, iso }
   })
 
   return (
@@ -130,7 +125,7 @@ function CycleBlade({ days, dailyPlan }) {
         </span>
       </div>
 
-      <div className="relative mx-auto" style={{ width: '100%', maxWidth: '600px' }}>
+      <div className="relative mx-auto" style={{ width: '100%', maxWidth: '1200px' }}>
         {/* Potrace-traced wakizashi — rotated -45deg in the SVG (hilt upper-right, tip lower-left) */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -140,36 +135,39 @@ function CycleBlade({ days, dailyPlan }) {
           style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))' }}
         />
 
-        {/* Day labels along the diagonal blade */}
-        {dayLabels.map(({ num, dow, hasWork, kanjiList, xPct, yPct, iso }) => (
-          <div
-            key={iso}
-            className="absolute"
-            style={{
-              left: `${xPct}%`,
-              top: `${yPct}%`,
-              transform: 'translate(-100%, -50%)',
-            }}
-          >
-            {/* Day number + weekday */}
-            <div className="flex items-baseline justify-end gap-2">
-              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '8px',
-                letterSpacing: '0.15em', color: hasWork ? '#5a5a62' : '#2a2a32' }}>
-                {dow}
-              </span>
-              <span style={{ fontFamily: 'Georgia, serif', fontSize: '17px', fontWeight: 300,
-                letterSpacing: '0.05em', color: hasWork ? '#e8e6e0' : 'rgba(200,200,200,0.18)' }}>
-                {num}
-              </span>
-            </div>
-            {/* Muscle kanji */}
-            <div style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '20px',
-              fontWeight: 400, color: hasWork ? '#e8e6e0' : '#e4b022',
-              textAlign: 'right', lineHeight: 1.2, letterSpacing: '0.15em' }}>
-              {hasWork ? kanjiList.join(' ') : '休'}
-            </div>
-          </div>
-        ))}
+        {/* Engraved day labels along the blade spine */}
+        <svg
+          viewBox="0 0 1000 1000"
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          aria-hidden="true"
+        >
+          <defs>
+            {/* Path following the blade spine from habaki (upper-right) to kissaki (lower-left).
+                Coordinates calibrated to the weapon img at 1200px max-width, 1:1 aspect. */}
+            <path id="blade-spine" d="M 580,395 Q 475,555 330,775" />
+          </defs>
+          {dayLabels.map(({ num, hasWork, kanjiStr, iso }, i) => {
+            const t = (i + 0.5) / dayLabels.length
+            const offset = 5 + t * 90  // 5% → 95% along spine
+            return (
+              <text
+                key={iso}
+                style={{
+                  fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif',
+                  fontSize: '18px',
+                  fontWeight: 400,
+                  letterSpacing: '0.15em',
+                  fill: hasWork ? '#8a8070' : '#e4b022',
+                  opacity: hasWork ? 0.65 : 0.8,
+                }}
+              >
+                <textPath href="#blade-spine" startOffset={`${offset}%`} textAnchor="middle">
+                  {num}  {kanjiStr}
+                </textPath>
+              </text>
+            )
+          })}
+        </svg>
       </div>
     </section>
   )
@@ -228,34 +226,34 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
       onMouseLeave={() => setPressed(false)}
       onMouseEnter={onHover}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onFire() } }}
-      className="relative w-full cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-red focus-visible:outline-offset-4"
+      className="relative w-full max-w-[480px] mx-auto cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-red focus-visible:outline-offset-4"
       style={{ transform: 'rotate(-1.5deg)', transformOrigin: 'center center' }}
     >
       <div
         className="absolute inset-0 bg-gtl-red-deep"
         style={{
           clipPath: 'polygon(1% 0%, 100% 0%, 99% 100%, 0% 100%)',
-          transform: pressed ? 'translate(0,0)' : 'translate(10px, 10px)',
+          transform: pressed ? 'translate(0,0)' : 'translate(7px, 7px)',
           transition: 'transform 80ms ease-out',
         }}
         aria-hidden="true"
       />
       <div
-        className="relative flex items-center justify-between px-12 py-8"
+        className="relative flex items-center justify-between px-8 py-5"
         style={{
           clipPath: 'polygon(1% 0%, 100% 0%, 99% 100%, 0% 100%)',
           background: pressed ? '#ff2a36' : '#d4181f',
-          transform: pressed ? 'translate(10px, 10px)' : 'translate(0,0)',
+          transform: pressed ? 'translate(7px, 7px)' : 'translate(0,0)',
           transition: 'transform 80ms ease-out, background 80ms ease-out',
         }}
       >
         <div>
-          <div className="font-display text-8xl text-gtl-paper leading-none tracking-tight">{label}</div>
-          <div className="font-mono text-[10px] tracking-[0.5em] uppercase text-gtl-paper/50 mt-2">
-            LAUNCH THE FORGE / THE CYCLE STARTS NOW
+          <div className="font-display text-4xl text-gtl-paper leading-none tracking-tight">{label}</div>
+          <div className="font-mono text-[8px] tracking-[0.4em] uppercase text-gtl-paper/50 mt-1">
+            LAUNCH THE FORGE
           </div>
         </div>
-        <div className="font-display text-6xl text-gtl-paper/30 leading-none select-none">▸</div>
+        <div className="font-display text-3xl text-gtl-paper/30 leading-none select-none">▸</div>
       </div>
     </div>
   )
