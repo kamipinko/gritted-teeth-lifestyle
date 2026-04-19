@@ -142,9 +142,7 @@ function CycleBlade({ days, dailyPlan }) {
           aria-hidden="true"
         >
           <defs>
-            {/* Path following the blade spine (mune) in weapon-SVG coordinates.
-                Habaki ~(1350,300) to kissaki ~(880,1700) in the rotated frame. */}
-            <path id="blade-spine" d="M 1340,340 Q 1150,900 870,1700" />
+            <path id="blade-spine" d="M 1290,300 L 965,1580" />
           </defs>
           {dayLabels.map(({ num, hasWork, kanjiStr, iso }, i) => {
             const t = (i + 0.5) / dayLabels.length
@@ -154,7 +152,7 @@ function CycleBlade({ days, dailyPlan }) {
                 key={iso}
                 style={{
                   fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif',
-                  fontSize: '52px',
+                  fontSize: '44px',
                   fontWeight: 400,
                   letterSpacing: '0.12em',
                   fill: hasWork ? '#8a8070' : '#e4b022',
