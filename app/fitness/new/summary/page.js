@@ -197,8 +197,13 @@ function CycleBlade({ days, dailyPlan }) {
                 1010,1710 1130,1610 1225,1420 1330,1040 1400,700 1460,380
               " />
             </clipPath>
+            <filter id="diff-flat-red" x="-20%" y="-20%" width="140%" height="140%">
+              <feFlood floodColor="#d4181f" result="flat-red" />
+              <feBlend in="flat-red" in2="SourceGraphic" mode="difference" result="blended" />
+              <feComposite in="blended" in2="SourceGraphic" operator="in" result="masked" />
+            </filter>
           </defs>
-          <g style={{ mixBlendMode: 'difference' }}>
+          <g filter="url(#diff-flat-red)">
             {dayLabels.map(({ num, hasWork, kanjiStr, iso, cx, cy, angle }) => {
               const kanjiChars = kanjiStr.split('')
               const n = kanjiChars.length
