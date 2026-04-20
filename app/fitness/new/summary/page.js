@@ -187,23 +187,40 @@ function CycleBlade({ days, dailyPlan }) {
           </defs>
           <g clipPath="url(#blade-clip)">
             {dayLabels.map(({ num, hasWork, kanjiStr, iso, cx, cy }) => (
-              <text
-                key={iso}
-                x={cx}
-                y={cy}
-                textAnchor="middle"
-                dominantBaseline="central"
-                style={{
-                  fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif',
-                  fontSize: '48px',
-                  fontWeight: 600,
-                  letterSpacing: '0.1em',
-                  fill: hasWork ? '#b0a898' : '#e4b022',
-                  opacity: hasWork ? 0.8 : 0.9,
-                }}
-              >
-                {num}  {kanjiStr}
-              </text>
+              <g key={iso}>
+                <text
+                  x={cx}
+                  y={cy - 35}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  style={{
+                    fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif',
+                    fontSize: '48px',
+                    fontWeight: 600,
+                    letterSpacing: '0.1em',
+                    fill: hasWork ? '#b0a898' : '#e4b022',
+                    opacity: hasWork ? 0.8 : 0.9,
+                  }}
+                >
+                  {num}
+                </text>
+                <text
+                  x={cx}
+                  y={cy + 35}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  style={{
+                    fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif',
+                    fontSize: '48px',
+                    fontWeight: 600,
+                    letterSpacing: '0.1em',
+                    fill: hasWork ? '#b0a898' : '#e4b022',
+                    opacity: hasWork ? 0.8 : 0.9,
+                  }}
+                >
+                  {kanjiStr}
+                </text>
+              </g>
             ))}
           </g>
         </svg>
