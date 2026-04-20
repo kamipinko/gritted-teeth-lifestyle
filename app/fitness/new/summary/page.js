@@ -222,7 +222,7 @@ function CycleBlade({ days, dailyPlan }) {
                 // Single kanji — tightened gap to date number
                 kanjiEls = (
                   <text x={0} y={78} textAnchor="middle" dominantBaseline="central"
-                    style={{ fontFamily: font, fontSize: '86px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                    style={{ fontFamily: font, fontSize: '104px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
                     {kanjiChars[0]}
                   </text>
                 )
