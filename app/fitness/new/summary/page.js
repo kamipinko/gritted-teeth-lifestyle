@@ -131,7 +131,7 @@ function CycleBlade({ days, dailyPlan }) {
       </div>
       )}
 
-      <div className="relative" style={{ transform: 'translateY(20px)' }}>
+      <div className="relative">
         {/* Weekday labels — positioned at viewport edges, vertically aligned with blade inscriptions */}
         {days.map((iso, i) => {
           const d = parseDate(iso)
