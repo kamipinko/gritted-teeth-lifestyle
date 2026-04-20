@@ -187,7 +187,7 @@ function CycleBlade({ days, dailyPlan }) {
               " />
             </clipPath>
           </defs>
-          <g>
+          <g style={{ mixBlendMode: 'difference' }}>
             {dayLabels.map(({ num, hasWork, kanjiStr, iso, cx, cy }) => {
               const kanjiChars = kanjiStr.split('')
               const n = kanjiChars.length
