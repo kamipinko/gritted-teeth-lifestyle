@@ -219,9 +219,9 @@ function CycleBlade({ days, dailyPlan }) {
 
               let kanjiEls
               if (n === 1) {
-                // Single kanji centered on interior line
+                // Single kanji — tightened gap to date number
                 kanjiEls = (
-                  <text x={0} y={120} textAnchor="middle" dominantBaseline="central"
+                  <text x={0} y={78} textAnchor="middle" dominantBaseline="central"
                     style={{ fontFamily: font, fontSize: '86px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
                     {kanjiChars[0]}
                   </text>
