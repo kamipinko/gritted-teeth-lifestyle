@@ -131,7 +131,7 @@ function CycleBlade({ days, dailyPlan }) {
       </div>
       )}
 
-      <div className="relative" style={{ width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 85px)' }}>
+      <div className="relative" style={{ width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 85px)', marginTop: '-100px' }}>
         {/* Potrace-traced wakizashi — rotated -45deg, tight viewBox 668,-635,1136,2642 */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
