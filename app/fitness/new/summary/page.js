@@ -131,6 +131,31 @@ function CycleBlade({ days, dailyPlan }) {
       </div>
       )}
 
+      <div className="fixed inset-0 pointer-events-none z-20">
+        <div className="absolute left-8 top-1/2 -translate-y-1/2 flex flex-col gap-12">
+          {days.slice(0, 3).map((iso) => {
+            const d = parseDate(iso)
+            const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()]
+            return (
+              <div key={iso} style={{ fontFamily: '"Noto Serif JP", Georgia, serif', fontSize: '28px', fontWeight: 700, color: '#b0a898', letterSpacing: '0.2em', opacity: 0.7 }}>
+                {dow}
+              </div>
+            )
+          })}
+        </div>
+        <div className="absolute right-8 top-1/2 -translate-y-1/2 flex flex-col gap-12">
+          {days.slice(-3).map((iso) => {
+            const d = parseDate(iso)
+            const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()]
+            return (
+              <div key={iso} style={{ fontFamily: '"Noto Serif JP", Georgia, serif', fontSize: '28px', fontWeight: 700, color: '#b0a898', letterSpacing: '0.2em', opacity: 0.7 }}>
+                {dow}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
       <div className="relative" style={{ width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 85px)', marginTop: '-100px' }}>
         {/* Potrace-traced wakizashi — rotated -45deg, tight viewBox 668,-635,1136,2642 */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
