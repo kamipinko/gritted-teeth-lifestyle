@@ -185,7 +185,7 @@ function CycleBlade({ days, dailyPlan }) {
               " />
             </clipPath>
           </defs>
-          <g clipPath="url(#blade-clip)">
+          <g>
             {dayLabels.map(({ num, hasWork, kanjiStr, iso, cx, cy }) => {
               const kanjiChars = kanjiStr.split('')
               const n = kanjiChars.length
