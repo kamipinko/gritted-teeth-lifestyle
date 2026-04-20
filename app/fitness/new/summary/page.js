@@ -131,31 +131,33 @@ function CycleBlade({ days, dailyPlan }) {
       </div>
       )}
 
-      <div className="fixed inset-0 pointer-events-none z-20">
-        {days.slice(0, 3).map((iso, i) => {
-          const d = parseDate(iso)
-          const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()]
-          const topVh = 30 + i * 11
-          return (
-            <div key={iso} className="absolute left-8" style={{ top: `${topVh}vh`, fontFamily: '"Noto Serif JP", Georgia, serif', fontSize: '28px', fontWeight: 700, color: '#b0a898', letterSpacing: '0.2em', opacity: 0.7 }}>
-              {dow}
-            </div>
-          )
-        })}
-        {days.slice(-3).map((iso, i) => {
-          const d = parseDate(iso)
-          const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()]
-          const baseIndex = days.length - 3 + i
-          const topVh = 30 + baseIndex * 11
-          return (
-            <div key={iso} className="absolute right-8" style={{ top: `${topVh}vh`, fontFamily: '"Noto Serif JP", Georgia, serif', fontSize: '28px', fontWeight: 700, color: '#b0a898', letterSpacing: '0.2em', opacity: 0.7 }}>
-              {dow}
-            </div>
-          )
-        })}
-      </div>
-
       <div className="relative" style={{ width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 85px)', marginTop: '-100px' }}>
+        {days.map((iso, i) => {
+          const d = parseDate(iso)
+          const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()]
+          const [, cy] = FACE_ANCHORS[i] || FACE_ANCHORS[FACE_ANCHORS.length - 1]
+          const topPct = ((cy - (-635)) / 2642) * 100
+          const isLeftSide = i < 3
+          return (
+            <div
+              key={`dow-${iso}`}
+              className="absolute pointer-events-none"
+              style={{
+                top: `${topPct}%`,
+                [isLeftSide ? 'left' : 'right']: '2vw',
+                transform: 'translateY(-50%)',
+                fontFamily: '"Noto Serif JP", Georgia, serif',
+                fontSize: '28px',
+                fontWeight: 700,
+                color: '#b0a898',
+                letterSpacing: '0.2em',
+                opacity: 0.7,
+              }}
+            >
+              {dow}
+            </div>
+          )
+        })}
         {/* Potrace-traced wakizashi — rotated -45deg, tight viewBox 668,-635,1136,2642 */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
