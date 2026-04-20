@@ -131,6 +131,86 @@ function CycleBlade({ days, dailyPlan }) {
     return { num, hasWork, kanjiStr, iso, cx: anchor.x, cy: anchor.y, angle: anchor.angle }
   })
 
+  const renderDayInscription = (dl) => {
+    const { num, hasWork, kanjiStr } = dl
+    const kanjiChars = kanjiStr.split('')
+    const n = kanjiChars.length
+    const baseColor = '#d4181f'
+    const baseOpacity = hasWork ? 0.8 : 0.9
+    const font = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+
+    const numEls = (
+      <text x={0} y={0} textAnchor="middle" dominantBaseline="central"
+        style={{ fontFamily: font, fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+        {num}
+      </text>
+    )
+
+    let kanjiEls
+    if (n === 1) {
+      kanjiEls = (
+        <text x={0} y={78} textAnchor="middle" dominantBaseline="central"
+          style={{ fontFamily: font, fontSize: '104px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+          {kanjiChars[0]}
+        </text>
+      )
+    } else if (n === 2) {
+      kanjiEls = kanjiChars.map((k, ki) => (
+        <text key={ki} x={(ki - 0.5) * 56} y={78} textAnchor="middle" dominantBaseline="central"
+          style={{ fontFamily: font, fontSize: '56px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+          {k}
+        </text>
+      ))
+    } else if (n <= 6) {
+      const topRow = kanjiChars.slice(0, Math.ceil(n / 2))
+      const botRow = kanjiChars.slice(Math.ceil(n / 2))
+      kanjiEls = (
+        <>
+          {topRow.map((k, ki) => (
+            <text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 44} y={64}
+              textAnchor="middle" dominantBaseline="central"
+              style={{ fontFamily: font, fontSize: '42px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+              {k}
+            </text>
+          ))}
+          {botRow.map((k, ki) => (
+            <text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 44} y={109}
+              textAnchor="middle" dominantBaseline="central"
+              style={{ fontFamily: font, fontSize: '42px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+              {k}
+            </text>
+          ))}
+        </>
+      )
+    } else {
+      const topRow = kanjiChars.slice(0, Math.ceil(n / 2))
+      const botRow = kanjiChars.slice(Math.ceil(n / 2))
+      kanjiEls = (
+        <>
+          {topRow.map((k, ki) => (
+            <text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 30} y={59}
+              textAnchor="middle" dominantBaseline="central"
+              style={{ fontFamily: font, fontSize: '28px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+              {k}
+            </text>
+          ))}
+          {botRow.map((k, ki) => (
+            <text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 30} y={91}
+              textAnchor="middle" dominantBaseline="central"
+              style={{ fontFamily: font, fontSize: '28px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+              {k}
+            </text>
+          ))}
+        </>
+      )
+    }
+
+    return <>{numEls}{kanjiEls}</>
+  }
+
+  const lastIdx = dayLabels.length - 1
+  const lastDay = lastIdx >= 0 ? dayLabels[lastIdx] : null
+
   return (
     <section className="relative z-10 py-2 px-2">
       {false && (
@@ -197,94 +277,36 @@ function CycleBlade({ days, dailyPlan }) {
                 1010,1710 1130,1610 1225,1420 1330,1040 1400,700 1460,380
               " />
             </clipPath>
+            {/* Half-plane clips in each glyph's local rotated frame — split the last day across the interior design line */}
+            <clipPath id="last-day-left" clipPathUnits="userSpaceOnUse">
+              <rect x="-500" y="-500" width="500" height="1000" />
+            </clipPath>
+            <clipPath id="last-day-right" clipPathUnits="userSpaceOnUse">
+              <rect x="0" y="-500" width="500" height="1000" />
+            </clipPath>
           </defs>
           <g style={{ mixBlendMode: 'difference' }}>
-            {dayLabels.map(({ num, hasWork, kanjiStr, iso, cx, cy, angle }) => {
-              const kanjiChars = kanjiStr.split('')
-              const n = kanjiChars.length
-              const baseColor = '#d4181f'
-              const baseOpacity = hasWork ? 0.8 : 0.9
-              const font = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-              // Tangent along the interior line; subtract 90 so text reads perpendicular
-              const textAngle = angle - 90
-
-              // Date number as horizontal pair, centered on the interior line
-              // The line bisects each digit top/bottom for the cutout effect
-              const numEls = (
-                <text x={0} y={0} textAnchor="middle" dominantBaseline="central"
-                  style={{ fontFamily: font, fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                  {num}
-                </text>
-              )
-
-              let kanjiEls
-              if (n === 1) {
-                // Single kanji — tightened gap to date number
-                kanjiEls = (
-                  <text x={0} y={78} textAnchor="middle" dominantBaseline="central"
-                    style={{ fontFamily: font, fontSize: '104px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                    {kanjiChars[0]}
-                  </text>
-                )
-              } else if (n === 2) {
-                // 2 kanji: horizontal row
-                kanjiEls = kanjiChars.map((k, ki) => (
-                  <text key={ki} x={(ki - 0.5) * 56} y={78} textAnchor="middle" dominantBaseline="central"
-                    style={{ fontFamily: font, fontSize: '56px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                    {k}
-                  </text>
-                ))
-              } else if (n <= 6) {
-                const topRow = kanjiChars.slice(0, Math.ceil(n / 2))
-                const botRow = kanjiChars.slice(Math.ceil(n / 2))
-                kanjiEls = (
-                  <>
-                    {topRow.map((k, ki) => (
-                      <text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 44} y={64}
-                        textAnchor="middle" dominantBaseline="central"
-                        style={{ fontFamily: font, fontSize: '42px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                        {k}
-                      </text>
-                    ))}
-                    {botRow.map((k, ki) => (
-                      <text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 44} y={109}
-                        textAnchor="middle" dominantBaseline="central"
-                        style={{ fontFamily: font, fontSize: '42px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                        {k}
-                      </text>
-                    ))}
-                  </>
-                )
-              } else {
-                const topRow = kanjiChars.slice(0, Math.ceil(n / 2))
-                const botRow = kanjiChars.slice(Math.ceil(n / 2))
-                kanjiEls = (
-                  <>
-                    {topRow.map((k, ki) => (
-                      <text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 30} y={59}
-                        textAnchor="middle" dominantBaseline="central"
-                        style={{ fontFamily: font, fontSize: '28px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                        {k}
-                      </text>
-                    ))}
-                    {botRow.map((k, ki) => (
-                      <text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 30} y={91}
-                        textAnchor="middle" dominantBaseline="central"
-                        style={{ fontFamily: font, fontSize: '28px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                        {k}
-                      </text>
-                    ))}
-                  </>
-                )
-              }
-
+            {dayLabels.map((dl, i) => {
+              const textAngle = dl.angle - 90
+              const isLast = i === lastIdx
               return (
-                <g key={iso} transform={`translate(${cx},${cy}) rotate(${textAngle})`}>
-                  {numEls}{kanjiEls}
+                <g key={dl.iso} transform={`translate(${dl.cx},${dl.cy}) rotate(${textAngle})`}>
+                  {isLast ? (
+                    // Last day's RIGHT half — stays in difference blend (reads black over solid blade)
+                    <g clipPath="url(#last-day-right)">{renderDayInscription(dl)}</g>
+                  ) : (
+                    renderDayInscription(dl)
+                  )}
                 </g>
               )
             })}
           </g>
+          {/* Last day's LEFT half — outside the difference group so the design-line crossing stays plain red */}
+          {lastDay && (
+            <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
+              <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay)}</g>
+            </g>
+          )}
         </svg>
         </div>
       </div>
