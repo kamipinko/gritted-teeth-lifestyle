@@ -157,7 +157,7 @@ function CycleBlade({ days, dailyPlan }) {
         </span>
       </div>
 
-      <div className="relative mx-auto" style={{ width: '100%', maxWidth: '550px' }}>
+      <div className="relative mx-auto" style={{ width: '100%', maxWidth: '750px' }}>
         {/* Potrace-traced wakizashi — rotated -45deg, tight viewBox 668,-635,1136,2642 */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -452,40 +452,15 @@ export default function SummaryPage() {
         CYCLE DESIGNATION: AUTHORIZED
       </div>
 
-      {/* ── HERO — cycle name (no red slab) ── */}
-      <section className="relative z-10 overflow-hidden">
-        <div className="relative px-8 pt-8 pb-14">
-          {/* Nav row */}
-          <div className="flex items-center gap-4 mb-6">
+      {/* ── Nav bar ── */}
+      <section className="relative z-10">
+        <div className="relative px-8 pt-6 pb-2">
+          <div className="flex items-center gap-4">
             <RetreatButton />
             <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke/60 overflow-hidden truncate">
               PALACE / FITNESS / NEW CYCLE / MISSION BRIEF
             </div>
           </div>
-
-          {/* Step tag */}
-          <div className="inline-flex items-center gap-3 mb-4" style={{ transform: 'rotate(1deg)' }}>
-            <div className="h-0.5 w-10 bg-gtl-red/40" />
-            <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-red/70 font-bold">
-              STEP 05 / REVIEW
-            </span>
-          </div>
-
-          {/* THE CYCLE NAME */}
-          <h1
-            className="font-display text-gtl-paper leading-none"
-            style={{
-              fontSize: 'clamp(3.5rem, 11vw, 9rem)',
-              transform: 'rotate(-2deg)',
-              transformOrigin: 'left center',
-              textShadow: '5px 5px 0 #070708, 10px 10px 0 rgba(0,0,0,0.4)',
-              letterSpacing: '-0.02em',
-            }}
-          >
-            {cycleName}
-          </h1>
-
-          {/* CYCLE DESIGNATION moved to top-right corner */}
         </div>
       </section>
 
