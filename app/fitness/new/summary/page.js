@@ -198,84 +198,49 @@ function CycleBlade({ days, dailyPlan }) {
               " />
             </clipPath>
           </defs>
+          {/* Days 1-5: difference-blend cutout effect */}
           <g style={{ mixBlendMode: 'difference' }}>
-            {dayLabels.map(({ num, hasWork, kanjiStr, iso, cx, cy, angle }) => {
+            {dayLabels.map(({ num, hasWork, kanjiStr, iso, cx, cy, angle }, dayIdx) => {
+              if (dayIdx === dayLabels.length - 1) return null
               const kanjiChars = kanjiStr.split('')
               const n = kanjiChars.length
               const baseColor = '#d4181f'
               const baseOpacity = hasWork ? 0.8 : 0.9
               const font = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-              // Tangent along the interior line; subtract 90 so text reads perpendicular
               const textAngle = angle - 90
+              const s = { fontFamily: font, fontWeight: 600, fill: baseColor, opacity: baseOpacity }
 
-              // Date number as horizontal pair, centered on the interior line
-              // The line bisects each digit top/bottom for the cutout effect
               const numEls = (
                 <text x={0} y={0} textAnchor="middle" dominantBaseline="central"
-                  style={{ fontFamily: font, fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                  {num}
-                </text>
+                  style={{ ...s, fontSize: '68px' }}>{num}</text>
               )
 
               let kanjiEls
               if (n === 1) {
-                // Single kanji — tightened gap to date number
-                kanjiEls = (
-                  <text x={0} y={78} textAnchor="middle" dominantBaseline="central"
-                    style={{ fontFamily: font, fontSize: '104px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                    {kanjiChars[0]}
-                  </text>
-                )
+                kanjiEls = (<text x={0} y={78} textAnchor="middle" dominantBaseline="central"
+                  style={{ ...s, fontSize: '104px' }}>{kanjiChars[0]}</text>)
               } else if (n === 2) {
-                // 2 kanji: horizontal row
                 kanjiEls = kanjiChars.map((k, ki) => (
                   <text key={ki} x={(ki - 0.5) * 56} y={78} textAnchor="middle" dominantBaseline="central"
-                    style={{ fontFamily: font, fontSize: '56px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                    {k}
-                  </text>
-                ))
+                    style={{ ...s, fontSize: '56px' }}>{k}</text>))
               } else if (n <= 6) {
                 const topRow = kanjiChars.slice(0, Math.ceil(n / 2))
                 const botRow = kanjiChars.slice(Math.ceil(n / 2))
-                kanjiEls = (
-                  <>
-                    {topRow.map((k, ki) => (
-                      <text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 44} y={64}
-                        textAnchor="middle" dominantBaseline="central"
-                        style={{ fontFamily: font, fontSize: '42px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                        {k}
-                      </text>
-                    ))}
-                    {botRow.map((k, ki) => (
-                      <text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 44} y={109}
-                        textAnchor="middle" dominantBaseline="central"
-                        style={{ fontFamily: font, fontSize: '42px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                        {k}
-                      </text>
-                    ))}
-                  </>
-                )
+                kanjiEls = (<>
+                  {topRow.map((k, ki) => (<text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 44} y={64}
+                    textAnchor="middle" dominantBaseline="central" style={{ ...s, fontSize: '42px' }}>{k}</text>))}
+                  {botRow.map((k, ki) => (<text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 44} y={109}
+                    textAnchor="middle" dominantBaseline="central" style={{ ...s, fontSize: '42px' }}>{k}</text>))}
+                </>)
               } else {
                 const topRow = kanjiChars.slice(0, Math.ceil(n / 2))
                 const botRow = kanjiChars.slice(Math.ceil(n / 2))
-                kanjiEls = (
-                  <>
-                    {topRow.map((k, ki) => (
-                      <text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 30} y={59}
-                        textAnchor="middle" dominantBaseline="central"
-                        style={{ fontFamily: font, fontSize: '28px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                        {k}
-                      </text>
-                    ))}
-                    {botRow.map((k, ki) => (
-                      <text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 30} y={91}
-                        textAnchor="middle" dominantBaseline="central"
-                        style={{ fontFamily: font, fontSize: '28px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                        {k}
-                      </text>
-                    ))}
-                  </>
-                )
+                kanjiEls = (<>
+                  {topRow.map((k, ki) => (<text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 30} y={59}
+                    textAnchor="middle" dominantBaseline="central" style={{ ...s, fontSize: '28px' }}>{k}</text>))}
+                  {botRow.map((k, ki) => (<text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 30} y={91}
+                    textAnchor="middle" dominantBaseline="central" style={{ ...s, fontSize: '28px' }}>{k}</text>))}
+                </>)
               }
 
               return (
@@ -285,6 +250,57 @@ function CycleBlade({ days, dailyPlan }) {
               )
             })}
           </g>
+          {/* Day 6 (last day): stroked red glyphs, no blend mode — sits on top of blade design */}
+          {(() => {
+            const dayIdx = dayLabels.length - 1
+            const { num, hasWork, kanjiStr, iso, cx, cy, angle } = dayLabels[dayIdx]
+            const kanjiChars = kanjiStr.split('')
+            const n = kanjiChars.length
+            const baseColor = '#d4181f'
+            const baseOpacity = hasWork ? 0.8 : 0.9
+            const font = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+            const textAngle = angle - 90
+            const s = { fontFamily: font, fontWeight: 600, fill: baseColor, opacity: baseOpacity, stroke: '#000', strokeWidth: '1px', paintOrder: 'stroke' }
+
+            const numEls = (
+              <text x={0} y={0} textAnchor="middle" dominantBaseline="central"
+                style={{ ...s, fontSize: '68px' }}>{num}</text>
+            )
+
+            let kanjiEls
+            if (n === 1) {
+              kanjiEls = (<text x={0} y={78} textAnchor="middle" dominantBaseline="central"
+                style={{ ...s, fontSize: '104px' }}>{kanjiChars[0]}</text>)
+            } else if (n === 2) {
+              kanjiEls = kanjiChars.map((k, ki) => (
+                <text key={ki} x={(ki - 0.5) * 56} y={78} textAnchor="middle" dominantBaseline="central"
+                  style={{ ...s, fontSize: '56px' }}>{k}</text>))
+            } else if (n <= 6) {
+              const topRow = kanjiChars.slice(0, Math.ceil(n / 2))
+              const botRow = kanjiChars.slice(Math.ceil(n / 2))
+              kanjiEls = (<>
+                {topRow.map((k, ki) => (<text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 44} y={64}
+                  textAnchor="middle" dominantBaseline="central" style={{ ...s, fontSize: '42px' }}>{k}</text>))}
+                {botRow.map((k, ki) => (<text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 44} y={109}
+                  textAnchor="middle" dominantBaseline="central" style={{ ...s, fontSize: '42px' }}>{k}</text>))}
+              </>)
+            } else {
+              const topRow = kanjiChars.slice(0, Math.ceil(n / 2))
+              const botRow = kanjiChars.slice(Math.ceil(n / 2))
+              kanjiEls = (<>
+                {topRow.map((k, ki) => (<text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 30} y={59}
+                  textAnchor="middle" dominantBaseline="central" style={{ ...s, fontSize: '28px' }}>{k}</text>))}
+                {botRow.map((k, ki) => (<text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 30} y={91}
+                  textAnchor="middle" dominantBaseline="central" style={{ ...s, fontSize: '28px' }}>{k}</text>))}
+              </>)
+            }
+
+            return (
+              <g transform={`translate(${cx},${cy}) rotate(${textAngle})`}>
+                {numEls}{kanjiEls}
+              </g>
+            )
+          })()}
         </svg>
         </div>
       </div>
