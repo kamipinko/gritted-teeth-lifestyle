@@ -175,6 +175,7 @@ function CycleBlade({ days, dailyPlan }) {
         <svg
           viewBox="668 -635 1136 2642"
           className="absolute inset-0 w-full h-full pointer-events-none"
+          style={{ top: '20px' }}
           aria-hidden="true"
         >
           <defs>
