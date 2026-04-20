@@ -208,20 +208,13 @@ function CycleBlade({ days, dailyPlan }) {
               // Tangent along the interior line; subtract 90 so text reads perpendicular
               const textAngle = angle - 90
 
-              // Split date number: tens above line, ones below
-              const tens = num[0]
-              const ones = num[1]
+              // Date number as horizontal pair, centered on the interior line
+              // The line bisects each digit top/bottom for the cutout effect
               const numEls = (
-                <>
-                  <text x={0} y={-40} textAnchor="middle" dominantBaseline="central"
-                    style={{ fontFamily: font, fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                    {tens}
-                  </text>
-                  <text x={0} y={40} textAnchor="middle" dominantBaseline="central"
-                    style={{ fontFamily: font, fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                    {ones}
-                  </text>
-                </>
+                <text x={0} y={0} textAnchor="middle" dominantBaseline="central"
+                  style={{ fontFamily: font, fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                  {num}
+                </text>
               )
 
               let kanjiEls
