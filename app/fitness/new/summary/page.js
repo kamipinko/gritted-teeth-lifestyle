@@ -186,42 +186,61 @@ function CycleBlade({ days, dailyPlan }) {
             </clipPath>
           </defs>
           <g clipPath="url(#blade-clip)">
-            {dayLabels.map(({ num, hasWork, kanjiStr, iso, cx, cy }) => (
-              <g key={iso}>
-                <text
-                  x={cx}
-                  y={cy - 35}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  style={{
-                    fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif',
-                    fontSize: '48px',
-                    fontWeight: 600,
-                    letterSpacing: '0.1em',
-                    fill: hasWork ? '#b0a898' : '#e4b022',
-                    opacity: hasWork ? 0.8 : 0.9,
-                  }}
-                >
+            {dayLabels.map(({ num, hasWork, kanjiStr, iso, cx, cy }) => {
+              const kanjiChars = kanjiStr.split('')
+              const n = kanjiChars.length
+              const baseColor = hasWork ? '#b0a898' : '#e4b022'
+              const baseOpacity = hasWork ? 0.8 : 0.9
+              const numEl = (
+                <text x={cx} y={cy - 45} textAnchor="middle" dominantBaseline="central"
+                  style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '42px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
                   {num}
                 </text>
-                <text
-                  x={cx}
-                  y={cy + 35}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  style={{
-                    fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif',
-                    fontSize: '48px',
-                    fontWeight: 600,
-                    letterSpacing: '0.1em',
-                    fill: hasWork ? '#b0a898' : '#e4b022',
-                    opacity: hasWork ? 0.8 : 0.9,
-                  }}
-                >
-                  {kanjiStr}
-                </text>
-              </g>
-            ))}
+              )
+              let kanjiEls
+              if (n === 1) {
+                kanjiEls = (
+                  <text x={cx} y={cy + 25} textAnchor="middle" dominantBaseline="central"
+                    style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '52px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                    {kanjiChars[0]}
+                  </text>
+                )
+              } else if (n <= 3) {
+                kanjiEls = kanjiChars.map((k, i) => (
+                  <text key={i} x={cx} y={cy + 10 + i * 36} textAnchor="middle" dominantBaseline="central"
+                    style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '34px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                    {k}
+                  </text>
+                ))
+              } else if (n <= 6) {
+                kanjiEls = kanjiChars.map((k, i) => {
+                  const col = i % 2
+                  const row = Math.floor(i / 2)
+                  const dx = col === 0 ? -18 : 18
+                  const dy = 10 + row * 28
+                  return (
+                    <text key={i} x={cx + dx} y={cy + dy} textAnchor="middle" dominantBaseline="central"
+                      style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '26px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                      {k}
+                    </text>
+                  )
+                })
+              } else {
+                kanjiEls = kanjiChars.map((k, i) => {
+                  const col = i % 2
+                  const row = Math.floor(i / 2)
+                  const dx = col === 0 ? -14 : 14
+                  const dy = 10 + row * 20
+                  return (
+                    <text key={i} x={cx + dx} y={cy + dy} textAnchor="middle" dominantBaseline="central"
+                      style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '18px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                      {k}
+                    </text>
+                  )
+                })
+              }
+              return <g key={iso}>{numEl}{kanjiEls}</g>
+            })}
           </g>
         </svg>
       </div>
