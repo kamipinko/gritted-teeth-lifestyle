@@ -105,18 +105,9 @@ function CycleBlade({ days, dailyPlan }) {
     ? `${MONTH_SHORT[first.getMonth()]} ${first.getDate()} — ${MONTH_SHORT[last.getMonth()]} ${last.getDate()}`
     : ''
 
-  // Edge anchors — pixel-calibrated points ON the blade spine edge (red/black boundary).
-  // Each has x,y in SVG coords + local tangent angle so inscriptions curve with the blade.
-  const EDGE_ANCHORS = [
-    { x: 1419, y: 558, angle: 95.1 },
-    { x: 1400, y: 775, angle: 95.7 },
-    { x: 1377, y: 991, angle: 96.9 },
-    { x: 1347, y: 1207, angle: 98.4 },
-    { x: 1313, y: 1424, angle: 100.4 },
-    { x: 1268, y: 1640, angle: 101.7 },
-  ]
-  // Keep FACE_ANCHORS for weekday side label positioning (they use y-values only)
-  const FACE_ANCHORS = EDGE_ANCHORS.map(e => [e.x, e.y])
+  // Hardcoded face-center anchors — pixel-calibrated midpoints between spine and ha edges.
+  // 6 points evenly spaced from habaki (10%) to kissaki (85%) along the blade.
+  const FACE_ANCHORS = [[1349,513],[1332,730],[1310,946],[1283,1162],[1251,1379],[1210,1595]]
 
   const dayLabels = days.map((iso, i) => {
     const d = parseDate(iso)
@@ -126,8 +117,8 @@ function CycleBlade({ days, dailyPlan }) {
     const kanjiStr = hasWork
       ? muscles.map((m) => MUSCLE_KANJI[m] || '?').join('')
       : '休'
-    const anchor = EDGE_ANCHORS[i] || EDGE_ANCHORS[EDGE_ANCHORS.length - 1]
-    return { num, hasWork, kanjiStr, iso, cx: anchor.x, cy: anchor.y, angle: anchor.angle }
+    const [cx, cy] = FACE_ANCHORS[i] || FACE_ANCHORS[FACE_ANCHORS.length - 1]
+    return { num, hasWork, kanjiStr, iso, cx, cy }
   })
 
   return (
@@ -198,114 +189,60 @@ function CycleBlade({ days, dailyPlan }) {
             </clipPath>
           </defs>
           <g style={{ mixBlendMode: 'difference' }}>
-            {dayLabels.map(({ num, hasWork, kanjiStr, iso, cx, cy, angle }) => {
+            {dayLabels.map(({ num, hasWork, kanjiStr, iso, cx, cy }) => {
               const kanjiChars = kanjiStr.split('')
               const n = kanjiChars.length
               const baseColor = '#d4181f'
               const baseOpacity = hasWork ? 0.8 : 0.9
-              const font = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-              // Tangent angle points along the edge; subtract 90 so text reads perpendicular
-              const textAngle = angle - 90
-
-              // Split date number into tens and ones, straddling the edge
-              const tens = num[0]
-              const ones = num[1]
-              const numEls = (
-                <>
-                  <text x={0} y={-42} textAnchor="middle" dominantBaseline="central"
-                    style={{ fontFamily: font, fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                    {tens}
-                  </text>
-                  <text x={0} y={42} textAnchor="middle" dominantBaseline="central"
-                    style={{ fontFamily: font, fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                    {ones}
-                  </text>
-                </>
+              const numEl = (
+                <text x={cx} y={cy - 74} textAnchor="middle" dominantBaseline="central"
+                  style={{ fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                  {num}
+                </text>
               )
-
-              // Kanji arranged so the edge line (y=0 in local frame) passes through the middle
               let kanjiEls
               if (n === 1) {
-                // Single kanji centered on edge
                 kanjiEls = (
-                  <text x={0} y={130} textAnchor="middle" dominantBaseline="central"
-                    style={{ fontFamily: font, fontSize: '86px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                  <text x={cx} y={cy + 25} textAnchor="middle" dominantBaseline="central"
+                    style={{ fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '86px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
                     {kanjiChars[0]}
                   </text>
                 )
-              } else if (n === 2) {
-                // 2 kanji: one above edge, one below
-                kanjiEls = (
-                  <>
-                    <text x={0} y={95} textAnchor="middle" dominantBaseline="central"
-                      style={{ fontFamily: font, fontSize: '56px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                      {kanjiChars[0]}
-                    </text>
-                    <text x={0} y={155} textAnchor="middle" dominantBaseline="central"
-                      style={{ fontFamily: font, fontSize: '56px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                      {kanjiChars[1]}
-                    </text>
-                  </>
-                )
-              } else if (n === 3) {
-                // 3 kanji: stack vertically, edge passes between 1st and 2nd
+              } else if (n <= 3) {
                 kanjiEls = kanjiChars.map((k, i) => (
-                  <text key={i} x={0} y={85 + i * 58} textAnchor="middle" dominantBaseline="central"
-                    style={{ fontFamily: font, fontSize: '56px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                  <text key={i} x={cx} y={cy + 10 + i * 58} textAnchor="middle" dominantBaseline="central"
+                    style={{ fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '56px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
                     {k}
                   </text>
                 ))
               } else if (n <= 6) {
-                // 4-6 kanji: 2 rows, edge passes between them
-                const topRow = kanjiChars.slice(0, Math.ceil(n / 2))
-                const botRow = kanjiChars.slice(Math.ceil(n / 2))
-                kanjiEls = (
-                  <>
-                    {topRow.map((k, i) => (
-                      <text key={`t${i}`} x={(i - (topRow.length - 1) / 2) * 46} y={90}
-                        textAnchor="middle" dominantBaseline="central"
-                        style={{ fontFamily: font, fontSize: '44px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                        {k}
-                      </text>
-                    ))}
-                    {botRow.map((k, i) => (
-                      <text key={`b${i}`} x={(i - (botRow.length - 1) / 2) * 46} y={140}
-                        textAnchor="middle" dominantBaseline="central"
-                        style={{ fontFamily: font, fontSize: '44px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                        {k}
-                      </text>
-                    ))}
-                  </>
-                )
+                kanjiEls = kanjiChars.map((k, i) => {
+                  const col = i % 2
+                  const row = Math.floor(i / 2)
+                  const dx = col === 0 ? -28 : 28
+                  const dy = 15 + row * 46
+                  return (
+                    <text key={i} x={cx + dx} y={cy + dy} textAnchor="middle" dominantBaseline="central"
+                      style={{ fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '44px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                      {k}
+                    </text>
+                  )
+                })
               } else {
-                // 7+ kanji: 2 rows compact
-                const topRow = kanjiChars.slice(0, Math.ceil(n / 2))
-                const botRow = kanjiChars.slice(Math.ceil(n / 2))
-                kanjiEls = (
-                  <>
-                    {topRow.map((k, i) => (
-                      <text key={`t${i}`} x={(i - (topRow.length - 1) / 2) * 32} y={85}
-                        textAnchor="middle" dominantBaseline="central"
-                        style={{ fontFamily: font, fontSize: '28px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                        {k}
-                      </text>
-                    ))}
-                    {botRow.map((k, i) => (
-                      <text key={`b${i}`} x={(i - (botRow.length - 1) / 2) * 32} y={120}
-                        textAnchor="middle" dominantBaseline="central"
-                        style={{ fontFamily: font, fontSize: '28px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                        {k}
-                      </text>
-                    ))}
-                  </>
-                )
+                kanjiEls = kanjiChars.map((k, i) => {
+                  const col = i % 2
+                  const row = Math.floor(i / 2)
+                  const dx = col === 0 ? -22 : 22
+                  const dy = 15 + row * 30
+                  return (
+                    <text key={i} x={cx + dx} y={cy + dy} textAnchor="middle" dominantBaseline="central"
+                      style={{ fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '28px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                      {k}
+                    </text>
+                  )
+                })
               }
-
-              return (
-                <g key={iso} transform={`translate(${cx},${cy}) rotate(${textAngle})`}>
-                  {numEls}{kanjiEls}
-                </g>
-              )
+              return <g key={iso}>{numEl}{kanjiEls}</g>
             })}
           </g>
         </svg>
