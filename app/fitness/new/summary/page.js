@@ -240,14 +240,14 @@ function CycleBlade({ days, dailyPlan }) {
                 kanjiEls = (
                   <>
                     {topRow.map((k, ki) => (
-                      <text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 44} y={85}
+                      <text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 44} y={43}
                         textAnchor="middle" dominantBaseline="central"
                         style={{ fontFamily: font, fontSize: '42px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
                         {k}
                       </text>
                     ))}
                     {botRow.map((k, ki) => (
-                      <text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 44} y={130}
+                      <text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 44} y={88}
                         textAnchor="middle" dominantBaseline="central"
                         style={{ fontFamily: font, fontSize: '42px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
                         {k}
@@ -261,14 +261,14 @@ function CycleBlade({ days, dailyPlan }) {
                 kanjiEls = (
                   <>
                     {topRow.map((k, ki) => (
-                      <text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 30} y={80}
+                      <text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 30} y={38}
                         textAnchor="middle" dominantBaseline="central"
                         style={{ fontFamily: font, fontSize: '28px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
                         {k}
                       </text>
                     ))}
                     {botRow.map((k, ki) => (
-                      <text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 30} y={112}
+                      <text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 30} y={70}
                         textAnchor="middle" dominantBaseline="central"
                         style={{ fontFamily: font, fontSize: '28px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
                         {k}
