@@ -198,19 +198,6 @@ function CycleBlade({ days, dailyPlan }) {
               " />
             </clipPath>
           </defs>
-          {/* Red patch under day 6 to hide diagonal design line behind stroked glyphs */}
-          {(() => {
-            const last = dayLabels[dayLabels.length - 1]
-            if (!last) return null
-            const textAngle = last.angle - 90
-            return (
-              <g clipPath="url(#blade-clip)">
-                <g transform={`translate(${last.cx},${last.cy}) rotate(${textAngle})`}>
-                  <rect x={-90} y={-60} width={180} height={200} fill="#d4181f" />
-                </g>
-              </g>
-            )
-          })()}
           {/* Days 1-5: difference-blend cutout effect */}
           <g style={{ mixBlendMode: 'difference' }}>
             {dayLabels.map(({ num, hasWork, kanjiStr, iso, cx, cy, angle }, dayIdx) => {
