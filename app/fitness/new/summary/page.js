@@ -142,7 +142,7 @@ function CycleBlade({ days, dailyPlan }) {
     const muscles = dailyPlan[iso] || []
     const hasWork = muscles.length > 0
     const kanjiStr = hasWork
-      ? muscles.slice(0, 3).map((m) => MUSCLE_KANJI[m] || '?').join('')
+      ? muscles.map((m) => MUSCLE_KANJI[m] || '?').join('')
       : '休'
     const frac = 0.08 + ((i + 0.5) / days.length) * 0.84
     const [cx, cy] = pointAtFraction(frac)
