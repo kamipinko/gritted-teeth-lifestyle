@@ -121,7 +121,7 @@ function CycleBlade({ days, dailyPlan }) {
 
   const dayLabels = days.map((iso, i) => {
     const d = parseDate(iso)
-    const num = String(d.getDate()).padStart(2, '0')
+    const num = String(d.getDate())
     const muscles = dailyPlan[iso] || []
     const hasWork = muscles.length > 0
     const kanjiStr = hasWork
