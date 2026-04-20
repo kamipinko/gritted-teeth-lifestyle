@@ -199,7 +199,7 @@ function CycleBlade({ days, dailyPlan }) {
             </clipPath>
           </defs>
           <g style={{ mixBlendMode: 'difference' }}>
-            {dayLabels.map(({ num, hasWork, kanjiStr, iso, cx, cy, angle }) => {
+            {dayLabels.map(({ num, hasWork, kanjiStr, iso, cx, cy, angle }, dayIdx) => {
               const kanjiChars = kanjiStr.split('')
               const n = kanjiChars.length
               const baseColor = '#d4181f'
@@ -208,14 +208,31 @@ function CycleBlade({ days, dailyPlan }) {
               // Tangent along the interior line; subtract 90 so text reads perpendicular
               const textAngle = angle - 90
 
-              // Date number as horizontal pair, centered on the interior line
-              // The line bisects each digit top/bottom for the cutout effect
-              const numEls = (
-                <text x={0} y={0} textAnchor="middle" dominantBaseline="central"
-                  style={{ fontFamily: font, fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                  {num}
-                </text>
-              )
+              const isLastDay = dayIdx === dayLabels.length - 1
+              let numEls
+              if (isLastDay) {
+                // Last day: left digit exempt from blend, right digit keeps it
+                numEls = (
+                  <>
+                    <text x={-20} y={0} textAnchor="middle" dominantBaseline="central"
+                      style={{ fontFamily: font, fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity, mixBlendMode: 'normal' }}>
+                      {num[0]}
+                    </text>
+                    <text x={20} y={0} textAnchor="middle" dominantBaseline="central"
+                      style={{ fontFamily: font, fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                      {num[1]}
+                    </text>
+                  </>
+                )
+              } else {
+                // Normal: single horizontal pair with blend from parent
+                numEls = (
+                  <text x={0} y={0} textAnchor="middle" dominantBaseline="central"
+                    style={{ fontFamily: font, fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                    {num}
+                  </text>
+                )
+              }
 
               let kanjiEls
               if (n === 1) {
