@@ -226,10 +226,10 @@ function CycleBlade({ days, dailyPlan }) {
                     {kanjiChars[0]}
                   </text>
                 )
-              } else if (n <= 3) {
-                // 2-3 kanji: horizontal row, centered on anchor
+              } else if (n === 2) {
+                // 2 kanji: horizontal row
                 kanjiEls = kanjiChars.map((k, ki) => (
-                  <text key={ki} x={(ki - (n - 1) / 2) * 56} y={120} textAnchor="middle" dominantBaseline="central"
+                  <text key={ki} x={(ki - 0.5) * 56} y={120} textAnchor="middle" dominantBaseline="central"
                     style={{ fontFamily: font, fontSize: '56px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
                     {k}
                   </text>
