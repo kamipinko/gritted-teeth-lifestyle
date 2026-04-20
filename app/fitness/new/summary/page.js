@@ -195,7 +195,7 @@ function CycleBlade({ days, dailyPlan }) {
               const baseOpacity = hasWork ? 0.8 : 0.9
               const numEl = (
                 <text x={cx} y={cy - 58} textAnchor="middle" dominantBaseline="central"
-                  style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '54px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                  style={{ fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '54px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
                   {num}
                 </text>
               )
@@ -203,14 +203,14 @@ function CycleBlade({ days, dailyPlan }) {
               if (n === 1) {
                 kanjiEls = (
                   <text x={cx} y={cy + 25} textAnchor="middle" dominantBaseline="central"
-                    style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                    style={{ fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
                     {kanjiChars[0]}
                   </text>
                 )
               } else if (n <= 3) {
                 kanjiEls = kanjiChars.map((k, i) => (
                   <text key={i} x={cx} y={cy + 10 + i * 46} textAnchor="middle" dominantBaseline="central"
-                    style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '44px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                    style={{ fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '44px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
                     {k}
                   </text>
                 ))
@@ -222,7 +222,7 @@ function CycleBlade({ days, dailyPlan }) {
                   const dy = 12 + row * 36
                   return (
                     <text key={i} x={cx + dx} y={cy + dy} textAnchor="middle" dominantBaseline="central"
-                      style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '34px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                      style={{ fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '34px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
                       {k}
                     </text>
                   )
@@ -235,7 +235,7 @@ function CycleBlade({ days, dailyPlan }) {
                   const dy = 12 + row * 24
                   return (
                     <text key={i} x={cx + dx} y={cy + dy} textAnchor="middle" dominantBaseline="central"
-                      style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '22px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                      style={{ fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '22px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
                       {k}
                     </text>
                   )
