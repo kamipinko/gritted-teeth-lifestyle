@@ -209,18 +209,30 @@ function CycleBlade({ days, dailyPlan }) {
               const textAngle = angle - 90
 
               const isLastDay = dayIdx === dayLabels.length - 1
-              // For last day: only right digit here (left digit rendered outside blend group)
-              const numEls = isLastDay ? (
-                <text x={20} y={0} textAnchor="middle" dominantBaseline="central"
-                  style={{ fontFamily: font, fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                  {num[1]}
-                </text>
-              ) : (
-                <text x={0} y={0} textAnchor="middle" dominantBaseline="central"
-                  style={{ fontFamily: font, fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                  {num}
-                </text>
-              )
+              let numEls
+              if (isLastDay) {
+                // Last day: left digit exempt from blend, right digit keeps it
+                numEls = (
+                  <>
+                    <text x={-20} y={0} textAnchor="middle" dominantBaseline="central"
+                      style={{ fontFamily: font, fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity, mixBlendMode: 'normal' }}>
+                      {num[0]}
+                    </text>
+                    <text x={20} y={0} textAnchor="middle" dominantBaseline="central"
+                      style={{ fontFamily: font, fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                      {num[1]}
+                    </text>
+                  </>
+                )
+              } else {
+                // Normal: single horizontal pair with blend from parent
+                numEls = (
+                  <text x={0} y={0} textAnchor="middle" dominantBaseline="central"
+                    style={{ fontFamily: font, fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                    {num}
+                  </text>
+                )
+              }
 
               let kanjiEls
               if (n === 1) {
@@ -302,24 +314,6 @@ function CycleBlade({ days, dailyPlan }) {
               )
             })}
           </g>
-          {/* Last day left digit — outside difference-blend group so it renders as plain red */}
-          {(() => {
-            const last = dayLabels[dayLabels.length - 1]
-            if (!last) return null
-            const { num, cx, cy, angle, hasWork } = last
-            const textAngle = angle - 90
-            const baseColor = '#d4181f'
-            const baseOpacity = hasWork ? 0.8 : 0.9
-            const font = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-            return (
-              <g transform={`translate(${cx},${cy}) rotate(${textAngle})`}>
-                <text x={-20} y={0} textAnchor="middle" dominantBaseline="central"
-                  style={{ fontFamily: font, fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-                  {num[0]}
-                </text>
-              </g>
-            )
-          })()}
         </svg>
         </div>
       </div>
