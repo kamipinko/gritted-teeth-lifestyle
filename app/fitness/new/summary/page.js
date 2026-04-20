@@ -105,7 +105,37 @@ function CycleBlade({ days, dailyPlan }) {
     ? `${MONTH_SHORT[first.getMonth()]} ${first.getDate()} — ${MONTH_SHORT[last.getMonth()]} ${last.getDate()}`
     : ''
 
-  // Day labels engraved along the blade spine via SVG textPath.
+  // Pre-compute label positions along the blade face center path.
+  // Waypoints calibrated from debug markers (midline between spine and ha edges).
+  const FACE_PTS = [[1354,288],[1286,619],[1208,970],[1109,1339],[1027,1557],[945,1660]]
+
+  // Compute cumulative arc lengths for even distribution
+  const segLens = []
+  let totalLen = 0
+  for (let i = 1; i < FACE_PTS.length; i++) {
+    const dx = FACE_PTS[i][0] - FACE_PTS[i-1][0]
+    const dy = FACE_PTS[i][1] - FACE_PTS[i-1][1]
+    const len = Math.sqrt(dx*dx + dy*dy)
+    segLens.push(len)
+    totalLen += len
+  }
+
+  function pointAtFraction(frac) {
+    let target = frac * totalLen
+    let acc = 0
+    for (let i = 0; i < segLens.length; i++) {
+      if (acc + segLens[i] >= target) {
+        const t = (target - acc) / segLens[i]
+        return [
+          FACE_PTS[i][0] + t * (FACE_PTS[i+1][0] - FACE_PTS[i][0]),
+          FACE_PTS[i][1] + t * (FACE_PTS[i+1][1] - FACE_PTS[i][1]),
+        ]
+      }
+      acc += segLens[i]
+    }
+    return FACE_PTS[FACE_PTS.length - 1]
+  }
+
   const dayLabels = days.map((iso, i) => {
     const d = parseDate(iso)
     const num = String(d.getDate()).padStart(2, '0')
@@ -114,7 +144,9 @@ function CycleBlade({ days, dailyPlan }) {
     const kanjiStr = hasWork
       ? muscles.slice(0, 3).map((m) => MUSCLE_KANJI[m] || '?').join('')
       : '休'
-    return { num, hasWork, kanjiStr, iso }
+    const frac = 0.08 + ((i + 0.5) / days.length) * 0.84
+    const [cx, cy] = pointAtFraction(frac)
+    return { num, hasWork, kanjiStr, iso, cx, cy }
   })
 
   return (
@@ -142,9 +174,6 @@ function CycleBlade({ days, dailyPlan }) {
           aria-hidden="true"
         >
           <defs>
-            {/* Face center path: midline between spine and cutting edge.
-                Calibrated from debug markers on actual blade edges. */}
-            <path id="blade-face-center" d="M 1354,288 L 1286,619 L 1208,970 L 1109,1339 L 1027,1557 L 945,1660" fill="none" stroke="none" />
             {/* Blade silhouette clip — spine edge + ha edge */}
             <clipPath id="blade-clip">
               <polygon points="
@@ -155,28 +184,25 @@ function CycleBlade({ days, dailyPlan }) {
             </clipPath>
           </defs>
           <g clipPath="url(#blade-clip)">
-            {dayLabels.map(({ num, hasWork, kanjiStr, iso }, i) => {
-              const t = (i + 0.5) / dayLabels.length
-              const offset = 8 + t * 84  // 8% → 92% along path
-              return (
-                <text
-                  key={iso}
-                  dominantBaseline="central"
-                  style={{
-                    fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif',
-                    fontSize: '48px',
-                    fontWeight: 600,
-                    letterSpacing: '0.1em',
-                    fill: hasWork ? '#b0a898' : '#e4b022',
-                    opacity: hasWork ? 0.8 : 0.9,
-                  }}
-                >
-                  <textPath href="#blade-face-center" startOffset={`${offset}%`} textAnchor="middle">
-                    {num}  {kanjiStr}
-                  </textPath>
-                </text>
-              )
-            })}
+            {dayLabels.map(({ num, hasWork, kanjiStr, iso, cx, cy }) => (
+              <text
+                key={iso}
+                x={cx}
+                y={cy}
+                textAnchor="middle"
+                dominantBaseline="central"
+                style={{
+                  fontFamily: '"Noto Serif JP", "Yu Mincho", Georgia, serif',
+                  fontSize: '48px',
+                  fontWeight: 600,
+                  letterSpacing: '0.1em',
+                  fill: hasWork ? '#b0a898' : '#e4b022',
+                  opacity: hasWork ? 0.8 : 0.9,
+                }}
+              >
+                {num}  {kanjiStr}
+              </text>
+            ))}
           </g>
         </svg>
       </div>
