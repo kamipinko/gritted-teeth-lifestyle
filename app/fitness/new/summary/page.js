@@ -151,11 +151,13 @@ function CycleBlade({ days, dailyPlan }) {
 
   return (
     <section className="relative z-10 py-2 px-2">
+      {false && (
       <div className="text-center mb-1">
         <span style={{ fontFamily: 'Georgia, serif', fontSize: '11px', letterSpacing: '0.2em', color: '#5a5a62' }}>
           {dateRange}
         </span>
       </div>
+      )}
 
       <div className="relative mx-auto" style={{ width: '100%', maxWidth: '2600px' }}>
         {/* Potrace-traced wakizashi — rotated -45deg, tight viewBox 668,-635,1136,2642 */}
@@ -495,7 +497,8 @@ export default function SummaryPage() {
         </section>
       )}
 
-      {/* ── EXPORT + BEGIN ── */}
+      {/* ── EXPORT + BEGIN (temporarily hidden for weapon sizing) ── */}
+      {false && (
       <section className="relative z-10 px-8 pb-20 pt-4 flex flex-col gap-4 no-print">
         <ExportButton />
         <BeginButton
@@ -504,6 +507,7 @@ export default function SummaryPage() {
           label={(() => { try { return localStorage.getItem('gtl-back-to-edit') === '1' ? 'RE-ETCH CYCLE' : 'ETCH CYCLE' } catch (_) { return 'ETCH CYCLE' } })()}
         />
       </section>
+      )}
 
       {/* ── DEADLINE STAMP OVERLAY ── */}
       {stampVisible && days.length > 0 && (() => {
