@@ -198,6 +198,11 @@ function CycleBlade({ days, dailyPlan }) {
               " />
             </clipPath>
           </defs>
+          {/* Red patch tracing the interior design line at day 22 to kill blend slivers */}
+          <polygon
+            points="1163,1563 1160,1577 1158,1591 1154,1604 1152,1618 1148,1631 1145,1645 1142,1658 1139,1672 1153,1685 1137,1699 1130,1712 1191,1717 1195,1703 1198,1690 1202,1676 1205,1663 1209,1649 1212,1636 1216,1622 1219,1609 1222,1595 1225,1582 1228,1568"
+            fill="#d4181f"
+          />
           <g style={{ mixBlendMode: 'difference' }}>
             {dayLabels.map(({ num, hasWork, kanjiStr, iso, cx, cy, angle }) => {
               const kanjiChars = kanjiStr.split('')
