@@ -191,7 +191,7 @@ function CycleBlade({ days, dailyPlan }) {
             {dayLabels.map(({ num, hasWork, kanjiStr, iso, cx, cy }) => {
               const kanjiChars = kanjiStr.split('')
               const n = kanjiChars.length
-              const baseColor = '#6b0808'
+              const baseColor = '#d4181f'
               const baseOpacity = hasWork ? 0.8 : 0.9
               const numEl = (
                 <text x={cx} y={cy - 58} textAnchor="middle" dominantBaseline="central"
