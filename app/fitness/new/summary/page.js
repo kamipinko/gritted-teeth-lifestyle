@@ -239,7 +239,7 @@ function CycleBlade({ days, dailyPlan }) {
                   )
                 })
               }
-              return <g key={iso}>{numEl}{kanjiEls}</g>
+              return <g key={iso} transform={`rotate(-55, ${cx}, ${cy})`}>{numEl}{kanjiEls}</g>
             })}
           </g>
         </svg>
