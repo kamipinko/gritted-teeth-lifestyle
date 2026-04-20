@@ -105,36 +105,9 @@ function CycleBlade({ days, dailyPlan }) {
     ? `${MONTH_SHORT[first.getMonth()]} ${first.getDate()} — ${MONTH_SHORT[last.getMonth()]} ${last.getDate()}`
     : ''
 
-  // Pre-compute label positions along the blade face center path.
-  // Waypoints calibrated from debug markers (midline between spine and ha edges).
-  const FACE_PTS = [[1354,288],[1286,619],[1208,970],[1109,1339],[1027,1557],[945,1660]]
-
-  // Compute cumulative arc lengths for even distribution
-  const segLens = []
-  let totalLen = 0
-  for (let i = 1; i < FACE_PTS.length; i++) {
-    const dx = FACE_PTS[i][0] - FACE_PTS[i-1][0]
-    const dy = FACE_PTS[i][1] - FACE_PTS[i-1][1]
-    const len = Math.sqrt(dx*dx + dy*dy)
-    segLens.push(len)
-    totalLen += len
-  }
-
-  function pointAtFraction(frac) {
-    let target = frac * totalLen
-    let acc = 0
-    for (let i = 0; i < segLens.length; i++) {
-      if (acc + segLens[i] >= target) {
-        const t = (target - acc) / segLens[i]
-        return [
-          FACE_PTS[i][0] + t * (FACE_PTS[i+1][0] - FACE_PTS[i][0]),
-          FACE_PTS[i][1] + t * (FACE_PTS[i+1][1] - FACE_PTS[i][1]),
-        ]
-      }
-      acc += segLens[i]
-    }
-    return FACE_PTS[FACE_PTS.length - 1]
-  }
+  // Hardcoded face-center anchors — pixel-calibrated midpoints between spine and ha edges.
+  // 6 points evenly spaced from habaki (10%) to kissaki (85%) along the blade.
+  const FACE_ANCHORS = [[1349,513],[1332,730],[1310,946],[1283,1162],[1251,1379],[1210,1595]]
 
   const dayLabels = days.map((iso, i) => {
     const d = parseDate(iso)
@@ -144,8 +117,7 @@ function CycleBlade({ days, dailyPlan }) {
     const kanjiStr = hasWork
       ? muscles.map((m) => MUSCLE_KANJI[m] || '?').join('')
       : '休'
-    const frac = 0.08 + ((i + 0.5) / days.length) * 0.84
-    const [cx, cy] = pointAtFraction(frac)
+    const [cx, cy] = FACE_ANCHORS[i] || FACE_ANCHORS[FACE_ANCHORS.length - 1]
     return { num, hasWork, kanjiStr, iso, cx, cy }
   })
 
