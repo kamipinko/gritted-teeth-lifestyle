@@ -131,7 +131,8 @@ function CycleBlade({ days, dailyPlan }) {
       </div>
       )}
 
-      <div className="relative" style={{ width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 85px)', marginTop: '-100px' }}>
+      <div className="relative">
+        {/* Weekday labels — positioned at viewport edges, vertically aligned with blade inscriptions */}
         {days.map((iso, i) => {
           const d = parseDate(iso)
           const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()]
@@ -141,7 +142,7 @@ function CycleBlade({ days, dailyPlan }) {
           return (
             <div
               key={`dow-${iso}`}
-              className="absolute pointer-events-none"
+              className="absolute pointer-events-none z-20"
               style={{
                 top: `${topPct}%`,
                 [isLeftSide ? 'left' : 'right']: '2vw',
@@ -158,7 +159,10 @@ function CycleBlade({ days, dailyPlan }) {
             </div>
           )
         })}
-        {/* Potrace-traced wakizashi — rotated -45deg, tight viewBox 668,-635,1136,2642 */}
+
+        {/* Blade container — 180vw overflow wrapper */}
+        <div className="relative" style={{ width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 85px)', marginTop: '-100px' }}>
+          {/* Potrace-traced wakizashi — rotated -45deg, tight viewBox 668,-635,1136,2642 */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/reference/wakizashi_styled.svg"
@@ -241,6 +245,7 @@ function CycleBlade({ days, dailyPlan }) {
             })}
           </g>
         </svg>
+        </div>
       </div>
     </section>
   )
