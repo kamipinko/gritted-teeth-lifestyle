@@ -194,8 +194,8 @@ function CycleBlade({ days, dailyPlan }) {
               const baseColor = '#d4181f'
               const baseOpacity = hasWork ? 0.8 : 0.9
               const numEl = (
-                <text x={cx} y={cy - 58} textAnchor="middle" dominantBaseline="central"
-                  style={{ fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '54px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                <text x={cx} y={cy - 74} textAnchor="middle" dominantBaseline="central"
+                  style={{ fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
                   {num}
                 </text>
               )
@@ -203,14 +203,14 @@ function CycleBlade({ days, dailyPlan }) {
               if (n === 1) {
                 kanjiEls = (
                   <text x={cx} y={cy + 25} textAnchor="middle" dominantBaseline="central"
-                    style={{ fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                    style={{ fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '86px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
                     {kanjiChars[0]}
                   </text>
                 )
               } else if (n <= 3) {
                 kanjiEls = kanjiChars.map((k, i) => (
-                  <text key={i} x={cx} y={cy + 10 + i * 46} textAnchor="middle" dominantBaseline="central"
-                    style={{ fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '44px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                  <text key={i} x={cx} y={cy + 10 + i * 58} textAnchor="middle" dominantBaseline="central"
+                    style={{ fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '56px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
                     {k}
                   </text>
                 ))
@@ -218,11 +218,11 @@ function CycleBlade({ days, dailyPlan }) {
                 kanjiEls = kanjiChars.map((k, i) => {
                   const col = i % 2
                   const row = Math.floor(i / 2)
-                  const dx = col === 0 ? -22 : 22
-                  const dy = 12 + row * 36
+                  const dx = col === 0 ? -28 : 28
+                  const dy = 15 + row * 46
                   return (
                     <text key={i} x={cx + dx} y={cy + dy} textAnchor="middle" dominantBaseline="central"
-                      style={{ fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '34px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                      style={{ fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '44px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
                       {k}
                     </text>
                   )
@@ -231,11 +231,11 @@ function CycleBlade({ days, dailyPlan }) {
                 kanjiEls = kanjiChars.map((k, i) => {
                   const col = i % 2
                   const row = Math.floor(i / 2)
-                  const dx = col === 0 ? -17 : 17
-                  const dy = 12 + row * 24
+                  const dx = col === 0 ? -22 : 22
+                  const dy = 15 + row * 30
                   return (
                     <text key={i} x={cx + dx} y={cy + dy} textAnchor="middle" dominantBaseline="central"
-                      style={{ fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '22px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+                      style={{ fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif', fontSize: '28px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
                       {k}
                     </text>
                   )
