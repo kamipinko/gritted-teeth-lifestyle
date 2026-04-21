@@ -157,26 +157,62 @@ function CycleBlade({ days, dailyPlan }) {
           {kanjiChars[0]}
         </text>
       )
-    } else {
-      // General pattern for n >= 2: pair columns in rows of 2; an odd last kanji sits centered in the final row.
-      // Per-bucket sizing keeps large counts from clipping the blade tip.
+    } else if (n <= 8) {
+      // n=2..8: pair columns in rows of 2; an odd last kanji sits centered in the final row.
       let fontSize, colSpacing, baseY, rowYStep
       if (n <= 4) {
         fontSize = 56; colSpacing = 56; baseY = 78; rowYStep = 58
       } else if (n <= 6) {
         fontSize = 48; colSpacing = n === 5 ? 57 : 44; baseY = 60; rowYStep = 42
-      } else if (n <= 8) {
-        fontSize = 28; colSpacing = 33; baseY = 52; rowYStep = 25
-      } else if (n <= 10) {
-        fontSize = 24; colSpacing = 28; baseY = 50; rowYStep = 22
       } else {
-        fontSize = 22; colSpacing = 26; baseY = 48; rowYStep = 20
+        fontSize = 28; colSpacing = 33; baseY = 52; rowYStep = 25
       }
       kanjiEls = kanjiChars.map((k, ki) => {
         const row = Math.floor(ki / 2)
         const isOddLast = n % 2 === 1 && ki === n - 1
         const x = isOddLast ? 0 : (ki % 2 - 0.5) * colSpacing
         const y = baseY + row * rowYStep
+        return (
+          <text key={ki} x={x} y={y} textAnchor="middle" dominantBaseline="central" {...outlineProps}
+            style={{ fontFamily: font, fontSize: `${fontSize}px`, fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+            {k}
+          </text>
+        )
+      })
+    } else if (n <= 11) {
+      // n=9..11: rows 1..4 match the n=8 2-column stack; row 5 sits over a virtual 4-column grid,
+      // with 1/2/3 kanji dropped into the center / outer / all three "gap" positions of that grid.
+      const fontSize = 28
+      const colSpacing = 33
+      const baseY = 52
+      const rowYStep = 25
+      // Row-5 x positions — widened beyond the M/4-spacing "starter" values so 28px glyphs don't collide.
+      const row5Positions = n === 9 ? [0] : n === 10 ? [-20, 20] : [-30, 0, 30]
+      kanjiEls = kanjiChars.map((k, ki) => {
+        let x, y
+        if (ki < 8) {
+          x = (ki % 2 - 0.5) * colSpacing
+          y = baseY + Math.floor(ki / 2) * rowYStep
+        } else {
+          x = row5Positions[ki - 8]
+          y = baseY + 4 * rowYStep
+        }
+        return (
+          <text key={ki} x={x} y={y} textAnchor="middle" dominantBaseline="central" {...outlineProps}
+            style={{ fontFamily: font, fontSize: `${fontSize}px`, fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+            {k}
+          </text>
+        )
+      })
+    } else {
+      // n=12 speculative (max live n=11): 3 rows × 4 columns. Not tuned — exists so layout doesn't break.
+      const fontSize = 22
+      const colSpacing = 20
+      const baseY = 48
+      const rowYStep = 22
+      kanjiEls = kanjiChars.map((k, ki) => {
+        const x = ((ki % 4) - 1.5) * colSpacing
+        const y = baseY + Math.floor(ki / 4) * rowYStep
         return (
           <text key={ki} x={x} y={y} textAnchor="middle" dominantBaseline="central" {...outlineProps}
             style={{ fontFamily: font, fontSize: `${fontSize}px`, fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
