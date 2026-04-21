@@ -157,15 +157,16 @@ function CycleBlade({ days, dailyPlan }) {
           {kanjiChars[0]}
         </text>
       )
-    } else if (n <= 8) {
-      // n=2..8: pair columns in rows of 2; an odd last kanji sits centered in the final row.
+    } else if (n <= 7) {
+      // n=2..7: pair columns in rows of 2; an odd last kanji sits centered in the final row.
       let fontSize, colSpacing, baseY, rowYStep
       if (n <= 4) {
         fontSize = 56; colSpacing = 56; baseY = 78; rowYStep = 58
       } else if (n <= 6) {
         fontSize = 48; colSpacing = n === 5 ? 57 : 44; baseY = 60; rowYStep = 42
       } else {
-        fontSize = 28; colSpacing = 33; baseY = 52; rowYStep = 25
+        // n === 7 — 4 rows × 2 cols, last row is a centered singleton
+        fontSize = 38; colSpacing = 44; baseY = 56; rowYStep = 36
       }
       kanjiEls = kanjiChars.map((k, ki) => {
         const row = Math.floor(ki / 2)
@@ -180,22 +181,24 @@ function CycleBlade({ days, dailyPlan }) {
         )
       })
     } else if (n <= 11) {
-      // n=9..11: rows 1..4 match the n=8 2-column stack; row 5 sits over a virtual 4-column grid,
-      // with 1/2/3 kanji dropped into the center / outer / all three "gap" positions of that grid.
+      // n=8..11: 4 columns × 2 rows (squat wide grid). n=9/10/11 add a row 3 with 1/2/3 kanji
+      // at the midpoint gaps between adjacent columns of the 4-col grid above.
       const fontSize = 28
-      const colSpacing = 33
+      const P = 30           // column pitch — columns at -1.5P, -0.5P, +0.5P, +1.5P
       const baseY = 52
-      const rowYStep = 25
-      // Row-5 x positions — widened beyond the M/4-spacing "starter" values so 28px glyphs don't collide.
-      const row5Positions = n === 9 ? [0] : n === 10 ? [-20, 20] : [-30, 0, 30]
+      const rowYStep = 28
+      // Row-3 gap positions (midpoints between adjacent columns): -P, 0, +P
+      const row3Positions = n === 9 ? [0] : n === 10 ? [-P, P] : n === 11 ? [-P, 0, P] : null
       kanjiEls = kanjiChars.map((k, ki) => {
         let x, y
         if (ki < 8) {
-          x = (ki % 2 - 0.5) * colSpacing
-          y = baseY + Math.floor(ki / 2) * rowYStep
+          const row = Math.floor(ki / 4)
+          const col = ki % 4
+          x = (col - 1.5) * P
+          y = baseY + row * rowYStep
         } else {
-          x = row5Positions[ki - 8]
-          y = baseY + 4 * rowYStep
+          x = row3Positions[ki - 8]
+          y = baseY + 2 * rowYStep
         }
         return (
           <text key={ki} x={x} y={y} textAnchor="middle" dominantBaseline="central" {...outlineProps}
@@ -205,13 +208,13 @@ function CycleBlade({ days, dailyPlan }) {
         )
       })
     } else {
-      // n=12 speculative (max live n=11): 3 rows × 4 columns. Not tuned — exists so layout doesn't break.
-      const fontSize = 22
-      const colSpacing = 20
-      const baseY = 48
-      const rowYStep = 22
+      // n=12 speculative (max live n=11): every column of the 4-col grid takes a 3rd kanji.
+      const fontSize = 28
+      const P = 30
+      const baseY = 52
+      const rowYStep = 28
       kanjiEls = kanjiChars.map((k, ki) => {
-        const x = ((ki % 4) - 1.5) * colSpacing
+        const x = ((ki % 4) - 1.5) * P
         const y = baseY + Math.floor(ki / 4) * rowYStep
         return (
           <text key={ki} x={x} y={y} textAnchor="middle" dominantBaseline="central" {...outlineProps}
