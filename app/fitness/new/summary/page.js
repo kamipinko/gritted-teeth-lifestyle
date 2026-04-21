@@ -137,11 +137,11 @@ function CycleBlade({ days, dailyPlan }) {
   })
 
   const renderDayInscription = (dl, { outline = false } = {}) => {
-    const { num, hasWork, kanjiStr } = dl
+    const { num, kanjiStr } = dl
     const kanjiChars = kanjiStr.split('')
     const n = kanjiChars.length
-    const baseColor = '#d4181f'
-    const baseOpacity = hasWork ? 0.8 : 0.9
+    const baseColor = '#ff0000'
+    const baseOpacity = 1.0
     const font = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
     const outlineProps = outline
       ? { stroke: '#000', strokeWidth: 1, paintOrder: 'stroke' }
