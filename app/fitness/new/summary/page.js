@@ -313,7 +313,7 @@ function CycleBlade({ days, dailyPlan }) {
             return (
               <text
                 key={`dow-${dl.iso}`}
-                x={isLeftSide ? 1070 : 1680}
+                x={isLeftSide ? 1070 : 1664}
                 y={dl.cy + yNudge}
                 textAnchor={isLeftSide ? 'start' : 'end'}
                 dominantBaseline="central"
