@@ -308,8 +308,8 @@ function CycleBlade({ days, dailyPlan }) {
           {dayLabels.map((dl, i) => {
             const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()]
             const isLeftSide = i < 3
-            // Right-side labels need a down-nudge to align visually with inscription center; ~25 viewBox units ≈ 15 screen-px
-            const yNudge = isLeftSide ? 0 : 25
+            // Right-side labels need a down-nudge to align visually with inscription center; ~15 viewBox units ≈ 9 screen-px
+            const yNudge = isLeftSide ? 0 : 15
             return (
               <text
                 key={`dow-${dl.iso}`}
