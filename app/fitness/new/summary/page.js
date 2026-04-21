@@ -109,12 +109,12 @@ function CycleBlade({ days, dailyPlan }) {
   // This is the red-to-dark transition line INSIDE the blade face, ~45% from mune edge.
   // ~140px margin to mune, ~175px margin to ha — plenty of room for inscriptions.
   const INTERIOR_ANCHORS = [
-    { x: 1352.24, y: 541.87, angle: 94.4 },
-    { x: 1336.44, y: 758.88, angle: 95.1 },
-    { x: 1314.83, y: 974.92, angle: 96.5 },
-    { x: 1288.25, y: 1190.98, angle: 98.0 },
-    { x: 1254.87, y: 1408.07, angle: 100.2 },
-    { x: 1211.23, y: 1624.14, angle: 101.5 },
+    { x: 1360.33, y: 541.87, angle: 94.4 },
+    { x: 1344.53, y: 758.88, angle: 95.1 },
+    { x: 1322.92, y: 974.92, angle: 96.5 },
+    { x: 1296.34, y: 1190.98, angle: 98.0 },
+    { x: 1262.96, y: 1408.07, angle: 100.2 },
+    { x: 1219.32, y: 1624.14, angle: 101.5 },
   ]
   // For weekday side label positioning (uses y-values only)
   const FACE_ANCHORS = INTERIOR_ANCHORS.map(a => [a.x, a.y])
