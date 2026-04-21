@@ -136,16 +136,19 @@ function CycleBlade({ days, dailyPlan }) {
     return { num, hasWork, kanjiStr, iso, cx: anchor.x, cy: anchor.y, angle: anchor.angle }
   })
 
-  const renderDayInscription = (dl) => {
+  const renderDayInscription = (dl, { outline = false } = {}) => {
     const { num, hasWork, kanjiStr } = dl
     const kanjiChars = kanjiStr.split('')
     const n = kanjiChars.length
     const baseColor = '#d4181f'
     const baseOpacity = hasWork ? 0.8 : 0.9
     const font = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+    const outlineProps = outline
+      ? { stroke: '#000', strokeWidth: 1, paintOrder: 'stroke' }
+      : {}
 
     const numEls = (
-      <text x={0} y={0} textAnchor="middle" dominantBaseline="central"
+      <text x={0} y={0} textAnchor="middle" dominantBaseline="central" {...outlineProps}
         style={{ fontFamily: font, fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
         {num}
       </text>
@@ -154,7 +157,7 @@ function CycleBlade({ days, dailyPlan }) {
     let kanjiEls
     if (n === 1) {
       kanjiEls = (
-        <text x={0} y={78} textAnchor="middle" dominantBaseline="central"
+        <text x={0} y={78} textAnchor="middle" dominantBaseline="central" {...outlineProps}
           style={{ fontFamily: font, fontSize: '104px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
           {kanjiChars[0]}
         </text>
@@ -176,7 +179,7 @@ function CycleBlade({ days, dailyPlan }) {
         const x = isOddLast ? 0 : (ki % 2 - 0.5) * colSpacing
         const y = baseY + row * rowYStep
         return (
-          <text key={ki} x={x} y={y} textAnchor="middle" dominantBaseline="central"
+          <text key={ki} x={x} y={y} textAnchor="middle" dominantBaseline="central" {...outlineProps}
             style={{ fontFamily: font, fontSize: `${fontSize}px`, fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
             {k}
           </text>
@@ -203,7 +206,7 @@ function CycleBlade({ days, dailyPlan }) {
           y = baseY + 2 * rowYStep
         }
         return (
-          <text key={ki} x={x} y={y} textAnchor="middle" dominantBaseline="central"
+          <text key={ki} x={x} y={y} textAnchor="middle" dominantBaseline="central" {...outlineProps}
             style={{ fontFamily: font, fontSize: `${fontSize}px`, fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
             {k}
           </text>
@@ -219,7 +222,7 @@ function CycleBlade({ days, dailyPlan }) {
         const x = ((ki % 4) - 1.5) * P
         const y = baseY + Math.floor(ki / 4) * rowYStep
         return (
-          <text key={ki} x={x} y={y} textAnchor="middle" dominantBaseline="central"
+          <text key={ki} x={x} y={y} textAnchor="middle" dominantBaseline="central" {...outlineProps}
             style={{ fontFamily: font, fontSize: `${fontSize}px`, fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
             {k}
           </text>
@@ -229,6 +232,9 @@ function CycleBlade({ days, dailyPlan }) {
 
     return <>{numEls}{kanjiEls}</>
   }
+
+  const lastIdx = dayLabels.length - 1
+  const lastDay = lastIdx >= 0 ? dayLabels[lastIdx] : null
 
   return (
     <section className="relative z-10 py-2 px-2 pointer-events-none">
@@ -283,17 +289,36 @@ function CycleBlade({ days, dailyPlan }) {
                 1010,1710 1130,1610 1225,1420 1330,1040 1400,700 1460,380
               " />
             </clipPath>
+            {/* Half-plane clips in each glyph's local rotated frame — split the last day across the interior design line */}
+            <clipPath id="last-day-left" clipPathUnits="userSpaceOnUse">
+              <rect x="-500" y="-500" width="500" height="1000" />
+            </clipPath>
+            <clipPath id="last-day-right" clipPathUnits="userSpaceOnUse">
+              <rect x="0" y="-500" width="500" height="1000" />
+            </clipPath>
           </defs>
           <g style={{ mixBlendMode: 'difference' }}>
-            {dayLabels.map((dl) => {
+            {dayLabels.map((dl, i) => {
               const textAngle = dl.angle - 90
+              const isLast = i === lastIdx
               return (
                 <g key={dl.iso} transform={`translate(${dl.cx},${dl.cy}) rotate(${textAngle})`}>
-                  {renderDayInscription(dl)}
+                  {isLast ? (
+                    // Last day's RIGHT half — stays in difference blend (reads black over solid blade)
+                    <g clipPath="url(#last-day-right)">{renderDayInscription(dl)}</g>
+                  ) : (
+                    renderDayInscription(dl)
+                  )}
                 </g>
               )
             })}
           </g>
+          {/* Last day's LEFT half — outside the difference group so the design-line crossing stays plain red */}
+          {lastDay && (
+            <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
+              <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true })}</g>
+            </g>
+          )}
           {/* Weekday side labels — share the viewBox so they align vertically with each inscription */}
           {dayLabels.map((dl, i) => {
             const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()]
