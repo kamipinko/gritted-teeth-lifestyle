@@ -249,7 +249,7 @@ function CycleBlade({ days, dailyPlan }) {
       <div className="relative">
         {/* Blade container — 180vw overflow wrapper. Section-level pointer-events-none keeps the blade's
             negative-margin overflow from swallowing clicks on the nav bar above it. */}
-        <div className="relative" style={{ width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 85px)', marginTop: '0px' }}>
+        <div className="relative" style={{ width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 85px)', marginTop: '-100px' }}>
           {/* Black backdrop — outer-subpath-only SVG (inner hole subpaths stripped out).
               Same viewBox + same rotate/translate/scale transforms as the red weapon,
               so it aligns pixel-exact. No interior holes means the page gradient can't
