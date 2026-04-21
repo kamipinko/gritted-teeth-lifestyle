@@ -245,12 +245,23 @@ function CycleBlade({ days, dailyPlan }) {
         {/* Blade container — 180vw overflow wrapper. Section-level pointer-events-none keeps the blade's
             negative-margin overflow from swallowing clicks on the nav bar above it. */}
         <div className="relative" style={{ width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 85px)', marginTop: '-100px' }}>
+          {/* Black backdrop filling the blade silhouette — kills page-gradient bleed-through inside the line-art's transparent interior. */}
+          <svg
+            viewBox="668 -635 1136 2642"
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            aria-hidden="true"
+          >
+            <polygon
+              points="1180,180 1100,520 1010,880 920,1240 860,1490 840,1600 925,1655 1010,1710 1130,1610 1225,1420 1330,1040 1400,700 1460,380"
+              fill="#000"
+            />
+          </svg>
           {/* Potrace-traced wakizashi — rotated -45deg, tight viewBox 668,-635,1136,2642 */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/reference/wakizashi_styled.svg"
           alt="Wakizashi"
-          className="block w-full h-auto opacity-85"
+          className="relative block w-full h-auto opacity-85"
           style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))' }}
         />
 
