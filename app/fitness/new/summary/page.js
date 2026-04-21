@@ -192,7 +192,7 @@ function CycleBlade({ days, dailyPlan }) {
       const row2 = kanjiChars.slice(2, 4)
       const row3 = kanjiChars.slice(4)
       // n=5 widens its rows-of-2 so the single centered 5th kanji below doesn't feel cramped above
-      const colSpacing = n === 5 ? 64 : 44
+      const colSpacing = n === 5 ? 60 : 44
       kanjiEls = (
         <>
           {row1.map((k, ki) => (
