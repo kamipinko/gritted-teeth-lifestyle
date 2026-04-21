@@ -252,7 +252,7 @@ function CycleBlade({ days, dailyPlan }) {
             Outer wrapper holds layout (width, margins). Inner wrapper gets the 0.75 scale so the blade
             and inscriptions shrink together; weekday labels live OUTSIDE the scale so they stay pinned
             to the viewport edges. */}
-        <div className="relative" style={{ width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 85px)', marginTop: '-100px', marginBottom: '-25%' }}>
+        <div className="relative" style={{ width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 85px)', marginTop: '-100px', height: '1250px', overflow: 'hidden' }}>
           <div className="relative" style={{ transform: 'scale(0.75)', transformOrigin: 'top center' }}>
           {/* Black backdrop — outer-subpath-only SVG (inner hole subpaths stripped out).
               Same viewBox + same rotate/translate/scale transforms as the red weapon,
@@ -332,8 +332,8 @@ function CycleBlade({ days, dailyPlan }) {
               top: -11.25px matches the scaled inscription SVG's top: -15px when that gets multiplied by 0.75. */}
           <svg
             viewBox="668 -635 1136 2642"
-            className="absolute inset-0 w-full h-full pointer-events-none"
-            style={{ top: '-11.25px', left: '0px' }}
+            className="absolute left-0 w-full pointer-events-none"
+            style={{ top: '-11.25px', aspectRatio: '1136 / 2642' }}
             aria-hidden="true"
           >
             {dayLabels.map((dl, i) => {
