@@ -105,6 +105,11 @@ function CycleBlade({ days, dailyPlan }) {
     ? `${MONTH_SHORT[first.getMonth()]} ${first.getDate()} — ${MONTH_SHORT[last.getMonth()]} ${last.getDate()}`
     : ''
 
+  // Backdrop renders client-side only — guarantees no hydration mismatch even if the bundler/browser
+  // serializes the extra <img> differently between server and client.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
   // Interior anchors — on the mune-side edge of the hi (fuller/blood groove).
   // This is the red-to-dark transition line INSIDE the blade face, ~45% from mune edge.
   // ~140px margin to mune, ~175px margin to ha — plenty of room for inscriptions.
@@ -246,14 +251,17 @@ function CycleBlade({ days, dailyPlan }) {
             negative-margin overflow from swallowing clicks on the nav bar above it. */}
         <div className="relative" style={{ width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 85px)', marginTop: '-100px' }}>
           {/* Black backdrop — same wakizashi silhouette with fill recolored to #000. Sits behind the red blade
-              so the page gradient doesn't bleed through. Pixel-perfect alignment because it IS the same path. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/reference/wakizashi_black_fill.svg"
-            alt=""
-            aria-hidden="true"
-            className="absolute inset-0 block w-full h-auto"
-          />
+              so the page gradient doesn't bleed through. Pixel-perfect alignment because it IS the same path.
+              Rendered post-mount to sidestep any SSR/CSR hydration mismatch. */}
+          {mounted && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src="/reference/wakizashi_black_fill.svg"
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 block w-full h-auto"
+            />
+          )}
           {/* Potrace-traced wakizashi — rotated -45deg, tight viewBox 668,-635,1136,2642 */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
