@@ -131,16 +131,19 @@ function CycleBlade({ days, dailyPlan }) {
     return { num, hasWork, kanjiStr, iso, cx: anchor.x, cy: anchor.y, angle: anchor.angle }
   })
 
-  const renderDayInscription = (dl) => {
+  const renderDayInscription = (dl, { outline = false } = {}) => {
     const { num, hasWork, kanjiStr } = dl
     const kanjiChars = kanjiStr.split('')
     const n = kanjiChars.length
     const baseColor = '#d4181f'
     const baseOpacity = hasWork ? 0.8 : 0.9
     const font = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+    const outlineProps = outline
+      ? { stroke: '#000', strokeWidth: 1, paintOrder: 'stroke' }
+      : {}
 
     const numEls = (
-      <text x={0} y={0} textAnchor="middle" dominantBaseline="central"
+      <text x={0} y={0} textAnchor="middle" dominantBaseline="central" {...outlineProps}
         style={{ fontFamily: font, fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
         {num}
       </text>
@@ -149,14 +152,14 @@ function CycleBlade({ days, dailyPlan }) {
     let kanjiEls
     if (n === 1) {
       kanjiEls = (
-        <text x={0} y={78} textAnchor="middle" dominantBaseline="central"
+        <text x={0} y={78} textAnchor="middle" dominantBaseline="central" {...outlineProps}
           style={{ fontFamily: font, fontSize: '104px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
           {kanjiChars[0]}
         </text>
       )
     } else if (n === 2) {
       kanjiEls = kanjiChars.map((k, ki) => (
-        <text key={ki} x={(ki - 0.5) * 56} y={78} textAnchor="middle" dominantBaseline="central"
+        <text key={ki} x={(ki - 0.5) * 56} y={78} textAnchor="middle" dominantBaseline="central" {...outlineProps}
           style={{ fontFamily: font, fontSize: '56px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
           {k}
         </text>
@@ -168,14 +171,14 @@ function CycleBlade({ days, dailyPlan }) {
         <>
           {topRow.map((k, ki) => (
             <text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 44} y={64}
-              textAnchor="middle" dominantBaseline="central"
+              textAnchor="middle" dominantBaseline="central" {...outlineProps}
               style={{ fontFamily: font, fontSize: '42px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
               {k}
             </text>
           ))}
           {botRow.map((k, ki) => (
             <text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 44} y={109}
-              textAnchor="middle" dominantBaseline="central"
+              textAnchor="middle" dominantBaseline="central" {...outlineProps}
               style={{ fontFamily: font, fontSize: '42px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
               {k}
             </text>
@@ -189,14 +192,14 @@ function CycleBlade({ days, dailyPlan }) {
         <>
           {topRow.map((k, ki) => (
             <text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 30} y={59}
-              textAnchor="middle" dominantBaseline="central"
+              textAnchor="middle" dominantBaseline="central" {...outlineProps}
               style={{ fontFamily: font, fontSize: '28px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
               {k}
             </text>
           ))}
           {botRow.map((k, ki) => (
             <text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 30} y={91}
-              textAnchor="middle" dominantBaseline="central"
+              textAnchor="middle" dominantBaseline="central" {...outlineProps}
               style={{ fontFamily: font, fontSize: '28px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
               {k}
             </text>
@@ -304,7 +307,7 @@ function CycleBlade({ days, dailyPlan }) {
           {/* Last day's LEFT half — outside the difference group so the design-line crossing stays plain red */}
           {lastDay && (
             <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
-              <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay)}</g>
+              <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true })}</g>
             </g>
           )}
         </svg>
