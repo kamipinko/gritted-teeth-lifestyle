@@ -308,8 +308,8 @@ function CycleBlade({ days, dailyPlan }) {
           {dayLabels.map((dl, i) => {
             const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()]
             const isLeftSide = i < 3
-            // Right-side labels read ~6 screen-px too high; nudge down ~10 viewBox units (scale ≈ 1.618 vb/px)
-            const yNudge = isLeftSide ? 0 : 10
+            // Right-side labels read too high; nudge down ~45 viewBox units (~28 screen-px at scale ≈ 1.618 vb/px)
+            const yNudge = isLeftSide ? 0 : 45
             return (
               <text
                 key={`dow-${dl.iso}`}
