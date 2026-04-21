@@ -191,17 +191,19 @@ function CycleBlade({ days, dailyPlan }) {
       const row1 = kanjiChars.slice(0, 2)
       const row2 = kanjiChars.slice(2, 4)
       const row3 = kanjiChars.slice(4)
+      // n=5 widens its rows-of-2 so the single centered 5th kanji below doesn't feel cramped above
+      const colSpacing = n === 5 ? 64 : 44
       kanjiEls = (
         <>
           {row1.map((k, ki) => (
-            <text key={`r1${ki}`} x={(ki - 0.5) * 44} y={60}
+            <text key={`r1${ki}`} x={(ki - 0.5) * colSpacing} y={60}
               textAnchor="middle" dominantBaseline="central" {...outlineProps}
               style={{ fontFamily: font, fontSize: '48px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
               {k}
             </text>
           ))}
           {row2.map((k, ki) => (
-            <text key={`r2${ki}`} x={(ki - 0.5) * 44} y={102}
+            <text key={`r2${ki}`} x={(ki - 0.5) * colSpacing} y={102}
               textAnchor="middle" dominantBaseline="central" {...outlineProps}
               style={{ fontFamily: font, fontSize: '48px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
               {k}
