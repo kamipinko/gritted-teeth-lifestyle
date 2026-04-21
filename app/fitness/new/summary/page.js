@@ -225,34 +225,6 @@ function CycleBlade({ days, dailyPlan }) {
       )}
 
       <div className="relative">
-        {/* Weekday labels — positioned at viewport edges, vertically aligned with blade inscriptions */}
-        {days.map((iso, i) => {
-          const d = parseDate(iso)
-          const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()]
-          const [, cy] = FACE_ANCHORS[i] || FACE_ANCHORS[FACE_ANCHORS.length - 1]
-          const topPct = ((cy - (-635)) / 2642) * 100
-          const isLeftSide = i < 3
-          return (
-            <div
-              key={`dow-${iso}`}
-              className="absolute pointer-events-none z-20"
-              style={{
-                top: `${topPct}%`,
-                [isLeftSide ? 'left' : 'right']: '2vw',
-                transform: 'translateY(-50%)',
-                fontFamily: '"Noto Serif JP", Georgia, serif',
-                fontSize: '28px',
-                fontWeight: 700,
-                color: '#b0a898',
-                letterSpacing: '0.2em',
-                opacity: 0.7,
-              }}
-            >
-              {dow}
-            </div>
-          )
-        })}
-
         {/* Blade container — 180vw overflow wrapper */}
         <div className="relative" style={{ width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 85px)', marginTop: '-100px' }}>
           {/* Potrace-traced wakizashi — rotated -45deg, tight viewBox 668,-635,1136,2642 */}
@@ -310,6 +282,30 @@ function CycleBlade({ days, dailyPlan }) {
               <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true })}</g>
             </g>
           )}
+          {/* Weekday side labels — share the viewBox so they align vertically with each inscription */}
+          {dayLabels.map((dl, i) => {
+            const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()]
+            const isLeftSide = i < 3
+            return (
+              <text
+                key={`dow-${dl.iso}`}
+                x={isLeftSide ? 1070 : 1680}
+                y={dl.cy}
+                textAnchor={isLeftSide ? 'start' : 'end'}
+                dominantBaseline="central"
+                style={{
+                  fontFamily: '"Noto Serif JP", Georgia, serif',
+                  fontSize: '45px',
+                  fontWeight: 700,
+                  fill: '#b0a898',
+                  letterSpacing: '0.2em',
+                  opacity: 0.7,
+                }}
+              >
+                {dow}
+              </text>
+            )
+          })}
         </svg>
         </div>
       </div>
