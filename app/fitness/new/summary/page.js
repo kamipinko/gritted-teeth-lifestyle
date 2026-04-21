@@ -249,11 +249,10 @@ function CycleBlade({ days, dailyPlan }) {
       <div className="relative">
         {/* Blade container — 180vw overflow wrapper. Section-level pointer-events-none keeps the blade's
             negative-margin overflow from swallowing clicks on the nav bar above it.
-            Outer wrapper holds layout (width, margins). Inner wrapper gets the 0.75 scale so the blade
-            and inscriptions shrink together; weekday labels live OUTSIDE the scale so they stay pinned
-            to the viewport edges. */}
-        <div className="relative" style={{ width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 85px)', marginTop: '-100px', height: '1250px', overflow: 'hidden' }}>
-          <div className="relative" style={{ transform: 'scale(0.75)', transformOrigin: 'top center' }}>
+            transform: scale(1.25) enlarges the whole render (blade img, backdrop, inscriptions,
+            weekday labels) uniformly. marginBottom: 312px compensates for the extra 25% of visual
+            height that transform adds below the layout box so subsequent content doesn't overlap. */}
+        <div className="relative" style={{ width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 85px)', marginTop: '-100px', height: '1250px', overflow: 'hidden', transform: 'scale(1.25)', transformOrigin: 'top center', marginBottom: '312px' }}>
           {/* Black backdrop — outer-subpath-only SVG (inner hole subpaths stripped out).
               Same viewBox + same rotate/translate/scale transforms as the red weapon,
               so it aligns pixel-exact. No interior holes means the page gradient can't
@@ -269,83 +268,71 @@ function CycleBlade({ days, dailyPlan }) {
             />
           )}
           {/* Potrace-traced wakizashi — rotated -45deg, tight viewBox 668,-635,1136,2642 */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/reference/wakizashi_styled.svg"
-          alt="Wakizashi"
-          className="relative block w-full h-auto"
-          style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))' }}
-        />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/reference/wakizashi_styled.svg"
+            alt="Wakizashi"
+            className="relative block w-full h-auto"
+            style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))' }}
+          />
 
-        {/* Engraved day labels along the blade spine — same viewBox as weapon SVG */}
-        <svg
-          viewBox="668 -635 1136 2642"
-          className="absolute inset-0 w-full h-full pointer-events-none"
-          style={{ top: '-15px', left: '0px' }}
-          aria-hidden="true"
-        >
-          <defs>
-            {/* Blade silhouette clip — spine edge + ha edge */}
-            <clipPath id="blade-clip">
-              <polygon points="
-                1180,180 1100,520 1010,880 920,1240 860,1490 840,1600
-                925,1655
-                1010,1710 1130,1610 1225,1420 1330,1040 1400,700 1460,380
-              " />
-            </clipPath>
-            {/* Half-plane clips in each glyph's local rotated frame — split the last day across the interior design line */}
-            <clipPath id="last-day-left" clipPathUnits="userSpaceOnUse">
-              <rect x="-500" y="-500" width="500" height="1000" />
-            </clipPath>
-            <clipPath id="last-day-right" clipPathUnits="userSpaceOnUse">
-              <rect x="0" y="-500" width="500" height="1000" />
-            </clipPath>
-          </defs>
-          <g style={{ mixBlendMode: 'difference' }}>
-            {dayLabels.map((dl, i) => {
-              const textAngle = dl.angle - 90
-              const isLast = i === lastIdx
-              return (
-                <g key={dl.iso} transform={`translate(${dl.cx},${dl.cy}) rotate(${textAngle})`}>
-                  {isLast ? (
-                    // Last day's RIGHT half — stays in difference blend (reads black over solid blade)
-                    <g clipPath="url(#last-day-right)">{renderDayInscription(dl)}</g>
-                  ) : (
-                    renderDayInscription(dl)
-                  )}
-                </g>
-              )
-            })}
-          </g>
-          {/* Last day's LEFT half — outside the difference group so the design-line crossing stays plain red */}
-          {lastDay && (
-            <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
-              <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true })}</g>
-            </g>
-          )}
-        </svg>
-          </div>
-          {/* Weekday side labels — OUTSIDE the scaled wrapper so their on-screen X positions stay at the
-              original near-viewport-edge spots (x=1070 / x=1664). Y is compensated so each label aligns
-              with the now-shrunken inscription's visual center:
-                  L = (anchor_y + 635) * 0.75 - 635
-              top: -11.25px matches the scaled inscription SVG's top: -15px when that gets multiplied by 0.75. */}
+          {/* Engraved day labels + weekday side labels — same viewBox as weapon SVG */}
           <svg
             viewBox="668 -635 1136 2642"
-            className="absolute left-0 w-full pointer-events-none"
-            style={{ top: '-11.25px', aspectRatio: '1136 / 2642' }}
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            style={{ top: '-15px', left: '0px' }}
             aria-hidden="true"
           >
+            <defs>
+              {/* Blade silhouette clip — spine edge + ha edge */}
+              <clipPath id="blade-clip">
+                <polygon points="
+                  1180,180 1100,520 1010,880 920,1240 860,1490 840,1600
+                  925,1655
+                  1010,1710 1130,1610 1225,1420 1330,1040 1400,700 1460,380
+                " />
+              </clipPath>
+              {/* Half-plane clips in each glyph's local rotated frame — split the last day across the interior design line */}
+              <clipPath id="last-day-left" clipPathUnits="userSpaceOnUse">
+                <rect x="-500" y="-500" width="500" height="1000" />
+              </clipPath>
+              <clipPath id="last-day-right" clipPathUnits="userSpaceOnUse">
+                <rect x="0" y="-500" width="500" height="1000" />
+              </clipPath>
+            </defs>
+            <g style={{ mixBlendMode: 'difference' }}>
+              {dayLabels.map((dl, i) => {
+                const textAngle = dl.angle - 90
+                const isLast = i === lastIdx
+                return (
+                  <g key={dl.iso} transform={`translate(${dl.cx},${dl.cy}) rotate(${textAngle})`}>
+                    {isLast ? (
+                      // Last day's RIGHT half — stays in difference blend (reads black over solid blade)
+                      <g clipPath="url(#last-day-right)">{renderDayInscription(dl)}</g>
+                    ) : (
+                      renderDayInscription(dl)
+                    )}
+                  </g>
+                )
+              })}
+            </g>
+            {/* Last day's LEFT half — outside the difference group so the design-line crossing stays plain red */}
+            {lastDay && (
+              <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
+                <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true })}</g>
+              </g>
+            )}
+            {/* Weekday side labels — share the viewBox so they align vertically with each inscription.
+                All contents (including labels) scale uniformly with the outer container's scale(1.25). */}
             {dayLabels.map((dl, i) => {
               const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()]
               const isLeftSide = i < 3
               const yNudge = isLeftSide ? 0 : 10
-              const scaledY = (dl.cy + 635) * 0.75 - 635 + yNudge
               return (
                 <text
                   key={`dow-${dl.iso}`}
                   x={isLeftSide ? 1070 : 1664}
-                  y={scaledY}
+                  y={dl.cy + yNudge}
                   textAnchor={isLeftSide ? 'start' : 'end'}
                   dominantBaseline="central"
                   style={{
