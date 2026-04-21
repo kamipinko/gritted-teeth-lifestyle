@@ -250,13 +250,13 @@ function CycleBlade({ days, dailyPlan }) {
         {/* Blade container — 180vw overflow wrapper. Section-level pointer-events-none keeps the blade's
             negative-margin overflow from swallowing clicks on the nav bar above it. */}
         <div className="relative" style={{ width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 85px)', marginTop: '-100px' }}>
-          {/* Black backdrop — same wakizashi silhouette with fill recolored to #000. Sits behind the red blade
-              so the page gradient doesn't bleed through. Pixel-perfect alignment because it IS the same path.
+          {/* Black backdrop — flood-filled solid silhouette PNG (no interior holes, unlike the line-art SVG).
+              Sits behind the red blade so the page gradient doesn't bleed through handle/tsuba/blade interior.
               Rendered post-mount to sidestep any SSR/CSR hydration mismatch. */}
           {mounted && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src="/reference/wakizashi_black_fill.svg"
+              src="/reference/wakizashi_solid_silhouette.png"
               alt=""
               aria-hidden="true"
               className="absolute inset-0 block w-full h-auto"
