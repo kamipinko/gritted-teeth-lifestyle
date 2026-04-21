@@ -157,88 +157,33 @@ function CycleBlade({ days, dailyPlan }) {
           {kanjiChars[0]}
         </text>
       )
-    } else if (n === 2) {
-      kanjiEls = kanjiChars.map((k, ki) => (
-        <text key={ki} x={(ki - 0.5) * 56} y={78} textAnchor="middle" dominantBaseline="central" {...outlineProps}
-          style={{ fontFamily: font, fontSize: '56px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-          {k}
-        </text>
-      ))
-    } else if (n <= 4) {
-      // 3..4 kanji: same 56px size as n=2, stacked in two rows to stay within the blade face
-      const topRow = kanjiChars.slice(0, Math.ceil(n / 2))
-      const botRow = kanjiChars.slice(Math.ceil(n / 2))
-      kanjiEls = (
-        <>
-          {topRow.map((k, ki) => (
-            <text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 56} y={78}
-              textAnchor="middle" dominantBaseline="central" {...outlineProps}
-              style={{ fontFamily: font, fontSize: '56px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-              {k}
-            </text>
-          ))}
-          {botRow.map((k, ki) => (
-            <text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 56} y={136}
-              textAnchor="middle" dominantBaseline="central" {...outlineProps}
-              style={{ fontFamily: font, fontSize: '56px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-              {k}
-            </text>
-          ))}
-        </>
-      )
-    } else if (n <= 6) {
-      // 5..6 kanji: 3-row layout so the 4-kanji block above stays put and the 5th/6th slot in as a centered bottom row
-      const row1 = kanjiChars.slice(0, 2)
-      const row2 = kanjiChars.slice(2, 4)
-      const row3 = kanjiChars.slice(4)
-      // n=5 widens its rows-of-2 so the single centered 5th kanji below doesn't feel cramped above
-      const colSpacing = n === 5 ? 57 : 44
-      kanjiEls = (
-        <>
-          {row1.map((k, ki) => (
-            <text key={`r1${ki}`} x={(ki - 0.5) * colSpacing} y={60}
-              textAnchor="middle" dominantBaseline="central" {...outlineProps}
-              style={{ fontFamily: font, fontSize: '48px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-              {k}
-            </text>
-          ))}
-          {row2.map((k, ki) => (
-            <text key={`r2${ki}`} x={(ki - 0.5) * colSpacing} y={102}
-              textAnchor="middle" dominantBaseline="central" {...outlineProps}
-              style={{ fontFamily: font, fontSize: '48px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-              {k}
-            </text>
-          ))}
-          {row3.map((k, ki) => (
-            <text key={`r3${ki}`} x={(ki - (row3.length - 1) / 2) * 44} y={144}
-              textAnchor="middle" dominantBaseline="central" {...outlineProps}
-              style={{ fontFamily: font, fontSize: '48px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-              {k}
-            </text>
-          ))}
-        </>
-      )
     } else {
-      const topRow = kanjiChars.slice(0, Math.ceil(n / 2))
-      const botRow = kanjiChars.slice(Math.ceil(n / 2))
-      kanjiEls = (
-        <>
-          {topRow.map((k, ki) => (
-            <text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 30} y={59}
-              textAnchor="middle" dominantBaseline="central" {...outlineProps}
-              style={{ fontFamily: font, fontSize: '28px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-              {k}
-            </text>
-          ))}
-          {botRow.map((k, ki) => (
-            <text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 30} y={91}
-              textAnchor="middle" dominantBaseline="central" {...outlineProps}
-              style={{ fontFamily: font, fontSize: '28px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-              {k}
-            </text>
-          ))}
-        </>
-      )
+      // General pattern for n >= 2: pair columns in rows of 2; an odd last kanji sits centered in the final row.
+      // Per-bucket sizing keeps large counts from clipping the blade tip.
+      let fontSize, colSpacing, baseY, rowYStep
+      if (n <= 4) {
+        fontSize = 56; colSpacing = 56; baseY = 78; rowYStep = 58
+      } else if (n <= 6) {
+        fontSize = 48; colSpacing = n === 5 ? 57 : 44; baseY = 60; rowYStep = 42
+      } else if (n <= 8) {
+        fontSize = 28; colSpacing = 33; baseY = 52; rowYStep = 25
+      } else if (n <= 10) {
+        fontSize = 24; colSpacing = 28; baseY = 50; rowYStep = 22
+      } else {
+        fontSize = 22; colSpacing = 26; baseY = 48; rowYStep = 20
+      }
+      kanjiEls = kanjiChars.map((k, ki) => {
+        const row = Math.floor(ki / 2)
+        const isOddLast = n % 2 === 1 && ki === n - 1
+        const x = isOddLast ? 0 : (ki % 2 - 0.5) * colSpacing
+        const y = baseY + row * rowYStep
+        return (
+          <text key={ki} x={x} y={y} textAnchor="middle" dominantBaseline="central" {...outlineProps}
+            style={{ fontFamily: font, fontSize: `${fontSize}px`, fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+            {k}
+          </text>
+        )
+      })
     }
 
     return <>{numEls}{kanjiEls}</>
