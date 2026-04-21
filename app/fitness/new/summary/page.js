@@ -269,7 +269,7 @@ function CycleBlade({ days, dailyPlan }) {
         <img
           src="/reference/wakizashi_styled.svg"
           alt="Wakizashi"
-          className="relative block w-full h-auto opacity-85"
+          className="relative block w-full h-auto"
           style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))' }}
         />
 
