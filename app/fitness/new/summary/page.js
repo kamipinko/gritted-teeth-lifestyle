@@ -232,7 +232,7 @@ function CycleBlade({ days, dailyPlan }) {
   const lastDay = lastIdx >= 0 ? dayLabels[lastIdx] : null
 
   return (
-    <section className="relative z-10 py-2 px-2">
+    <section className="relative z-10 py-2 px-2 pointer-events-none">
       {false && (
       <div className="text-center mb-1">
         <span style={{ fontFamily: 'Georgia, serif', fontSize: '11px', letterSpacing: '0.2em', color: '#5a5a62' }}>
@@ -242,7 +242,8 @@ function CycleBlade({ days, dailyPlan }) {
       )}
 
       <div className="relative">
-        {/* Blade container — 180vw overflow wrapper */}
+        {/* Blade container — 180vw overflow wrapper. Section-level pointer-events-none keeps the blade's
+            negative-margin overflow from swallowing clicks on the nav bar above it. */}
         <div className="relative" style={{ width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 85px)', marginTop: '-100px' }}>
           {/* Potrace-traced wakizashi — rotated -45deg, tight viewBox 668,-635,1136,2642 */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -420,29 +421,17 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
 
 function RetreatButton() {
   const { play } = useSound()
-  const [hovered, setHovered] = useState(false)
   let backHref = '/fitness/new/branded'
   try { if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit' } catch (_) {}
   return (
     <Link
       href={backHref}
-      onMouseEnter={() => { setHovered(true); play('button-hover') }}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={() => play('button-hover')}
       onClick={() => play('menu-close')}
-      className="group relative inline-flex items-center"
+      className="group inline-flex items-center gap-1.5 font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-smoke/70 hover:text-gtl-red transition-colors duration-200"
     >
-      <div
-        className={`absolute inset-0 -inset-x-2 transition-all duration-300 ease-out
-          ${hovered ? 'bg-gtl-paper opacity-20' : 'bg-gtl-paper opacity-10'}`}
-        style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
-        aria-hidden="true"
-      />
-      <div className="relative flex items-center gap-3 px-4 py-2">
-        <span className={`font-display text-base leading-none transition-all duration-300
-          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-paper/60'}`}>◀</span>
-        <span className={`font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300
-          ${hovered ? 'text-gtl-paper' : 'text-gtl-paper/60'}`}>RETREAT</span>
-      </div>
+      <span className="text-[11px] leading-none transition-transform duration-200 group-hover:-translate-x-0.5">◀</span>
+      <span>RETREAT</span>
     </Link>
   )
 }
