@@ -164,6 +164,28 @@ function CycleBlade({ days, dailyPlan }) {
           {k}
         </text>
       ))
+    } else if (n <= 4) {
+      // 3..4 kanji: same 56px size as n=2, stacked in two rows to stay within the blade face
+      const topRow = kanjiChars.slice(0, Math.ceil(n / 2))
+      const botRow = kanjiChars.slice(Math.ceil(n / 2))
+      kanjiEls = (
+        <>
+          {topRow.map((k, ki) => (
+            <text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 56} y={52}
+              textAnchor="middle" dominantBaseline="central" {...outlineProps}
+              style={{ fontFamily: font, fontSize: '56px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+              {k}
+            </text>
+          ))}
+          {botRow.map((k, ki) => (
+            <text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 56} y={112}
+              textAnchor="middle" dominantBaseline="central" {...outlineProps}
+              style={{ fontFamily: font, fontSize: '56px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+              {k}
+            </text>
+          ))}
+        </>
+      )
     } else if (n <= 6) {
       const topRow = kanjiChars.slice(0, Math.ceil(n / 2))
       const botRow = kanjiChars.slice(Math.ceil(n / 2))
