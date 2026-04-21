@@ -187,19 +187,28 @@ function CycleBlade({ days, dailyPlan }) {
         </>
       )
     } else if (n <= 6) {
-      const topRow = kanjiChars.slice(0, Math.ceil(n / 2))
-      const botRow = kanjiChars.slice(Math.ceil(n / 2))
+      // 5..6 kanji: 3-row layout so the 4-kanji block above stays put and the 5th/6th slot in as a centered bottom row
+      const row1 = kanjiChars.slice(0, 2)
+      const row2 = kanjiChars.slice(2, 4)
+      const row3 = kanjiChars.slice(4)
       kanjiEls = (
         <>
-          {topRow.map((k, ki) => (
-            <text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 44} y={64}
+          {row1.map((k, ki) => (
+            <text key={`r1${ki}`} x={(ki - 0.5) * 44} y={44}
               textAnchor="middle" dominantBaseline="central" {...outlineProps}
               style={{ fontFamily: font, fontSize: '42px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
               {k}
             </text>
           ))}
-          {botRow.map((k, ki) => (
-            <text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 44} y={109}
+          {row2.map((k, ki) => (
+            <text key={`r2${ki}`} x={(ki - 0.5) * 44} y={86}
+              textAnchor="middle" dominantBaseline="central" {...outlineProps}
+              style={{ fontFamily: font, fontSize: '42px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+              {k}
+            </text>
+          ))}
+          {row3.map((k, ki) => (
+            <text key={`r3${ki}`} x={(ki - (row3.length - 1) / 2) * 44} y={128}
               textAnchor="middle" dominantBaseline="central" {...outlineProps}
               style={{ fontFamily: font, fontSize: '42px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
               {k}
