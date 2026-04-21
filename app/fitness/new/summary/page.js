@@ -187,30 +187,30 @@ function CycleBlade({ days, dailyPlan }) {
         </>
       )
     } else if (n <= 6) {
-      // 5..6 kanji: same 56px plateau as 2..4, stacked in 3 rows (2 / 2 / centered 1 or 2)
+      // 5..6 kanji: 3-row layout so the 4-kanji block above stays put and the 5th/6th slot in as a centered bottom row
       const row1 = kanjiChars.slice(0, 2)
       const row2 = kanjiChars.slice(2, 4)
       const row3 = kanjiChars.slice(4)
       kanjiEls = (
         <>
           {row1.map((k, ki) => (
-            <text key={`r1${ki}`} x={(ki - 0.5) * 56} y={78}
+            <text key={`r1${ki}`} x={(ki - 0.5) * 44} y={60}
               textAnchor="middle" dominantBaseline="central" {...outlineProps}
-              style={{ fontFamily: font, fontSize: '56px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+              style={{ fontFamily: font, fontSize: '42px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
               {k}
             </text>
           ))}
           {row2.map((k, ki) => (
-            <text key={`r2${ki}`} x={(ki - 0.5) * 56} y={146}
+            <text key={`r2${ki}`} x={(ki - 0.5) * 44} y={102}
               textAnchor="middle" dominantBaseline="central" {...outlineProps}
-              style={{ fontFamily: font, fontSize: '56px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+              style={{ fontFamily: font, fontSize: '42px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
               {k}
             </text>
           ))}
           {row3.map((k, ki) => (
-            <text key={`r3${ki}`} x={(ki - (row3.length - 1) / 2) * 56} y={214}
+            <text key={`r3${ki}`} x={(ki - (row3.length - 1) / 2) * 44} y={144}
               textAnchor="middle" dominantBaseline="central" {...outlineProps}
-              style={{ fontFamily: font, fontSize: '56px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
+              style={{ fontFamily: font, fontSize: '42px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
               {k}
             </text>
           ))}
