@@ -171,14 +171,14 @@ function CycleBlade({ days, dailyPlan }) {
       kanjiEls = (
         <>
           {topRow.map((k, ki) => (
-            <text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 56} y={52}
+            <text key={`t${ki}`} x={(ki - (topRow.length - 1) / 2) * 56} y={78}
               textAnchor="middle" dominantBaseline="central" {...outlineProps}
               style={{ fontFamily: font, fontSize: '56px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
               {k}
             </text>
           ))}
           {botRow.map((k, ki) => (
-            <text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 56} y={112}
+            <text key={`b${ki}`} x={(ki - (botRow.length - 1) / 2) * 56} y={136}
               textAnchor="middle" dominantBaseline="central" {...outlineProps}
               style={{ fontFamily: font, fontSize: '56px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
               {k}
