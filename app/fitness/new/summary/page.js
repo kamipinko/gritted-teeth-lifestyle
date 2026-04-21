@@ -157,7 +157,7 @@ function CycleBlade({ days, dailyPlan }) {
     let kanjiEls
     if (n === 1) {
       kanjiEls = (
-        <text x={0} y={78} textAnchor="middle" dominantBaseline="central" {...outlineProps}
+        <text x={0} y={60} textAnchor="middle" dominantBaseline="central" {...outlineProps}
           style={{ fontFamily: font, fontSize: '104px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
           {kanjiChars[0]}
         </text>
@@ -166,12 +166,12 @@ function CycleBlade({ days, dailyPlan }) {
       // n=2..7: pair columns in rows of 2; an odd last kanji sits centered in the final row.
       let fontSize, colSpacing, baseY, rowYStep
       if (n <= 4) {
-        fontSize = 56; colSpacing = 56; baseY = 78; rowYStep = 58
+        fontSize = 56; colSpacing = 56; baseY = 60; rowYStep = 58
       } else if (n <= 6) {
-        fontSize = 48; colSpacing = n === 5 ? 57 : 44; baseY = 60; rowYStep = 42
+        fontSize = 48; colSpacing = n === 5 ? 57 : 44; baseY = 46; rowYStep = 42
       } else {
         // n === 7 — 4 rows × 2 cols, last row is a centered singleton
-        fontSize = 38; colSpacing = 44; baseY = 56; rowYStep = 36
+        fontSize = 38; colSpacing = 44; baseY = 42; rowYStep = 36
       }
       kanjiEls = kanjiChars.map((k, ki) => {
         const row = Math.floor(ki / 2)
@@ -190,7 +190,7 @@ function CycleBlade({ days, dailyPlan }) {
       // at the midpoint gaps between adjacent columns of the 4-col grid above.
       const fontSize = 28
       const P = 30           // column pitch — columns at -1.5P, -0.5P, +0.5P, +1.5P
-      const baseY = 52
+      const baseY = 38
       const rowYStep = 28
       // Row-3 gap positions (midpoints between adjacent columns): -P, 0, +P
       const row3Positions = n === 9 ? [0] : n === 10 ? [-P, P] : n === 11 ? [-P, 0, P] : null
@@ -216,7 +216,7 @@ function CycleBlade({ days, dailyPlan }) {
       // n=12 speculative (max live n=11): every column of the 4-col grid takes a 3rd kanji.
       const fontSize = 28
       const P = 30
-      const baseY = 52
+      const baseY = 38
       const rowYStep = 28
       kanjiEls = kanjiChars.map((k, ki) => {
         const x = ((ki % 4) - 1.5) * P
