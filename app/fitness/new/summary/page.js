@@ -248,8 +248,12 @@ function CycleBlade({ days, dailyPlan }) {
 
       <div className="relative">
         {/* Blade container — 180vw overflow wrapper. Section-level pointer-events-none keeps the blade's
-            negative-margin overflow from swallowing clicks on the nav bar above it. */}
-        <div className="relative" style={{ width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 85px)', marginTop: '-100px', transform: 'scale(0.75)', transformOrigin: 'top center', marginBottom: '-25%' }}>
+            negative-margin overflow from swallowing clicks on the nav bar above it.
+            Outer wrapper holds layout (width, margins). Inner wrapper gets the 0.75 scale so the blade
+            and inscriptions shrink together; weekday labels live OUTSIDE the scale so they stay pinned
+            to the viewport edges. */}
+        <div className="relative" style={{ width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 85px)', marginTop: '-100px', marginBottom: '-25%' }}>
+          <div className="relative" style={{ transform: 'scale(0.75)', transformOrigin: 'top center' }}>
           {/* Black backdrop — outer-subpath-only SVG (inner hole subpaths stripped out).
               Same viewBox + same rotate/translate/scale transforms as the red weapon,
               so it aligns pixel-exact. No interior holes means the page gradient can't
@@ -319,33 +323,45 @@ function CycleBlade({ days, dailyPlan }) {
               <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true })}</g>
             </g>
           )}
-          {/* Weekday side labels — share the viewBox so they align vertically with each inscription */}
-          {dayLabels.map((dl, i) => {
-            const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()]
-            const isLeftSide = i < 3
-            // Right-side labels need a down-nudge to align visually with inscription center; ~10 viewBox units ≈ 6 screen-px
-            const yNudge = isLeftSide ? 0 : 10
-            return (
-              <text
-                key={`dow-${dl.iso}`}
-                x={isLeftSide ? 1070 : 1664}
-                y={dl.cy + yNudge}
-                textAnchor={isLeftSide ? 'start' : 'end'}
-                dominantBaseline="central"
-                style={{
-                  fontFamily: '"Noto Serif JP", Georgia, serif',
-                  fontSize: '45px',
-                  fontWeight: 700,
-                  fill: '#b0a898',
-                  letterSpacing: '0.2em',
-                  opacity: 0.7,
-                }}
-              >
-                {dow}
-              </text>
-            )
-          })}
         </svg>
+          </div>
+          {/* Weekday side labels — OUTSIDE the scaled wrapper so their on-screen X positions stay at the
+              original near-viewport-edge spots (x=1070 / x=1664). Y is compensated so each label aligns
+              with the now-shrunken inscription's visual center:
+                  L = (anchor_y + 635) * 0.75 - 635
+              top: -11.25px matches the scaled inscription SVG's top: -15px when that gets multiplied by 0.75. */}
+          <svg
+            viewBox="668 -635 1136 2642"
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            style={{ top: '-11.25px', left: '0px' }}
+            aria-hidden="true"
+          >
+            {dayLabels.map((dl, i) => {
+              const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()]
+              const isLeftSide = i < 3
+              const yNudge = isLeftSide ? 0 : 10
+              const scaledY = (dl.cy + 635) * 0.75 - 635 + yNudge
+              return (
+                <text
+                  key={`dow-${dl.iso}`}
+                  x={isLeftSide ? 1070 : 1664}
+                  y={scaledY}
+                  textAnchor={isLeftSide ? 'start' : 'end'}
+                  dominantBaseline="central"
+                  style={{
+                    fontFamily: '"Noto Serif JP", Georgia, serif',
+                    fontSize: '45px',
+                    fontWeight: 700,
+                    fill: '#b0a898',
+                    letterSpacing: '0.2em',
+                    opacity: 0.7,
+                  }}
+                >
+                  {dow}
+                </text>
+              )
+            })}
+          </svg>
         </div>
       </div>
     </section>
