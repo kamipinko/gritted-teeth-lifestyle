@@ -140,7 +140,7 @@ function CycleBlade({ days, dailyPlan }) {
     const { num, kanjiStr } = dl
     const kanjiChars = kanjiStr.split('')
     const n = kanjiChars.length
-    const baseColor = '#ff0000'
+    const baseColor = '#d4181f'
     const baseOpacity = 1.0
     const font = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
     const outlineProps = outline
