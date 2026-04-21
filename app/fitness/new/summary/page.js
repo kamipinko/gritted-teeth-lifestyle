@@ -386,34 +386,22 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
       onMouseLeave={() => setPressed(false)}
       onMouseEnter={onHover}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onFire() } }}
-      className="relative w-full max-w-[480px] mx-auto cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-red focus-visible:outline-offset-4"
-      style={{ transform: 'rotate(-1.5deg)', transformOrigin: 'center center' }}
+      className="fixed bottom-5 right-5 z-40 no-print group cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-paper focus-visible:outline-offset-2"
     >
       <div
-        className="absolute inset-0 bg-gtl-red-deep"
+        className="relative flex items-center gap-2 px-4 py-2.5"
         style={{
-          clipPath: 'polygon(1% 0%, 100% 0%, 99% 100%, 0% 100%)',
-          transform: pressed ? 'translate(0,0)' : 'translate(7px, 7px)',
-          transition: 'transform 80ms ease-out',
-        }}
-        aria-hidden="true"
-      />
-      <div
-        className="relative flex items-center justify-between px-8 py-5"
-        style={{
-          clipPath: 'polygon(1% 0%, 100% 0%, 99% 100%, 0% 100%)',
+          clipPath: 'polygon(2% 0%, 100% 0%, 98% 100%, 0% 100%)',
           background: pressed ? '#ff2a36' : '#d4181f',
-          transform: pressed ? 'translate(7px, 7px)' : 'translate(0,0)',
-          transition: 'transform 80ms ease-out, background 80ms ease-out',
+          transform: pressed ? 'translate(2px, 2px)' : 'translate(0, 0)',
+          boxShadow: pressed ? 'none' : '3px 3px 0 rgba(0,0,0,0.45)',
+          transition: 'transform 80ms ease-out, background 80ms ease-out, box-shadow 80ms ease-out',
         }}
       >
-        <div>
-          <div className="font-display text-4xl text-gtl-paper leading-none tracking-tight">{label}</div>
-          <div className="font-mono text-[8px] tracking-[0.4em] uppercase text-gtl-paper/50 mt-1">
-            LAUNCH THE FORGE
-          </div>
-        </div>
-        <div className="font-display text-3xl text-gtl-paper/30 leading-none select-none">▸</div>
+        <span className="font-mono text-[11px] tracking-[0.3em] uppercase text-gtl-paper font-bold leading-none">
+          {label}
+        </span>
+        <span className="font-mono text-sm text-gtl-paper/80 leading-none transition-transform duration-150 group-hover:translate-x-0.5">▸</span>
       </div>
     </div>
   )
@@ -606,17 +594,12 @@ export default function SummaryPage() {
         </section>
       )}
 
-      {/* ── EXPORT + BEGIN (temporarily hidden for weapon sizing) ── */}
-      {false && (
-      <section className="relative z-10 px-8 pb-20 pt-4 flex flex-col gap-4 no-print">
-        <ExportButton />
-        <BeginButton
-          onFire={handleBegin}
-          onHover={() => play('button-hover')}
-          label={(() => { try { return localStorage.getItem('gtl-back-to-edit') === '1' ? 'RE-ETCH CYCLE' : 'ETCH CYCLE' } catch (_) { return 'ETCH CYCLE' } })()}
-        />
-      </section>
-      )}
+      {/* ── ETCH CYCLE (fixed bottom-right CTA) ── */}
+      <BeginButton
+        onFire={handleBegin}
+        onHover={() => play('button-hover')}
+        label={(() => { try { return localStorage.getItem('gtl-back-to-edit') === '1' ? 'RE-ETCH CYCLE' : 'ETCH CYCLE' } catch (_) { return 'ETCH CYCLE' } })()}
+      />
 
       {/* ── DEADLINE STAMP OVERLAY ── */}
       {stampVisible && days.length > 0 && (() => {
