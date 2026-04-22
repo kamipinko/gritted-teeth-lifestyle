@@ -419,16 +419,17 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
         className="relative flex items-center gap-2 px-4 py-2.5"
         style={{
           clipPath: 'polygon(2% 0%, 100% 0%, 98% 100%, 0% 100%)',
-          background: pressed ? '#ff2a36' : '#d4181f',
+          background: pressed ? '#2a2a2e' : '#1a1a1e',
+          border: '1px solid #d4181f',
           transform: pressed ? 'translate(2px, 2px)' : 'translate(0, 0)',
-          boxShadow: pressed ? 'none' : '3px 3px 0 rgba(0,0,0,0.45)',
+          boxShadow: pressed ? 'none' : '2px 2px 0 rgba(0,0,0,0.35)',
           transition: 'transform 80ms ease-out, background 80ms ease-out, box-shadow 80ms ease-out',
         }}
       >
-        <span className="font-mono text-[11px] tracking-[0.3em] uppercase text-gtl-paper font-bold leading-none">
+        <span className="font-mono text-[11px] tracking-[0.3em] uppercase text-gtl-red font-bold leading-none">
           {label}
         </span>
-        <span className="font-mono text-sm text-gtl-paper/80 leading-none transition-transform duration-150 group-hover:translate-x-0.5">▸</span>
+        <span className="font-mono text-sm text-gtl-red/80 leading-none transition-transform duration-150 group-hover:translate-x-0.5">▸</span>
       </div>
     </div>
   )
