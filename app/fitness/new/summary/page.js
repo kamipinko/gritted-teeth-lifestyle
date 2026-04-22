@@ -237,7 +237,7 @@ function CycleBlade({ days, dailyPlan }) {
   const lastDay = lastIdx >= 0 ? dayLabels[lastIdx] : null
 
   return (
-    <section className="relative z-10 py-2 px-2 pointer-events-none min-h-[calc(100vh-56px)] overflow-hidden">
+    <section className="relative z-10 py-2 px-2 pointer-events-none min-h-[calc(100vh-7px)] overflow-hidden">
       {false && (
       <div className="text-center mb-1">
         <span style={{ fontFamily: 'Georgia, serif', fontSize: '11px', letterSpacing: '0.2em', color: '#5a5a62' }}>
@@ -249,7 +249,7 @@ function CycleBlade({ days, dailyPlan }) {
       <div>
         {/* Blade container — 180vw overflow wrapper, bottom-anchored to the section so the tip sits ~24px above the viewport bottom.
             The section's pointer-events-none keeps the blade's overflow from swallowing clicks on the nav and fixed button above. */}
-        <div style={{ position: 'absolute', bottom: '-24px', left: 0, width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 85px)' }}>
+        <div style={{ position: 'absolute', bottom: '6px', left: 0, width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 85px)' }}>
           {/* Black backdrop — outer-subpath-only SVG (inner hole subpaths stripped out).
               Same viewBox + same rotate/translate/scale transforms as the red weapon,
               so it aligns pixel-exact. No interior holes means the page gradient can't
