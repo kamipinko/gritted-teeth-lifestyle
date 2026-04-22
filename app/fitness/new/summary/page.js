@@ -325,13 +325,16 @@ function CycleBlade({ days, dailyPlan }) {
             const isLeftSide = i < 3
             // Right-side labels need a down-nudge to align visually with inscription center; ~10 viewBox units ≈ 6 screen-px
             const yNudge = isLeftSide ? 0 : 10
+            const labelX = isLeftSide ? 1000 : 1750
+            const labelY = dl.cy + yNudge
             return (
               <text
                 key={`dow-${dl.iso}`}
-                x={isLeftSide ? 1070 : 1664}
-                y={dl.cy + yNudge}
+                x={labelX}
+                y={labelY}
                 textAnchor={isLeftSide ? 'start' : 'end'}
                 dominantBaseline="central"
+                transform={`rotate(-11 ${labelX} ${labelY})`}
                 style={{
                   fontFamily: '"Noto Serif JP", Georgia, serif',
                   fontSize: '45px',
