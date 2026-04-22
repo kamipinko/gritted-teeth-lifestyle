@@ -551,11 +551,6 @@ export default function SummaryPage() {
       <div className="absolute inset-0 pointer-events-none"
         style={{ background: 'linear-gradient(160deg, rgba(122,14,20,0.18) 0%, transparent 45%, rgba(74,10,14,0.28) 100%)' }} />
 
-      {/* Cycle designation — top right */}
-      <div className="absolute top-4 right-6 z-10 font-mono text-[8px] tracking-[0.4em] uppercase text-gtl-smoke/40">
-        CYCLE DESIGNATION: AUTHORIZED
-      </div>
-
       {/* ── Nav bar ── */}
       <section className="relative z-10">
         <div className="relative px-8 pt-6 pb-2">
