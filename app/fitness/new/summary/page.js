@@ -407,11 +407,11 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
     <>
       <style>{`
         @keyframes flame-flicker {
-          0%, 100% { filter: drop-shadow(3px 3px 0 #000) hue-rotate(0deg)  saturate(1.4) brightness(1.15); }
-          20%      { filter: drop-shadow(3px 3px 0 #000) hue-rotate(40deg) saturate(2.4) brightness(1.55); }
-          35%      { filter: drop-shadow(2px 2px 0 #000) hue-rotate(75deg) saturate(3.0) brightness(1.9);  }
-          55%      { filter: drop-shadow(3px 3px 0 #000) hue-rotate(25deg) saturate(1.9) brightness(1.3);  }
-          75%      { filter: drop-shadow(2px 2px 0 #000) hue-rotate(60deg) saturate(2.6) brightness(1.7);  }
+          0%, 100% { filter: drop-shadow(3px 3px 0 #000) hue-rotate(0deg)  saturate(1.3) brightness(1.1); }
+          20%      { filter: drop-shadow(3px 3px 0 #000) hue-rotate(40deg) saturate(1.7) brightness(1.3); }
+          35%      { filter: drop-shadow(2px 2px 0 #000) hue-rotate(75deg) saturate(2.0) brightness(1.5); }
+          55%      { filter: drop-shadow(3px 3px 0 #000) hue-rotate(25deg) saturate(1.5) brightness(1.2); }
+          75%      { filter: drop-shadow(2px 2px 0 #000) hue-rotate(60deg) saturate(1.85) brightness(1.4); }
         }
         .flicker-flame { animation: flame-flicker 260ms steps(6, end) infinite; }
       `}</style>
