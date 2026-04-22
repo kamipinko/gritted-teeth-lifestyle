@@ -404,34 +404,46 @@ function ExportButton() {
 function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
   const [pressed, setPressed] = useState(false)
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      aria-label="Etch the cycle"
-      onMouseDown={() => setPressed(true)}
-      onMouseUp={() => { setPressed(false); onFire() }}
-      onMouseLeave={() => setPressed(false)}
-      onMouseEnter={onHover}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onFire() } }}
-      className="fixed bottom-5 right-5 z-40 no-print group cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-paper focus-visible:outline-offset-2"
-    >
+    <>
+      <style>{`
+        @keyframes flame-flicker {
+          0%, 100% { filter: drop-shadow(3px 3px 0 #000) hue-rotate(0deg)  saturate(1.4) brightness(1.15); }
+          20%      { filter: drop-shadow(3px 3px 0 #000) hue-rotate(40deg) saturate(2.4) brightness(1.55); }
+          35%      { filter: drop-shadow(2px 2px 0 #000) hue-rotate(75deg) saturate(3.0) brightness(1.9);  }
+          55%      { filter: drop-shadow(3px 3px 0 #000) hue-rotate(25deg) saturate(1.9) brightness(1.3);  }
+          75%      { filter: drop-shadow(2px 2px 0 #000) hue-rotate(60deg) saturate(2.6) brightness(1.7);  }
+        }
+        .flicker-flame { animation: flame-flicker 260ms steps(6, end) infinite; }
+      `}</style>
       <div
-        className="relative flex items-center gap-2 px-4 py-2.5"
-        style={{
-          clipPath: 'polygon(2% 0%, 100% 0%, 98% 100%, 0% 100%)',
-          background: pressed ? '#2a2a2e' : '#1a1a1e',
-          border: '1px solid #d4181f',
-          transform: pressed ? 'translate(2px, 2px)' : 'translate(0, 0)',
-          boxShadow: pressed ? 'none' : '2px 2px 0 rgba(0,0,0,0.35)',
-          transition: 'transform 80ms ease-out, background 80ms ease-out, box-shadow 80ms ease-out',
-        }}
+        role="button"
+        tabIndex={0}
+        aria-label="Etch the cycle"
+        onMouseDown={() => setPressed(true)}
+        onMouseUp={() => { setPressed(false); onFire() }}
+        onMouseLeave={() => setPressed(false)}
+        onMouseEnter={onHover}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onFire() } }}
+        className="fixed bottom-5 right-5 z-40 no-print flex flex-col items-center cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-paper focus-visible:outline-offset-2"
       >
-        <span className="font-mono text-[11px] tracking-[0.3em] uppercase text-gtl-red font-bold leading-none">
+        <img
+          src="/reference/gurren_flame.svg"
+          alt=""
+          aria-hidden="true"
+          className={`block w-[72px] h-[72px] ${pressed ? 'flicker-flame' : ''}`}
+          style={{
+            filter: pressed
+              ? 'drop-shadow(3px 3px 0 #000)'
+              : 'drop-shadow(2px 2px 0 #000) drop-shadow(0 2px 6px rgba(0,0,0,0.45))',
+            transform: pressed ? 'translate(2px, 2px)' : 'none',
+            transition: 'transform 80ms ease-out, filter 120ms ease-out',
+          }}
+        />
+        <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-red/70 leading-none mt-1 block text-center">
           {label}
         </span>
-        <span className="font-mono text-sm text-gtl-red/80 leading-none transition-transform duration-150 group-hover:translate-x-0.5">▸</span>
       </div>
-    </div>
+    </>
   )
 }
 
