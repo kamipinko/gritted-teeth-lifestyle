@@ -237,7 +237,7 @@ function CycleBlade({ days, dailyPlan }) {
   const lastDay = lastIdx >= 0 ? dayLabels[lastIdx] : null
 
   return (
-    <section className="relative z-10 py-2 px-2 pointer-events-none min-h-[calc(100vh-7px)] overflow-hidden">
+    <section className="relative z-10 py-2 px-2 pointer-events-none min-h-[calc(100vh-7px)]">
       {false && (
       <div className="text-center mb-1">
         <span style={{ fontFamily: 'Georgia, serif', fontSize: '11px', letterSpacing: '0.2em', color: '#5a5a62' }}>
