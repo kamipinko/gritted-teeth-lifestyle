@@ -551,20 +551,6 @@ export default function SummaryPage() {
       <div className="absolute inset-0 pointer-events-none"
         style={{ background: 'linear-gradient(160deg, rgba(122,14,20,0.18) 0%, transparent 45%, rgba(74,10,14,0.28) 100%)' }} />
 
-      {/* 完 kanji watermark */}
-      <div
-        className="absolute -top-16 -right-24 pointer-events-none select-none"
-        aria-hidden="true"
-        style={{
-          fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-          fontSize: '52rem', lineHeight: '0.8',
-          color: '#d4181f', opacity: 0.055, fontWeight: 900,
-          animation: 'flicker 6s ease-in-out infinite',
-        }}
-      >
-        完
-      </div>
-
       {/* Cycle designation — top right */}
       <div className="absolute top-4 right-6 z-10 font-mono text-[8px] tracking-[0.4em] uppercase text-gtl-smoke/40">
         CYCLE DESIGNATION: AUTHORIZED
@@ -575,9 +561,6 @@ export default function SummaryPage() {
         <div className="relative px-8 pt-6 pb-2">
           <div className="flex items-center gap-4">
             <RetreatButton />
-            <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke/60 overflow-hidden truncate">
-              PALACE / FITNESS / NEW CYCLE / MISSION BRIEF
-            </div>
           </div>
         </div>
       </section>
