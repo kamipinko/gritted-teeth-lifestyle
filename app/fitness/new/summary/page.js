@@ -319,13 +319,18 @@ function CycleBlade({ days, dailyPlan }) {
               <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true })}</g>
             </g>
           )}
-          {/* Weekday side labels — share the viewBox so they align vertically with each inscription */}
+          {/* Weekday side labels — share the viewBox so they align vertically with each inscription.
+              Per-row x calibration equalizes the on-screen gap between each label and the blade
+              silhouette; a single x isn't enough because the 11deg blade rotation makes the right-
+              side blade edge recede as y increases. See verify_weekday_gaps.py for the measurement. */}
           {dayLabels.map((dl, i) => {
             const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()]
             const isLeftSide = i < 3
             // Right-side labels need a down-nudge to align visually with inscription center; ~10 viewBox units ≈ 6 screen-px
             const yNudge = isLeftSide ? 0 : 10
-            const labelX = isLeftSide ? 1000 : 1750
+            const LEFT_X  = [1001,  998, 1001]  // i = 0,1,2
+            const RIGHT_X = [1597, 1572, 1542]  // i-3 = 0,1,2
+            const labelX = isLeftSide ? LEFT_X[i] : RIGHT_X[i - 3]
             const labelY = dl.cy + yNudge
             return (
               <text
