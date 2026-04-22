@@ -249,7 +249,7 @@ function CycleBlade({ days, dailyPlan }) {
       <div>
         {/* Blade container — 180vw overflow wrapper, bottom-anchored to the section so the tip sits ~24px above the viewport bottom.
             The section's pointer-events-none keeps the blade's overflow from swallowing clicks on the nav and fixed button above. */}
-        <div style={{ position: 'absolute', bottom: '6px', left: 0, width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 80px)', transform: 'rotate(15deg) scale(0.5625)', transformOrigin: '34.4% 97.7%' }}>
+        <div style={{ position: 'absolute', bottom: '6px', left: 0, width: '180vw', maxWidth: 'none', marginLeft: 'calc(-40vw - 80px)', transform: 'rotate(11deg) scale(0.5625)', transformOrigin: '34.4% 97.7%' }}>
           {/* Black backdrop — outer-subpath-only SVG (inner hole subpaths stripped out).
               Same viewBox + same rotate/translate/scale transforms as the red weapon,
               so it aligns pixel-exact. No interior holes means the page gradient can't
