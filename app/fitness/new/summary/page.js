@@ -98,7 +98,7 @@ function DayCard({ iso, muscles, index }) {
    Source: public/reference/wakizashi.png → threshold → potrace → SVG.
    Diagonal pose: hilt upper-right, tip lower-left.
    ══════════════════════════════════════════════════════════════════════════ */
-function CycleBlade({ days, dailyPlan }) {
+function CycleBlade({ days, dailyPlan, glowing = false }) {
   const first = days[0] ? parseDate(days[0]) : null
   const last  = days[days.length - 1] ? parseDate(days[days.length - 1]) : null
   const dateRange = first && last
@@ -136,11 +136,11 @@ function CycleBlade({ days, dailyPlan }) {
     return { num, hasWork, kanjiStr, iso, cx: anchor.x, cy: anchor.y, angle: anchor.angle }
   })
 
-  const renderDayInscription = (dl, { outline = false } = {}) => {
+  const renderDayInscription = (dl, { outline = false, glow = false } = {}) => {
     const { num, kanjiStr } = dl
     const kanjiChars = kanjiStr.split('')
     const n = kanjiChars.length
-    const baseColor = '#d4181f'
+    const baseColor = glow ? '#ffdd00' : '#d4181f'
     const baseOpacity = 1.0
     const font = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
     const outlineProps = outline
@@ -318,6 +318,31 @@ function CycleBlade({ days, dailyPlan }) {
             <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
               <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true })}</g>
             </g>
+          )}
+          {/* Flame-etch glow overlay — mounts only while `glowing` is true so the CSS
+              animation restarts fresh on every button press. Sits above the difference
+              group so the bloom is additive, not blended. */}
+          {glowing && (
+            <>
+              <style>{`
+                @keyframes inscription-etch {
+                  0%   { opacity: 0; filter: drop-shadow(0 0 2px #ff6600); }
+                  15%  { opacity: 1; filter: drop-shadow(0 0 8px #ff6600); }
+                  40%  { opacity: 1; filter: drop-shadow(0 0 14px #ffaa00) drop-shadow(0 0 22px #ffdd00); }
+                  60%  { opacity: 1; filter: drop-shadow(0 0 18px #fff0a0) drop-shadow(0 0 28px #ffdd00); }
+                  80%  { opacity: 1; filter: drop-shadow(0 0 12px #ffaa00); }
+                  100% { opacity: 0; filter: drop-shadow(0 0 4px #ff6600); }
+                }
+                .inscription-etching { animation: inscription-etch 1500ms ease-in-out forwards; }
+              `}</style>
+              <g className="inscription-etching">
+                {dayLabels.map((dl) => (
+                  <g key={`glow-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
+                    {renderDayInscription(dl, { glow: true })}
+                  </g>
+                ))}
+              </g>
+            </>
           )}
           {/* Weekday side labels — share the viewBox so they align vertically with each inscription.
               Per-row x calibration equalizes the on-screen gap between each label and the blade
@@ -506,6 +531,7 @@ export default function SummaryPage() {
   const [fireActive,  setFireActive] = useState(false)
   const [stampVisible, setStampVisible] = useState(false)
   const [stampLanded,  setStampLanded]  = useState(false)
+  const [inscriptionsGlowing, setInscriptionsGlowing] = useState(false)
   const mainRef = useRef(null)
 
   useEffect(() => {
@@ -541,7 +567,12 @@ export default function SummaryPage() {
         localStorage.setItem(pk('cycles'), JSON.stringify([cycle, ...existing]))
       }
     } catch (_) {}
-    setStampVisible(true)
+
+    // Timers are relative to handleBegin() call, which fires 400ms after press.
+    // Press-absolute times in the comments:
+    setTimeout(() => setInscriptionsGlowing(true),  600)   // t=1000 from press: flame-etch glow begins
+    setTimeout(() => setInscriptionsGlowing(false), 2100)  // t=2500: glow complete
+    setTimeout(() => setStampVisible(true),         2100)  // t=2500: stamp flies in
 
     setTimeout(() => {
       play('stamp')
@@ -563,10 +594,10 @@ export default function SummaryPage() {
           { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
         )
       }
-    }, 665)
+    }, 2765)                                // t=3165: stamp lands (665ms after fly-in)
 
-    setTimeout(() => play('stamp'), 750)
-    setTimeout(() => setFireActive(true), 1900)
+    setTimeout(() => play('stamp'),       2850)   // t=3250
+    setTimeout(() => setFireActive(true), 4000)   // t=4400
   }
 
   const cols = days.length <= 5 ? days.length
@@ -604,7 +635,7 @@ export default function SummaryPage() {
 
       {/* ── THE BLADE (< 7 days) or DAY CARDS (>= 7 days) ── */}
       {days.length > 0 && days.length < 7 && (
-        <CycleBlade days={days} dailyPlan={dailyPlan} />
+        <CycleBlade days={days} dailyPlan={dailyPlan} glowing={inscriptionsGlowing} />
       )}
 
       {days.length >= 7 && (
