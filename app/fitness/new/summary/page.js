@@ -354,11 +354,11 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                 .inscription-etching { animation: inscription-etch 1500ms ease-in-out forwards; }
               `}</style>
               <g className="inscription-etching" style={{ pointerEvents: 'none' }}>
-                {/* Outer hot tips — lighter/broader aura, heavier displacement */}
+                {/* Outer hot tips — amber, widest displacement */}
                 <g filter="url(#flame-outer)">
                   {dayLabels.map((dl) => (
                     <g key={`flame-outer-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
-                      {renderDayInscription(dl, { glowFill: '#fff0a0' })}
+                      {renderDayInscription(dl, { glowFill: '#ffaa00' })}
                     </g>
                   ))}
                 </g>
@@ -370,7 +370,7 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                     </g>
                   ))}
                 </g>
-                {/* Base red — tightest displacement, rendered on top so it sits closest to the crisp etched glyph */}
+                {/* Base red — tightest displacement, closest to the glyph silhouette */}
                 <g filter="url(#flame-base)">
                   {dayLabels.map((dl) => (
                     <g key={`flame-base-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
@@ -378,6 +378,20 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                     </g>
                   ))}
                 </g>
+                {/* Last-day LEFT half flame cover. The base text for this half renders
+                    outside the difference-blend group as a solid red outline variant,
+                    which would otherwise occlude the flame beneath. Repeating the flame
+                    layers here — clipped to the left-half plane — makes the glow visible
+                    on BOTH halves of the last day. */}
+                {lastDay && (
+                  <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
+                    <g clipPath="url(#last-day-left)">
+                      <g filter="url(#flame-outer)">{renderDayInscription(lastDay, { glowFill: '#ffaa00' })}</g>
+                      <g filter="url(#flame-inner)">{renderDayInscription(lastDay, { glowFill: '#ff5500' })}</g>
+                      <g filter="url(#flame-base)">{renderDayInscription(lastDay, { glowFill: '#ff2200' })}</g>
+                    </g>
+                  </g>
+                )}
               </g>
             </>
           )}
