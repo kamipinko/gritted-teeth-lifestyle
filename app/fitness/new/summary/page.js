@@ -742,14 +742,11 @@ export default function SummaryPage() {
             </feTurbulence>
             <feDisplacementMap in="SourceGraphic" in2="edgeNoise" scale="12" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
             <feGaussianBlur in="displaced" stdDeviation="0.6" result="blurred"/>
-            <feTurbulence type="turbulence" baseFrequency="0.18 0.28" numOctaves="3" seed="1" result="dropoutNoise">
-              <animate attributeName="baseFrequency"
-                values="0.18 0.28;0.16 0.32;0.20 0.24;0.18 0.28"
-                dur="250ms" repeatCount="indefinite"/>
-            </feTurbulence>
-            <feColorMatrix in="dropoutNoise" type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0   2.8 0 0 0 -1.3" result="dropoutMask"/>
-            <feComposite in="blurred" in2="dropoutMask" operator="in" result="perforated"/>
-            <feComponentTransfer in="perforated" result="tapered">
+            {/* No dropout on the button variant — single-layer render needs all pixels;
+                the 70% dropout that works for the three-layer inscriptions would destroy
+                the button silhouette. Feed the blurred result straight into the alpha
+                taper and the amber palette. */}
+            <feComponentTransfer in="blurred" result="tapered">
               <feFuncA type="table" tableValues="0 0 0.15 0.4 0.7 0.9 1"/>
             </feComponentTransfer>
             {/* amber #ffaa00 */}
