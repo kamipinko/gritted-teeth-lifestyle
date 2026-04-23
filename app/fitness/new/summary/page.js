@@ -136,11 +136,11 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
     return { num, hasWork, kanjiStr, iso, cx: anchor.x, cy: anchor.y, angle: anchor.angle }
   })
 
-  const renderDayInscription = (dl, { outline = false, glow = false, glowFill = null } = {}) => {
+  const renderDayInscription = (dl, { outline = false, glow = false, glowFill = null, maskFill = null } = {}) => {
     const { num, kanjiStr } = dl
     const kanjiChars = kanjiStr.split('')
     const n = kanjiChars.length
-    const baseColor = glowFill || (glow ? '#ffdd00' : '#d4181f')
+    const baseColor = maskFill || glowFill || (glow ? '#ffdd00' : '#d4181f')
     const baseOpacity = 1.0
     const font = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
     const outlineProps = outline
@@ -296,14 +296,18 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
             <clipPath id="last-day-right" clipPathUnits="userSpaceOnUse">
               <rect x="0" y="-500" width="500" height="1000" />
             </clipPath>
-            {/* Inscription spark gradient — radial: hot-orange core fading to transparent.
-                Used by each <circle> particle; mixBlendMode=screen on the parent group
-                makes overlapping particles additively brighten. */}
-            <radialGradient id="spark-grad" cx="50%" cy="50%" r="50%">
-              <stop offset="0%"  stopColor="#ff5000" stopOpacity="0.95"/>
-              <stop offset="35%" stopColor="#ff8c00" stopOpacity="0.5"/>
-              <stop offset="70%" stopColor="#ff8c00" stopOpacity="0"/>
-            </radialGradient>
+            {/* Inscription-window mask — white-filled glyph duplicates inside an
+                otherwise-black rect. Everything drawn with mask='url(#inscription-window)'
+                is clipped to the glyph silhouettes: visible inside letters, hidden
+                outside. Used to turn the inscriptions into flame-filled windows. */}
+            <mask id="inscription-window" maskUnits="userSpaceOnUse" x="668" y="-635" width="1136" height="2642">
+              <rect x="668" y="-635" width="1136" height="2642" fill="black"/>
+              {dayLabels.map((dl) => (
+                <g key={`mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
+                  {renderDayInscription(dl, { maskFill: 'white' })}
+                </g>
+              ))}
+            </mask>
           </defs>
           {/* Flame-aura overlay — mounts only while `glowing` is true. Sits BEHIND the
               difference-blend text so the dancing tongues lick around the crisp etched
@@ -319,36 +323,32 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                 }
                 .inscription-etching { animation: inscription-etch 1500ms ease-in-out forwards; }
               `}</style>
-              {/* Particle sparks rendered FIRST in document order = painted underneath
-                  the inscriptions below. mixBlendMode='screen' on the parent makes
-                  overlapping particles additively brighten, and <animateTransform>/
-                  <animate> on SVG attributes (NOT CSS transforms on SVG nodes) guarantee
-                  the rise direction is in the blade's tilted local frame — sparks go
-                  up-along-blade, not sideways off-screen.
+              {/* Particles clipped to the inscription silhouettes via SVG mask.
+                  Wide horizontal spread (±90 viewBox units, broader than glyph width)
+                  gives the particles material to flow through the glyph 'windows'.
+                  SVG <animateTransform> ensures the rise direction is in the blade's
+                  tilted local frame — particles flow up-along-blade through the cutouts.
                   Deterministic per-index delay keeps SSR/CSR consistent. */}
-              <g className="inscription-etching" style={{ pointerEvents: 'none', mixBlendMode: 'screen' }}>
+              <g mask="url(#inscription-window)" className="inscription-etching" style={{ pointerEvents: 'none' }}>
                 {dayLabels.flatMap((dl) => {
-                  const PARTS = 12
+                  const PARTS = 16
                   return Array.from({ length: PARTS }).map((_, i) => {
-                    const xOff  = ((i / (PARTS - 1)) - 0.5) * 90
-                    const delay = (i * 73 + (i % 3) * 41) % 1400
+                    const xOff  = ((i / (PARTS - 1)) - 0.5) * 180
+                    const delay = (i * 71 + (i % 4) * 47) % 1200
                     return (
                       <circle
                         key={`${dl.iso}-sp${i}`}
                         cx={dl.cx + xOff}
-                        cy={dl.cy + 80}
-                        r={18}
-                        fill="url(#spark-grad)"
+                        cy={dl.cy + 120}
+                        r={28}
+                        fill="#ff5000"
                         opacity={0}
                       >
                         <animateTransform attributeName="transform" type="translate"
-                          values="0 0; 0 -200" dur="1200ms"
+                          values="0 0; 0 -260" dur="1200ms"
                           begin={`${delay}ms`} repeatCount="indefinite"/>
                         <animate attributeName="opacity"
-                          values="0; 0.95; 0" dur="1200ms"
-                          begin={`${delay}ms`} repeatCount="indefinite"/>
-                        <animate attributeName="r"
-                          values="18; 18; 2" dur="1200ms"
+                          values="0; 0.9; 0" dur="1200ms"
                           begin={`${delay}ms`} repeatCount="indefinite"/>
                       </circle>
                     )
@@ -357,36 +357,32 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
               </g>
             </>
           )}
-          {/* Base inscriptions stay visible throughout. In rest state: mixBlendMode=
-              difference + red fill renders the glyphs as black-etched against the blade.
-              During glow: switch to normal blend with an amber glowFill so the glyphs
-              read as 'heated metal' — no green contamination from difference + warm
-              particles beneath, and inscriptions stay legible the entire time. */}
-          <g style={{ mixBlendMode: glowing ? 'normal' : 'difference' }}>
+          {/* Difference-blend base inscriptions. Hidden during glow: the masked
+              particle layer above supplies the glyph visuals (flame-filled windows),
+              and keeping the black etched text visible would occlude them. Fade
+              smoothly back in once the glow ends. */}
+          <g style={{ mixBlendMode: 'difference', opacity: glowing ? 0 : 1, transition: 'opacity 150ms ease-out' }}>
             {dayLabels.map((dl, i) => {
               const textAngle = dl.angle - 90
               const isLast = i === lastIdx
-              const paint = glowing ? { glowFill: '#ffb347' } : undefined
               return (
                 <g key={dl.iso} transform={`translate(${dl.cx},${dl.cy}) rotate(${textAngle})`}>
                   {isLast ? (
-                    // Last day's RIGHT half — clipped to right half plane
-                    <g clipPath="url(#last-day-right)">{renderDayInscription(dl, paint)}</g>
+                    // Last day's RIGHT half — stays in difference blend (reads black over solid blade)
+                    <g clipPath="url(#last-day-right)">{renderDayInscription(dl)}</g>
                   ) : (
-                    renderDayInscription(dl, paint)
+                    renderDayInscription(dl)
                   )}
                 </g>
               )
             })}
           </g>
-          {/* Last day's LEFT half — outside the difference group so its outline variant
-              stays plain red at rest. During glow, switch to amber glowFill (no outline)
-              so it matches the other inscriptions as heated metal. */}
+          {/* Last day's LEFT half — outside the difference group so the design-line crossing stays plain red.
+              Same opacity gating as the difference-blend group above so the masked particles show cleanly. */}
           {lastDay && (
-            <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
-              <g clipPath="url(#last-day-left)">
-                {renderDayInscription(lastDay, glowing ? { glowFill: '#ffb347' } : { outline: true })}
-              </g>
+            <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}
+               style={{ opacity: glowing ? 0 : 1, transition: 'opacity 150ms ease-out' }}>
+              <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true })}</g>
             </g>
           )}
           {/* Weekday side labels — share the viewBox so they align vertically with each inscription.
