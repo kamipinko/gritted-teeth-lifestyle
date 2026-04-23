@@ -330,14 +330,17 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                   tilted local frame — particles flow up-along-blade through the cutouts.
                   Deterministic per-index delay keeps SSR/CSR consistent. */}
               <g mask="url(#inscription-window)" className="inscription-etching" style={{ pointerEvents: 'none' }}>
-                {dayLabels.flatMap((dl) => {
+                {dayLabels.flatMap((dl, dayIdx) => {
                   const PARTS = 18
                   return Array.from({ length: PARTS }).map((_, i) => {
                     // Deterministic pseudo-random spread via prime multipliers + modulo.
                     // Same index → same values across SSR/CSR renders (no hydration mismatch).
-                    const h  = (i * 97) % 1000
-                    const h2 = (i * 53 + i * i) % 1000
-                    const h3 = (i * 31 + 17) % 1000
+                    // `k` folds the inscription's day index in so each inscription's particles
+                    // land on a different hash path — desyncs the six glyphs from each other.
+                    const k  = i + dayIdx * 23
+                    const h  = (k * 97) % 1000
+                    const h2 = (k * 53 + k * k) % 1000
+                    const h3 = (k * 31 + 17) % 1000
 
                     const xOff      = ((i / (PARTS - 1)) - 0.5) * 200 + ((h % 100) - 50) * 0.6
                     const delay     = h2 * 1.4                             // 0-1400ms
