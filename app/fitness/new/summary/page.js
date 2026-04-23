@@ -306,7 +306,7 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                 <animate attributeName="baseFrequency" values="0.012 0.02;0.010 0.028;0.014 0.016;0.012 0.02" dur="700ms" repeatCount="indefinite"/>
               </feTurbulence>
               <feDisplacementMap in="SourceGraphic" in2="edgeNoise" scale="65" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
-              <feGaussianBlur in="displaced" stdDeviation="2.0" result="blurred"/>
+              <feGaussianBlur in="displaced" stdDeviation="0.8" result="blurred"/>
               {/* Dropout mask — finer turbulence thresholded to ~binary alpha, then composited
                   (operator='in') with the blurred flame so ~45% of pixels punch out as holes.
                   Seed animates on a 450ms cycle so the holes dance like sparks. Applied only
@@ -315,9 +315,9 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
               <feTurbulence type="turbulence" baseFrequency="0.08 0.12" numOctaves="3" seed="1" result="dropoutNoise">
                 <animate attributeName="baseFrequency"
                   values="0.08 0.12;0.07 0.14;0.09 0.10;0.08 0.12"
-                  dur="450ms" repeatCount="indefinite"/>
+                  dur="250ms" repeatCount="indefinite"/>
               </feTurbulence>
-              <feColorMatrix in="dropoutNoise" type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0   2.2 0 0 0 -0.7" result="dropoutMask"/>
+              <feColorMatrix in="dropoutNoise" type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0   2.8 0 0 0 -1.3" result="dropoutMask"/>
               <feComposite in="blurred" in2="dropoutMask" operator="in" result="perforated"/>
               <feComponentTransfer in="perforated" result="tapered">
                 <feFuncA type="table" tableValues="0 0 0.15 0.4 0.7 0.9 1"/>
