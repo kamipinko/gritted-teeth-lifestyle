@@ -403,6 +403,22 @@ function ExportButton() {
 /* ── BEGIN ── */
 function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
   const [pressed, setPressed] = useState(false)
+  const [flickering, setFlickering] = useState(false)
+
+  const triggerFlicker = () => {
+    setFlickering(true)
+    setTimeout(() => setFlickering(false), 500)
+  }
+  const handlePressStart = () => { setPressed(true); triggerFlicker() }
+  const handlePressEnd = () => { setPressed(false); setTimeout(onFire, 400) }
+  const handleKey = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      triggerFlicker()
+      setTimeout(onFire, 400)
+    }
+  }
+
   return (
     <>
       <style>{`
@@ -413,30 +429,30 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
           55%      { filter: drop-shadow(3px 3px 0 #000) hue-rotate(25deg) saturate(1.5) brightness(1.2); }
           75%      { filter: drop-shadow(2px 2px 0 #000) hue-rotate(60deg) saturate(1.85) brightness(1.4); }
         }
-        .flicker-flame { animation: flame-flicker 260ms steps(6, end) infinite; }
+        .flicker-flame { animation: flame-flicker 500ms steps(6, end); }
       `}</style>
       <div
         role="button"
         tabIndex={0}
         aria-label="Etch the cycle"
-        onMouseDown={() => setPressed(true)}
-        onMouseUp={() => { setPressed(false); onFire() }}
+        onMouseDown={handlePressStart}
+        onMouseUp={handlePressEnd}
         onMouseLeave={() => setPressed(false)}
         onMouseEnter={onHover}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onFire() } }}
+        onKeyDown={handleKey}
         className="fixed bottom-5 right-5 z-40 no-print cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-paper focus-visible:outline-offset-2"
       >
         <img
           src="/reference/gurren_flame.svg"
           alt=""
           aria-hidden="true"
-          className={`block w-[72px] h-[72px] ${pressed ? 'flicker-flame' : ''}`}
+          className={`block w-[72px] h-[72px] ${flickering ? 'flicker-flame' : ''}`}
           style={{
-            filter: pressed
+            filter: flickering
               ? undefined
               : 'drop-shadow(2px 2px 0 #000) drop-shadow(0 2px 6px rgba(0,0,0,0.45))',
             transform: pressed ? 'translate(2px, 2px)' : 'none',
-            transition: 'transform 80ms ease-out, filter 120ms ease-out',
+            transition: 'transform 80ms ease-out',
           }}
         />
       </div>
