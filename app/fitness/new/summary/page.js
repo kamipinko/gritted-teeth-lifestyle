@@ -330,6 +330,10 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                   tilted local frame — particles flow up-along-blade through the cutouts.
                   Deterministic per-index delay keeps SSR/CSR consistent. */}
               <g mask="url(#inscription-window)" className="inscription-etching" style={{ pointerEvents: 'none' }}>
+                {/* Dark underlay — same rect as the mask region, filled gtl-void so the
+                    glyph windows show near-black instead of the red blade. Orange particles
+                    on black = high contrast regardless of position; orange on red bled. */}
+                <rect x="668" y="-635" width="1136" height="2642" fill="#0a0a0a"/>
                 {(() => {
                   // GLSL-style fractional-sin hash — adjacent integer seeds produce wildly
                   // uncorrelated outputs in [0, 1). Same input → same output (SSR/CSR safe),
@@ -369,7 +373,7 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                           cx={dl.cx + xOff}
                           cy={dl.cy + startY}
                           r={size}
-                          fill="#ffd700"
+                          fill="#ff5000"
                           opacity={0}
                         >
                           <animateTransform attributeName="transform" type="translate"
