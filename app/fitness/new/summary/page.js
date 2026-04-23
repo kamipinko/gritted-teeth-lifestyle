@@ -433,7 +433,7 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
           className={`block w-[72px] h-[72px] ${pressed ? 'flicker-flame' : ''}`}
           style={{
             filter: pressed
-              ? 'drop-shadow(3px 3px 0 #000)'
+              ? undefined
               : 'drop-shadow(2px 2px 0 #000) drop-shadow(0 2px 6px rgba(0,0,0,0.45))',
             transform: pressed ? 'translate(2px, 2px)' : 'none',
             transition: 'transform 80ms ease-out, filter 120ms ease-out',
