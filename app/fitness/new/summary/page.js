@@ -353,27 +353,34 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                 }
                 .inscription-etching { animation: inscription-etch 1500ms ease-in-out forwards; }
 
-                /* Per-layer opacity shimmer — three phases 33% apart so amber, orange, and
-                   red each dominate in turn, making the aura shimmer through warm tones
-                   rather than sit at one color. */
+                /* Per-layer opacity shimmer — three phases 33% apart so amber, orange,
+                   and red each dominate in turn. Aggressive min opacities (0.05-0.2)
+                   so the OTHER two layers near-vanish at each peak, giving the dominant
+                   layer clear visual ownership of the aura for that phase.
+                   700ms cycle → ~2.1 full shimmer cycles per 1500ms glow window. */
                 @keyframes shimmer-outer {
                   0%, 100% { opacity: 1.0 }
-                  33%      { opacity: 0.35 }
-                  66%      { opacity: 0.7  }
-                }
-                @keyframes shimmer-inner {
-                  0%, 100% { opacity: 0.4 }
-                  33%      { opacity: 1.0 }
+                  33%      { opacity: 0.05 }
                   66%      { opacity: 0.55 }
                 }
+                @keyframes shimmer-inner {
+                  0%, 100% { opacity: 0.1 }
+                  33%      { opacity: 1.0 }
+                  66%      { opacity: 0.2 }
+                }
                 @keyframes shimmer-base {
-                  0%, 100% { opacity: 0.5 }
-                  33%      { opacity: 0.7 }
+                  0%, 100% { opacity: 0.2 }
+                  33%      { opacity: 0.35 }
                   66%      { opacity: 1.0 }
                 }
-                .shimmer-outer { animation: shimmer-outer 1200ms ease-in-out infinite; }
-                .shimmer-inner { animation: shimmer-inner 1200ms ease-in-out infinite; }
-                .shimmer-base  { animation: shimmer-base  1200ms ease-in-out infinite; }
+                /* Offset brightness pulses on non-matching periods — beat-frequency
+                   against the opacity cycle so nothing locks into a visible loop. */
+                @keyframes outer-bright { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.4)} }
+                @keyframes inner-bright { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.5)} }
+                @keyframes base-bright  { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.3)} }
+                .shimmer-outer { animation: shimmer-outer 700ms ease-in-out infinite, outer-bright 850ms ease-in-out infinite; }
+                .shimmer-inner { animation: shimmer-inner 700ms ease-in-out infinite, inner-bright 920ms ease-in-out infinite; }
+                .shimmer-base  { animation: shimmer-base  700ms ease-in-out infinite, base-bright  780ms ease-in-out infinite; }
               `}</style>
               <g className="inscription-etching" style={{ pointerEvents: 'none' }}>
                 {/* Outer hot tips — amber, widest displacement */}
