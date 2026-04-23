@@ -342,8 +342,15 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                     const h2 = (k * 53 + k * k) % 1000
                     const h3 = (k * 31 + 17) % 1000
 
-                    const xOff      = ((i / (PARTS - 1)) - 0.5) * 200 + ((h % 100) - 50) * 0.6
-                    const delay     = h2 * 1.4                             // 0-1400ms
+                    // Pure-hash xOff (no index-based uniform spread) so inscriptions don't
+                    // line up in the same 18 x-columns across glyphs. Range ~±130 units.
+                    const xOff      = ((h2 % 200) - 100) + ((h % 60) - 30)
+                    // Per-inscription phase offset — stagger each glyph ~1/6 cycle so
+                    // density peaks land at different moments (when glyph 0 is peaking,
+                    // glyph 3 ≈ 180° out-of-phase is in a trough). 217 is coprime with
+                    // the 1400ms hash range, avoids accidental re-alignment.
+                    const phaseOffset = dayIdx * 217
+                    const delay     = (h2 * 1.4 + phaseOffset) % 1500      // 0-1500ms
                     const dur       = 800 + (h3 % 700)                     // 800-1500ms
                     const rise      = 180 + (h3 % 160)                     // 180-340 vb units
                     const size      = 14 + (h % 28)                        // r=14-42
