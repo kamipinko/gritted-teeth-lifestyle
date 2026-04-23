@@ -742,15 +742,29 @@ export default function SummaryPage() {
             </feTurbulence>
             <feDisplacementMap in="SourceGraphic" in2="edgeNoise" scale="5" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
             <feGaussianBlur in="displaced" stdDeviation="0.6" result="blurred"/>
-            {/* No dropout on the button variant — single-layer render needs all pixels;
-                the 70% dropout that works for the three-layer inscriptions would destroy
-                the button silhouette. Feed the blurred result straight into the alpha
-                taper and the amber palette. */}
+            {/* Taper + palette FIRST on the clean blurred silhouette, so we don't
+                lose any pixels to compounding. Dropout happens at the very end as
+                the final stage — punches crisp holes into the finished amber flame. */}
             <feComponentTransfer in="blurred" result="tapered">
               <feFuncA type="table" tableValues="0 0 0.15 0.4 0.7 0.9 1"/>
             </feComponentTransfer>
             {/* amber #ffaa00 */}
-            <feColorMatrix in="tapered" type="matrix" values="0 0 0 0 1      0 0 0 0 0.667  0 0 0 0 0      0 0 0 0.9 0"/>
+            <feColorMatrix in="tapered" type="matrix" values="0 0 0 0 1      0 0 0 0 0.667  0 0 0 0 0      0 0 0 0.9 0" result="colored"/>
+            {/* Mild dropout LAST: ~77% survive. Threshold 2.2R - 0.5 applied to
+                the finished amber output — silhouette stays recognizable while
+                scattered holes fleck across the flame body. */}
+            <feTurbulence type="turbulence" baseFrequency="0.18 0.28" numOctaves="3" seed="1" result="dropoutNoiseBtn">
+              <animate attributeName="baseFrequency" values="0.18 0.28;0.16 0.32;0.20 0.24;0.18 0.28" dur="280ms" repeatCount="indefinite"/>
+            </feTurbulence>
+            <feColorMatrix in="dropoutNoiseBtn" type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0   2.2 0 0 0 -0.5" result="dropoutMaskBtnRaw"/>
+            {/* Upward drift: animating dy from 0 to -80 slides the mask up through the
+                flame each 500ms cycle. Viewer perceives survivors as continuously rising
+                specs; the loop seam is invisible because the noise pattern at dy=0 is
+                uncorrelated with dy=-80. */}
+            <feOffset in="dropoutMaskBtnRaw" dx="0" dy="0" result="dropoutMaskBtn">
+              <animate attributeName="dy" values="0;-80" dur="500ms" repeatCount="indefinite"/>
+            </feOffset>
+            <feComposite in="colored" in2="dropoutMaskBtn" operator="in"/>
           </filter>
         </defs>
       </svg>
