@@ -352,10 +352,32 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                   100% { opacity: 0; }
                 }
                 .inscription-etching { animation: inscription-etch 1500ms ease-in-out forwards; }
+
+                /* Per-layer opacity shimmer — three phases 33% apart so amber, orange, and
+                   red each dominate in turn, making the aura shimmer through warm tones
+                   rather than sit at one color. */
+                @keyframes shimmer-outer {
+                  0%, 100% { opacity: 1.0 }
+                  33%      { opacity: 0.35 }
+                  66%      { opacity: 0.7  }
+                }
+                @keyframes shimmer-inner {
+                  0%, 100% { opacity: 0.4 }
+                  33%      { opacity: 1.0 }
+                  66%      { opacity: 0.55 }
+                }
+                @keyframes shimmer-base {
+                  0%, 100% { opacity: 0.5 }
+                  33%      { opacity: 0.7 }
+                  66%      { opacity: 1.0 }
+                }
+                .shimmer-outer { animation: shimmer-outer 1200ms ease-in-out infinite; }
+                .shimmer-inner { animation: shimmer-inner 1200ms ease-in-out infinite; }
+                .shimmer-base  { animation: shimmer-base  1200ms ease-in-out infinite; }
               `}</style>
               <g className="inscription-etching" style={{ pointerEvents: 'none' }}>
                 {/* Outer hot tips — amber, widest displacement */}
-                <g filter="url(#flame-outer)">
+                <g filter="url(#flame-outer)" className="shimmer-outer">
                   {dayLabels.map((dl) => (
                     <g key={`flame-outer-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
                       {renderDayInscription(dl, { glowFill: '#ffaa00' })}
@@ -363,7 +385,7 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                   ))}
                 </g>
                 {/* Inner mid-heat — deep-orange aura hugging the glyphs */}
-                <g filter="url(#flame-inner)">
+                <g filter="url(#flame-inner)" className="shimmer-inner">
                   {dayLabels.map((dl) => (
                     <g key={`flame-inner-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
                       {renderDayInscription(dl, { glowFill: '#ff5500' })}
@@ -371,7 +393,7 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                   ))}
                 </g>
                 {/* Base red — tightest displacement, closest to the glyph silhouette */}
-                <g filter="url(#flame-base)">
+                <g filter="url(#flame-base)" className="shimmer-base">
                   {dayLabels.map((dl) => (
                     <g key={`flame-base-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
                       {renderDayInscription(dl, { glowFill: '#ff2200' })}
@@ -386,9 +408,9 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                 {lastDay && (
                   <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
                     <g clipPath="url(#last-day-left)">
-                      <g filter="url(#flame-outer)">{renderDayInscription(lastDay, { glowFill: '#ffaa00' })}</g>
-                      <g filter="url(#flame-inner)">{renderDayInscription(lastDay, { glowFill: '#ff5500' })}</g>
-                      <g filter="url(#flame-base)">{renderDayInscription(lastDay, { glowFill: '#ff2200' })}</g>
+                      <g filter="url(#flame-outer)" className="shimmer-outer">{renderDayInscription(lastDay, { glowFill: '#ffaa00' })}</g>
+                      <g filter="url(#flame-inner)" className="shimmer-inner">{renderDayInscription(lastDay, { glowFill: '#ff5500' })}</g>
+                      <g filter="url(#flame-base)" className="shimmer-base">{renderDayInscription(lastDay, { glowFill: '#ff2200' })}</g>
                     </g>
                   </g>
                 )}
