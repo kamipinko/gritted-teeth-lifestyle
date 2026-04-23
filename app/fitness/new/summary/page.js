@@ -353,34 +353,53 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                 }
                 .inscription-etching { animation: inscription-etch 1500ms ease-in-out forwards; }
 
-                /* Per-layer opacity shimmer — three phases 33% apart so amber, orange,
-                   and red each dominate in turn. Aggressive min opacities (0.05-0.2)
-                   so the OTHER two layers near-vanish at each peak, giving the dominant
-                   layer clear visual ownership of the aura for that phase.
-                   700ms cycle → ~2.1 full shimmer cycles per 1500ms glow window. */
+                /* Staccato flicker — short 280-380ms cycles, steps() timing (no smooth
+                   interpolation), 7 irregular keyframe stops per cycle, and small
+                   animation-delay offsets on each stacked animation so nothing locks
+                   in step. Layers SNAP between states — reads as flame flicker, not
+                   a glow-pulse. */
                 @keyframes shimmer-outer {
-                  0%, 100% { opacity: 1.0 }
-                  33%      { opacity: 0.05 }
-                  66%      { opacity: 0.55 }
+                  0%   { opacity: 1.0 }
+                  14%  { opacity: 0.05 }
+                  28%  { opacity: 0.7 }
+                  45%  { opacity: 0.15 }
+                  62%  { opacity: 0.9 }
+                  81%  { opacity: 0.2 }
+                  100% { opacity: 1.0 }
                 }
                 @keyframes shimmer-inner {
-                  0%, 100% { opacity: 0.1 }
-                  33%      { opacity: 1.0 }
-                  66%      { opacity: 0.2 }
+                  0%   { opacity: 0.15 }
+                  12%  { opacity: 0.85 }
+                  31%  { opacity: 0.1 }
+                  49%  { opacity: 1.0 }
+                  68%  { opacity: 0.2 }
+                  83%  { opacity: 0.75 }
+                  100% { opacity: 0.15 }
                 }
                 @keyframes shimmer-base {
-                  0%, 100% { opacity: 0.2 }
-                  33%      { opacity: 0.35 }
-                  66%      { opacity: 1.0 }
+                  0%   { opacity: 0.2 }
+                  18%  { opacity: 0.6 }
+                  34%  { opacity: 1.0 }
+                  53%  { opacity: 0.25 }
+                  71%  { opacity: 0.8 }
+                  89%  { opacity: 0.15 }
+                  100% { opacity: 0.2 }
                 }
-                /* Offset brightness pulses on non-matching periods — beat-frequency
-                   against the opacity cycle so nothing locks into a visible loop. */
-                @keyframes outer-bright { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.4)} }
-                @keyframes inner-bright { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.5)} }
-                @keyframes base-bright  { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.3)} }
-                .shimmer-outer { animation: shimmer-outer 700ms ease-in-out infinite, outer-bright 850ms ease-in-out infinite; }
-                .shimmer-inner { animation: shimmer-inner 700ms ease-in-out infinite, inner-bright 920ms ease-in-out infinite; }
-                .shimmer-base  { animation: shimmer-base  700ms ease-in-out infinite, base-bright  780ms ease-in-out infinite; }
+                @keyframes outer-bright { 0%,100%{filter:brightness(1)} 25%{filter:brightness(1.5)} 60%{filter:brightness(0.85)} 80%{filter:brightness(1.3)} }
+                @keyframes inner-bright { 0%,100%{filter:brightness(1)} 22%{filter:brightness(0.9)}  55%{filter:brightness(1.6)}  78%{filter:brightness(1.1)} }
+                @keyframes base-bright  { 0%,100%{filter:brightness(1)} 30%{filter:brightness(1.4)}  58%{filter:brightness(0.9)}  85%{filter:brightness(1.5)} }
+                .shimmer-outer {
+                  animation: shimmer-outer 320ms steps(4, end) infinite, outer-bright 270ms steps(3, end) infinite;
+                  animation-delay: 0ms, 40ms;
+                }
+                .shimmer-inner {
+                  animation: shimmer-inner 280ms steps(4, end) infinite, inner-bright 360ms steps(3, end) infinite;
+                  animation-delay: 80ms, 150ms;
+                }
+                .shimmer-base  {
+                  animation: shimmer-base  380ms steps(4, end) infinite, base-bright  240ms steps(3, end) infinite;
+                  animation-delay: 140ms, 55ms;
+                }
               `}</style>
               <g className="inscription-etching" style={{ pointerEvents: 'none' }}>
                 {/* Outer hot tips — amber, widest displacement */}
