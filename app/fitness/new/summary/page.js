@@ -301,32 +301,42 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                 end FORCES the output color (ignores upstream RGB entirely). Three
                 layers, warm band only (G < 0.7*R, B=0), so zero green hint no matter
                 how they alpha-blend over the red blade. */}
-            <filter id="flame-outer" x="-50%" y="-80%" width="200%" height="260%">
+            <filter id="flame-outer" x="-80%" y="-120%" width="260%" height="340%">
               <feTurbulence type="fractalNoise" baseFrequency="0.015 0.06" numOctaves="2" seed="3" result="noise">
                 <animate attributeName="baseFrequency" values="0.015 0.06;0.012 0.08;0.018 0.05;0.015 0.06" dur="3100ms" repeatCount="indefinite"/>
               </feTurbulence>
-              <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
-              <feGaussianBlur in="displaced" stdDeviation="1.8" result="blurred"/>
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="22" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+              <feGaussianBlur in="displaced" stdDeviation="5.0" result="blurred"/>
+              {/* Alpha falloff curve — kill faint blur fringe, ramp mid-alpha smoothly to full at the core */}
+              <feComponentTransfer in="blurred" result="tapered">
+                <feFuncA type="table" tableValues="0 0 0.15 0.4 0.7 0.9 1"/>
+              </feComponentTransfer>
               {/* amber #ffaa00 (255,170,0) at 0.9 alpha — the wavering outer tips */}
-              <feColorMatrix in="blurred" type="matrix" values="0 0 0 0 1      0 0 0 0 0.667  0 0 0 0 0      0 0 0 0.9 0"/>
+              <feColorMatrix in="tapered" type="matrix" values="0 0 0 0 1      0 0 0 0 0.667  0 0 0 0 0      0 0 0 0.9 0"/>
             </filter>
-            <filter id="flame-inner" x="-50%" y="-80%" width="200%" height="260%">
+            <filter id="flame-inner" x="-60%" y="-100%" width="220%" height="300%">
               <feTurbulence type="fractalNoise" baseFrequency="0.02 0.09" numOctaves="2" seed="11" result="noise">
                 <animate attributeName="baseFrequency" values="0.02 0.09;0.024 0.07;0.018 0.11;0.02 0.09" dur="2400ms" repeatCount="indefinite"/>
               </feTurbulence>
-              <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
-              <feGaussianBlur in="displaced" stdDeviation="1.0" result="blurred"/>
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="12" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+              <feGaussianBlur in="displaced" stdDeviation="2.5" result="blurred"/>
+              <feComponentTransfer in="blurred" result="tapered">
+                <feFuncA type="table" tableValues="0 0 0.15 0.4 0.7 0.9 1"/>
+              </feComponentTransfer>
               {/* deep orange #ff5500 (255,85,0) at full alpha — mid aura hugging glyphs */}
-              <feColorMatrix in="blurred" type="matrix" values="0 0 0 0 1      0 0 0 0 0.333  0 0 0 0 0      0 0 0 1 0"/>
+              <feColorMatrix in="tapered" type="matrix" values="0 0 0 0 1      0 0 0 0 0.333  0 0 0 0 0      0 0 0 1 0"/>
             </filter>
-            <filter id="flame-base" x="-30%" y="-50%" width="160%" height="200%">
+            <filter id="flame-base" x="-40%" y="-70%" width="180%" height="240%">
               <feTurbulence type="fractalNoise" baseFrequency="0.03 0.12" numOctaves="2" seed="17" result="noise">
                 <animate attributeName="baseFrequency" values="0.03 0.12;0.028 0.14;0.032 0.10;0.03 0.12" dur="2000ms" repeatCount="indefinite"/>
               </feTurbulence>
-              <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
-              <feGaussianBlur in="displaced" stdDeviation="0.6" result="blurred"/>
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+              <feGaussianBlur in="displaced" stdDeviation="1.2" result="blurred"/>
+              <feComponentTransfer in="blurred" result="tapered">
+                <feFuncA type="table" tableValues="0 0 0.15 0.4 0.7 0.9 1"/>
+              </feComponentTransfer>
               {/* pure red #ff2200 (255,34,0) — base layer closest to the glyphs */}
-              <feColorMatrix in="blurred" type="matrix" values="0 0 0 0 1      0 0 0 0 0.133  0 0 0 0 0      0 0 0 1 0"/>
+              <feColorMatrix in="tapered" type="matrix" values="0 0 0 0 1      0 0 0 0 0.133  0 0 0 0 0      0 0 0 1 0"/>
             </filter>
           </defs>
           {/* Flame-aura overlay — mounts only while `glowing` is true. Sits BEHIND the
