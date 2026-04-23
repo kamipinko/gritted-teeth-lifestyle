@@ -296,29 +296,37 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
             <clipPath id="last-day-right" clipPathUnits="userSpaceOnUse">
               <rect x="0" y="-500" width="500" height="1000" />
             </clipPath>
-            {/* Flame aura filters — feTurbulence drives feDisplacementMap to push the
-                duplicated-text alpha into wavering tongues, then feFlood+feComposite
-                recolors to flame hues. The <animate> elements keep the noise field
-                evolving so edges dance rather than repeat. */}
+            {/* Flame aura filters — feTurbulence drives feDisplacementMap to push
+                the duplicated-text alpha into wavering tongues; feColorMatrix at the
+                end FORCES the output color (ignores upstream RGB entirely). Three
+                layers, warm band only (G < 0.7*R, B=0), so zero green hint no matter
+                how they alpha-blend over the red blade. */}
             <filter id="flame-outer" x="-50%" y="-80%" width="200%" height="260%">
               <feTurbulence type="fractalNoise" baseFrequency="0.015 0.06" numOctaves="2" seed="3" result="noise">
-                <animate attributeName="baseFrequency" values="0.015 0.06;0.012 0.08;0.018 0.05;0.015 0.06" dur="1400ms" repeatCount="indefinite"/>
-                <animate attributeName="seed" values="3;7;2;5;3" dur="900ms" repeatCount="indefinite"/>
+                <animate attributeName="baseFrequency" values="0.015 0.06;0.012 0.08;0.018 0.05;0.015 0.06" dur="3100ms" repeatCount="indefinite"/>
               </feTurbulence>
               <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
               <feGaussianBlur in="displaced" stdDeviation="1.8" result="blurred"/>
-              <feFlood floodColor="#fff0a0" floodOpacity="0.9" result="tipColor"/>
-              <feComposite in="tipColor" in2="blurred" operator="in"/>
+              {/* amber #ffaa00 (255,170,0) at 0.9 alpha — the wavering outer tips */}
+              <feColorMatrix in="blurred" type="matrix" values="0 0 0 0 1      0 0 0 0 0.667  0 0 0 0 0      0 0 0 0.9 0"/>
             </filter>
             <filter id="flame-inner" x="-50%" y="-80%" width="200%" height="260%">
               <feTurbulence type="fractalNoise" baseFrequency="0.02 0.09" numOctaves="2" seed="11" result="noise">
-                <animate attributeName="baseFrequency" values="0.02 0.09;0.024 0.07;0.018 0.11;0.02 0.09" dur="1100ms" repeatCount="indefinite"/>
-                <animate attributeName="seed" values="11;4;9;2;11" dur="1300ms" repeatCount="indefinite"/>
+                <animate attributeName="baseFrequency" values="0.02 0.09;0.024 0.07;0.018 0.11;0.02 0.09" dur="2400ms" repeatCount="indefinite"/>
               </feTurbulence>
               <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
               <feGaussianBlur in="displaced" stdDeviation="1.0" result="blurred"/>
-              <feFlood floodColor="#ff7a00" floodOpacity="1" result="midColor"/>
-              <feComposite in="midColor" in2="blurred" operator="in"/>
+              {/* deep orange #ff5500 (255,85,0) at full alpha — mid aura hugging glyphs */}
+              <feColorMatrix in="blurred" type="matrix" values="0 0 0 0 1      0 0 0 0 0.333  0 0 0 0 0      0 0 0 1 0"/>
+            </filter>
+            <filter id="flame-base" x="-30%" y="-50%" width="160%" height="200%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.03 0.12" numOctaves="2" seed="17" result="noise">
+                <animate attributeName="baseFrequency" values="0.03 0.12;0.028 0.14;0.032 0.10;0.03 0.12" dur="2000ms" repeatCount="indefinite"/>
+              </feTurbulence>
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+              <feGaussianBlur in="displaced" stdDeviation="0.6" result="blurred"/>
+              {/* pure red #ff2200 (255,34,0) — base layer closest to the glyphs */}
+              <feColorMatrix in="blurred" type="matrix" values="0 0 0 0 1      0 0 0 0 0.133  0 0 0 0 0      0 0 0 1 0"/>
             </filter>
           </defs>
           {/* Flame-aura overlay — mounts only while `glowing` is true. Sits BEHIND the
@@ -344,11 +352,19 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                     </g>
                   ))}
                 </g>
-                {/* Inner mid-heat — orange aura hugging the glyphs */}
+                {/* Inner mid-heat — deep-orange aura hugging the glyphs */}
                 <g filter="url(#flame-inner)">
                   {dayLabels.map((dl) => (
                     <g key={`flame-inner-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
-                      {renderDayInscription(dl, { glowFill: '#ffaa00' })}
+                      {renderDayInscription(dl, { glowFill: '#ff5500' })}
+                    </g>
+                  ))}
+                </g>
+                {/* Base red — tightest displacement, rendered on top so it sits closest to the crisp etched glyph */}
+                <g filter="url(#flame-base)">
+                  {dayLabels.map((dl) => (
+                    <g key={`flame-base-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
+                      {renderDayInscription(dl, { glowFill: '#ff2200' })}
                     </g>
                   ))}
                 </g>
