@@ -313,7 +313,9 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                   to flame-outer (tip/edge layer); flame-inner and flame-base stay solid to
                   keep the glyph core readable. */}
               <feTurbulence type="turbulence" baseFrequency="0.08 0.12" numOctaves="3" seed="1" result="dropoutNoise">
-                <animate attributeName="seed" values="1;9;3;7;5;1" dur="450ms" repeatCount="indefinite"/>
+                <animate attributeName="baseFrequency"
+                  values="0.08 0.12;0.07 0.14;0.09 0.10;0.08 0.12"
+                  dur="450ms" repeatCount="indefinite"/>
               </feTurbulence>
               <feColorMatrix in="dropoutNoise" type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0   2.2 0 0 0 -0.7" result="dropoutMask"/>
               <feComposite in="blurred" in2="dropoutMask" operator="in" result="perforated"/>
