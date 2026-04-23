@@ -422,14 +422,23 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
   return (
     <>
       <style>{`
-        @keyframes flame-flicker {
-          0%, 100% { filter: drop-shadow(3px 3px 0 #000) hue-rotate(0deg)  saturate(1.3) brightness(1.1); }
-          20%      { filter: drop-shadow(3px 3px 0 #000) hue-rotate(40deg) saturate(1.7) brightness(1.3); }
-          35%      { filter: drop-shadow(2px 2px 0 #000) hue-rotate(75deg) saturate(2.0) brightness(1.5); }
-          55%      { filter: drop-shadow(3px 3px 0 #000) hue-rotate(25deg) saturate(1.5) brightness(1.2); }
-          75%      { filter: drop-shadow(2px 2px 0 #000) hue-rotate(60deg) saturate(1.85) brightness(1.4); }
+        @keyframes flame-dance {
+          0%   { transform: translate(0, 0) scale(1) rotate(0deg);
+                 filter: drop-shadow(2px 2px 0 #000) drop-shadow(0 0 8px rgba(255,69,0,0.6))  hue-rotate(0deg)  saturate(1.3) brightness(1.1); }
+          15%  { transform: translate(-1px, -1.5px) scale(1.03) rotate(-0.6deg);
+                 filter: drop-shadow(2px 2px 0 #000) drop-shadow(0 0 14px rgba(255,140,0,0.75)) hue-rotate(20deg) saturate(1.6) brightness(1.3); }
+          28%  { transform: translate(1px, -2px) scale(1.01) rotate(0.8deg);
+                 filter: drop-shadow(2px 2px 0 #000) drop-shadow(0 0 10px rgba(255,170,0,0.8))  hue-rotate(40deg) saturate(1.8) brightness(1.35); }
+          45%  { transform: translate(-1.5px, -1px) scale(1.04) rotate(-0.8deg);
+                 filter: drop-shadow(2px 2px 0 #000) drop-shadow(0 0 18px rgba(255,204,0,0.85)) hue-rotate(60deg) saturate(2.0) brightness(1.45); }
+          60%  { transform: translate(0, -2px) scale(1.02) rotate(0.3deg);
+                 filter: drop-shadow(2px 2px 0 #000) drop-shadow(0 0 12px rgba(255,140,0,0.7))  hue-rotate(35deg) saturate(1.7) brightness(1.25); }
+          78%  { transform: translate(1px, -1px) scale(1.01) rotate(-0.2deg);
+                 filter: drop-shadow(2px 2px 0 #000) drop-shadow(0 0 10px rgba(255,69,0,0.6))   hue-rotate(10deg) saturate(1.4) brightness(1.15); }
+          100% { transform: translate(0, 0) scale(1) rotate(0deg);
+                 filter: drop-shadow(2px 2px 0 #000) drop-shadow(0 0 8px rgba(255,69,0,0.6))    hue-rotate(0deg)  saturate(1.3) brightness(1.1); }
         }
-        .flicker-flame { animation: flame-flicker 500ms steps(6, end); }
+        .flicker-flame { animation: flame-dance 500ms cubic-bezier(0.4, 0, 0.6, 1); }
       `}</style>
       <div
         role="button"
@@ -451,8 +460,7 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
             filter: flickering
               ? undefined
               : 'drop-shadow(2px 2px 0 #000) drop-shadow(0 2px 6px rgba(0,0,0,0.45))',
-            transform: pressed ? 'translate(2px, 2px)' : 'none',
-            transition: 'transform 80ms ease-out',
+            transition: 'filter 120ms ease-out',
           }}
         />
       </div>
