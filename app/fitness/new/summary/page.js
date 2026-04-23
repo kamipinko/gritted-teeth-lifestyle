@@ -395,7 +395,12 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
               </g>
             </>
           )}
-          <g style={{ mixBlendMode: 'difference' }}>
+          {/* Difference-blend base text. Hidden during glow: mixBlendMode=difference
+              operates on whatever sits behind the text, so with the flame aura rendered
+              beneath, |amber − red| computes to pure green and contaminates the aura.
+              Fading opacity to 0 while glowing=true lets the flame layers BE the
+              inscriptions cleanly; text fades back in smoothly on glow end. */}
+          <g style={{ mixBlendMode: 'difference', opacity: glowing ? 0 : 1, transition: 'opacity 150ms ease-out' }}>
             {dayLabels.map((dl, i) => {
               const textAngle = dl.angle - 90
               const isLast = i === lastIdx
@@ -411,9 +416,11 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
               )
             })}
           </g>
-          {/* Last day's LEFT half — outside the difference group so the design-line crossing stays plain red */}
+          {/* Last day's LEFT half — outside the difference group so the design-line crossing stays plain red.
+              Same opacity gating as the difference-blend group above so the flame aura has clean canvas during glow. */}
           {lastDay && (
-            <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
+            <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}
+               style={{ opacity: glowing ? 0 : 1, transition: 'opacity 150ms ease-out' }}>
               <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true })}</g>
             </g>
           )}
