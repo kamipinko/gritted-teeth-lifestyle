@@ -136,11 +136,11 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
     return { num, hasWork, kanjiStr, iso, cx: anchor.x, cy: anchor.y, angle: anchor.angle }
   })
 
-  const renderDayInscription = (dl, { outline = false, glow = false } = {}) => {
+  const renderDayInscription = (dl, { outline = false, glow = false, glowFill = null } = {}) => {
     const { num, kanjiStr } = dl
     const kanjiChars = kanjiStr.split('')
     const n = kanjiChars.length
-    const baseColor = glow ? '#ffdd00' : '#d4181f'
+    const baseColor = glowFill || (glow ? '#ffdd00' : '#d4181f')
     const baseOpacity = 1.0
     const font = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
     const outlineProps = outline
@@ -296,7 +296,65 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
             <clipPath id="last-day-right" clipPathUnits="userSpaceOnUse">
               <rect x="0" y="-500" width="500" height="1000" />
             </clipPath>
+            {/* Flame aura filters — feTurbulence drives feDisplacementMap to push the
+                duplicated-text alpha into wavering tongues, then feFlood+feComposite
+                recolors to flame hues. The <animate> elements keep the noise field
+                evolving so edges dance rather than repeat. */}
+            <filter id="flame-outer" x="-50%" y="-80%" width="200%" height="260%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.015 0.06" numOctaves="2" seed="3" result="noise">
+                <animate attributeName="baseFrequency" values="0.015 0.06;0.012 0.08;0.018 0.05;0.015 0.06" dur="1400ms" repeatCount="indefinite"/>
+                <animate attributeName="seed" values="3;7;2;5;3" dur="900ms" repeatCount="indefinite"/>
+              </feTurbulence>
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+              <feGaussianBlur in="displaced" stdDeviation="1.8" result="blurred"/>
+              <feFlood floodColor="#fff0a0" floodOpacity="0.9" result="tipColor"/>
+              <feComposite in="tipColor" in2="blurred" operator="in"/>
+            </filter>
+            <filter id="flame-inner" x="-50%" y="-80%" width="200%" height="260%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.02 0.09" numOctaves="2" seed="11" result="noise">
+                <animate attributeName="baseFrequency" values="0.02 0.09;0.024 0.07;0.018 0.11;0.02 0.09" dur="1100ms" repeatCount="indefinite"/>
+                <animate attributeName="seed" values="11;4;9;2;11" dur="1300ms" repeatCount="indefinite"/>
+              </feTurbulence>
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+              <feGaussianBlur in="displaced" stdDeviation="1.0" result="blurred"/>
+              <feFlood floodColor="#ff7a00" floodOpacity="1" result="midColor"/>
+              <feComposite in="midColor" in2="blurred" operator="in"/>
+            </filter>
           </defs>
+          {/* Flame-aura overlay — mounts only while `glowing` is true. Sits BEHIND the
+              difference-blend text so the dancing tongues lick around the crisp etched
+              glyphs without obscuring them. */}
+          {glowing && (
+            <>
+              <style>{`
+                @keyframes inscription-etch {
+                  0%   { opacity: 0; }
+                  12%  { opacity: 1; }
+                  85%  { opacity: 1; }
+                  100% { opacity: 0; }
+                }
+                .inscription-etching { animation: inscription-etch 1500ms ease-in-out forwards; }
+              `}</style>
+              <g className="inscription-etching" style={{ pointerEvents: 'none' }}>
+                {/* Outer hot tips — lighter/broader aura, heavier displacement */}
+                <g filter="url(#flame-outer)">
+                  {dayLabels.map((dl) => (
+                    <g key={`flame-outer-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
+                      {renderDayInscription(dl, { glowFill: '#fff0a0' })}
+                    </g>
+                  ))}
+                </g>
+                {/* Inner mid-heat — orange aura hugging the glyphs */}
+                <g filter="url(#flame-inner)">
+                  {dayLabels.map((dl) => (
+                    <g key={`flame-inner-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
+                      {renderDayInscription(dl, { glowFill: '#ffaa00' })}
+                    </g>
+                  ))}
+                </g>
+              </g>
+            </>
+          )}
           <g style={{ mixBlendMode: 'difference' }}>
             {dayLabels.map((dl, i) => {
               const textAngle = dl.angle - 90
@@ -318,31 +376,6 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
             <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
               <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true })}</g>
             </g>
-          )}
-          {/* Flame-etch glow overlay — mounts only while `glowing` is true so the CSS
-              animation restarts fresh on every button press. Sits above the difference
-              group so the bloom is additive, not blended. */}
-          {glowing && (
-            <>
-              <style>{`
-                @keyframes inscription-etch {
-                  0%   { opacity: 0; filter: drop-shadow(0 0 2px #ff6600); }
-                  15%  { opacity: 1; filter: drop-shadow(0 0 8px #ff6600); }
-                  40%  { opacity: 1; filter: drop-shadow(0 0 14px #ffaa00) drop-shadow(0 0 22px #ffdd00); }
-                  60%  { opacity: 1; filter: drop-shadow(0 0 18px #fff0a0) drop-shadow(0 0 28px #ffdd00); }
-                  80%  { opacity: 1; filter: drop-shadow(0 0 12px #ffaa00); }
-                  100% { opacity: 0; filter: drop-shadow(0 0 4px #ff6600); }
-                }
-                .inscription-etching { animation: inscription-etch 1500ms ease-in-out forwards; }
-              `}</style>
-              <g className="inscription-etching">
-                {dayLabels.map((dl) => (
-                  <g key={`glow-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
-                    {renderDayInscription(dl, { glow: true })}
-                  </g>
-                ))}
-              </g>
-            </>
           )}
           {/* Weekday side labels — share the viewBox so they align vertically with each inscription.
               Per-row x calibration equalizes the on-screen gap between each label and the blade
