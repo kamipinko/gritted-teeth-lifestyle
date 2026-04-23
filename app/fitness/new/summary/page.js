@@ -424,7 +424,7 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
         onMouseLeave={() => setPressed(false)}
         onMouseEnter={onHover}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onFire() } }}
-        className="fixed bottom-5 right-5 z-40 no-print flex flex-col items-center cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-paper focus-visible:outline-offset-2"
+        className="fixed bottom-5 right-5 z-40 no-print cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-paper focus-visible:outline-offset-2"
       >
         <img
           src="/reference/gurren_flame.svg"
@@ -439,9 +439,6 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
             transition: 'transform 80ms ease-out, filter 120ms ease-out',
           }}
         />
-        <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-red/70 leading-none mt-1 block text-center">
-          {label}
-        </span>
       </div>
     </>
   )
