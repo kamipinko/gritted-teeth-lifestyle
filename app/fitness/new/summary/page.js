@@ -508,6 +508,11 @@ function ExportButton() {
 }
 
 /* ── BEGIN ── */
+// Gurren flame outline — path data lifted from public/reference/gurren_flame.svg
+// (same asset the <img src> was loading). Inlined so we can apply SVG-mask-window
+// effects (particles rising through the silhouette on press).
+const GURREN_FLAME_D = 'M23.2,520.6c5.4-0.2,10.8-0.3,16.2,1.1c5.1,1.4,10.2,4.3,13.1,8.5c3.7,5.5,3.5,13.2,2.3,20.3c-2,11.8-6.6,21.8-11.8,31.8c-6.9,13.3-14.8,26.6-17.3,41.5c-2.5,14.9,0.5,31.4,8.9,44c5.9,8.8,14.6,15.8,24.1,20.2c10.9,5.1,22.9,6.9,34.9,8.7c-5.5-5.1-10.9-10.2-15.8-16c-4.8-5.8-9-12.4-11.2-19.6c-2-6.9-2.2-14.5-0.6-21.6c1.3-5.7,3.7-11,6.1-16.4c-0.7,5.5-1.3,11-0.5,16.4c1.2,7.5,5.3,14.6,10.6,20.5c5.3,5.8,11.7,10.4,18.9,12.7c4.1,1.3,8.5,1.8,12.8,2.2c-2.1-3.8-4.2-7.5-5.9-11.6c-2.4-5.7-4-12-4.1-18.1c-0.2-13.7,6.8-27,15.9-37.3c8-9,17.6-15.7,23-26.8c4-8.1,5.7-18.5,7.2-27.7c2.7,6.5,4,12.1,4.1,17.9c0.2,10.3-3.4,20.7-8,30.1c-5.1,10.3-11.6,19.4-16,29.8c-2.9,6.9-4.9,14.5-4.8,21.9c0,5.3,1.1,10.6,2.2,15.9c7.5-2.9,14.9-5.8,21.5-10.1c6.7-4.5,12.4-10.6,17.4-17.1c3.5-4.5,6.5-9.3,9.6-14c0,7.1-0.1,14.2-1.8,21.2c-1.4,5.6-3.8,11.2-6.7,16.2c-4.1,7.2-9.3,13.3-15,18.5c-5,4.5-10.3,8.2-16.7,11.9c10.6-0.3,20.8-1.9,31.1-4.6c11.8-3.1,23.8-7.8,34.4-16.1c9.9-7.7,18.6-18.7,24-31c10.3-23.7,7.9-52.4-1.3-74.7c-4.4-10.7-10.3-19.8-13.1-29.8c0,10.5-0.7,19.3-2.5,27.7c-1.8,8.4-4.6,16.3-10.6,22.3c-3.8,3.8-8.8,6.7-15.4,7.6c4.1-6.9,8.2-13.8,10.8-21.2c3.1-8.9,4-18.4,2.3-27.9c-1.9-10.9-7.2-21.7-14.3-30.3c-5.9-7.1-13.1-12.7-19.5-19c-9.7-9.5-17.8-20.7-23.2-32.9c-4.2-9.5-6.7-19.7-5.6-34c-10.3,16-11.6,28.8-10.4,40.7c0.6,6.4,1.9,12.6,7.1,24.7c-9.4-4.6-16.1-11.8-20.8-19.8c-6.9-11.6-9.6-25.1-9.1-37.7c0.5-10.8,3.4-20.9,7.5-30.1c3.2-7.3,7-14,10.8-20.7c-6.3,4.1-12.6,8.2-18.6,13c-7.4,6-14.3,13.1-19.1,21.3c-7.4,12.7-9.7,28.1-7.6,42.4c1.4,9.1,4.6,17.8,8.5,26.2c6.6,14.1,15.3,27.1,19.6,43.1c2.5,9,3.6,18.9,2,27.8c-1.4,7.9-5,15-11,17.2c-3,1.1-6.5,1.1-9.3-0.8c-2.8-1.9-4.8-5.8-5.9-9.4c-1.7-5.6-1.4-10.8-1.5-16.4c-0.2-7.8-1.3-16.5-5.3-23.7c-3.2-5.8-8.4-10.6-14.2-13.2c-5.9-2.7-12.4-3.1-19-1.8C32.2,515.3,27.8,517,23.2,520.6z'
+
 function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
   const [pressed, setPressed] = useState(false)
   const [flickering, setFlickering] = useState(false)
@@ -518,73 +523,97 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
   }
 
   return (
-    <>
-      <style>{`
-        @keyframes btn-particle-rise {
-          0%   { opacity: 0; transform: translateY(0) scale(0.8); }
-          25%  { opacity: 1; }
-          100% { opacity: 0; transform: translateY(-56px) scale(0); }
-        }
-        .btn-fire {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          filter: blur(1px);
-          z-index: 5;
-        }
-        .btn-particle {
-          position: absolute;
-          bottom: 6px;
-          left: var(--xoff);
-          width: 18px;
-          height: 18px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(255,80,0,0.9) 20%, rgba(255,140,0,0.3) 55%, rgba(255,140,0,0) 75%);
-          mix-blend-mode: screen;
-          opacity: 0;
-          animation: btn-particle-rise 800ms ease-out var(--delay) infinite;
-          transform-origin: center;
-        }
-      `}</style>
-      <div
-        role="button"
-        tabIndex={0}
-        aria-label="Etch the cycle"
-        onMouseDown={() => { setPressed(true); triggerFlicker() }}
-        onMouseUp={() => { setPressed(false); onFire() }}
-        onMouseLeave={() => setPressed(false)}
-        onMouseEnter={onHover}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); triggerFlicker(); onFire() } }}
-        className="fixed bottom-5 right-5 z-40 no-print cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-paper focus-visible:outline-offset-2"
-        style={{ width: 72, height: 72 }}
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label="Etch the cycle"
+      onMouseDown={() => { setPressed(true); triggerFlicker() }}
+      onMouseUp={() => { setPressed(false); onFire() }}
+      onMouseLeave={() => setPressed(false)}
+      onMouseEnter={onHover}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); triggerFlicker(); onFire() } }}
+      className="fixed bottom-5 right-5 z-40 no-print cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-paper focus-visible:outline-offset-2"
+      style={{ width: 72, height: 72 }}
+    >
+      <svg
+        viewBox="23.2 388.8 208.8 307.9"
+        width={72}
+        height={72}
+        className="relative z-10 block"
+        aria-hidden="true"
+        style={{
+          filter: 'drop-shadow(2px 2px 0 #000) drop-shadow(0 2px 6px rgba(0,0,0,0.45))',
+          transform: pressed ? 'translate(2px, 2px)' : 'none',
+          transition: 'transform 80ms ease-out',
+          overflow: 'visible',
+        }}
       >
-        <img
-          src="/reference/gurren_flame.svg"
-          alt=""
-          aria-hidden="true"
-          className="block w-[72px] h-[72px] relative z-10"
-          style={{
-            filter: 'drop-shadow(2px 2px 0 #000) drop-shadow(0 2px 6px rgba(0,0,0,0.45))',
-            transform: pressed ? 'translate(2px, 2px)' : 'none',
-            transition: 'transform 80ms ease-out',
-          }}
-        />
+        <defs>
+          {/* Mask defining the flame silhouette as the 'window' — white-filled path
+              inside a black rect. Particles clipped through this reveal only inside
+              the Gurren flame shape. */}
+          <mask id="btn-flame-window" maskUnits="userSpaceOnUse" x="23.2" y="388.8" width="208.8" height="307.9">
+            <rect x="23.2" y="388.8" width="208.8" height="307.9" fill="black"/>
+            <path d={GURREN_FLAME_D} fill="white"/>
+          </mask>
+        </defs>
+        {/* Static flame silhouette. Red at rest; void-black when flickering so the
+            masked orange particles pop through a dark window instead of the red fill. */}
+        <path d={GURREN_FLAME_D} fill={flickering ? '#0a0a0a' : '#d4181f'}/>
         {flickering && (
-          <div className="btn-fire" aria-hidden="true">
-            {Array.from({ length: 14 }).map((_, i) => (
-              <div
-                key={i}
-                className="btn-particle"
-                style={{
-                  '--delay': `${(i * 60 + (i % 3) * 37) % 900}ms`,
-                  '--xoff': `${(i / 13) * 100}%`,
-                }}
-              />
-            ))}
-          </div>
+          <g mask="url(#btn-flame-window)">
+            {(() => {
+              const hash01 = (n) => {
+                const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453
+                return x - Math.floor(x)
+              }
+              const PARTS = 10
+              return Array.from({ length: PARTS }).map((_, i) => {
+                const rX      = hash01(i * 1)
+                const rXj     = hash01(i * 2 + 5)
+                const rDly    = hash01(i * 3 + 11)
+                const rDur    = hash01(i * 5 + 17)
+                const rRise   = hash01(i * 7 + 19)
+                const rSize   = hash01(i * 11 + 23)
+                const rPeak   = hash01(i * 13 + 29)
+                const rDrft   = hash01(i * 17 + 31)
+                const rStartJ = hash01(i * 19 + 37)
+
+                const cxBase = 23.2 + 104.4                              // viewBox horizontal center
+                const xOff   = (rX - 0.5) * 140 + (rXj - 0.5) * 40       // within flame silhouette width
+                const delay  = (rDly * 540) % 600                        // ~600ms window
+                const dur    = 130 + rDur * 150                          // 130-280ms (matches inscriptions)
+                const rise   = 200 + rRise * 100                         // 200-300 viewBox units
+                const size   = 14 + rSize * 26                           // r 14-40
+                const peakA  = 0.5 + rPeak * 0.5                         // 0.5-1.0
+                const driftX = (rDrft - 0.5) * 80                        // ±40 lateral
+                const startY = 630 + (rStartJ - 0.5) * 60                // near the BOTTOM of the flame (high viewBox y)
+
+                return (
+                  <circle key={`btn-sp${i}`}
+                    cx={cxBase + xOff} cy={startY}
+                    r={size} fill="#ff5000" opacity={0}>
+                    <animateTransform attributeName="transform" type="translate"
+                      values={`0 0; ${(driftX * 0.4).toFixed(2)} -${(rise * 0.5).toFixed(2)}; ${driftX.toFixed(2)} -${rise.toFixed(2)}`}
+                      dur={`${dur.toFixed(0)}ms`}
+                      begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                    <animate attributeName="opacity"
+                      values={`0; ${peakA.toFixed(2)}; ${peakA.toFixed(2)}; 0`}
+                      keyTimes="0; 0.08; 0.55; 1"
+                      dur={`${dur.toFixed(0)}ms`}
+                      begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                    <animate attributeName="r"
+                      values={`${size.toFixed(2)}; ${size.toFixed(2)}; ${(2 + rPeak * 4).toFixed(2)}`}
+                      dur={`${dur.toFixed(0)}ms`}
+                      begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                  </circle>
+                )
+              })
+            })()}
+          </g>
         )}
-      </div>
-    </>
+      </svg>
+    </div>
   )
 }
 
