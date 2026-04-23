@@ -331,24 +331,44 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                   Deterministic per-index delay keeps SSR/CSR consistent. */}
               <g mask="url(#inscription-window)" className="inscription-etching" style={{ pointerEvents: 'none' }}>
                 {dayLabels.flatMap((dl) => {
-                  const PARTS = 16
+                  const PARTS = 18
                   return Array.from({ length: PARTS }).map((_, i) => {
-                    const xOff  = ((i / (PARTS - 1)) - 0.5) * 180
-                    const delay = (i * 71 + (i % 4) * 47) % 1200
+                    // Deterministic pseudo-random spread via prime multipliers + modulo.
+                    // Same index → same values across SSR/CSR renders (no hydration mismatch).
+                    const h  = (i * 97) % 1000
+                    const h2 = (i * 53 + i * i) % 1000
+                    const h3 = (i * 31 + 17) % 1000
+
+                    const xOff      = ((i / (PARTS - 1)) - 0.5) * 200 + ((h % 100) - 50) * 0.6
+                    const delay     = h2 * 1.4                             // 0-1400ms
+                    const dur       = 800 + (h3 % 700)                     // 800-1500ms
+                    const rise      = 180 + (h3 % 160)                     // 180-340 vb units
+                    const size      = 14 + (h % 28)                        // r=14-42
+                    const yJitter   = h3 % 60                              // 0-60 start-y jitter
+                    const peakOp    = (0.85 - (h % 30) / 200).toFixed(3)   // 0.70-0.85
+                    const peakTime  = (0.15 + (h3 % 20) / 100).toFixed(2)  // 0.15-0.34
+                    const endR      = 2 + (h % 4)                          // 2-5 shrink-to-dot
+
                     return (
                       <circle
                         key={`${dl.iso}-sp${i}`}
                         cx={dl.cx + xOff}
-                        cy={dl.cy + 120}
-                        r={28}
+                        cy={dl.cy + 120 + yJitter}
+                        r={size}
                         fill="#ff5000"
                         opacity={0}
                       >
                         <animateTransform attributeName="transform" type="translate"
-                          values="0 0; 0 -260" dur="1200ms"
+                          values={`0 0; 0 -${rise}`} dur={`${dur}ms`}
                           begin={`${delay}ms`} repeatCount="indefinite"/>
                         <animate attributeName="opacity"
-                          values="0; 0.9; 0" dur="1200ms"
+                          values={`0; ${peakOp}; 0`}
+                          keyTimes={`0; ${peakTime}; 1`}
+                          dur={`${dur}ms`}
+                          begin={`${delay}ms`} repeatCount="indefinite"/>
+                        <animate attributeName="r"
+                          values={`${size}; ${size}; ${endR}`}
+                          dur={`${dur}ms`}
                           begin={`${delay}ms`} repeatCount="indefinite"/>
                       </circle>
                     )
