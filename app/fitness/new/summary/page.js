@@ -354,8 +354,8 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                       const rEndR   = hash01(k * 23 + 41)
 
                       const xOff   = (rX - 0.5) * 200 + (rXj - 0.5) * 60
-                      const delay  = (rDly * 1000 + dayIdx * 131) % 1100     // widened 0-1100ms, stagger via 131 preserved
-                      const dur    = 420 + rDur * 480                        // 420-900ms (raging fast rise)
+                      const delay  = (rDly * 340 + dayIdx * 131) % 380       // 0-380ms spawn window, stagger via 131
+                      const dur    = 130 + rDur * 150                        // 130-280ms (2x faster — pixel-per-ms doubled)
                       const rise   = 280 + rRise * 200                       // 280-480 vb units
                       const size   = 20 + rSize * 38                         // r 20-58
                       const peakA  = 0.5 + rPeak * 0.5                       // 0.5-1.0
