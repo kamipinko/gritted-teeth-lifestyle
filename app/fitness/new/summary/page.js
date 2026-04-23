@@ -302,13 +302,22 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                 layers, warm band only (G < 0.7*R, B=0), so zero green hint no matter
                 how they alpha-blend over the red blade. */}
             <filter id="flame-outer" x="-80%" y="-120%" width="260%" height="340%">
-              <feTurbulence type="turbulence" baseFrequency="0.012 0.02" numOctaves="4" seed="3" result="noise">
+              <feTurbulence type="turbulence" baseFrequency="0.012 0.02" numOctaves="4" seed="3" result="edgeNoise">
                 <animate attributeName="baseFrequency" values="0.012 0.02;0.010 0.028;0.014 0.016;0.012 0.02" dur="700ms" repeatCount="indefinite"/>
               </feTurbulence>
-              <feDisplacementMap in="SourceGraphic" in2="noise" scale="65" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+              <feDisplacementMap in="SourceGraphic" in2="edgeNoise" scale="65" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
               <feGaussianBlur in="displaced" stdDeviation="2.0" result="blurred"/>
-              {/* Alpha falloff curve — kill faint blur fringe, ramp mid-alpha smoothly to full at the core */}
-              <feComponentTransfer in="blurred" result="tapered">
+              {/* Dropout mask — finer turbulence thresholded to ~binary alpha, then composited
+                  (operator='in') with the blurred flame so ~45% of pixels punch out as holes.
+                  Seed animates on a 450ms cycle so the holes dance like sparks. Applied only
+                  to flame-outer (tip/edge layer); flame-inner and flame-base stay solid to
+                  keep the glyph core readable. */}
+              <feTurbulence type="turbulence" baseFrequency="0.08 0.12" numOctaves="3" seed="1" result="dropoutNoise">
+                <animate attributeName="seed" values="1;9;3;7;5;1" dur="450ms" repeatCount="indefinite"/>
+              </feTurbulence>
+              <feColorMatrix in="dropoutNoise" type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0   2.2 0 0 0 -0.7" result="dropoutMask"/>
+              <feComposite in="blurred" in2="dropoutMask" operator="in" result="perforated"/>
+              <feComponentTransfer in="perforated" result="tapered">
                 <feFuncA type="table" tableValues="0 0 0.15 0.4 0.7 0.9 1"/>
               </feComponentTransfer>
               {/* amber #ffaa00 (255,170,0) at 0.9 alpha — the wavering outer tips */}
