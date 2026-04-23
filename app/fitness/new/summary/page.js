@@ -435,12 +435,12 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
     setTimeout(() => setFlickering(false), 500)
   }
   const handlePressStart = () => { setPressed(true); triggerFlicker() }
-  const handlePressEnd = () => { setPressed(false); setTimeout(onFire, 400) }
+  const handlePressEnd = () => { setPressed(false); onFire() }
   const handleKey = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
       triggerFlicker()
-      setTimeout(onFire, 400)
+      onFire()
     }
   }
 
@@ -568,11 +568,11 @@ export default function SummaryPage() {
       }
     } catch (_) {}
 
-    // Timers are relative to handleBegin() call, which fires 400ms after press.
-    // Press-absolute times in the comments:
-    setTimeout(() => setInscriptionsGlowing(true),  600)   // t=1000 from press: flame-etch glow begins
-    setTimeout(() => setInscriptionsGlowing(false), 2100)  // t=2500: glow complete
-    setTimeout(() => setStampVisible(true),         2100)  // t=2500: stamp flies in
+    // handleBegin fires immediately on press (no onFire delay).
+    // All timers are press-absolute from t=0.
+    setTimeout(() => setInscriptionsGlowing(true),   200)   // glow begins (overlaps tail of flicker)
+    setTimeout(() => setInscriptionsGlowing(false), 1700)   // glow complete (1500ms window)
+    setTimeout(() => setStampVisible(true),         1700)   // stamp flies in
 
     setTimeout(() => {
       play('stamp')
@@ -594,10 +594,10 @@ export default function SummaryPage() {
           { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
         )
       }
-    }, 2765)                                // t=3165: stamp lands (665ms after fly-in)
+    }, 2365)   // stamp lands (665ms after fly-in)
 
-    setTimeout(() => play('stamp'),       2850)   // t=3250
-    setTimeout(() => setFireActive(true), 4000)   // t=4400
+    setTimeout(() => play('stamp'),       2450)
+    setTimeout(() => setFireActive(true), 3600)
   }
 
   const cols = days.length <= 5 ? days.length
