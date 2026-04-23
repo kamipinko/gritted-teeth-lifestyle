@@ -607,6 +607,15 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
           filter: flickering
             ? 'url(#flame-outer-btn) drop-shadow(3px 3px 0 #000)'
             : 'drop-shadow(2px 2px 0 #000) drop-shadow(0 2px 6px rgba(0,0,0,0.45))',
+          // Lifearc top-fade: sparks dim toward the top of the button so each spec
+          // dies out as it rises. Only applied while flickering so the rest-state
+          // flame silhouette stays fully opaque.
+          maskImage: flickering
+            ? 'linear-gradient(to top, black 0%, black 55%, rgba(0,0,0,0.25) 85%, transparent 100%)'
+            : undefined,
+          WebkitMaskImage: flickering
+            ? 'linear-gradient(to top, black 0%, black 55%, rgba(0,0,0,0.25) 85%, transparent 100%)'
+            : undefined,
           transform: pressed ? 'translate(2px, 2px)' : 'none',
           transition: 'transform 80ms ease-out',
         }}
@@ -736,7 +745,12 @@ export default function SummaryPage() {
            turbulence type, same animated baseFrequency technique, same amber palette. */}
       <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute' }}>
         <defs>
-          <filter id="flame-outer-btn" x="-30%" y="-30%" width="160%" height="160%">
+          {/* Filter region extends 120% ABOVE the source so feOffset's upward scroll
+              has fresh noise space — hides the feOffset loop-back pop. The lifearc
+              top-fade is applied as a CSS mask-image on the <img> element instead
+              of an feImage+feComposite inside the filter (feImage referencing a
+              gradient fails silently in some browsers — killed all output). */}
+          <filter id="flame-outer-btn" x="-20%" y="-120%" width="140%" height="340%">
             <feTurbulence type="turbulence" baseFrequency="0.05 0.08" numOctaves="4" seed="3" result="edgeNoise">
               <animate attributeName="baseFrequency" values="0.05 0.08;0.04 0.10;0.06 0.06;0.05 0.08" dur="700ms" repeatCount="indefinite"/>
             </feTurbulence>
@@ -750,17 +764,15 @@ export default function SummaryPage() {
             </feComponentTransfer>
             {/* amber #ffaa00 */}
             <feColorMatrix in="tapered" type="matrix" values="0 0 0 0 1      0 0 0 0 0.667  0 0 0 0 0      0 0 0 0.9 0" result="colored"/>
-            {/* Mild dropout LAST: ~77% survive. Threshold 2.2R - 0.5 applied to
-                the finished amber output — silhouette stays recognizable while
-                scattered holes fleck across the flame body. */}
-            <feTurbulence type="turbulence" baseFrequency="0.18 0.28" numOctaves="3" seed="1" result="dropoutNoiseBtn">
+            {/* Mild dropout: ~77% survive. stitchTiles='stitch' on the noise makes
+                it tile seamlessly so the upward scroll doesn't show a loop seam. */}
+            <feTurbulence type="turbulence" baseFrequency="0.18 0.28" numOctaves="3" seed="1" stitchTiles="stitch" result="dropoutNoiseBtn">
               <animate attributeName="baseFrequency" values="0.18 0.28;0.16 0.32;0.20 0.24;0.18 0.28" dur="280ms" repeatCount="indefinite"/>
             </feTurbulence>
             <feColorMatrix in="dropoutNoiseBtn" type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0   2.2 0 0 0 -0.5" result="dropoutMaskBtnRaw"/>
             {/* Upward drift: animating dy from 0 to -80 slides the mask up through the
                 flame each 500ms cycle. Viewer perceives survivors as continuously rising
-                specs; the loop seam is invisible because the noise pattern at dy=0 is
-                uncorrelated with dy=-80. */}
+                specs; taller filter region above hides the loop seam. */}
             <feOffset in="dropoutMaskBtnRaw" dx="0" dy="0" result="dropoutMaskBtn">
               <animate attributeName="dy" values="0;-80" dur="500ms" repeatCount="indefinite"/>
             </feOffset>
