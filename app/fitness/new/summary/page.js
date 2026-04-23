@@ -339,7 +339,7 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                     return x - Math.floor(x)
                   }
                   return dayLabels.flatMap((dl, dayIdx) => {
-                    const PARTS = 28
+                    const PARTS = 84
                     return Array.from({ length: PARTS }).map((_, i) => {
                       const k = i + dayIdx * 23
                       const rX      = hash01(k * 1)
@@ -354,12 +354,12 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                       const rEndR   = hash01(k * 23 + 41)
 
                       const xOff   = (rX - 0.5) * 200 + (rXj - 0.5) * 60
-                      const delay  = (rDly * 600 + dayIdx * 131) % 700       // tight 0-700ms, per-inscription stagger via 131
-                      const dur    = 420 + rDur * 480                        // 420-900ms (fast rise)
-                      const rise   = 280 + rRise * 200                       // 280-480 vb units (longer travel)
-                      const size   = 20 + rSize * 38                         // r 20-58 (bigger blobs)
-                      const peakA  = 0.5 + rPeak * 0.5                       // 0.5-1.0 (bright, never dim)
-                      const driftX = (rDrft - 0.5) * 180                     // ±90 (violent lateral curl)
+                      const delay  = (rDly * 200 + dayIdx * 131) % 300       // very tight 0-300ms, per-inscription stagger still via 131
+                      const dur    = 140 + rDur * 160                        // 140-300ms (blazing fast rise)
+                      const rise   = 840 + rRise * 600                       // 840-1440 vb units (long travel per cycle)
+                      const size   = 60 + rSize * 114                        // r 60-174 (huge blobs)
+                      const peakA  = 0.5 + rPeak * 0.5                       // 0.5-1.0
+                      const driftX = (rDrft - 0.5) * 540                     // ±270 (chaotic lateral)
                       const startY = 120 + (rStartJ - 0.5) * 140             // ±70 start-y jitter
                       const endR   = 2 + rEndR * 4                           // 2-6 shrink-to-dot
 
@@ -376,10 +376,10 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                             values={`0 0; ${(driftX * 0.4).toFixed(2)} -${(rise * 0.5).toFixed(2)}; ${driftX.toFixed(2)} -${rise.toFixed(2)}`}
                             dur={`${dur.toFixed(0)}ms`}
                             begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
-                          {/* Front-loaded opacity: ignite in 8%, hold through 55%, fade to 0 by end. */}
+                          {/* Trapezoidal opacity: ignite in 4%, hold 71% at peak, 25% fade. Constant burn. */}
                           <animate attributeName="opacity"
                             values={`0; ${peakA.toFixed(2)}; ${peakA.toFixed(2)}; 0`}
-                            keyTimes="0; 0.08; 0.55; 1"
+                            keyTimes="0; 0.04; 0.75; 1"
                             dur={`${dur.toFixed(0)}ms`}
                             begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
                           <animate attributeName="r"
