@@ -584,51 +584,34 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
   }
 
   return (
-    <>
-      <style>{`
-        @keyframes flame-dance {
-          0%   { transform: translate(0, 0) scale(1) rotate(0deg);
-                 filter: drop-shadow(2px 2px 0 #000) drop-shadow(0 0 8px rgba(255,69,0,0.6))  hue-rotate(0deg)  saturate(1.3) brightness(1.1); }
-          15%  { transform: translate(-1px, -1.5px) scale(1.03) rotate(-0.6deg);
-                 filter: drop-shadow(2px 2px 0 #000) drop-shadow(0 0 14px rgba(255,140,0,0.75)) hue-rotate(20deg) saturate(1.6) brightness(1.3); }
-          28%  { transform: translate(1px, -2px) scale(1.01) rotate(0.8deg);
-                 filter: drop-shadow(2px 2px 0 #000) drop-shadow(0 0 10px rgba(255,170,0,0.8))  hue-rotate(40deg) saturate(1.8) brightness(1.35); }
-          45%  { transform: translate(-1.5px, -1px) scale(1.04) rotate(-0.8deg);
-                 filter: drop-shadow(2px 2px 0 #000) drop-shadow(0 0 18px rgba(255,204,0,0.85)) hue-rotate(60deg) saturate(2.0) brightness(1.45); }
-          60%  { transform: translate(0, -2px) scale(1.02) rotate(0.3deg);
-                 filter: drop-shadow(2px 2px 0 #000) drop-shadow(0 0 12px rgba(255,140,0,0.7))  hue-rotate(35deg) saturate(1.7) brightness(1.25); }
-          78%  { transform: translate(1px, -1px) scale(1.01) rotate(-0.2deg);
-                 filter: drop-shadow(2px 2px 0 #000) drop-shadow(0 0 10px rgba(255,69,0,0.6))   hue-rotate(10deg) saturate(1.4) brightness(1.15); }
-          100% { transform: translate(0, 0) scale(1) rotate(0deg);
-                 filter: drop-shadow(2px 2px 0 #000) drop-shadow(0 0 8px rgba(255,69,0,0.6))    hue-rotate(0deg)  saturate(1.3) brightness(1.1); }
-        }
-        .flicker-flame { animation: flame-dance 500ms cubic-bezier(0.4, 0, 0.6, 1); }
-      `}</style>
-      <div
-        role="button"
-        tabIndex={0}
-        aria-label="Etch the cycle"
-        onMouseDown={handlePressStart}
-        onMouseUp={handlePressEnd}
-        onMouseLeave={() => setPressed(false)}
-        onMouseEnter={onHover}
-        onKeyDown={handleKey}
-        className="fixed bottom-5 right-5 z-40 no-print cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-paper focus-visible:outline-offset-2"
-      >
-        <img
-          src="/reference/gurren_flame.svg"
-          alt=""
-          aria-hidden="true"
-          className={`block w-[72px] h-[72px] ${flickering ? 'flicker-flame' : ''}`}
-          style={{
-            filter: flickering
-              ? undefined
-              : 'drop-shadow(2px 2px 0 #000) drop-shadow(0 2px 6px rgba(0,0,0,0.45))',
-            transition: 'filter 120ms ease-out',
-          }}
-        />
-      </div>
-    </>
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label="Etch the cycle"
+      onMouseDown={handlePressStart}
+      onMouseUp={handlePressEnd}
+      onMouseLeave={() => setPressed(false)}
+      onMouseEnter={onHover}
+      onKeyDown={handleKey}
+      className="fixed bottom-5 right-5 z-40 no-print cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-paper focus-visible:outline-offset-2"
+    >
+      <img
+        src="/reference/gurren_flame.svg"
+        alt=""
+        aria-hidden="true"
+        className="block w-[72px] h-[72px]"
+        style={{
+          // Shared flame-outer-btn filter runs first (turbulence displacement, amber palette,
+          // dropout holes); drop-shadow layers on top for manga hard offset. Composes the
+          // same visual technique used on the blade inscriptions — coherent flicker language.
+          filter: flickering
+            ? 'url(#flame-outer-btn) drop-shadow(3px 3px 0 #000)'
+            : 'drop-shadow(2px 2px 0 #000) drop-shadow(0 2px 6px rgba(0,0,0,0.45))',
+          transform: pressed ? 'translate(2px, 2px)' : 'none',
+          transition: 'transform 80ms ease-out',
+        }}
+      />
+    </div>
   )
 }
 
@@ -745,6 +728,35 @@ export default function SummaryPage() {
 
   return (
     <main ref={mainRef} className="relative h-[100dvh] overflow-hidden bg-gtl-void">
+
+      {/* ── Shared SVG filter defs (accessible via CSS filter: url(#…) from any element) ──
+           flame-outer-btn is a button-scaled version of the inscription flame-outer filter:
+           smaller displacement (72px canvas vs viewBox-compressed inscription SVG), tighter
+           blur, coarser dropout so holes are still readable at the button render size. Same
+           turbulence type, same animated baseFrequency technique, same amber palette. */}
+      <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute' }}>
+        <defs>
+          <filter id="flame-outer-btn" x="-30%" y="-30%" width="160%" height="160%">
+            <feTurbulence type="turbulence" baseFrequency="0.05 0.08" numOctaves="4" seed="3" result="edgeNoise">
+              <animate attributeName="baseFrequency" values="0.05 0.08;0.04 0.10;0.06 0.06;0.05 0.08" dur="700ms" repeatCount="indefinite"/>
+            </feTurbulence>
+            <feDisplacementMap in="SourceGraphic" in2="edgeNoise" scale="12" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+            <feGaussianBlur in="displaced" stdDeviation="0.6" result="blurred"/>
+            <feTurbulence type="turbulence" baseFrequency="0.18 0.28" numOctaves="3" seed="1" result="dropoutNoise">
+              <animate attributeName="baseFrequency"
+                values="0.18 0.28;0.16 0.32;0.20 0.24;0.18 0.28"
+                dur="250ms" repeatCount="indefinite"/>
+            </feTurbulence>
+            <feColorMatrix in="dropoutNoise" type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0   2.8 0 0 0 -1.3" result="dropoutMask"/>
+            <feComposite in="blurred" in2="dropoutMask" operator="in" result="perforated"/>
+            <feComponentTransfer in="perforated" result="tapered">
+              <feFuncA type="table" tableValues="0 0 0.15 0.4 0.7 0.9 1"/>
+            </feComponentTransfer>
+            {/* amber #ffaa00 */}
+            <feColorMatrix in="tapered" type="matrix" values="0 0 0 0 1      0 0 0 0 0.667  0 0 0 0 0      0 0 0 0.9 0"/>
+          </filter>
+        </defs>
+      </svg>
 
       {/* ── Print styles ── */}
       <style>{`
