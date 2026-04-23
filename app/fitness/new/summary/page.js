@@ -303,7 +303,7 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                 how they alpha-blend over the red blade. */}
             <filter id="flame-outer" x="-80%" y="-120%" width="260%" height="340%">
               <feTurbulence type="fractalNoise" baseFrequency="0.015 0.06" numOctaves="2" seed="3" result="noise">
-                <animate attributeName="baseFrequency" values="0.015 0.06;0.012 0.08;0.018 0.05;0.015 0.06" dur="3100ms" repeatCount="indefinite"/>
+                <animate attributeName="baseFrequency" values="0.015 0.06;0.012 0.08;0.018 0.05;0.015 0.06" dur="700ms" repeatCount="indefinite"/>
               </feTurbulence>
               <feDisplacementMap in="SourceGraphic" in2="noise" scale="22" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
               <feGaussianBlur in="displaced" stdDeviation="5.0" result="blurred"/>
@@ -316,7 +316,7 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
             </filter>
             <filter id="flame-inner" x="-60%" y="-100%" width="220%" height="300%">
               <feTurbulence type="fractalNoise" baseFrequency="0.02 0.09" numOctaves="2" seed="11" result="noise">
-                <animate attributeName="baseFrequency" values="0.02 0.09;0.024 0.07;0.018 0.11;0.02 0.09" dur="2400ms" repeatCount="indefinite"/>
+                <animate attributeName="baseFrequency" values="0.02 0.09;0.024 0.07;0.018 0.11;0.02 0.09" dur="550ms" repeatCount="indefinite"/>
               </feTurbulence>
               <feDisplacementMap in="SourceGraphic" in2="noise" scale="12" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
               <feGaussianBlur in="displaced" stdDeviation="2.5" result="blurred"/>
@@ -328,7 +328,7 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
             </filter>
             <filter id="flame-base" x="-40%" y="-70%" width="180%" height="240%">
               <feTurbulence type="fractalNoise" baseFrequency="0.03 0.12" numOctaves="2" seed="17" result="noise">
-                <animate attributeName="baseFrequency" values="0.03 0.12;0.028 0.14;0.032 0.10;0.03 0.12" dur="2000ms" repeatCount="indefinite"/>
+                <animate attributeName="baseFrequency" values="0.03 0.12;0.028 0.14;0.032 0.10;0.03 0.12" dur="600ms" repeatCount="indefinite"/>
               </feTurbulence>
               <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
               <feGaussianBlur in="displaced" stdDeviation="1.2" result="blurred"/>
