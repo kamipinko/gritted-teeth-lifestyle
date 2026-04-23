@@ -740,7 +740,7 @@ export default function SummaryPage() {
             <feTurbulence type="turbulence" baseFrequency="0.05 0.08" numOctaves="4" seed="3" result="edgeNoise">
               <animate attributeName="baseFrequency" values="0.05 0.08;0.04 0.10;0.06 0.06;0.05 0.08" dur="700ms" repeatCount="indefinite"/>
             </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="edgeNoise" scale="12" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+            <feDisplacementMap in="SourceGraphic" in2="edgeNoise" scale="5" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
             <feGaussianBlur in="displaced" stdDeviation="0.6" result="blurred"/>
             {/* No dropout on the button variant — single-layer render needs all pixels;
                 the 70% dropout that works for the three-layer inscriptions would destroy
