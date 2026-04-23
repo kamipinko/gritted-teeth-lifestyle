@@ -330,60 +330,71 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                   tilted local frame — particles flow up-along-blade through the cutouts.
                   Deterministic per-index delay keeps SSR/CSR consistent. */}
               <g mask="url(#inscription-window)" className="inscription-etching" style={{ pointerEvents: 'none' }}>
-                {dayLabels.flatMap((dl, dayIdx) => {
-                  const PARTS = 18
-                  return Array.from({ length: PARTS }).map((_, i) => {
-                    // Deterministic pseudo-random spread via prime multipliers + modulo.
-                    // Same index → same values across SSR/CSR renders (no hydration mismatch).
-                    // `k` folds the inscription's day index in so each inscription's particles
-                    // land on a different hash path — desyncs the six glyphs from each other.
-                    const k  = i + dayIdx * 23
-                    const h  = (k * 97) % 1000
-                    const h2 = (k * 53 + k * k) % 1000
-                    const h3 = (k * 31 + 17) % 1000
+                {(() => {
+                  // GLSL-style fractional-sin hash — adjacent integer seeds produce wildly
+                  // uncorrelated outputs in [0, 1). Same input → same output (SSR/CSR safe),
+                  // but no visible banding the way (k*97) % 1000 has.
+                  const hash01 = (n) => {
+                    const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453
+                    return x - Math.floor(x)
+                  }
+                  return dayLabels.flatMap((dl, dayIdx) => {
+                    const PARTS = 18
+                    return Array.from({ length: PARTS }).map((_, i) => {
+                      const k = i + dayIdx * 23
+                      // Each property reads from its own uncorrelated hash stream — no two
+                      // properties derived from the same seed, so size/delay/drift/etc don't
+                      // correlate and reveal structure.
+                      const rX      = hash01(k * 1)
+                      const rXj     = hash01(k * 2 + 5)
+                      const rDly    = hash01(k * 3 + 11)
+                      const rDur    = hash01(k * 5 + 17)
+                      const rRise   = hash01(k * 7 + 19)
+                      const rSize   = hash01(k * 11 + 23)
+                      const rPeak   = hash01(k * 13 + 29)
+                      const rDrft   = hash01(k * 17 + 31)
+                      const rStartJ = hash01(k * 19 + 37)
+                      const rEndR   = hash01(k * 23 + 41)
+                      const rPeakT  = hash01(k * 29 + 43)
 
-                    // Pure-hash xOff (no index-based uniform spread) so inscriptions don't
-                    // line up in the same 18 x-columns across glyphs. Range ~±130 units.
-                    const xOff      = ((h2 % 200) - 100) + ((h % 60) - 30)
-                    // Per-inscription phase offset — stagger each glyph ~1/6 cycle so
-                    // density peaks land at different moments (when glyph 0 is peaking,
-                    // glyph 3 ≈ 180° out-of-phase is in a trough). 217 is coprime with
-                    // the 1400ms hash range, avoids accidental re-alignment.
-                    const phaseOffset = dayIdx * 217
-                    const delay     = (h2 * 1.4 + phaseOffset) % 1500      // 0-1500ms
-                    const dur       = 800 + (h3 % 700)                     // 800-1500ms
-                    const rise      = 180 + (h3 % 160)                     // 180-340 vb units
-                    const size      = 14 + (h % 28)                        // r=14-42
-                    const yJitter   = h3 % 60                              // 0-60 start-y jitter
-                    const peakOp    = (0.85 - (h % 30) / 200).toFixed(3)   // 0.70-0.85
-                    const peakTime  = (0.15 + (h3 % 20) / 100).toFixed(2)  // 0.15-0.34
-                    const endR      = 2 + (h % 4)                          // 2-5 shrink-to-dot
+                      const xOff   = (rX - 0.5) * 200 + (rXj - 0.5) * 60
+                      const delay  = (rDly * 1400 + dayIdx * 217) % 1500     // keeps per-inscription phase stagger
+                      const dur    = 800 + rDur * 700                        // 800-1500ms
+                      const rise   = 180 + rRise * 160                       // 180-340 vb units
+                      const size   = 14 + rSize * 28                         // r 14-42
+                      const peakA  = 0.35 + rPeak * 0.6                      // 0.35-0.95 (wider amplitude)
+                      const driftX = (rDrft - 0.5) * 80                      // ±40 horizontal drift during rise
+                      const startY = 120 + (rStartJ - 0.5) * 140             // ±70 start-y jitter
+                      const endR   = 2 + rEndR * 4                           // 2-6 shrink-to-dot
+                      const peakT  = 0.15 + rPeakT * 0.2                     // 0.15-0.35 ramp-in timing
 
-                    return (
-                      <circle
-                        key={`${dl.iso}-sp${i}`}
-                        cx={dl.cx + xOff}
-                        cy={dl.cy + 120 + yJitter}
-                        r={size}
-                        fill="#ff5000"
-                        opacity={0}
-                      >
-                        <animateTransform attributeName="transform" type="translate"
-                          values={`0 0; 0 -${rise}`} dur={`${dur}ms`}
-                          begin={`${delay}ms`} repeatCount="indefinite"/>
-                        <animate attributeName="opacity"
-                          values={`0; ${peakOp}; 0`}
-                          keyTimes={`0; ${peakTime}; 1`}
-                          dur={`${dur}ms`}
-                          begin={`${delay}ms`} repeatCount="indefinite"/>
-                        <animate attributeName="r"
-                          values={`${size}; ${size}; ${endR}`}
-                          dur={`${dur}ms`}
-                          begin={`${delay}ms`} repeatCount="indefinite"/>
-                      </circle>
-                    )
+                      return (
+                        <circle
+                          key={`${dl.iso}-sp${i}`}
+                          cx={dl.cx + xOff}
+                          cy={dl.cy + startY}
+                          r={size}
+                          fill="#ff5000"
+                          opacity={0}
+                        >
+                          <animateTransform attributeName="transform" type="translate"
+                            values={`0 0; ${(driftX * 0.4).toFixed(2)} -${(rise * 0.5).toFixed(2)}; ${driftX.toFixed(2)} -${rise.toFixed(2)}`}
+                            dur={`${dur.toFixed(0)}ms`}
+                            begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                          <animate attributeName="opacity"
+                            values={`0; ${peakA.toFixed(2)}; 0`}
+                            keyTimes={`0; ${peakT.toFixed(2)}; 1`}
+                            dur={`${dur.toFixed(0)}ms`}
+                            begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                          <animate attributeName="r"
+                            values={`${size.toFixed(2)}; ${size.toFixed(2)}; ${endR.toFixed(2)}`}
+                            dur={`${dur.toFixed(0)}ms`}
+                            begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                        </circle>
+                      )
+                    })
                   })
-                })}
+                })()}
               </g>
             </>
           )}
