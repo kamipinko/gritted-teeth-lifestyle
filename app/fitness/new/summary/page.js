@@ -339,12 +339,9 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                     return x - Math.floor(x)
                   }
                   return dayLabels.flatMap((dl, dayIdx) => {
-                    const PARTS = 18
+                    const PARTS = 28
                     return Array.from({ length: PARTS }).map((_, i) => {
                       const k = i + dayIdx * 23
-                      // Each property reads from its own uncorrelated hash stream — no two
-                      // properties derived from the same seed, so size/delay/drift/etc don't
-                      // correlate and reveal structure.
                       const rX      = hash01(k * 1)
                       const rXj     = hash01(k * 2 + 5)
                       const rDly    = hash01(k * 3 + 11)
@@ -355,18 +352,16 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                       const rDrft   = hash01(k * 17 + 31)
                       const rStartJ = hash01(k * 19 + 37)
                       const rEndR   = hash01(k * 23 + 41)
-                      const rPeakT  = hash01(k * 29 + 43)
 
                       const xOff   = (rX - 0.5) * 200 + (rXj - 0.5) * 60
-                      const delay  = (rDly * 1400 + dayIdx * 217) % 1500     // keeps per-inscription phase stagger
-                      const dur    = 800 + rDur * 700                        // 800-1500ms
-                      const rise   = 180 + rRise * 160                       // 180-340 vb units
-                      const size   = 14 + rSize * 28                         // r 14-42
-                      const peakA  = 0.35 + rPeak * 0.6                      // 0.35-0.95 (wider amplitude)
-                      const driftX = (rDrft - 0.5) * 80                      // ±40 horizontal drift during rise
+                      const delay  = (rDly * 600 + dayIdx * 131) % 700       // tight 0-700ms, per-inscription stagger via 131
+                      const dur    = 420 + rDur * 480                        // 420-900ms (fast rise)
+                      const rise   = 280 + rRise * 200                       // 280-480 vb units (longer travel)
+                      const size   = 20 + rSize * 38                         // r 20-58 (bigger blobs)
+                      const peakA  = 0.5 + rPeak * 0.5                       // 0.5-1.0 (bright, never dim)
+                      const driftX = (rDrft - 0.5) * 180                     // ±90 (violent lateral curl)
                       const startY = 120 + (rStartJ - 0.5) * 140             // ±70 start-y jitter
                       const endR   = 2 + rEndR * 4                           // 2-6 shrink-to-dot
-                      const peakT  = 0.15 + rPeakT * 0.2                     // 0.15-0.35 ramp-in timing
 
                       return (
                         <circle
@@ -381,9 +376,10 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                             values={`0 0; ${(driftX * 0.4).toFixed(2)} -${(rise * 0.5).toFixed(2)}; ${driftX.toFixed(2)} -${rise.toFixed(2)}`}
                             dur={`${dur.toFixed(0)}ms`}
                             begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                          {/* Front-loaded opacity: ignite in 8%, hold through 55%, fade to 0 by end. */}
                           <animate attributeName="opacity"
-                            values={`0; ${peakA.toFixed(2)}; 0`}
-                            keyTimes={`0; ${peakT.toFixed(2)}; 1`}
+                            values={`0; ${peakA.toFixed(2)}; ${peakA.toFixed(2)}; 0`}
+                            keyTimes="0; 0.08; 0.55; 1"
                             dur={`${dur.toFixed(0)}ms`}
                             begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
                           <animate attributeName="r"
