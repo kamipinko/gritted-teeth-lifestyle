@@ -369,7 +369,7 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                           cx={dl.cx + xOff}
                           cy={dl.cy + startY}
                           r={size}
-                          fill="#ff5000"
+                          fill="#ffd700"
                           opacity={0}
                         >
                           <animateTransform attributeName="transform" type="translate"
