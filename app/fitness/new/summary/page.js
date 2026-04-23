@@ -325,30 +325,6 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
               {/* amber #ffaa00 (255,170,0) at 0.9 alpha — the wavering outer tips */}
               <feColorMatrix in="tapered" type="matrix" values="0 0 0 0 1      0 0 0 0 0.667  0 0 0 0 0      0 0 0 0.9 0"/>
             </filter>
-            <filter id="flame-inner" x="-60%" y="-100%" width="220%" height="300%">
-              <feTurbulence type="turbulence" baseFrequency="0.018 0.03" numOctaves="4" seed="11" result="noise">
-                <animate attributeName="baseFrequency" values="0.018 0.03;0.016 0.038;0.020 0.024;0.018 0.03" dur="550ms" repeatCount="indefinite"/>
-              </feTurbulence>
-              <feDisplacementMap in="SourceGraphic" in2="noise" scale="40" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
-              <feGaussianBlur in="displaced" stdDeviation="1.2" result="blurred"/>
-              <feComponentTransfer in="blurred" result="tapered">
-                <feFuncA type="table" tableValues="0 0 0.15 0.4 0.7 0.9 1"/>
-              </feComponentTransfer>
-              {/* deep orange #ff5500 (255,85,0) at full alpha — mid aura hugging glyphs */}
-              <feColorMatrix in="tapered" type="matrix" values="0 0 0 0 1      0 0 0 0 0.333  0 0 0 0 0      0 0 0 1 0"/>
-            </filter>
-            <filter id="flame-base" x="-40%" y="-70%" width="180%" height="240%">
-              <feTurbulence type="turbulence" baseFrequency="0.025 0.04" numOctaves="4" seed="17" result="noise">
-                <animate attributeName="baseFrequency" values="0.025 0.04;0.022 0.048;0.028 0.032;0.025 0.04" dur="600ms" repeatCount="indefinite"/>
-              </feTurbulence>
-              <feDisplacementMap in="SourceGraphic" in2="noise" scale="18" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
-              <feGaussianBlur in="displaced" stdDeviation="0.6" result="blurred"/>
-              <feComponentTransfer in="blurred" result="tapered">
-                <feFuncA type="table" tableValues="0 0 0.15 0.4 0.7 0.9 1"/>
-              </feComponentTransfer>
-              {/* pure red #ff2200 (255,34,0) — base layer closest to the glyphs */}
-              <feColorMatrix in="tapered" type="matrix" values="0 0 0 0 1      0 0 0 0 0.133  0 0 0 0 0      0 0 0 1 0"/>
-            </filter>
           </defs>
           {/* Flame-aura overlay — mounts only while `glowing` is true. Sits BEHIND the
               difference-blend text so the dancing tongues lick around the crisp etched
@@ -369,6 +345,9 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                    animation-delay offsets on each stacked animation so nothing locks
                    in step. Layers SNAP between states — reads as flame flicker, not
                    a glow-pulse. */
+                /* Single-layer staccato — only flame-outer renders now. Kept short
+                   step-timed opacity + offset brightness so the amber dropout pattern
+                   flickers on and off instead of sitting static. */
                 @keyframes shimmer-outer {
                   0%   { opacity: 1.0 }
                   14%  { opacity: 0.05 }
@@ -378,42 +357,16 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                   81%  { opacity: 0.2 }
                   100% { opacity: 1.0 }
                 }
-                @keyframes shimmer-inner {
-                  0%   { opacity: 0.15 }
-                  12%  { opacity: 0.85 }
-                  31%  { opacity: 0.1 }
-                  49%  { opacity: 1.0 }
-                  68%  { opacity: 0.2 }
-                  83%  { opacity: 0.75 }
-                  100% { opacity: 0.15 }
-                }
-                @keyframes shimmer-base {
-                  0%   { opacity: 0.2 }
-                  18%  { opacity: 0.6 }
-                  34%  { opacity: 1.0 }
-                  53%  { opacity: 0.25 }
-                  71%  { opacity: 0.8 }
-                  89%  { opacity: 0.15 }
-                  100% { opacity: 0.2 }
-                }
                 @keyframes outer-bright { 0%,100%{filter:brightness(1)} 25%{filter:brightness(1.5)} 60%{filter:brightness(0.85)} 80%{filter:brightness(1.3)} }
-                @keyframes inner-bright { 0%,100%{filter:brightness(1)} 22%{filter:brightness(0.9)}  55%{filter:brightness(1.6)}  78%{filter:brightness(1.1)} }
-                @keyframes base-bright  { 0%,100%{filter:brightness(1)} 30%{filter:brightness(1.4)}  58%{filter:brightness(0.9)}  85%{filter:brightness(1.5)} }
                 .shimmer-outer {
                   animation: shimmer-outer 320ms steps(4, end) infinite, outer-bright 270ms steps(3, end) infinite;
                   animation-delay: 0ms, 40ms;
                 }
-                .shimmer-inner {
-                  animation: shimmer-inner 280ms steps(4, end) infinite, inner-bright 360ms steps(3, end) infinite;
-                  animation-delay: 80ms, 150ms;
-                }
-                .shimmer-base  {
-                  animation: shimmer-base  380ms steps(4, end) infinite, base-bright  240ms steps(3, end) infinite;
-                  animation-delay: 140ms, 55ms;
-                }
               `}</style>
               <g className="inscription-etching" style={{ pointerEvents: 'none' }}>
-                {/* Outer hot tips — amber, widest displacement */}
+                {/* Only flame-outer renders — its 70% dropout holes now expose the dark
+                    blade/void behind instead of being filled by inner/base layers, so
+                    the scattered-pixel 'static' pattern is visible. */}
                 <g filter="url(#flame-outer)" className="shimmer-outer">
                   {dayLabels.map((dl) => (
                     <g key={`flame-outer-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
@@ -421,33 +374,12 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                     </g>
                   ))}
                 </g>
-                {/* Inner mid-heat — deep-orange aura hugging the glyphs */}
-                <g filter="url(#flame-inner)" className="shimmer-inner">
-                  {dayLabels.map((dl) => (
-                    <g key={`flame-inner-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
-                      {renderDayInscription(dl, { glowFill: '#ff5500' })}
-                    </g>
-                  ))}
-                </g>
-                {/* Base red — tightest displacement, closest to the glyph silhouette */}
-                <g filter="url(#flame-base)" className="shimmer-base">
-                  {dayLabels.map((dl) => (
-                    <g key={`flame-base-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
-                      {renderDayInscription(dl, { glowFill: '#ff2200' })}
-                    </g>
-                  ))}
-                </g>
-                {/* Last-day LEFT half flame cover. The base text for this half renders
-                    outside the difference-blend group as a solid red outline variant,
-                    which would otherwise occlude the flame beneath. Repeating the flame
-                    layers here — clipped to the left-half plane — makes the glow visible
-                    on BOTH halves of the last day. */}
+                {/* Last-day LEFT half flame cover — clipped duplicate of the outer layer
+                    so the outline-variant text on that half doesn't occlude the glow. */}
                 {lastDay && (
                   <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
                     <g clipPath="url(#last-day-left)">
                       <g filter="url(#flame-outer)" className="shimmer-outer">{renderDayInscription(lastDay, { glowFill: '#ffaa00' })}</g>
-                      <g filter="url(#flame-inner)" className="shimmer-inner">{renderDayInscription(lastDay, { glowFill: '#ff5500' })}</g>
-                      <g filter="url(#flame-base)" className="shimmer-base">{renderDayInscription(lastDay, { glowFill: '#ff2200' })}</g>
                     </g>
                   </g>
                 )}
