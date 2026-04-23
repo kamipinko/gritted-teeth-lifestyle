@@ -339,7 +339,7 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                     return x - Math.floor(x)
                   }
                   return dayLabels.flatMap((dl, dayIdx) => {
-                    const PARTS = 84
+                    const PARTS = 40
                     return Array.from({ length: PARTS }).map((_, i) => {
                       const k = i + dayIdx * 23
                       const rX      = hash01(k * 1)
@@ -354,12 +354,12 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                       const rEndR   = hash01(k * 23 + 41)
 
                       const xOff   = (rX - 0.5) * 200 + (rXj - 0.5) * 60
-                      const delay  = (rDly * 200 + dayIdx * 131) % 300       // very tight 0-300ms, per-inscription stagger still via 131
-                      const dur    = 140 + rDur * 160                        // 140-300ms (blazing fast rise)
-                      const rise   = 840 + rRise * 600                       // 840-1440 vb units (long travel per cycle)
-                      const size   = 60 + rSize * 114                        // r 60-174 (huge blobs)
+                      const delay  = (rDly * 400 + dayIdx * 131) % 500       // 0-500ms, per-inscription stagger via 131
+                      const dur    = 280 + rDur * 320                        // 280-600ms
+                      const rise   = 400 + rRise * 300                       // 400-700 vb units
+                      const size   = 16 + rSize * 32                         // r 16-48 (visible flames, not wall-to-wall fill)
                       const peakA  = 0.5 + rPeak * 0.5                       // 0.5-1.0
-                      const driftX = (rDrft - 0.5) * 540                     // ±270 (chaotic lateral)
+                      const driftX = (rDrft - 0.5) * 260                     // ±130 lateral
                       const startY = 120 + (rStartJ - 0.5) * 140             // ±70 start-y jitter
                       const endR   = 2 + rEndR * 4                           // 2-6 shrink-to-dot
 
