@@ -571,56 +571,77 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
 
   const triggerFlicker = () => {
     setFlickering(true)
-    setTimeout(() => setFlickering(false), 500)
-  }
-  const handlePressStart = () => { setPressed(true); triggerFlicker() }
-  const handlePressEnd = () => { setPressed(false); onFire() }
-  const handleKey = (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      triggerFlicker()
-      onFire()
-    }
+    setTimeout(() => setFlickering(false), 900)
   }
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      aria-label="Etch the cycle"
-      onMouseDown={handlePressStart}
-      onMouseUp={handlePressEnd}
-      onMouseLeave={() => setPressed(false)}
-      onMouseEnter={onHover}
-      onKeyDown={handleKey}
-      className="fixed bottom-5 right-5 z-40 no-print cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-paper focus-visible:outline-offset-2"
-    >
-      <img
-        src="/reference/gurren_flame.svg"
-        alt=""
-        aria-hidden="true"
-        className="block w-[72px] h-[72px]"
-        style={{
-          // Shared flame-outer-btn filter runs first (turbulence displacement, amber palette,
-          // dropout holes); drop-shadow layers on top for manga hard offset. Composes the
-          // same visual technique used on the blade inscriptions — coherent flicker language.
-          filter: flickering
-            ? 'url(#flame-outer-btn) drop-shadow(3px 3px 0 #000)'
-            : 'drop-shadow(2px 2px 0 #000) drop-shadow(0 2px 6px rgba(0,0,0,0.45))',
-          // Lifearc top-fade: sparks dim toward the top of the button so each spec
-          // dies out as it rises. Only applied while flickering so the rest-state
-          // flame silhouette stays fully opaque.
-          maskImage: flickering
-            ? 'linear-gradient(to top, black 0%, black 55%, rgba(0,0,0,0.25) 85%, transparent 100%)'
-            : undefined,
-          WebkitMaskImage: flickering
-            ? 'linear-gradient(to top, black 0%, black 55%, rgba(0,0,0,0.25) 85%, transparent 100%)'
-            : undefined,
-          transform: pressed ? 'translate(2px, 2px)' : 'none',
-          transition: 'transform 80ms ease-out',
-        }}
-      />
-    </div>
+    <>
+      <style>{`
+        @keyframes btn-particle-rise {
+          0%   { opacity: 0; transform: translateY(0) scale(0.8); }
+          25%  { opacity: 1; }
+          100% { opacity: 0; transform: translateY(-56px) scale(0); }
+        }
+        .btn-fire {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          filter: blur(1px);
+          z-index: 5;
+        }
+        .btn-particle {
+          position: absolute;
+          bottom: 6px;
+          left: var(--xoff);
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(255,80,0,0.9) 20%, rgba(255,140,0,0.3) 55%, rgba(255,140,0,0) 75%);
+          mix-blend-mode: screen;
+          opacity: 0;
+          animation: btn-particle-rise 800ms ease-out var(--delay) infinite;
+          transform-origin: center;
+        }
+      `}</style>
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label="Etch the cycle"
+        onMouseDown={() => { setPressed(true); triggerFlicker() }}
+        onMouseUp={() => { setPressed(false); onFire() }}
+        onMouseLeave={() => setPressed(false)}
+        onMouseEnter={onHover}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); triggerFlicker(); onFire() } }}
+        className="fixed bottom-5 right-5 z-40 no-print cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-paper focus-visible:outline-offset-2"
+        style={{ width: 72, height: 72 }}
+      >
+        <img
+          src="/reference/gurren_flame.svg"
+          alt=""
+          aria-hidden="true"
+          className="block w-[72px] h-[72px] relative z-10"
+          style={{
+            filter: 'drop-shadow(2px 2px 0 #000) drop-shadow(0 2px 6px rgba(0,0,0,0.45))',
+            transform: pressed ? 'translate(2px, 2px)' : 'none',
+            transition: 'transform 80ms ease-out',
+          }}
+        />
+        {flickering && (
+          <div className="btn-fire" aria-hidden="true">
+            {Array.from({ length: 14 }).map((_, i) => (
+              <div
+                key={i}
+                className="btn-particle"
+                style={{
+                  '--delay': `${(i * 60 + (i % 3) * 37) % 900}ms`,
+                  '--xoff': `${(i / 13) * 100}%`,
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </>
   )
 }
 
@@ -743,44 +764,6 @@ export default function SummaryPage() {
            smaller displacement (72px canvas vs viewBox-compressed inscription SVG), tighter
            blur, coarser dropout so holes are still readable at the button render size. Same
            turbulence type, same animated baseFrequency technique, same amber palette. */}
-      <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute' }}>
-        <defs>
-          {/* Filter region extends 120% ABOVE the source so feOffset's upward scroll
-              has fresh noise space — hides the feOffset loop-back pop. The lifearc
-              top-fade is applied as a CSS mask-image on the <img> element instead
-              of an feImage+feComposite inside the filter (feImage referencing a
-              gradient fails silently in some browsers — killed all output). */}
-          <filter id="flame-outer-btn" x="-20%" y="-120%" width="140%" height="340%">
-            <feTurbulence type="turbulence" baseFrequency="0.05 0.08" numOctaves="4" seed="3" result="edgeNoise">
-              <animate attributeName="baseFrequency" values="0.05 0.08;0.04 0.10;0.06 0.06;0.05 0.08" dur="700ms" repeatCount="indefinite"/>
-            </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="edgeNoise" scale="5" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
-            <feGaussianBlur in="displaced" stdDeviation="0.6" result="blurred"/>
-            {/* Taper + palette FIRST on the clean blurred silhouette, so we don't
-                lose any pixels to compounding. Dropout happens at the very end as
-                the final stage — punches crisp holes into the finished amber flame. */}
-            <feComponentTransfer in="blurred" result="tapered">
-              <feFuncA type="table" tableValues="0 0 0.15 0.4 0.7 0.9 1"/>
-            </feComponentTransfer>
-            {/* amber #ffaa00 */}
-            <feColorMatrix in="tapered" type="matrix" values="0 0 0 0 1      0 0 0 0 0.667  0 0 0 0 0      0 0 0 0.9 0" result="colored"/>
-            {/* Mild dropout: ~77% survive. stitchTiles='stitch' on the noise makes
-                it tile seamlessly so the upward scroll doesn't show a loop seam. */}
-            <feTurbulence type="turbulence" baseFrequency="0.18 0.28" numOctaves="3" seed="1" stitchTiles="stitch" result="dropoutNoiseBtn">
-              <animate attributeName="baseFrequency" values="0.18 0.28;0.16 0.32;0.20 0.24;0.18 0.28" dur="280ms" repeatCount="indefinite"/>
-            </feTurbulence>
-            <feColorMatrix in="dropoutNoiseBtn" type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0   2.2 0 0 0 -0.5" result="dropoutMaskBtnRaw"/>
-            {/* Upward drift: animating dy from 0 to -80 slides the mask up through the
-                flame each 500ms cycle. Viewer perceives survivors as continuously rising
-                specs; taller filter region above hides the loop seam. */}
-            <feOffset in="dropoutMaskBtnRaw" dx="0" dy="0" result="dropoutMaskBtn">
-              <animate attributeName="dy" values="0;-80" dur="500ms" repeatCount="indefinite"/>
-            </feOffset>
-            <feComposite in="colored" in2="dropoutMaskBtn" operator="in"/>
-          </filter>
-        </defs>
-      </svg>
-
       {/* ── Print styles ── */}
       <style>{`
         @media print {
