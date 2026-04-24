@@ -402,7 +402,14 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off', h
               (hot=true): normal blend over dark-orange DEPTH_STACK_HOT so the letters glow warm without
               any difference(warm, red)→green contamination. Opacity snaps binary on `glowing` only —
               base is hidden only during the flame particle window, snaps back the instant flames end. */}
-          <g style={{ mixBlendMode: hot ? 'normal' : 'difference', opacity: glowing ? 0 : 1, transition: 'opacity 0ms' }}>
+          <g style={{
+            mixBlendMode: hot ? 'normal' : 'difference',
+            opacity: glowing ? 0 : 1,
+            transition: 'opacity 0ms, filter 300ms ease-out',
+            filter: hot
+              ? 'drop-shadow(0 0 3px #ff7a00) drop-shadow(0 0 8px rgba(255, 122, 0, 0.55)) drop-shadow(0 0 16px rgba(255, 80, 0, 0.3))'
+              : 'none',
+          }}>
             {dayLabels.map((dl, i) => {
               const textAngle = dl.angle - 90
               const isLast = i === lastIdx
@@ -421,7 +428,13 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off', h
               (no difference blend) even in the red state. */}
           {lastDay && (
             <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}
-               style={{ opacity: glowing ? 0 : 1, transition: 'opacity 0ms' }}>
+               style={{
+                 opacity: glowing ? 0 : 1,
+                 transition: 'opacity 0ms, filter 300ms ease-out',
+                 filter: hot
+                   ? 'drop-shadow(0 0 3px #ff7a00) drop-shadow(0 0 8px rgba(255, 122, 0, 0.55)) drop-shadow(0 0 16px rgba(255, 80, 0, 0.3))'
+                   : 'none',
+               }}>
               <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true, hot })}</g>
             </g>
           )}
