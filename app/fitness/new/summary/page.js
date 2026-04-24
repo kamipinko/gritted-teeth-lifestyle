@@ -1075,7 +1075,7 @@ export default function SummaryPage() {
           }
         }
         .weekday-flame-engulf {
-          animation: weekday-flame-engulf 280ms ease-out forwards;
+          animation: weekday-flame-engulf 140ms ease-out forwards;
           fill: #ffa840;
           pointer-events: none;
         }
