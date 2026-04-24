@@ -1002,8 +1002,8 @@ export default function SummaryPage() {
       <svg
         aria-hidden="true"
         className="fixed z-[20] pointer-events-none select-none"
-        width={160} height={60}
-        viewBox="0 0 160 60"
+        width={130} height={78}
+        viewBox="0 0 130 78"
         style={{
           bottom: 'calc(20px + 128px + 60px)',
           right: '40px',
@@ -1013,24 +1013,28 @@ export default function SummaryPage() {
         }}
       >
         <defs>
-          <mask id="watermark-window" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="60">
-            <rect x="0" y="0" width="160" height="60" fill="black"/>
-            <text x="80" y="42" textAnchor="middle"
+          <mask id="watermark-window" maskUnits="userSpaceOnUse" x="0" y="0" width="130" height="78">
+            <rect x="0" y="0" width="130" height="78" fill="black"/>
+            <text textAnchor="start"
               fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-              fontSize="16" fontWeight="600" letterSpacing="6" fill="white">ETCH CYCLE</text>
+              fontSize="18" fontWeight="600" letterSpacing="6" fill="white">
+              <tspan x="8"  y="30">ETCH</tspan>
+              <tspan x="34" y="62">CYCLE</tspan>
+            </text>
           </mask>
         </defs>
         {/* Base text — dim red idle, fully hidden while flickering so the particle flames
             (rendered AFTER through the mask) are the sole visible content inside letter shapes.
-            Same cheat the blade inscriptions use during their flame phase. */}
-        <text x="80" y="42" textAnchor="middle"
+            Two stacked tspans create the ETCH / CYCLE indented layout. */}
+        <text textAnchor="start"
           fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-          fontSize="16" fontWeight="600" letterSpacing="6"
+          fontSize="18" fontWeight="600" letterSpacing="6"
           className={flickering ? 'watermark-hot' : ''}
           fill='rgba(212, 24, 31, 0.65)'
           opacity={flickering ? 0 : 1}
           style={{ transition: 'opacity 0ms' }}>
-          ETCH CYCLE
+          <tspan x="8"  y="30">ETCH</tspan>
+          <tspan x="34" y="62">CYCLE</tspan>
         </text>
         {/* Particles AFTER — clipped to letter silhouettes via the mask, paint on top of the
             void-black base so the flames show through the letter shapes. */}
@@ -1045,13 +1049,13 @@ export default function SummaryPage() {
                 const rDur  = hash01(i * 5 + 17)
                 const rSize = hash01(i * 11 + 23)
                 const rPeak = hash01(i * 13 + 29)
-                const xOff  = rX * 160
+                const xOff  = rX * 130
                 const delay = rDly * 250
                 const dur   = 350 + rDur * 300
                 const size  = 12 + rSize * 14
                 const peakA = 0.55 + rPeak * 0.45
                 return (
-                  <circle key={`wm${i}`} cx={xOff} cy={62} r={size} fill="#ff5000" opacity={0}>
+                  <circle key={`wm${i}`} cx={xOff} cy={78} r={size} fill="#ff5000" opacity={0}>
                     <animateTransform attributeName="transform" type="translate"
                       values={`0 0; 0 -${50 + rSize * 20}`}
                       dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
