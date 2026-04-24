@@ -98,7 +98,7 @@ function DayCard({ iso, muscles, index }) {
    Source: public/reference/wakizashi.png → threshold → potrace → SVG.
    Diagonal pose: hilt upper-right, tip lower-left.
    ══════════════════════════════════════════════════════════════════════════ */
-function CycleBlade({ days, dailyPlan, glowing = false, bursting = false }) {
+function CycleBlade({ days, dailyPlan, glowing = false }) {
   const first = days[0] ? parseDate(days[0]) : null
   const last  = days[days.length - 1] ? parseDate(days[days.length - 1]) : null
   const dateRange = first && last
@@ -308,19 +308,6 @@ function CycleBlade({ days, dailyPlan, glowing = false, bursting = false }) {
                 </g>
               ))}
             </mask>
-            {/* Mummy-M god-ray burst gradients. Radial halo is the central bloom;
-                linear ray is a top-fade used on each of the 8 radiating triangles. */}
-            <radialGradient id="burst-halo" cx="50%" cy="50%" r="50%">
-              <stop offset="0%"   stopColor="white"   stopOpacity="1"/>
-              <stop offset="30%"  stopColor="#ffd700" stopOpacity="0.85"/>
-              <stop offset="65%"  stopColor="#ff8c00" stopOpacity="0.35"/>
-              <stop offset="100%" stopColor="#ff8c00" stopOpacity="0"/>
-            </radialGradient>
-            <linearGradient id="burst-ray" x1="0" y1="1" x2="0" y2="0">
-              <stop offset="0%"   stopColor="white"   stopOpacity="0.9"/>
-              <stop offset="50%"  stopColor="#ffd700" stopOpacity="0.5"/>
-              <stop offset="100%" stopColor="#ffd700" stopOpacity="0"/>
-            </linearGradient>
           </defs>
           {/* Flame-aura overlay — mounts only while `glowing` is true. Sits BEHIND the
               difference-blend text so the dancing tongues lick around the crisp etched
@@ -408,74 +395,6 @@ function CycleBlade({ days, dailyPlan, glowing = false, bursting = false }) {
                     })
                   })
                 })()}
-              </g>
-            </>
-          )}
-          {/* Mummy-M god-ray burst — fires when the rising-flame phase ends.
-              Per inscription: one radial halo expanding outward + 8 radiating
-              ray triangles at 45° increments. All 6 inscriptions burst at once
-              for this test (no stagger). screen blend-mode makes overlapping
-              rays additively brighten. */}
-          {bursting && (
-            <>
-              {/* CSS keyframes replace SMIL <animate>/<animateTransform> — Chromium
-                  has a quirk where SMIL begin='0s' + fill='freeze' on dynamically
-                  mounted elements treats 0s as document-start and freezes at the
-                  final keyframe before React ever paints. CSS animations start
-                  reliably on the frame after class application. */}
-              <style>{`
-                @keyframes halo-burst {
-                  0%   { transform: scale(0);    opacity: 0; }
-                  30%  { transform: scale(0.7);  opacity: 1; }
-                  45%  { transform: scale(1.0);  opacity: 1; }
-                  100% { transform: scale(1.35); opacity: 0; }
-                }
-                @keyframes ray-burst {
-                  0%   { transform: scale(0.2) rotate(var(--ray-angle)); opacity: 0; }
-                  30%  { transform: scale(1.6) rotate(var(--ray-angle)); opacity: 0.95; }
-                  100% { transform: scale(2.2) rotate(var(--ray-angle)); opacity: 0; }
-                }
-                .burst-halo {
-                  transform-origin: var(--cx) var(--cy);
-                  transform-box: fill-box;
-                  animation: halo-burst 500ms ease-out forwards;
-                }
-                .burst-ray {
-                  transform-origin: var(--cx) var(--cy);
-                  transform-box: fill-box;
-                  animation: ray-burst 500ms ease-out forwards;
-                }
-              `}</style>
-              <g style={{ mixBlendMode: 'screen', pointerEvents: 'none' }}>
-                {dayLabels.map((dl) => (
-                  <g key={`burst-${dl.iso}`}>
-                    <circle
-                      cx={dl.cx} cy={dl.cy} r={200}
-                      fill="url(#burst-halo)"
-                      className="burst-halo"
-                      style={{ '--cx': `${dl.cx}px`, '--cy': `${dl.cy}px` }}
-                    />
-                    {Array.from({ length: 8 }).map((_, i) => {
-                      const angle = i * 45
-                      const rayWidth = 14
-                      const rayLen = 170
-                      const points = `${dl.cx - rayWidth},${dl.cy} ${dl.cx + rayWidth},${dl.cy} ${dl.cx},${dl.cy - rayLen}`
-                      return (
-                        <polygon
-                          key={`ray-${dl.iso}-${i}`}
-                          points={points}
-                          fill="url(#burst-ray)"
-                          className="burst-ray"
-                          style={{
-                            '--cx': `${dl.cx}px`,
-                            '--cy': `${dl.cy}px`,
-                            '--ray-angle': `${angle}deg`,
-                          }}
-                        />
-                      )
-                    })}
-                  </g>
-                ))}
               </g>
             </>
           )}
@@ -738,7 +657,6 @@ export default function SummaryPage() {
   const [stampVisible, setStampVisible] = useState(false)
   const [stampLanded,  setStampLanded]  = useState(false)
   const [inscriptionsGlowing, setInscriptionsGlowing] = useState(false)
-  const [bursting, setBursting] = useState(false)
   const mainRef = useRef(null)
 
   useEffect(() => {
@@ -777,17 +695,9 @@ export default function SummaryPage() {
 
     // handleBegin fires immediately on press (no onFire delay).
     // All timers are press-absolute from t=0.
-    // Press-absolute beat sequence:
-    //  0-200    flame flicker (button)
-    //  200-1500 particles rise through inscription windows (1300ms)
-    //  1500-2000 god-ray burst per inscription (500ms, clear canvas before stamp)
-    //  2000-2665 stamp flies in (665ms deadline-slam)
-    //  4700     fire transition / navigate
-    setTimeout(() => setInscriptionsGlowing(true),   200)   // glow begins
-    setTimeout(() => setInscriptionsGlowing(false), 1500)   // particles fade (was 1700)
-    setTimeout(() => setBursting(true),             1500)   // burst replaces particles (was 1700)
-    setTimeout(() => setBursting(false),            2000)   // burst done after 500ms (was 2200)
-    setTimeout(() => setStampVisible(true),         2000)   // stamp flies in AFTER burst (was 1700)
+    setTimeout(() => setInscriptionsGlowing(true),   200)   // glow begins (overlaps tail of flicker)
+    setTimeout(() => setInscriptionsGlowing(false), 1700)   // glow complete (1500ms window)
+    setTimeout(() => setStampVisible(true),         1700)   // stamp flies in
 
     setTimeout(() => {
       play('stamp')
@@ -809,10 +719,10 @@ export default function SummaryPage() {
           { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
         )
       }
-    }, 2665)   // stamp lands (665ms after fly-in; was 2365)
+    }, 2365)   // stamp lands (665ms after fly-in)
 
-    setTimeout(() => play('stamp'),       2750)   // was 2450
-    setTimeout(() => setFireActive(true), 4700)   // was 3600 — shifted 300ms + extra breathing
+    setTimeout(() => play('stamp'),       2450)
+    setTimeout(() => setFireActive(true), 3600)
   }
 
   const cols = days.length <= 5 ? days.length
@@ -855,7 +765,7 @@ export default function SummaryPage() {
 
       {/* ── THE BLADE (< 7 days) or DAY CARDS (>= 7 days) ── */}
       {days.length > 0 && days.length < 7 && (
-        <CycleBlade days={days} dailyPlan={dailyPlan} glowing={inscriptionsGlowing} bursting={bursting} />
+        <CycleBlade days={days} dailyPlan={dailyPlan} glowing={inscriptionsGlowing} />
       )}
 
       {days.length >= 7 && (
