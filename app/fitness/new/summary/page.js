@@ -417,39 +417,67 @@ function CycleBlade({ days, dailyPlan, glowing = false, bursting = false }) {
               for this test (no stagger). screen blend-mode makes overlapping
               rays additively brighten. */}
           {bursting && (
-            <g style={{ mixBlendMode: 'screen', pointerEvents: 'none' }}>
-              {dayLabels.map((dl) => (
-                <g key={`burst-${dl.iso}`}>
-                  <circle cx={dl.cx} cy={dl.cy} r="0" fill="url(#burst-halo)">
-                    <animate attributeName="r"       values="0; 180; 240"  keyTimes="0; 0.4; 1" dur="500ms" repeatCount="1" fill="freeze"/>
-                    <animate attributeName="opacity" values="0; 1; 0"      keyTimes="0; 0.3; 1" dur="500ms" repeatCount="1" fill="freeze"/>
-                  </circle>
-                  {Array.from({ length: 8 }).map((_, i) => {
-                    const angle = i * 45
-                    const rayWidth = 14
-                    const rayLen = 170
-                    const points = `${dl.cx - rayWidth},${dl.cy} ${dl.cx + rayWidth},${dl.cy} ${dl.cx},${dl.cy - rayLen}`
-                    // Pre-baked per-ray rotation via the static transform attribute;
-                    // scale animation goes in on top via additive='sum'.
-                    return (
-                      <polygon
-                        key={`ray-${dl.iso}-${i}`}
-                        points={points}
-                        fill="url(#burst-ray)"
-                        opacity="0"
-                        transform={`rotate(${angle} ${dl.cx} ${dl.cy})`}
-                      >
-                        <animate attributeName="opacity" values="0; 0.95; 0" keyTimes="0; 0.3; 1" dur="500ms" repeatCount="1" fill="freeze"/>
-                        <animateTransform
-                          attributeName="transform" type="scale"
-                          values="0.2; 1.8; 2.2" keyTimes="0; 0.45; 1"
-                          dur="500ms" additive="sum" repeatCount="1" fill="freeze"/>
-                      </polygon>
-                    )
-                  })}
-                </g>
-              ))}
-            </g>
+            <>
+              {/* CSS keyframes replace SMIL <animate>/<animateTransform> — Chromium
+                  has a quirk where SMIL begin='0s' + fill='freeze' on dynamically
+                  mounted elements treats 0s as document-start and freezes at the
+                  final keyframe before React ever paints. CSS animations start
+                  reliably on the frame after class application. */}
+              <style>{`
+                @keyframes halo-burst {
+                  0%   { transform: scale(0);    opacity: 0; }
+                  30%  { transform: scale(0.7);  opacity: 1; }
+                  45%  { transform: scale(1.0);  opacity: 1; }
+                  100% { transform: scale(1.35); opacity: 0; }
+                }
+                @keyframes ray-burst {
+                  0%   { transform: scale(0.2) rotate(var(--ray-angle)); opacity: 0; }
+                  30%  { transform: scale(1.6) rotate(var(--ray-angle)); opacity: 0.95; }
+                  100% { transform: scale(2.2) rotate(var(--ray-angle)); opacity: 0; }
+                }
+                .burst-halo {
+                  transform-origin: var(--cx) var(--cy);
+                  transform-box: fill-box;
+                  animation: halo-burst 500ms ease-out forwards;
+                }
+                .burst-ray {
+                  transform-origin: var(--cx) var(--cy);
+                  transform-box: fill-box;
+                  animation: ray-burst 500ms ease-out forwards;
+                }
+              `}</style>
+              <g style={{ mixBlendMode: 'screen', pointerEvents: 'none' }}>
+                {dayLabels.map((dl) => (
+                  <g key={`burst-${dl.iso}`}>
+                    <circle
+                      cx={dl.cx} cy={dl.cy} r={200}
+                      fill="url(#burst-halo)"
+                      className="burst-halo"
+                      style={{ '--cx': `${dl.cx}px`, '--cy': `${dl.cy}px` }}
+                    />
+                    {Array.from({ length: 8 }).map((_, i) => {
+                      const angle = i * 45
+                      const rayWidth = 14
+                      const rayLen = 170
+                      const points = `${dl.cx - rayWidth},${dl.cy} ${dl.cx + rayWidth},${dl.cy} ${dl.cx},${dl.cy - rayLen}`
+                      return (
+                        <polygon
+                          key={`ray-${dl.iso}-${i}`}
+                          points={points}
+                          fill="url(#burst-ray)"
+                          className="burst-ray"
+                          style={{
+                            '--cx': `${dl.cx}px`,
+                            '--cy': `${dl.cy}px`,
+                            '--ray-angle': `${angle}deg`,
+                          }}
+                        />
+                      )
+                    })}
+                  </g>
+                ))}
+              </g>
+            </>
           )}
           {/* Difference-blend base inscriptions. Hidden during glow: the masked
               particle layer above supplies the glyph visuals (flame-filled windows),
