@@ -599,7 +599,7 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                     const rPeak = hash01(k * 13 + 29)
                     const xOff  = (rX - 0.5) * 220
                     const delay = rDly * 300
-                    const dur   = 400 + rDur * 300
+                    const dur   = 130 + rDur * 150
                     const size  = 18 + rSize * 24
                     const peakA = 0.55 + rPeak * 0.45
                     return (
@@ -1060,8 +1060,8 @@ export default function SummaryPage() {
                 const xBase  = isEtchBand ? 8 : 34
                 const xSpan  = isEtchBand ? 70 : 90
                 const xOff   = xBase + rX * xSpan
-                const delay  = isEtchBand ? rDly * 250 : rDly * 600
-                const dur    = isEtchBand ? (350 + rDur * 300) : (650 + rDur * 500)
+                const delay  = rDly * 300
+                const dur    = 130 + rDur * 150
                 const size   = isEtchBand ? (9 + rSize * 11) : (5 + rSize * 6)
                 const peakA  = isEtchBand ? (0.55 + rPeak * 0.45) : (0.40 + rPeak * 0.40)
                 const peakKeyTime = isEtchBand ? 0.25 : 0.15
