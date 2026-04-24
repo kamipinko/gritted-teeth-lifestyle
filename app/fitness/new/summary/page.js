@@ -35,6 +35,27 @@ function parseDate(iso) {
   return new Date(iso + 'T12:00:00')
 }
 
+// Per-element randomized CSS vars for the flame-engulf bloom. Each seed yields a unique
+// duration/blur/glow combo so no two blooms render identically across the cascade.
+function engulfVars(seed) {
+  const h = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
+  const r1 = h(seed * 7 + 3)
+  const r2 = h(seed * 11 + 17)
+  const r3 = h(seed * 13 + 29)
+  return {
+    '--engulf-dur': `${120 + r1 * 70}ms`,
+    '--engulf-opacity-start': `${0.85 + r2 * 0.15}`,
+    '--engulf-glow-1':  `${4  + r1 * 6}px`,
+    '--engulf-glow-1b': `${12 + r2 * 10}px`,
+    '--engulf-glow-1c': `${22 + r3 * 14}px`,
+    '--engulf-glow-2':  `${8  + r1 * 6}px`,
+    '--engulf-glow-2b': `${20 + r3 * 10}px`,
+    '--engulf-blur-1':  `${1.0 + r2 * 1.2}px`,
+    '--engulf-blur-2':  `${2.2 + r3 * 2.0}px`,
+    '--engulf-blur-3':  `${4.0 + r1 * 2.5}px`,
+  }
+}
+
 /* ── Compact muscle chip ── */
 function MuscleChip({ id, index = 0 }) {
   const rot = SLAB_ROTATIONS[index % SLAB_ROTATIONS.length]
@@ -586,8 +607,10 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                       y={labelY}
                       textAnchor={isLeftSide ? 'start' : 'end'}
                       dominantBaseline="central"
+                      transform={`rotate(-11 ${labelX} ${labelY})`}
                       className="weekday-flame-engulf"
                       style={{
+                        ...engulfVars(i + 7),
                         fontFamily: '"Noto Serif JP", Georgia, serif',
                         fontSize: '45px',
                         fontWeight: 700,
@@ -1046,36 +1069,36 @@ export default function SummaryPage() {
         .watermark-hot { animation: watermark-hot-hold 100ms forwards; }
         @keyframes weekday-flame-engulf {
           0% {
-            opacity: 0.95;
+            opacity: var(--engulf-opacity-start, 0.95);
             filter:
-              drop-shadow(0 0 2px #fff4c9)
-              drop-shadow(0 0 4px #ffb060)
-              blur(0.3px);
+              drop-shadow(0 0 var(--engulf-glow-0, 2px) #fff4c9)
+              drop-shadow(0 0 var(--engulf-glow-0b, 4px) #ffb060)
+              blur(var(--engulf-blur-0, 0.3px));
           }
           35% {
             opacity: 0.75;
             filter:
-              drop-shadow(0 0 6px #ffb060)
-              drop-shadow(0 0 16px #ff6600)
-              drop-shadow(0 0 28px rgba(255, 80, 0, 0.7))
-              blur(1.5px);
+              drop-shadow(0 0 var(--engulf-glow-1, 6px) #ffb060)
+              drop-shadow(0 0 var(--engulf-glow-1b, 16px) #ff6600)
+              drop-shadow(0 0 var(--engulf-glow-1c, 28px) rgba(255, 80, 0, 0.7))
+              blur(var(--engulf-blur-1, 1.5px));
           }
           70% {
             opacity: 0.35;
             filter:
-              drop-shadow(0 0 10px #ff4400)
-              drop-shadow(0 0 24px rgba(255, 60, 0, 0.45))
-              blur(3px);
+              drop-shadow(0 0 var(--engulf-glow-2, 10px) #ff4400)
+              drop-shadow(0 0 var(--engulf-glow-2b, 24px) rgba(255, 60, 0, 0.45))
+              blur(var(--engulf-blur-2, 3px));
           }
           100% {
             opacity: 0;
             filter:
-              drop-shadow(0 0 14px rgba(255, 40, 0, 0.2))
-              blur(5px);
+              drop-shadow(0 0 var(--engulf-glow-3, 14px) rgba(255, 40, 0, 0.2))
+              blur(var(--engulf-blur-3, 5px));
           }
         }
         .weekday-flame-engulf {
-          animation: weekday-flame-engulf 140ms ease-out forwards;
+          animation: weekday-flame-engulf var(--engulf-dur, 140ms) ease-out forwards;
           fill: #ffa840;
           pointer-events: none;
         }
@@ -1118,14 +1141,17 @@ export default function SummaryPage() {
           ETCH
         </text>
         {watermarkIgnited[0] && (
-          <text
-            x="8" y="30"
-            textAnchor="start"
-            fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-            fontSize="18" fontWeight="600" letterSpacing="6"
-            className="weekday-flame-engulf">
-            ETCH
-          </text>
+          <g transform="rotate(-8 38 24)">
+            <text
+              x="8" y="30"
+              textAnchor="start"
+              fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+              fontSize="18" fontWeight="600" letterSpacing="6"
+              className="weekday-flame-engulf"
+              style={engulfVars(91)}>
+              ETCH
+            </text>
+          </g>
         )}
         <text textAnchor="start"
           fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
@@ -1138,14 +1164,17 @@ export default function SummaryPage() {
           CYCLE
         </text>
         {watermarkIgnited[1] && (
-          <text
-            x="8" y="62"
-            textAnchor="start"
-            fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-            fontSize="18" fontWeight="600" letterSpacing="6"
-            className="weekday-flame-engulf">
-            CYCLE
-          </text>
+          <g transform="rotate(-8 46 56)">
+            <text
+              x="8" y="62"
+              textAnchor="start"
+              fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+              fontSize="18" fontWeight="600" letterSpacing="6"
+              className="weekday-flame-engulf"
+              style={engulfVars(92)}>
+              CYCLE
+            </text>
+          </g>
         )}
         {/* Particles AFTER — clipped to letter silhouettes via the mask, paint on top of the
             void-black base so the flames show through the letter shapes. */}
