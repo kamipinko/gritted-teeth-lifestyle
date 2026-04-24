@@ -400,7 +400,7 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off' })
               the masked particle layer supplies the flame visuals, and the zoom duplicates supply
               the peak visuals. Keeping the black etched text visible during peak would read as
               green contamination (difference(warm-zoom-over, red-blade) = green). */}
-          <g style={{ mixBlendMode: 'difference', opacity: baseHidden ? 0 : 1, transition: 'opacity 150ms ease-out' }}>
+          <g style={{ mixBlendMode: 'difference', opacity: baseHidden ? 0 : 1, transition: 'opacity 0ms' }}>
             {dayLabels.map((dl, i) => {
               const textAngle = dl.angle - 90
               const isLast = i === lastIdx
@@ -420,7 +420,7 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off' })
               Same opacity gating as the difference-blend group above so the masked particles show cleanly. */}
           {lastDay && (
             <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}
-               style={{ opacity: baseHidden ? 0 : 1, transition: 'opacity 150ms ease-out' }}>
+               style={{ opacity: baseHidden ? 0 : 1, transition: 'opacity 0ms' }}>
               <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true })}</g>
             </g>
           )}
@@ -737,9 +737,9 @@ export default function SummaryPage() {
     // All timers are press-absolute from t=0.
     setTimeout(() => setInscriptionsGlowing(true),   200)   // flames begin (particles through mask windows)
     setTimeout(() => setInscriptionsGlowing(false), 1500)   // flames end, inscriptions reveal
-    setTimeout(() => setGlowIntensity('peak'),      1500)   // bright peak glow + zoom-burst finale
-    setTimeout(() => setGlowIntensity('off'),       2000)   // glow off; inscriptions back to crisp 3D embossed red
-    setTimeout(() => setStampVisible(true),         2000)   // stamp flies in after peak
+    setTimeout(() => setGlowIntensity('peak'),      1500)   // bright peak glow + zoom-burst finale (280ms)
+    setTimeout(() => setGlowIntensity('off'),       1780)   // zoom animation ends; base snaps back
+    setTimeout(() => setStampVisible(true),         1780)   // stamp flies in the moment peak ends
 
     setTimeout(() => {
       play('stamp')
@@ -761,10 +761,10 @@ export default function SummaryPage() {
           { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
         )
       }
-    }, 2665)   // stamp lands (665ms after fly-in)
+    }, 2445)   // stamp lands (665ms after fly-in)
 
-    setTimeout(() => play('stamp'),       2750)
-    setTimeout(() => setFireActive(true), 4700)
+    setTimeout(() => play('stamp'),       2530)
+    setTimeout(() => setFireActive(true), 4480)
   }
 
   const cols = days.length <= 5 ? days.length
