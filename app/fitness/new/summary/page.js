@@ -916,16 +916,18 @@ export default function SummaryPage() {
         aria-hidden="true"
         className="fixed z-[20] pointer-events-none select-none text-[12px] tracking-[0.5em] uppercase text-[#ff7a00]/40"
         style={{
-          bottom: 'calc(20px + 128px + 32px)',
+          bottom: 'calc(20px + 128px + 48px)',
           right: '20px',
-          whiteSpace: 'nowrap',
+          lineHeight: 1.25,
+          textAlign: 'right',
           textShadow: '0 0 5px rgba(255, 122, 0, 0.3)',
           fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
           transform: 'rotate(-12deg)',
           transformOrigin: 'right bottom',
         }}
       >
-        Etch Cycle
+        <div style={{ paddingRight: '1.8em' }}>Etch</div>
+        <div>Cycle</div>
       </div>
 
       {/* ── ETCH CYCLE (fixed bottom-right CTA) ── */}
