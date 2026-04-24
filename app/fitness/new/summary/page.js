@@ -476,14 +476,14 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               <g className="inscription-zoom-burst" style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
                 {dayLabels.map((dl, i) => (
                   <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
-                    <g className="zoom-glyph" style={{ animationDelay: `${i * 140}ms` }}>
+                    <g className="zoom-glyph" style={{ animationDelay: `${i * 170}ms` }}>
                       {renderDayInscription(dl, { maskFill: '#ff6600' })}
                     </g>
                   </g>
                 ))}
                 {lastDay && (
                   <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
-                    <g className="zoom-glyph" style={{ animationDelay: `${lastIdx * 140}ms` }}>
+                    <g className="zoom-glyph" style={{ animationDelay: `${lastIdx * 170}ms` }}>
                       <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { maskFill: '#ff6600' })}</g>
                     </g>
                   </g>
@@ -772,14 +772,14 @@ export default function SummaryPage() {
     setTimeout(() => setGlowIntensity('peak'),      1500)   // zoom-burst cascade begins (340ms per glyph, 140ms stagger)
     // Cascade per-inscription: flame off + hot on + zoom fires, all at t=1500 + i*140.
     for (let i = 0; i < 6; i++) {
-      const at = 1500 + i * 140
+      const at = 1500 + i * 170
       setTimeout(() => {
         setGlowingDays(prev => { const next = [...prev]; next[i] = false; return next })
         setHotDays(prev => { const next = [...prev]; next[i] = true; return next })
       }, at)
     }
-    setTimeout(() => setGlowIntensity('off'),       2540)   // last cascade slot ends (1500 + 140*5 + 340)
-    setTimeout(() => setStampVisible(true),         2540)   // stamp flies in after cascade finishes
+    setTimeout(() => setGlowIntensity('off'),       2690)   // last cascade slot ends (1500 + 170*5 + 340)
+    setTimeout(() => setStampVisible(true),         2690)   // stamp flies in after cascade finishes
 
     setTimeout(() => {
       play('stamp')
@@ -801,10 +801,10 @@ export default function SummaryPage() {
           { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
         )
       }
-    }, 3205)   // stamp lands (665ms after fly-in)
+    }, 3355)   // stamp lands (665ms after fly-in)
 
-    setTimeout(() => play('stamp'),       3290)
-    setTimeout(() => setFireActive(true), 5240)
+    setTimeout(() => play('stamp'),       3440)
+    setTimeout(() => setFireActive(true), 5390)
   }
 
   const cols = days.length <= 5 ? days.length
