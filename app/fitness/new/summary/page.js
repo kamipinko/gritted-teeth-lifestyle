@@ -803,7 +803,7 @@ export default function SummaryPage() {
     for (let i = 0; i < 6; i++) {
       setTimeout(() => {
         setCooledDays(prev => { const next = [...prev]; next[i] = true; return next })
-      }, 1500 + 1600 + i * 450)
+      }, 1500 + 1600 + i * 350)
     }
     setTimeout(() => setGlowIntensity('off'),       2940)   // last zoom cascade slot ends (1500 + 220*5 + 340)
     setTimeout(() => setStampVisible(true),         2940)   // stamp flies in after zoom cascade finishes
@@ -831,7 +831,7 @@ export default function SummaryPage() {
     }, 3605)   // stamp lands (665ms after fly-in)
 
     setTimeout(() => play('stamp'),       3690)
-    setTimeout(() => setFireActive(true), 6400)
+    setTimeout(() => setFireActive(true), 5900)
   }
 
   const cols = days.length <= 5 ? days.length
