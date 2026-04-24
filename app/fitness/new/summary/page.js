@@ -418,7 +418,7 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
           <style>{`
             @keyframes inscription-hot-to-cool {
               0%   { filter: drop-shadow(0 0 3px #ffb347) drop-shadow(0 0 8px #ff8800) drop-shadow(0 0 18px rgba(255, 120, 0, 0.75)) drop-shadow(0 0 32px rgba(255, 80, 0, 0.35)); }
-              60%  { filter: drop-shadow(0 0 3px #ffb347) drop-shadow(0 0 8px #ff8800) drop-shadow(0 0 18px rgba(255, 120, 0, 0.75)) drop-shadow(0 0 32px rgba(255, 80, 0, 0.35)); }
+              75%  { filter: drop-shadow(0 0 3px #ffb347) drop-shadow(0 0 8px #ff8800) drop-shadow(0 0 18px rgba(255, 120, 0, 0.75)) drop-shadow(0 0 32px rgba(255, 80, 0, 0.35)); }
               100% { filter: drop-shadow(0 0 1.5px #ff8800) drop-shadow(0 0 4px rgba(255, 122, 0, 0.55)) drop-shadow(0 0 7px rgba(255, 80, 0, 0.2)) drop-shadow(0 0 7px rgba(255, 80, 0, 0)); }
             }
             .inscription-hot { animation: inscription-hot-to-cool 1800ms ease-out forwards; }
@@ -488,14 +488,14 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               <g className="inscription-zoom-burst" style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
                 {dayLabels.map((dl, i) => (
                   <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
-                    <g className="zoom-glyph" style={{ animationDelay: `${i * 320}ms` }}>
+                    <g className="zoom-glyph" style={{ animationDelay: `${i * 450}ms` }}>
                       {renderDayInscription(dl, { maskFill: '#ff6600' })}
                     </g>
                   </g>
                 ))}
                 {lastDay && (
                   <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
-                    <g className="zoom-glyph" style={{ animationDelay: `${lastIdx * 320}ms` }}>
+                    <g className="zoom-glyph" style={{ animationDelay: `${lastIdx * 450}ms` }}>
                       <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { maskFill: '#ff6600' })}</g>
                     </g>
                   </g>
@@ -785,14 +785,14 @@ export default function SummaryPage() {
     // Cascade per-inscription: flame off + hot on + zoom fires, all at t=1500 + i*220.
     // Hot→cool dissipation runs as a single CSS keyframe triggered by the className flip.
     for (let i = 0; i < 6; i++) {
-      const at = 1500 + i * 320
+      const at = 1500 + i * 450
       setTimeout(() => {
         setGlowingDays(prev => { const next = [...prev]; next[i] = false; return next })
         setHotDays(prev => { const next = [...prev]; next[i] = true; return next })
       }, at)
     }
-    setTimeout(() => setGlowIntensity('off'),       3440)   // last cascade slot ends (1500 + 320*5 + 340)
-    setTimeout(() => setStampVisible(true),         3440)   // stamp flies in after cascade finishes
+    setTimeout(() => setGlowIntensity('off'),       3750)   // last cascade slot starts (1500 + 450*5); zoom-bursts briefly outlive this
+    setTimeout(() => setStampVisible(true),         3750)   // stamp flies in as last cascade slot fires
 
     setTimeout(() => {
       play('stamp')
@@ -814,10 +814,10 @@ export default function SummaryPage() {
           { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
         )
       }
-    }, 4105)   // stamp lands (665ms after fly-in)
+    }, 4415)   // stamp lands (665ms after fly-in)
 
-    setTimeout(() => play('stamp'),       4190)
-    setTimeout(() => setFireActive(true), 6140)
+    setTimeout(() => play('stamp'),       4500)
+    setTimeout(() => setFireActive(true), 6450)
   }
 
   const cols = days.length <= 5 ? days.length
