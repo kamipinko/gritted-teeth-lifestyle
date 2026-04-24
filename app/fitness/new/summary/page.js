@@ -900,13 +900,14 @@ export default function SummaryPage() {
     }
     setTimeout(() => setGlowIntensity('off'),       2940)   // last zoom cascade slot ends (1500 + 220*5 + 340)
     setTimeout(() => setStampVisible(true),         2940)   // stamp flies in after zoom cascade finishes
-    // Weekday labels cascade one-by-one starting at t=500 (exactly when day 0's inscription
-    // flame fires — the last in the reverse-order flame cascade), with a 60ms forward stagger
-    // matching the inscription flame activation rhythm. Each weekday burns until navigation.
-    for (let wi = 0; wi < 6; wi++) {
+    // Weekday labels cascade in REVERSE order (wi=5 first at t=500, wi=0 last at t=800),
+    // matching the blade's tip-to-handle flame activation. Starts exactly when day 0's
+    // inscription flame fires (last in the inscription reverse cascade). Burns until nav.
+    for (let step = 0; step < 6; step++) {
+      const wi = 5 - step
       setTimeout(() => {
         setWeekdaysIgnited(prev => { const next = [...prev]; next[wi] = true; return next })
-      }, 500 + wi * 60)
+      }, 500 + step * 60)
     }
 
     setTimeout(() => {
