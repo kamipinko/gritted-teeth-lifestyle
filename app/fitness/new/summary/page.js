@@ -788,7 +788,14 @@ export default function SummaryPage() {
 
     // handleBegin fires immediately on press (no onFire delay).
     // All timers are press-absolute from t=0.
-    setTimeout(() => setGlowingDays(Array(6).fill(true)), 200)   // flames begin (all inscriptions)
+    // Flame activation: REVERSE order, 100ms stagger. Day 5 (tip) ignites first at t=200,
+    // cascading up to day 0 (handle) at t=700. Faster than the main 220ms deactivation cascade.
+    for (let step = 0; step < 6; step++) {
+      const dayIdx = 5 - step
+      setTimeout(() => {
+        setGlowingDays(prev => { const next = [...prev]; next[dayIdx] = true; return next })
+      }, 200 + step * 100)
+    }
     setTimeout(() => setGlowIntensity('peak'),      1500)   // zoom-burst cascade begins (340ms per glyph, 220ms stagger)
     // Fast cascade: flame off + hot on + zoom fires at t=1500 + i*220.
     for (let i = 0; i < 6; i++) {
