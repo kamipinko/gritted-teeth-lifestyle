@@ -98,7 +98,7 @@ function DayCard({ iso, muscles, index }) {
    Source: public/reference/wakizashi.png → threshold → potrace → SVG.
    Diagonal pose: hilt upper-right, tip lower-left.
    ══════════════════════════════════════════════════════════════════════════ */
-function CycleBlade({ days, dailyPlan, glowing = false, bursting = false }) {
+function CycleBlade({ days, dailyPlan, glowing = false }) {
   const first = days[0] ? parseDate(days[0]) : null
   const last  = days[days.length - 1] ? parseDate(days[days.length - 1]) : null
   const dateRange = first && last
@@ -308,14 +308,6 @@ function CycleBlade({ days, dailyPlan, glowing = false, bursting = false }) {
                 </g>
               ))}
             </mask>
-            {/* Ray shaft gradient — bright at the base (polygon's narrow end, near the
-                inscription), fading to transparent at the tip. objectBoundingBox runs
-                the gradient along each polygon's local y-axis regardless of rotation. */}
-            <linearGradient id="ray-shaft" x1="0.5" y1="1" x2="0.5" y2="0" gradientUnits="objectBoundingBox">
-              <stop offset="0%"   stopColor="white"   stopOpacity="0.95"/>
-              <stop offset="35%"  stopColor="#fff4c9" stopOpacity="0.6"/>
-              <stop offset="100%" stopColor="#ffd700" stopOpacity="0"/>
-            </linearGradient>
           </defs>
           {/* Flame-aura overlay — mounts only while `glowing` is true. Sits BEHIND the
               difference-blend text so the dancing tongues lick around the crisp etched
@@ -468,45 +460,6 @@ function CycleBlade({ days, dailyPlan, glowing = false, bursting = false }) {
               </text>
             )
           })}
-          {/* God-rays burst — tapered polygon rays per inscription. Polygon is narrow
-              at the base (y=0, near inscription) and wider at the tip (y=-180), which
-              reads as a 3D shaft approaching the viewer. 12 rays per inscription at 30°
-              spacing. plus-lighter blend brightens blade + inscription holes behind. */}
-          {bursting && (
-            <>
-              <style>{`
-                @keyframes burst-appear {
-                  0%   { opacity: 0; }
-                  25%  { opacity: 1; }
-                  75%  { opacity: 1; }
-                  100% { opacity: 0; }
-                }
-                .burst-group { animation: burst-appear 500ms ease-out forwards; }
-              `}</style>
-              <g className="burst-group" style={{ mixBlendMode: 'plus-lighter' }}>
-                {dayLabels.map((dl) => {
-                  const RAYS = 12
-                  return (
-                    <g key={`burst-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
-                      {Array.from({ length: RAYS }).map((_, i) => {
-                        const angle = (360 / RAYS) * i
-                        return (
-                          <polygon
-                            key={i}
-                            points="-2,0 2,0 15,-180 -15,-180"
-                            fill="url(#ray-shaft)"
-                            transform={`rotate(${angle})`}
-                          />
-                        )
-                      })}
-                      <circle cx="0" cy="0" r="10" fill="white" opacity="0.9"/>
-                      <circle cx="0" cy="0" r="5"  fill="#fffbe0"/>
-                    </g>
-                  )
-                })}
-              </g>
-            </>
-          )}
         </svg>
         </div>
       </div>
@@ -704,7 +657,6 @@ export default function SummaryPage() {
   const [stampVisible, setStampVisible] = useState(false)
   const [stampLanded,  setStampLanded]  = useState(false)
   const [inscriptionsGlowing, setInscriptionsGlowing] = useState(false)
-  const [bursting, setBursting] = useState(false)
   const mainRef = useRef(null)
 
   useEffect(() => {
@@ -743,17 +695,9 @@ export default function SummaryPage() {
 
     // handleBegin fires immediately on press (no onFire delay).
     // All timers are press-absolute from t=0.
-    // Press-absolute beats:
-    //  200-1500  inscription particle flames
-    //  1500-2000 god-rays burst (HTML sunrays overlay)
-    //  2000      stamp flies in (after burst completes)
-    //  2665      stamp lands
-    //  4700      fire transition / navigate
-    setTimeout(() => setInscriptionsGlowing(true),   200)
-    setTimeout(() => setInscriptionsGlowing(false), 1500)
-    setTimeout(() => setBursting(true),             1500)
-    setTimeout(() => setBursting(false),            2000)
-    setTimeout(() => setStampVisible(true),         2000)
+    setTimeout(() => setInscriptionsGlowing(true),   200)   // glow begins (overlaps tail of flicker)
+    setTimeout(() => setInscriptionsGlowing(false), 1700)   // glow complete (1500ms window)
+    setTimeout(() => setStampVisible(true),         1700)   // stamp flies in
 
     setTimeout(() => {
       play('stamp')
@@ -775,10 +719,10 @@ export default function SummaryPage() {
           { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
         )
       }
-    }, 2665)   // stamp lands (665ms after fly-in; shifted from 2365)
+    }, 2365)   // stamp lands (665ms after fly-in)
 
-    setTimeout(() => play('stamp'),       2750)
-    setTimeout(() => setFireActive(true), 4700)
+    setTimeout(() => play('stamp'),       2450)
+    setTimeout(() => setFireActive(true), 3600)
   }
 
   const cols = days.length <= 5 ? days.length
@@ -821,7 +765,7 @@ export default function SummaryPage() {
 
       {/* ── THE BLADE (< 7 days) or DAY CARDS (>= 7 days) ── */}
       {days.length > 0 && days.length < 7 && (
-        <CycleBlade days={days} dailyPlan={dailyPlan} glowing={inscriptionsGlowing} bursting={bursting} />
+        <CycleBlade days={days} dailyPlan={dailyPlan} glowing={inscriptionsGlowing} />
       )}
 
       {days.length >= 7 && (
