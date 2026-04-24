@@ -157,9 +157,9 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off', h
       { dy: 0, fill: '#d4181f' },
     ]
     const DEPTH_STACK_HOT = [
-      { dy: 3, fill: '#2e1200' },
-      { dy: 2, fill: '#5c2500' },
-      { dy: 1, fill: '#8a3800' },
+      { dy: 3, fill: '#ffffff' },
+      { dy: 2, fill: '#ffe0a0' },
+      { dy: 1, fill: '#c86818' },
       { dy: 0, fill: '#b84a00' },
     ]
     const stack = hot ? DEPTH_STACK_HOT : DEPTH_STACK_RED
