@@ -794,7 +794,7 @@ export default function SummaryPage() {
       const dayIdx = 5 - step
       setTimeout(() => {
         setGlowingDays(prev => { const next = [...prev]; next[dayIdx] = true; return next })
-      }, 200 + step * 100)
+      }, 200 + step * 60)
     }
     setTimeout(() => setGlowIntensity('peak'),      1500)   // zoom-burst cascade begins (340ms per glyph, 220ms stagger)
     // Fast cascade: flame off + hot on + zoom fires at t=1500 + i*220.
