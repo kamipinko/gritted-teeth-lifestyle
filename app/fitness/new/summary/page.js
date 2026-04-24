@@ -99,7 +99,12 @@ function DayCard({ iso, muscles, index }) {
    Diagonal pose: hilt upper-right, tip lower-left.
    ══════════════════════════════════════════════════════════════════════════ */
 function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [] }) {
-  const HOT_GLOW_FILTER    = 'drop-shadow(0 0 2px #ff8800) drop-shadow(0 0 5px rgba(255, 122, 0, 0.65)) drop-shadow(0 0 10px rgba(255, 80, 0, 0.25))'
+  const HOT_GLOW_FILTER = [
+    'drop-shadow(0 0 3px #ffb347)',
+    'drop-shadow(0 0 8px #ff8800)',
+    'drop-shadow(0 0 18px rgba(255, 120, 0, 0.75))',
+    'drop-shadow(0 0 32px rgba(255, 80, 0, 0.35))',
+  ].join(' ')
   const COOLED_GLOW_FILTER = 'drop-shadow(0 0 1.5px #ff8800) drop-shadow(0 0 4px rgba(255, 122, 0, 0.55)) drop-shadow(0 0 7px rgba(255, 80, 0, 0.2))'
   const anyGlowing = glowingDays.some(Boolean)
   const first = days[0] ? parseDate(days[0]) : null
