@@ -1071,35 +1071,35 @@ export default function SummaryPage() {
           0% {
             opacity: var(--engulf-opacity-start, 0.95);
             filter:
-              drop-shadow(0 0 var(--engulf-glow-0, 2px) #fff4c9)
-              drop-shadow(0 0 var(--engulf-glow-0b, 4px) #ffb060)
+              drop-shadow(0 0 var(--engulf-glow-0, 2px) #ff5000)
+              drop-shadow(0 0 var(--engulf-glow-0b, 4px) #ff5000)
               blur(var(--engulf-blur-0, 0.3px));
           }
           35% {
             opacity: 0.75;
             filter:
-              drop-shadow(0 0 var(--engulf-glow-1, 6px) #ffb060)
-              drop-shadow(0 0 var(--engulf-glow-1b, 16px) #ff6600)
-              drop-shadow(0 0 var(--engulf-glow-1c, 28px) rgba(255, 80, 0, 0.7))
+              drop-shadow(0 0 var(--engulf-glow-1, 6px) #ff5000)
+              drop-shadow(0 0 var(--engulf-glow-1b, 16px) #ff5000)
+              drop-shadow(0 0 var(--engulf-glow-1c, 28px) rgba(255, 80, 0, 0.6))
               blur(var(--engulf-blur-1, 1.5px));
           }
           70% {
             opacity: 0.35;
             filter:
-              drop-shadow(0 0 var(--engulf-glow-2, 10px) #ff4400)
-              drop-shadow(0 0 var(--engulf-glow-2b, 24px) rgba(255, 60, 0, 0.45))
+              drop-shadow(0 0 var(--engulf-glow-2, 10px) #ff5000)
+              drop-shadow(0 0 var(--engulf-glow-2b, 24px) rgba(255, 80, 0, 0.4))
               blur(var(--engulf-blur-2, 3px));
           }
           100% {
             opacity: 0;
             filter:
-              drop-shadow(0 0 var(--engulf-glow-3, 14px) rgba(255, 40, 0, 0.2))
+              drop-shadow(0 0 var(--engulf-glow-3, 14px) rgba(255, 80, 0, 0.15))
               blur(var(--engulf-blur-3, 5px));
           }
         }
         .weekday-flame-engulf {
           animation: weekday-flame-engulf var(--engulf-dur, 140ms) ease-out forwards;
-          fill: #ffa840;
+          fill: #ff5000;
           pointer-events: none;
         }
       `}</style>
