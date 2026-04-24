@@ -98,7 +98,11 @@ function DayCard({ iso, muscles, index }) {
    Source: public/reference/wakizashi.png → threshold → potrace → SVG.
    Diagonal pose: hilt upper-right, tip lower-left.
    ══════════════════════════════════════════════════════════════════════════ */
-function CycleBlade({ days, dailyPlan, glowing = false }) {
+function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off' }) {
+  const glowFilter =
+    glowIntensity === 'peak'     ? 'drop-shadow(0 0 8px #ffc266) drop-shadow(0 0 18px #ff8833)' :
+    glowIntensity === 'residual' ? 'drop-shadow(0 0 3px rgba(255,140,60,0.5))' :
+                                   'none'
   const first = days[0] ? parseDate(days[0]) : null
   const last  = days[days.length - 1] ? parseDate(days[days.length - 1]) : null
   const dateRange = first && last
@@ -147,21 +151,30 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
       ? { stroke: '#000', strokeWidth: 1, paintOrder: 'stroke' }
       : {}
 
-    const numEls = (
-      <text x={0} y={0} textAnchor="middle" dominantBaseline="central" {...outlineProps}
-        style={{ fontFamily: font, fontSize: '68px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-        {num}
+    // 3D embossed depth: 4 stacked layers with progressive y-offset + darkening ramp.
+    // For mask/zoom passes (flat maskFill or glowFill), collapse to a single flat layer so
+    // the silhouette stays crisp (mask uses luminance; zoom is bright cream).
+    const DEPTH_STACK = [
+      { dy: 3, fill: '#3a0608' },
+      { dy: 2, fill: '#6b0b10' },
+      { dy: 1, fill: '#9e1118' },
+      { dy: 0, fill: '#d4181f' },
+    ]
+    const isFlat = !!maskFill || !!glowFill
+    const layers = isFlat ? [{ dy: 0, fill: baseColor }] : DEPTH_STACK
+
+    const renderText = (keyBase, x, y, fontSize, char) => layers.map((layer, li) => (
+      <text key={`${keyBase}-${li}`} x={x} y={y + layer.dy} textAnchor="middle" dominantBaseline="central" {...outlineProps}
+        style={{ fontFamily: font, fontSize: `${fontSize}px`, fontWeight: 600, fill: layer.fill, opacity: baseOpacity }}>
+        {char}
       </text>
-    )
+    ))
+
+    const numEls = renderText('num', 0, 0, 68, num)
 
     let kanjiEls
     if (n === 1) {
-      kanjiEls = (
-        <text x={0} y={60} textAnchor="middle" dominantBaseline="central" {...outlineProps}
-          style={{ fontFamily: font, fontSize: '104px', fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-          {kanjiChars[0]}
-        </text>
-      )
+      kanjiEls = renderText('kj0', 0, 60, 104, kanjiChars[0])
     } else if (n <= 7) {
       // n=2..7: pair columns in rows of 2; an odd last kanji sits centered in the final row.
       let fontSize, colSpacing, baseY, rowYStep
@@ -173,17 +186,12 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
         // n === 7 — 4 rows × 2 cols, last row is a centered singleton
         fontSize = 38; colSpacing = 44; baseY = 42; rowYStep = 36
       }
-      kanjiEls = kanjiChars.map((k, ki) => {
+      kanjiEls = kanjiChars.flatMap((k, ki) => {
         const row = Math.floor(ki / 2)
         const isOddLast = n % 2 === 1 && ki === n - 1
         const x = isOddLast ? 0 : (ki % 2 - 0.5) * colSpacing
         const y = baseY + row * rowYStep
-        return (
-          <text key={ki} x={x} y={y} textAnchor="middle" dominantBaseline="central" {...outlineProps}
-            style={{ fontFamily: font, fontSize: `${fontSize}px`, fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-            {k}
-          </text>
-        )
+        return renderText(`kj${ki}`, x, y, fontSize, k)
       })
     } else if (n <= 11) {
       // n=8..11: 4 columns × 2 rows (squat wide grid). n=9/10/11 add a row 3 with 1/2/3 kanji
@@ -194,7 +202,7 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
       const rowYStep = 28
       // Row-3 gap positions (midpoints between adjacent columns): -P, 0, +P
       const row3Positions = n === 9 ? [0] : n === 10 ? [-P, P] : n === 11 ? [-P, 0, P] : null
-      kanjiEls = kanjiChars.map((k, ki) => {
+      kanjiEls = kanjiChars.flatMap((k, ki) => {
         let x, y
         if (ki < 8) {
           const row = Math.floor(ki / 4)
@@ -205,12 +213,7 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
           x = row3Positions[ki - 8]
           y = baseY + 2 * rowYStep
         }
-        return (
-          <text key={ki} x={x} y={y} textAnchor="middle" dominantBaseline="central" {...outlineProps}
-            style={{ fontFamily: font, fontSize: `${fontSize}px`, fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-            {k}
-          </text>
-        )
+        return renderText(`kj${ki}`, x, y, fontSize, k)
       })
     } else {
       // n=12 speculative (max live n=11): every column of the 4-col grid takes a 3rd kanji.
@@ -218,15 +221,10 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
       const P = 30
       const baseY = 38
       const rowYStep = 28
-      kanjiEls = kanjiChars.map((k, ki) => {
+      kanjiEls = kanjiChars.flatMap((k, ki) => {
         const x = ((ki % 4) - 1.5) * P
         const y = baseY + Math.floor(ki / 4) * rowYStep
-        return (
-          <text key={ki} x={x} y={y} textAnchor="middle" dominantBaseline="central" {...outlineProps}
-            style={{ fontFamily: font, fontSize: `${fontSize}px`, fontWeight: 600, fill: baseColor, opacity: baseOpacity }}>
-            {k}
-          </text>
-        )
+        return renderText(`kj${ki}`, x, y, fontSize, k)
       })
     }
 
@@ -401,8 +399,9 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
           {/* Difference-blend base inscriptions. Hidden during glow: the masked
               particle layer above supplies the glyph visuals (flame-filled windows),
               and keeping the black etched text visible would occlude them. Fade
-              smoothly back in once the glow ends. */}
-          <g style={{ mixBlendMode: 'difference', opacity: glowing ? 0 : 1, transition: 'opacity 150ms ease-out' }}>
+              smoothly back in once the glow ends. Drop-shadow glow filter layered
+              on top for the peak/residual phases of the glow state machine. */}
+          <g style={{ mixBlendMode: 'difference', opacity: glowing ? 0 : 1, transition: 'opacity 150ms ease-out, filter 500ms ease-out', filter: glowFilter }}>
             {dayLabels.map((dl, i) => {
               const textAngle = dl.angle - 90
               const isLast = i === lastIdx
@@ -422,9 +421,48 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
               Same opacity gating as the difference-blend group above so the masked particles show cleanly. */}
           {lastDay && (
             <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}
-               style={{ opacity: glowing ? 0 : 1, transition: 'opacity 150ms ease-out' }}>
+               style={{ opacity: glowing ? 0 : 1, transition: 'opacity 150ms ease-out, filter 500ms ease-out', filter: glowFilter }}>
               <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true })}</g>
             </g>
+          )}
+          {/* Zoom-burst finale — fires during the 'peak' glow phase. Each inscription
+              spawns a bright near-white duplicate that rapidly scales from 1x to 12x
+              while fading to zero. plus-lighter blend reads as light 'punching toward
+              the viewer'. Inner <g> holds the scale animation so the outer <g>'s
+              translate/rotate SVG attribute isn't clobbered by the CSS transform. */}
+          {glowIntensity === 'peak' && (
+            <>
+              <style>{`
+                @keyframes inscription-zoom {
+                  0%   { transform: scale(1);   opacity: 0.9; }
+                  15%  { transform: scale(1.4); opacity: 0.95; }
+                  40%  { transform: scale(4);   opacity: 0.5; }
+                  70%  { transform: scale(8);   opacity: 0.15; }
+                  100% { transform: scale(12);  opacity: 0; }
+                }
+                .inscription-zoom-burst .zoom-glyph {
+                  transform-box: fill-box;
+                  transform-origin: center;
+                  animation: inscription-zoom 500ms ease-out forwards;
+                }
+              `}</style>
+              <g className="inscription-zoom-burst" style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
+                {dayLabels.map((dl) => (
+                  <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
+                    <g className="zoom-glyph">
+                      {renderDayInscription(dl, { maskFill: '#fff4c9' })}
+                    </g>
+                  </g>
+                ))}
+                {lastDay && (
+                  <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
+                    <g className="zoom-glyph">
+                      <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { maskFill: '#fff4c9' })}</g>
+                    </g>
+                  </g>
+                )}
+              </g>
+            </>
           )}
           {/* Weekday side labels — share the viewBox so they align vertically with each inscription.
               Per-row x calibration equalizes the on-screen gap between each label and the blade
@@ -657,6 +695,8 @@ export default function SummaryPage() {
   const [stampVisible, setStampVisible] = useState(false)
   const [stampLanded,  setStampLanded]  = useState(false)
   const [inscriptionsGlowing, setInscriptionsGlowing] = useState(false)
+  // Glow state machine: 'off' (no glow) → 'peak' (bright + zoom-burst) → 'residual' (faint orange heat).
+  const [glowIntensity, setGlowIntensity] = useState('off')
   const mainRef = useRef(null)
 
   useEffect(() => {
@@ -695,9 +735,11 @@ export default function SummaryPage() {
 
     // handleBegin fires immediately on press (no onFire delay).
     // All timers are press-absolute from t=0.
-    setTimeout(() => setInscriptionsGlowing(true),   200)   // glow begins (overlaps tail of flicker)
-    setTimeout(() => setInscriptionsGlowing(false), 1700)   // glow complete (1500ms window)
-    setTimeout(() => setStampVisible(true),         1700)   // stamp flies in
+    setTimeout(() => setInscriptionsGlowing(true),   200)   // flames begin (particles through mask windows)
+    setTimeout(() => setInscriptionsGlowing(false), 1500)   // flames end, inscriptions reveal
+    setTimeout(() => setGlowIntensity('peak'),      1500)   // bright peak glow + zoom-burst finale
+    setTimeout(() => setGlowIntensity('residual'), 2000)    // glow settles to residual orange heat
+    setTimeout(() => setStampVisible(true),         2000)   // stamp flies in after peak
 
     setTimeout(() => {
       play('stamp')
@@ -719,10 +761,10 @@ export default function SummaryPage() {
           { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
         )
       }
-    }, 2365)   // stamp lands (665ms after fly-in)
+    }, 2665)   // stamp lands (665ms after fly-in)
 
-    setTimeout(() => play('stamp'),       2450)
-    setTimeout(() => setFireActive(true), 3600)
+    setTimeout(() => play('stamp'),       2750)
+    setTimeout(() => setFireActive(true), 4700)
   }
 
   const cols = days.length <= 5 ? days.length
@@ -765,7 +807,7 @@ export default function SummaryPage() {
 
       {/* ── THE BLADE (< 7 days) or DAY CARDS (>= 7 days) ── */}
       {days.length > 0 && days.length < 7 && (
-        <CycleBlade days={days} dailyPlan={dailyPlan} glowing={inscriptionsGlowing} />
+        <CycleBlade days={days} dailyPlan={dailyPlan} glowing={inscriptionsGlowing} glowIntensity={glowIntensity} />
       )}
 
       {days.length >= 7 && (
