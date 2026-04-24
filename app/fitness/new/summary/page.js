@@ -917,7 +917,7 @@ export default function SummaryPage() {
 
         return (
           <div className="fixed inset-0 z-[9997] flex items-center justify-center pointer-events-none"
-               style={{ transform: 'translate(-300px, -300px)' }}>
+               style={{ transform: 'translate(-150px, -150px)' }}>
             <style>{`
               @keyframes deadline-slam {
                 0%   { transform: translateY(-320px) scale(9) rotate(-18deg); opacity: 0; filter: blur(24px); }
@@ -956,7 +956,7 @@ export default function SummaryPage() {
                 }} />
             ))}
 
-            <div style={{ transform: 'scale(0.78)' }}>
+            <div style={{ transform: 'scale(0.6)' }}>
               <div style={{ animation: 'deadline-slam 950ms cubic-bezier(0.18, 1.2, 0.35, 1) forwards' }}>
                 <div className="relative">
                 <div className="absolute inset-0 bg-gtl-red-deep"
