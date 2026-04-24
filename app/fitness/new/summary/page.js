@@ -1006,8 +1006,8 @@ export default function SummaryPage() {
         viewBox="0 0 130 78"
         style={{
           bottom: 'calc(20px + 128px + 60px)',
-          right: '40px',
-          transform: 'rotate(12deg)',
+          right: '20px',
+          transform: 'rotate(8deg)',
           transformOrigin: 'right bottom',
           overflow: 'visible',
         }}
@@ -1049,19 +1049,27 @@ export default function SummaryPage() {
                 const rDur  = hash01(i * 5 + 17)
                 const rSize = hash01(i * 11 + 23)
                 const rPeak = hash01(i * 13 + 29)
-                const xOff  = rX * 130
-                const delay = rDly * 250
-                const dur   = 350 + rDur * 300
-                const size  = 12 + rSize * 14
-                const peakA = 0.55 + rPeak * 0.45
+                // Partition by index parity so each band (ETCH top, CYCLE below) gets its own
+                // dedicated particle pool. Short rise confines trails to their home line so
+                // CYCLE reads as individual flickers instead of a continuous orange wash.
+                const isEtchBand = (i % 2 === 1)
+                const startY = isEtchBand ? 46 : 74
+                const rise   = 18 + rSize * 14
+                const xBase  = isEtchBand ? 8 : 34
+                const xSpan  = isEtchBand ? 70 : 90
+                const xOff   = xBase + rX * xSpan
+                const delay  = rDly * 250
+                const dur    = 350 + rDur * 300
+                const size   = 9 + rSize * 11
+                const peakA  = 0.55 + rPeak * 0.45
                 return (
-                  <circle key={`wm${i}`} cx={xOff} cy={78} r={size} fill="#ff5000" opacity={0}>
+                  <circle key={`wm${i}`} cx={xOff} cy={startY} r={size} fill="#ff5000" opacity={0}>
                     <animateTransform attributeName="transform" type="translate"
-                      values={`0 0; 0 -${50 + rSize * 20}`}
+                      values={`0 0; 0 -${rise.toFixed(0)}`}
                       dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
                     <animate attributeName="opacity"
                       values={`0; ${peakA.toFixed(2)}; 0`}
-                      keyTimes="0; 0.2; 1"
+                      keyTimes="0; 0.25; 1"
                       dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
                   </circle>
                 )
