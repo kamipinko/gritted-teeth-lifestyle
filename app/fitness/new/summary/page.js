@@ -98,7 +98,7 @@ function DayCard({ iso, muscles, index }) {
    Source: public/reference/wakizashi.png → threshold → potrace → SVG.
    Diagonal pose: hilt upper-right, tip lower-left.
    ══════════════════════════════════════════════════════════════════════════ */
-function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [] }) {
+function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [], weekdaysIgnited = false, weekdaysCooled = false }) {
   const anyGlowing = glowingDays.some(Boolean)
   const first = days[0] ? parseDate(days[0]) : null
   const last  = days[days.length - 1] ? parseDate(days[days.length - 1]) : null
@@ -511,37 +511,41 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
           {/* Weekday side labels — share the viewBox so they align vertically with each inscription.
               Per-row x calibration equalizes the on-screen gap between each label and the blade
               silhouette; a single x isn't enough because the 11deg blade rotation makes the right-
-              side blade edge recede as y increases. See verify_weekday_gaps.py for the measurement. */}
-          {dayLabels.map((dl, i) => {
-            const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()]
-            const isLeftSide = i < 3
-            // Right-side labels need a down-nudge to align visually with inscription center; ~10 viewBox units ≈ 6 screen-px
-            const yNudge = isLeftSide ? 0 : 10
-            const LEFT_X  = [1001,  998, 1001]  // i = 0,1,2
-            const RIGHT_X = [1597, 1572, 1542]  // i-3 = 0,1,2
-            const labelX = isLeftSide ? LEFT_X[i] : RIGHT_X[i - 3]
-            const labelY = dl.cy + yNudge
-            return (
-              <text
-                key={`dow-${dl.iso}`}
-                x={labelX}
-                y={labelY}
-                textAnchor={isLeftSide ? 'start' : 'end'}
-                dominantBaseline="central"
-                transform={`rotate(-11 ${labelX} ${labelY})`}
-                style={{
-                  fontFamily: '"Noto Serif JP", Georgia, serif',
-                  fontSize: '45px',
-                  fontWeight: 700,
-                  fill: '#b0a898',
-                  letterSpacing: '0.2em',
-                  opacity: 0.7,
-                }}
-              >
-                {dow}
-              </text>
-            )
-          })}
+              side blade edge recede as y increases. See verify_weekday_gaps.py for the measurement.
+              Wrapped in a <g> so all 6 labels can ignite + cool simultaneously via the same
+              .inscription-hot / .inscription-cooled keyframes used by the inscription glyphs. */}
+          <g className={weekdaysCooled ? 'inscription-cooled' : (weekdaysIgnited ? 'inscription-hot' : '')}>
+            {dayLabels.map((dl, i) => {
+              const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()]
+              const isLeftSide = i < 3
+              const yNudge = isLeftSide ? 0 : 10
+              const LEFT_X  = [1001,  998, 1001]
+              const RIGHT_X = [1597, 1572, 1542]
+              const labelX = isLeftSide ? LEFT_X[i] : RIGHT_X[i - 3]
+              const labelY = dl.cy + yNudge
+              const fill = weekdaysCooled ? '#d4181f' : (weekdaysIgnited ? '#ff6600' : '#b0a898')
+              return (
+                <text
+                  key={`dow-${dl.iso}`}
+                  x={labelX}
+                  y={labelY}
+                  textAnchor={isLeftSide ? 'start' : 'end'}
+                  dominantBaseline="central"
+                  transform={`rotate(-11 ${labelX} ${labelY})`}
+                  style={{
+                    fontFamily: '"Noto Serif JP", Georgia, serif',
+                    fontSize: '45px',
+                    fontWeight: 700,
+                    fill,
+                    letterSpacing: '0.2em',
+                    opacity: weekdaysIgnited ? 1 : 0.7,
+                  }}
+                >
+                  {dow}
+                </text>
+              )
+            })}
+          </g>
         </svg>
         </div>
       </div>
@@ -595,26 +599,19 @@ function ExportButton() {
 // effects (particles rising through the silhouette on press).
 const GURREN_FLAME_D = 'M23.2,520.6c5.4-0.2,10.8-0.3,16.2,1.1c5.1,1.4,10.2,4.3,13.1,8.5c3.7,5.5,3.5,13.2,2.3,20.3c-2,11.8-6.6,21.8-11.8,31.8c-6.9,13.3-14.8,26.6-17.3,41.5c-2.5,14.9,0.5,31.4,8.9,44c5.9,8.8,14.6,15.8,24.1,20.2c10.9,5.1,22.9,6.9,34.9,8.7c-5.5-5.1-10.9-10.2-15.8-16c-4.8-5.8-9-12.4-11.2-19.6c-2-6.9-2.2-14.5-0.6-21.6c1.3-5.7,3.7-11,6.1-16.4c-0.7,5.5-1.3,11-0.5,16.4c1.2,7.5,5.3,14.6,10.6,20.5c5.3,5.8,11.7,10.4,18.9,12.7c4.1,1.3,8.5,1.8,12.8,2.2c-2.1-3.8-4.2-7.5-5.9-11.6c-2.4-5.7-4-12-4.1-18.1c-0.2-13.7,6.8-27,15.9-37.3c8-9,17.6-15.7,23-26.8c4-8.1,5.7-18.5,7.2-27.7c2.7,6.5,4,12.1,4.1,17.9c0.2,10.3-3.4,20.7-8,30.1c-5.1,10.3-11.6,19.4-16,29.8c-2.9,6.9-4.9,14.5-4.8,21.9c0,5.3,1.1,10.6,2.2,15.9c7.5-2.9,14.9-5.8,21.5-10.1c6.7-4.5,12.4-10.6,17.4-17.1c3.5-4.5,6.5-9.3,9.6-14c0,7.1-0.1,14.2-1.8,21.2c-1.4,5.6-3.8,11.2-6.7,16.2c-4.1,7.2-9.3,13.3-15,18.5c-5,4.5-10.3,8.2-16.7,11.9c10.6-0.3,20.8-1.9,31.1-4.6c11.8-3.1,23.8-7.8,34.4-16.1c9.9-7.7,18.6-18.7,24-31c10.3-23.7,7.9-52.4-1.3-74.7c-4.4-10.7-10.3-19.8-13.1-29.8c0,10.5-0.7,19.3-2.5,27.7c-1.8,8.4-4.6,16.3-10.6,22.3c-3.8,3.8-8.8,6.7-15.4,7.6c4.1-6.9,8.2-13.8,10.8-21.2c3.1-8.9,4-18.4,2.3-27.9c-1.9-10.9-7.2-21.7-14.3-30.3c-5.9-7.1-13.1-12.7-19.5-19c-9.7-9.5-17.8-20.7-23.2-32.9c-4.2-9.5-6.7-19.7-5.6-34c-10.3,16-11.6,28.8-10.4,40.7c0.6,6.4,1.9,12.6,7.1,24.7c-9.4-4.6-16.1-11.8-20.8-19.8c-6.9-11.6-9.6-25.1-9.1-37.7c0.5-10.8,3.4-20.9,7.5-30.1c3.2-7.3,7-14,10.8-20.7c-6.3,4.1-12.6,8.2-18.6,13c-7.4,6-14.3,13.1-19.1,21.3c-7.4,12.7-9.7,28.1-7.6,42.4c1.4,9.1,4.6,17.8,8.5,26.2c6.6,14.1,15.3,27.1,19.6,43.1c2.5,9,3.6,18.9,2,27.8c-1.4,7.9-5,15-11,17.2c-3,1.1-6.5,1.1-9.3-0.8c-2.8-1.9-4.8-5.8-5.9-9.4c-1.7-5.6-1.4-10.8-1.5-16.4c-0.2-7.8-1.3-16.5-5.3-23.7c-3.2-5.8-8.4-10.6-14.2-13.2c-5.9-2.7-12.4-3.1-19-1.8C32.2,515.3,27.8,517,23.2,520.6z'
 
-function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
+function BeginButton({ onFire, onHover, onTriggerFlicker, flickering = false, label = 'ETCH CYCLE' }) {
   const [pressed, setPressed] = useState(false)
-  const [flickering, setFlickering] = useState(false)
-
-  const triggerFlicker = () => {
-    // Ignite. No reset timer — flame burns through the full etch sequence until
-    // the page navigates away and BeginButton unmounts.
-    setFlickering(true)
-  }
 
   return (
     <div
       role="button"
       tabIndex={0}
       aria-label="Etch the cycle"
-      onMouseDown={() => { setPressed(true); triggerFlicker() }}
+      onMouseDown={() => { setPressed(true); onTriggerFlicker && onTriggerFlicker() }}
       onMouseUp={() => { setPressed(false); onFire() }}
       onMouseLeave={() => setPressed(false)}
       onMouseEnter={onHover}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); triggerFlicker(); onFire() } }}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onTriggerFlicker && onTriggerFlicker(); onFire() } }}
       className="fixed bottom-5 right-5 z-40 no-print cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-paper focus-visible:outline-offset-2"
       style={{ width: 128, height: 128 }}
     >
@@ -750,6 +747,11 @@ export default function SummaryPage() {
   // Dissipation — slow cascade, decoupled from zoom/hot. Flips true 800+i*450ms after press
   // so each inscription holds its full hot state well after the faster zoom cascade completes.
   const [cooledDays, setCooledDays] = useState(() => Array(6).fill(false))
+  // Button flicker state lifted to SummaryPage so the watermark can co-ignite with the button.
+  const [flickering, setFlickering] = useState(false)
+  // Weekday side labels ignite all-at-once right after the last inscription's cascade slot.
+  const [weekdaysIgnited, setWeekdaysIgnited] = useState(false)
+  const [weekdaysCooled, setWeekdaysCooled] = useState(false)
   const mainRef = useRef(null)
 
   useEffect(() => {
@@ -814,6 +816,8 @@ export default function SummaryPage() {
     }
     setTimeout(() => setGlowIntensity('off'),       2940)   // last zoom cascade slot ends (1500 + 220*5 + 340)
     setTimeout(() => setStampVisible(true),         2940)   // stamp flies in after zoom cascade finishes
+    setTimeout(() => setWeekdaysIgnited(true),      2600)   // weekday labels ignite when last inscription peaks
+    setTimeout(() => setWeekdaysCooled(true),       4100)   // weekday labels cool 1500ms later
 
     setTimeout(() => {
       play('stamp')
@@ -881,7 +885,7 @@ export default function SummaryPage() {
 
       {/* ── THE BLADE (< 7 days) or DAY CARDS (>= 7 days) ── */}
       {days.length > 0 && days.length < 7 && (
-        <CycleBlade days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} />
+        <CycleBlade days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdaysIgnited={weekdaysIgnited} weekdaysCooled={weekdaysCooled} />
       )}
 
       {days.length >= 7 && (
@@ -910,30 +914,65 @@ export default function SummaryPage() {
         </section>
       )}
 
-      {/* Watermark label: sits below the flame button above the nav — subtle warm orange
-          poster-style tracking; fixed so it doesn't fight the blade container's absolute layout. */}
+      {/* Watermark label: dim red gradient at rest; on press, a bright flame-colored band
+          scrolls horizontally through the letter shapes via background-clip: text. */}
+      <style>{`
+        .watermark-idle {
+          color: transparent;
+          background: linear-gradient(90deg, #8a0f14 0%, #d4181f 50%, #8a0f14 100%);
+          -webkit-background-clip: text;
+                  background-clip: text;
+          text-shadow: 0 0 3px rgba(212, 24, 31, 0.25);
+        }
+        .watermark-ignited {
+          color: transparent;
+          background-image: linear-gradient(90deg,
+            #7a0e14 0%,
+            #ff2200 15%,
+            #ff8800 30%,
+            #ffcc00 45%,
+            #fff4c9 52%,
+            #ffcc00 60%,
+            #ff8800 75%,
+            #ff2200 90%,
+            #7a0e14 100%
+          );
+          background-size: 300% 100%;
+          background-position: 0% 0%;
+          -webkit-background-clip: text;
+                  background-clip: text;
+          animation: watermark-shimmer 900ms linear;
+          text-shadow:
+            0 0 6px rgba(255, 200, 100, 0.9),
+            0 0 14px rgba(255, 140, 60, 0.6),
+            0 0 24px rgba(255, 80, 0, 0.4);
+        }
+        @keyframes watermark-shimmer {
+          0%   { background-position: 100% 0%; }
+          100% { background-position: -100% 0%; }
+        }
+      `}</style>
       <div
         aria-hidden="true"
-        className="fixed z-[20] pointer-events-none select-none text-[12px] tracking-[0.5em] uppercase text-[#ff7a00]/40"
+        className={`fixed z-[20] pointer-events-none select-none text-[12px] tracking-[0.5em] uppercase ${flickering ? 'watermark-ignited' : 'watermark-idle'}`}
         style={{
-          bottom: 'calc(20px + 128px + 48px)',
+          bottom: 'calc(20px + 128px + 32px)',
           right: '20px',
-          lineHeight: 1.25,
-          textAlign: 'right',
-          textShadow: '0 0 5px rgba(255, 122, 0, 0.3)',
+          whiteSpace: 'nowrap',
           fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
           transform: 'rotate(-12deg)',
           transformOrigin: 'right bottom',
         }}
       >
-        <div style={{ paddingRight: '1.8em' }}>Etch</div>
-        <div>Cycle</div>
+        Etch Cycle
       </div>
 
       {/* ── ETCH CYCLE (fixed bottom-right CTA) ── */}
       <BeginButton
         onFire={handleBegin}
         onHover={() => play('button-hover')}
+        onTriggerFlicker={() => setFlickering(true)}
+        flickering={flickering}
         label={(() => { try { return localStorage.getItem('gtl-back-to-edit') === '1' ? 'RE-ETCH CYCLE' : 'ETCH CYCLE' } catch (_) { return 'ETCH CYCLE' } })()}
       />
 
