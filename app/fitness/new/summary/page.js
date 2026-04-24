@@ -586,7 +586,6 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                       y={labelY}
                       textAnchor={isLeftSide ? 'start' : 'end'}
                       dominantBaseline="central"
-                      transform={`rotate(-11 ${labelX} ${labelY})`}
                       className="weekday-zoom-burst"
                       style={{
                         fontFamily: '"Noto Serif JP", Georgia, serif',
@@ -1047,8 +1046,8 @@ export default function SummaryPage() {
         .watermark-hot { animation: watermark-hot-hold 100ms forwards; }
         @keyframes weekday-zoom-burst {
           0%   { transform: scale(1);    opacity: 0.9; }
-          60%  { transform: scale(1.18); opacity: 0.55; }
-          100% { transform: scale(1.25); opacity: 0; }
+          60%  { transform: scale(1.08); opacity: 0.55; }
+          100% { transform: scale(1.12); opacity: 0; }
         }
         .weekday-zoom-burst {
           transform-box: fill-box;
@@ -1097,14 +1096,16 @@ export default function SummaryPage() {
           ETCH
         </text>
         {watermarkIgnited[0] && (
-          <text
-            x="8" y="30"
-            textAnchor="start"
-            fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-            fontSize="18" fontWeight="600" letterSpacing="6"
-            className="weekday-zoom-burst">
-            ETCH
-          </text>
+          <g transform="rotate(-8 38 24)">
+            <text
+              x="8" y="30"
+              textAnchor="start"
+              fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+              fontSize="18" fontWeight="600" letterSpacing="6"
+              className="weekday-zoom-burst">
+              ETCH
+            </text>
+          </g>
         )}
         <text textAnchor="start"
           fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
@@ -1117,14 +1118,16 @@ export default function SummaryPage() {
           CYCLE
         </text>
         {watermarkIgnited[1] && (
-          <text
-            x="8" y="62"
-            textAnchor="start"
-            fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-            fontSize="18" fontWeight="600" letterSpacing="6"
-            className="weekday-zoom-burst">
-            CYCLE
-          </text>
+          <g transform="rotate(-8 46 56)">
+            <text
+              x="8" y="62"
+              textAnchor="start"
+              fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+              fontSize="18" fontWeight="600" letterSpacing="6"
+              className="weekday-zoom-burst">
+              CYCLE
+            </text>
+          </g>
         )}
         {/* Particles AFTER — clipped to letter silhouettes via the mask, paint on top of the
             void-black base so the flames show through the letter shapes. */}
