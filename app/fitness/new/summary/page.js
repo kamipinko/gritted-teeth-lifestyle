@@ -98,11 +98,7 @@ function DayCard({ iso, muscles, index }) {
    Source: public/reference/wakizashi.png → threshold → potrace → SVG.
    Diagonal pose: hilt upper-right, tip lower-left.
    ══════════════════════════════════════════════════════════════════════════ */
-function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off' }) {
-  // Base inscriptions hide during BOTH flame window and peak zoom window: difference-blend over
-  // red blade makes them black, and if a warm zoom duplicate lights the area behind them at the
-  // same time, difference(warm, red) → green contamination. Hiding during peak removes the source.
-  const baseHidden = glowing || glowIntensity === 'peak'
+function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off', hot = false }) {
   const first = days[0] ? parseDate(days[0]) : null
   const last  = days[days.length - 1] ? parseDate(days[days.length - 1]) : null
   const dateRange = first && last
@@ -140,11 +136,10 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off' })
     return { num, hasWork, kanjiStr, iso, cx: anchor.x, cy: anchor.y, angle: anchor.angle }
   })
 
-  const renderDayInscription = (dl, { outline = false, glow = false, glowFill = null, maskFill = null } = {}) => {
+  const renderDayInscription = (dl, { outline = false, maskFill = null, hot = false } = {}) => {
     const { num, kanjiStr } = dl
     const kanjiChars = kanjiStr.split('')
     const n = kanjiChars.length
-    const baseColor = maskFill || glowFill || (glow ? '#ffdd00' : '#d4181f')
     const baseOpacity = 1.0
     const font = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
     const outlineProps = outline
@@ -152,16 +147,23 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off' })
       : {}
 
     // 3D embossed depth: 4 stacked layers with progressive y-offset + darkening ramp.
-    // For mask/zoom passes (flat maskFill or glowFill), collapse to a single flat layer so
-    // the silhouette stays crisp (mask uses luminance; zoom is bright cream).
-    const DEPTH_STACK = [
+    // Red stack is the default pre-ignition color; hot stack is the dark-orange ignited
+    // state (post-flame, persists until navigation). maskFill (mask + zoom-burst passes)
+    // collapses to a single flat layer so the silhouette stays crisp.
+    const DEPTH_STACK_RED = [
       { dy: 3, fill: '#3a0608' },
       { dy: 2, fill: '#6b0b10' },
       { dy: 1, fill: '#9e1118' },
       { dy: 0, fill: '#d4181f' },
     ]
-    const isFlat = !!maskFill || !!glowFill
-    const layers = isFlat ? [{ dy: 0, fill: baseColor }] : DEPTH_STACK
+    const DEPTH_STACK_HOT = [
+      { dy: 3, fill: '#2e1200' },
+      { dy: 2, fill: '#5c2500' },
+      { dy: 1, fill: '#8a3800' },
+      { dy: 0, fill: '#b84a00' },
+    ]
+    const stack = hot ? DEPTH_STACK_HOT : DEPTH_STACK_RED
+    const layers = maskFill ? [{ dy: 0, fill: maskFill }] : stack
 
     const renderText = (keyBase, x, y, fontSize, char) => layers.map((layer, li) => (
       <text key={`${keyBase}-${li}`} x={x} y={y + layer.dy} textAnchor="middle" dominantBaseline="central" {...outlineProps}
@@ -396,32 +398,31 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off' })
               </g>
             </>
           )}
-          {/* Difference-blend base inscriptions. Hidden during BOTH flame window and peak zoom:
-              the masked particle layer supplies the flame visuals, and the zoom duplicates supply
-              the peak visuals. Keeping the black etched text visible during peak would read as
-              green contamination (difference(warm-zoom-over, red-blade) = green). */}
-          <g style={{ mixBlendMode: 'difference', opacity: baseHidden ? 0 : 1, transition: 'opacity 0ms' }}>
+          {/* Base inscriptions. Pre-ignition: difference-blend red (reads dark carved). After ignition
+              (hot=true): normal blend over dark-orange DEPTH_STACK_HOT so the letters glow warm without
+              any difference(warm, red)→green contamination. Opacity snaps binary on `glowing` only —
+              base is hidden only during the flame particle window, snaps back the instant flames end. */}
+          <g style={{ mixBlendMode: hot ? 'normal' : 'difference', opacity: glowing ? 0 : 1, transition: 'opacity 0ms' }}>
             {dayLabels.map((dl, i) => {
               const textAngle = dl.angle - 90
               const isLast = i === lastIdx
               return (
                 <g key={dl.iso} transform={`translate(${dl.cx},${dl.cy}) rotate(${textAngle})`}>
                   {isLast ? (
-                    // Last day's RIGHT half — stays in difference blend (reads black over solid blade)
-                    <g clipPath="url(#last-day-right)">{renderDayInscription(dl)}</g>
+                    <g clipPath="url(#last-day-right)">{renderDayInscription(dl, { hot })}</g>
                   ) : (
-                    renderDayInscription(dl)
+                    renderDayInscription(dl, { hot })
                   )}
                 </g>
               )
             })}
           </g>
-          {/* Last day's LEFT half — outside the difference group so the design-line crossing stays plain red.
-              Same opacity gating as the difference-blend group above so the masked particles show cleanly. */}
+          {/* Last day's LEFT half — outside the main group so the design-line crossing stays plain
+              (no difference blend) even in the red state. */}
           {lastDay && (
             <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}
-               style={{ opacity: baseHidden ? 0 : 1, transition: 'opacity 0ms' }}>
-              <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true })}</g>
+               style={{ opacity: glowing ? 0 : 1, transition: 'opacity 0ms' }}>
+              <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true, hot })}</g>
             </g>
           )}
           {/* Zoom-burst finale — fires during the 'peak' glow phase. Each inscription
@@ -457,7 +458,7 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off' })
                 {lastDay && (
                   <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
                     <g className="zoom-glyph">
-                      <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { maskFill: '#fff4c9' })}</g>
+                      <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { maskFill: '#ff6600' })}</g>
                     </g>
                   </g>
                 )}
@@ -695,8 +696,11 @@ export default function SummaryPage() {
   const [stampVisible, setStampVisible] = useState(false)
   const [stampLanded,  setStampLanded]  = useState(false)
   const [inscriptionsGlowing, setInscriptionsGlowing] = useState(false)
-  // Glow state machine: 'off' (no glow) → 'peak' (bright + zoom-burst) → 'residual' (faint orange heat).
+  // Glow state machine: 'off' → 'peak' (zoom-burst one-shot) → 'off' again.
   const [glowIntensity, setGlowIntensity] = useState('off')
+  // Persistent dark-orange 'ignited' color on base inscriptions. Flips true at peak start
+  // (t=1500) and never flips back on this page — survives the stamp + fire transition.
+  const [inscriptionsHot, setInscriptionsHot] = useState(false)
   const mainRef = useRef(null)
 
   useEffect(() => {
@@ -737,8 +741,9 @@ export default function SummaryPage() {
     // All timers are press-absolute from t=0.
     setTimeout(() => setInscriptionsGlowing(true),   200)   // flames begin (particles through mask windows)
     setTimeout(() => setInscriptionsGlowing(false), 1500)   // flames end, inscriptions reveal
-    setTimeout(() => setGlowIntensity('peak'),      1500)   // bright peak glow + zoom-burst finale (280ms)
-    setTimeout(() => setGlowIntensity('off'),       1780)   // zoom animation ends; base snaps back
+    setTimeout(() => setGlowIntensity('peak'),      1500)   // zoom-burst finale (280ms)
+    setTimeout(() => setInscriptionsHot(true),      1500)   // base inscriptions ignite (dark orange); stays hot
+    setTimeout(() => setGlowIntensity('off'),       1780)   // zoom-burst ends; hot color remains on base
     setTimeout(() => setStampVisible(true),         1780)   // stamp flies in the moment peak ends
 
     setTimeout(() => {
@@ -807,7 +812,7 @@ export default function SummaryPage() {
 
       {/* ── THE BLADE (< 7 days) or DAY CARDS (>= 7 days) ── */}
       {days.length > 0 && days.length < 7 && (
-        <CycleBlade days={days} dailyPlan={dailyPlan} glowing={inscriptionsGlowing} glowIntensity={glowIntensity} />
+        <CycleBlade days={days} dailyPlan={dailyPlan} glowing={inscriptionsGlowing} glowIntensity={glowIntensity} hot={inscriptionsHot} />
       )}
 
       {days.length >= 7 && (
