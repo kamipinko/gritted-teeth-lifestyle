@@ -98,7 +98,7 @@ function DayCard({ iso, muscles, index }) {
    Source: public/reference/wakizashi.png → threshold → potrace → SVG.
    Diagonal pose: hilt upper-right, tip lower-left.
    ══════════════════════════════════════════════════════════════════════════ */
-function CycleBlade({ days, dailyPlan, glowing = false }) {
+function CycleBlade({ days, dailyPlan, glowing = false, bursting = false }) {
   const first = days[0] ? parseDate(days[0]) : null
   const last  = days[days.length - 1] ? parseDate(days[days.length - 1]) : null
   const dateRange = first && last
@@ -109,6 +109,12 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
   // serializes the extra <img> differently between server and client.
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
+
+  // Overlay SVG ref + screen-coord anchors for the burst sunrays HTML overlay.
+  // Projected via getScreenCTM so the HTML <div>s can sit at the exact on-screen
+  // position of each inscription, regardless of the blade's rotation/scale.
+  const overlaySvgRef = useRef(null)
+  const [burstAnchors, setBurstAnchors] = useState([])
 
   // Interior anchors — on the mune-side edge of the hi (fuller/blood groove).
   // This is the red-to-dark transition line INSIDE the blade face, ~45% from mune edge.
@@ -135,6 +141,35 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
     const anchor = INTERIOR_ANCHORS[i] || INTERIOR_ANCHORS[INTERIOR_ANCHORS.length - 1]
     return { num, hasWork, kanjiStr, iso, cx: anchor.x, cy: anchor.y, angle: anchor.angle }
   })
+
+  // Project each inscription's viewBox (cx, cy) to screen pixels via SVG CTM.
+  // Required for the HTML sunrays overlay to sit at the exact spot each glyph
+  // occupies on-screen, regardless of the blade's rotation+scale transforms.
+  useEffect(() => {
+    if (!overlaySvgRef.current || dayLabels.length === 0) return
+    const compute = () => {
+      const svg = overlaySvgRef.current
+      if (!svg) return
+      const ctm = svg.getScreenCTM()
+      if (!ctm) return
+      const anchors = dayLabels.map((dl) => {
+        const pt = svg.createSVGPoint(); pt.x = dl.cx; pt.y = dl.cy
+        const s = pt.matrixTransform(ctm)
+        return { iso: dl.iso, x: s.x, y: s.y }
+      })
+      setBurstAnchors(anchors)
+    }
+    // Run after layout — rAF gives the browser a chance to compute the CTM
+    // with all transforms resolved (including the rotate(11deg)/scale(0.5625)
+    // on the container).
+    const id = requestAnimationFrame(compute)
+    window.addEventListener('resize', compute)
+    return () => {
+      cancelAnimationFrame(id)
+      window.removeEventListener('resize', compute)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [days.length, mounted])
 
   const renderDayInscription = (dl, { outline = false, glow = false, glowFill = null, maskFill = null } = {}) => {
     const { num, kanjiStr } = dl
@@ -275,6 +310,7 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
 
         {/* Engraved day labels along the blade spine — same viewBox as weapon SVG */}
         <svg
+          ref={overlaySvgRef}
           viewBox="668 -635 1136 2642"
           className="absolute inset-0 w-full h-full pointer-events-none"
           style={{ top: '-15px', left: '0px' }}
@@ -463,6 +499,70 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
         </svg>
         </div>
       </div>
+      {/* God-rays burst — HTML overlay using CSS 3D perspective to project
+          box-shadow 'beams' as light streaks. One cluster per inscription,
+          positioned at the screen-space anchor computed via getScreenCTM. */}
+      {bursting && burstAnchors.length > 0 && (
+        <>
+          <style>{`
+            @keyframes burst-fade {
+              0%   { opacity: 0; }
+              25%  { opacity: 1; }
+              100% { opacity: 0; }
+            }
+            .burst-anchor .sunrays {
+              position: absolute;
+              top: 0; left: 0;
+              width: 80px;
+              height: 80px;
+              perspective: 2px;
+              perspective-origin: 50% 100%;
+              transform-style: preserve-3d;
+              display: flex;
+              align-items: flex-end;
+              animation: burst-fade 500ms ease-out forwards;
+            }
+            .burst-anchor .sr-1 { transform: translate(-50%, -80%) rotate(-18deg); }
+            .burst-anchor .sr-2 { transform: translate(-50%, -80%) rotate(18deg); }
+            .burst-anchor .sunrays > .light {
+              flex: 0 0 15%;
+              height: 80%;
+              box-shadow: 40px -4px 8px rgba(255, 250, 220, 0.95);
+              transform-origin: 0% 100% 0px;
+              transform: rotateX(90deg) translateZ(0);
+            }
+            .burst-anchor .sunrays > .light:nth-child(2n) { box-shadow: none; }
+            .burst-anchor .burst-sun {
+              position: absolute;
+              top: -4px; left: -6px;
+              width: 12px;
+              height: 12px;
+              border-radius: 50%;
+              background: radial-gradient(circle, white 20%, #ffd700 50%, transparent 75%);
+              box-shadow: 0 0 18px 6px rgba(255, 220, 150, 0.9);
+              mix-blend-mode: plus-lighter;
+              animation: burst-fade 500ms ease-out forwards;
+            }
+          `}</style>
+          <div className="fixed inset-0 pointer-events-none z-[20]" aria-hidden="true">
+            {burstAnchors.map((a) => (
+              <div
+                key={a.iso}
+                className="burst-anchor"
+                style={{ position: 'absolute', left: a.x, top: a.y, width: 1, height: 1 }}
+              >
+                <div className="sunrays sr-1">
+                  {Array.from({ length: 6 }).map((_, i) => <div key={i} className="light"/>)}
+                </div>
+                <div className="sunrays sr-2">
+                  {Array.from({ length: 6 }).map((_, i) => <div key={i} className="light"/>)}
+                </div>
+                <div className="burst-sun"/>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </section>
   )
 }
@@ -657,6 +757,7 @@ export default function SummaryPage() {
   const [stampVisible, setStampVisible] = useState(false)
   const [stampLanded,  setStampLanded]  = useState(false)
   const [inscriptionsGlowing, setInscriptionsGlowing] = useState(false)
+  const [bursting, setBursting] = useState(false)
   const mainRef = useRef(null)
 
   useEffect(() => {
@@ -695,9 +796,17 @@ export default function SummaryPage() {
 
     // handleBegin fires immediately on press (no onFire delay).
     // All timers are press-absolute from t=0.
-    setTimeout(() => setInscriptionsGlowing(true),   200)   // glow begins (overlaps tail of flicker)
-    setTimeout(() => setInscriptionsGlowing(false), 1700)   // glow complete (1500ms window)
-    setTimeout(() => setStampVisible(true),         1700)   // stamp flies in
+    // Press-absolute beats:
+    //  200-1500  inscription particle flames
+    //  1500-2000 god-rays burst (HTML sunrays overlay)
+    //  2000      stamp flies in (after burst completes)
+    //  2665      stamp lands
+    //  4700      fire transition / navigate
+    setTimeout(() => setInscriptionsGlowing(true),   200)
+    setTimeout(() => setInscriptionsGlowing(false), 1500)
+    setTimeout(() => setBursting(true),             1500)
+    setTimeout(() => setBursting(false),            2000)
+    setTimeout(() => setStampVisible(true),         2000)
 
     setTimeout(() => {
       play('stamp')
@@ -719,10 +828,10 @@ export default function SummaryPage() {
           { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
         )
       }
-    }, 2365)   // stamp lands (665ms after fly-in)
+    }, 2665)   // stamp lands (665ms after fly-in; shifted from 2365)
 
-    setTimeout(() => play('stamp'),       2450)
-    setTimeout(() => setFireActive(true), 3600)
+    setTimeout(() => play('stamp'),       2750)
+    setTimeout(() => setFireActive(true), 4700)
   }
 
   const cols = days.length <= 5 ? days.length
@@ -765,7 +874,7 @@ export default function SummaryPage() {
 
       {/* ── THE BLADE (< 7 days) or DAY CARDS (>= 7 days) ── */}
       {days.length > 0 && days.length < 7 && (
-        <CycleBlade days={days} dailyPlan={dailyPlan} glowing={inscriptionsGlowing} />
+        <CycleBlade days={days} dailyPlan={dailyPlan} glowing={inscriptionsGlowing} bursting={bursting} />
       )}
 
       {days.length >= 7 && (
