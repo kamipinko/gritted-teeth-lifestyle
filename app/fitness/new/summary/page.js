@@ -1002,30 +1002,30 @@ export default function SummaryPage() {
       <svg
         aria-hidden="true"
         className="fixed z-[20] pointer-events-none select-none"
-        width={220} height={70}
-        viewBox="0 0 220 70"
+        width={160} height={60}
+        viewBox="0 0 160 60"
         style={{
-          bottom: 'calc(20px + 128px + 80px)',
-          right: '160px',
+          bottom: 'calc(20px + 128px + 60px)',
+          right: '16px',
           transform: 'rotate(-12deg)',
           transformOrigin: 'right bottom',
           overflow: 'visible',
         }}
       >
         <defs>
-          <mask id="watermark-window" maskUnits="userSpaceOnUse" x="0" y="0" width="220" height="70">
-            <rect x="0" y="0" width="220" height="70" fill="black"/>
-            <text x="110" y="48" textAnchor="middle"
+          <mask id="watermark-window" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="60">
+            <rect x="0" y="0" width="160" height="60" fill="black"/>
+            <text x="80" y="42" textAnchor="middle"
               fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-              fontSize="20" fontWeight="600" letterSpacing="9" fill="white">ETCH CYCLE</text>
+              fontSize="16" fontWeight="600" letterSpacing="6" fill="white">ETCH CYCLE</text>
           </mask>
         </defs>
         {/* Base text — dim red idle, fully hidden while flickering so the particle flames
             (rendered AFTER through the mask) are the sole visible content inside letter shapes.
             Same cheat the blade inscriptions use during their flame phase. */}
-        <text x="110" y="48" textAnchor="middle"
+        <text x="80" y="42" textAnchor="middle"
           fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-          fontSize="20" fontWeight="600" letterSpacing="9"
+          fontSize="16" fontWeight="600" letterSpacing="6"
           className={flickering ? 'watermark-hot' : ''}
           fill='rgba(212, 24, 31, 0.65)'
           opacity={flickering ? 0 : 1}
@@ -1045,7 +1045,7 @@ export default function SummaryPage() {
                 const rDur  = hash01(i * 5 + 17)
                 const rSize = hash01(i * 11 + 23)
                 const rPeak = hash01(i * 13 + 29)
-                const xOff  = rX * 220
+                const xOff  = rX * 160
                 const delay = rDly * 250
                 const dur   = 350 + rDur * 300
                 const size  = 12 + rSize * 14
