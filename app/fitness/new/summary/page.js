@@ -99,10 +99,9 @@ function DayCard({ iso, muscles, index }) {
    Diagonal pose: hilt upper-right, tip lower-left.
    ══════════════════════════════════════════════════════════════════════════ */
 function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off' }) {
-  const glowFilter =
-    glowIntensity === 'peak'     ? 'drop-shadow(0 0 8px #ffc266) drop-shadow(0 0 18px #ff8833)' :
-    glowIntensity === 'residual' ? 'drop-shadow(0 0 3px rgba(255,140,60,0.5))' :
-                                   'none'
+  const glowFilter = glowIntensity === 'peak'
+    ? 'drop-shadow(0 0 8px #ffc266) drop-shadow(0 0 18px #ff8833)'
+    : 'none'
   const first = days[0] ? parseDate(days[0]) : null
   const last  = days[days.length - 1] ? parseDate(days[days.length - 1]) : null
   const dateRange = first && last
@@ -401,7 +400,7 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off' })
               and keeping the black etched text visible would occlude them. Fade
               smoothly back in once the glow ends. Drop-shadow glow filter layered
               on top for the peak/residual phases of the glow state machine. */}
-          <g style={{ mixBlendMode: 'difference', opacity: glowing ? 0 : 1, transition: 'opacity 150ms ease-out, filter 500ms ease-out', filter: glowFilter }}>
+          <g style={{ mixBlendMode: 'difference', opacity: glowing ? 0 : 1, transition: 'opacity 150ms ease-out, filter 300ms ease-out', filter: glowFilter }}>
             {dayLabels.map((dl, i) => {
               const textAngle = dl.angle - 90
               const isLast = i === lastIdx
@@ -421,7 +420,7 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off' })
               Same opacity gating as the difference-blend group above so the masked particles show cleanly. */}
           {lastDay && (
             <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}
-               style={{ opacity: glowing ? 0 : 1, transition: 'opacity 150ms ease-out, filter 500ms ease-out', filter: glowFilter }}>
+               style={{ opacity: glowing ? 0 : 1, transition: 'opacity 150ms ease-out, filter 300ms ease-out', filter: glowFilter }}>
               <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true })}</g>
             </g>
           )}
@@ -444,18 +443,14 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off' })
                   transform-origin: center;
                   animation: inscription-zoom 280ms ease-out forwards;
                   mix-blend-mode: plus-lighter;
-                  filter:
-                    drop-shadow(0 0 3px #ffffff)
-                    drop-shadow(0 0 8px #ffcc00)
-                    drop-shadow(0 0 18px #ff6600)
-                    drop-shadow(0 0 32px #ff4400);
+                  filter: drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 16px #ff4400);
                 }
               `}</style>
               <g className="inscription-zoom-burst" style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
                 {dayLabels.map((dl) => (
                   <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
                     <g className="zoom-glyph">
-                      {renderDayInscription(dl, { maskFill: '#fff4c9' })}
+                      {renderDayInscription(dl, { maskFill: '#ff6600' })}
                     </g>
                   </g>
                 ))}
@@ -743,7 +738,7 @@ export default function SummaryPage() {
     setTimeout(() => setInscriptionsGlowing(true),   200)   // flames begin (particles through mask windows)
     setTimeout(() => setInscriptionsGlowing(false), 1500)   // flames end, inscriptions reveal
     setTimeout(() => setGlowIntensity('peak'),      1500)   // bright peak glow + zoom-burst finale
-    setTimeout(() => setGlowIntensity('residual'), 2000)    // glow settles to residual orange heat
+    setTimeout(() => setGlowIntensity('off'),       2000)   // glow off; inscriptions back to crisp 3D embossed red
     setTimeout(() => setStampVisible(true),         2000)   // stamp flies in after peak
 
     setTimeout(() => {
