@@ -98,8 +98,9 @@ function DayCard({ iso, muscles, index }) {
    Source: public/reference/wakizashi.png → threshold → potrace → SVG.
    Diagonal pose: hilt upper-right, tip lower-left.
    ══════════════════════════════════════════════════════════════════════════ */
-function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [] }) {
-  const HOT_GLOW_FILTER = 'drop-shadow(0 0 2px #ff8800) drop-shadow(0 0 5px rgba(255, 122, 0, 0.65)) drop-shadow(0 0 10px rgba(255, 80, 0, 0.25))'
+function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [] }) {
+  const HOT_GLOW_FILTER    = 'drop-shadow(0 0 2px #ff8800) drop-shadow(0 0 5px rgba(255, 122, 0, 0.65)) drop-shadow(0 0 10px rgba(255, 80, 0, 0.25))'
+  const COOLED_GLOW_FILTER = 'drop-shadow(0 0 1px rgba(255, 136, 0, 0.85)) drop-shadow(0 0 3px rgba(255, 122, 0, 0.35))'
   const anyGlowing = glowingDays.some(Boolean)
   const first = days[0] ? parseDate(days[0]) : null
   const last  = days[days.length - 1] ? parseDate(days[days.length - 1]) : null
@@ -416,13 +417,14 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
             const textAngle = dl.angle - 90
             const isLast = i === lastIdx
             const hot = !!hotDays[i]
+            const cooled = !!cooledDays[i]
             const flameOn = !!glowingDays[i]
             return (
               <g key={dl.iso} style={{
                 mixBlendMode: hot ? 'normal' : 'difference',
                 opacity: flameOn ? 0 : 1,
-                transition: 'opacity 0ms, filter 300ms ease-out',
-                filter: hot ? HOT_GLOW_FILTER : 'none',
+                transition: 'opacity 0ms, filter 400ms ease-out',
+                filter: !hot ? 'none' : (cooled ? COOLED_GLOW_FILTER : HOT_GLOW_FILTER),
               }}>
                 <g transform={`translate(${dl.cx},${dl.cy}) rotate(${textAngle})`}>
                   {isLast ? (
@@ -440,8 +442,8 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
           {lastDay && (
             <g style={{
               opacity: glowingDays[lastIdx] ? 0 : 1,
-              transition: 'opacity 0ms, filter 300ms ease-out',
-              filter: hotDays[lastIdx] ? HOT_GLOW_FILTER : 'none',
+              transition: 'opacity 0ms, filter 400ms ease-out',
+              filter: !hotDays[lastIdx] ? 'none' : (cooledDays[lastIdx] ? COOLED_GLOW_FILTER : HOT_GLOW_FILTER),
             }}>
               <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
                 <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true, hot: !!hotDays[lastIdx] })}</g>
@@ -730,6 +732,10 @@ export default function SummaryPage() {
   // Per-day ignition flags — each inscription flips hot at the same moment its zoom-burst
   // fires, so the color/glow transition cascades in sync with the zoom wave. Never flips back.
   const [hotDays, setHotDays] = useState(() => Array(6).fill(false))
+  // Cooldown flag per day — flips true 340ms after each inscription's zoom ends, dimming
+  // that day's glow from 'freshly branded' to a subtle ember halo. Transitions smoothly via
+  // CSS filter interpolation.
+  const [cooledDays, setCooledDays] = useState(() => Array(6).fill(false))
   const mainRef = useRef(null)
 
   useEffect(() => {
@@ -769,14 +775,18 @@ export default function SummaryPage() {
     // handleBegin fires immediately on press (no onFire delay).
     // All timers are press-absolute from t=0.
     setTimeout(() => setGlowingDays(Array(6).fill(true)), 200)   // flames begin (all inscriptions)
-    setTimeout(() => setGlowIntensity('peak'),      1500)   // zoom-burst cascade begins (340ms per glyph, 140ms stagger)
-    // Cascade per-inscription: flame off + hot on + zoom fires, all at t=1500 + i*140.
+    setTimeout(() => setGlowIntensity('peak'),      1500)   // zoom-burst cascade begins (340ms per glyph, 220ms stagger)
+    // Cascade per-inscription: flame off + hot on + zoom fires, all at t=1500 + i*220.
+    // Cooldown: each day's glow dims to ember state 340ms after its zoom begins (= zoom-end).
     for (let i = 0; i < 6; i++) {
       const at = 1500 + i * 220
       setTimeout(() => {
         setGlowingDays(prev => { const next = [...prev]; next[i] = false; return next })
         setHotDays(prev => { const next = [...prev]; next[i] = true; return next })
       }, at)
+      setTimeout(() => {
+        setCooledDays(prev => { const next = [...prev]; next[i] = true; return next })
+      }, at + 340)
     }
     setTimeout(() => setGlowIntensity('off'),       2940)   // last cascade slot ends (1500 + 220*5 + 340)
     setTimeout(() => setStampVisible(true),         2940)   // stamp flies in after cascade finishes
@@ -847,7 +857,7 @@ export default function SummaryPage() {
 
       {/* ── THE BLADE (< 7 days) or DAY CARDS (>= 7 days) ── */}
       {days.length > 0 && days.length < 7 && (
-        <CycleBlade days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} />
+        <CycleBlade days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} />
       )}
 
       {days.length >= 7 && (
