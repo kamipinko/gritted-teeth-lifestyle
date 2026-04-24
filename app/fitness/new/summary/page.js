@@ -586,7 +586,7 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                       y={labelY}
                       textAnchor={isLeftSide ? 'start' : 'end'}
                       dominantBaseline="central"
-                      className="weekday-zoom-burst"
+                      className="weekday-flame-engulf"
                       style={{
                         fontFamily: '"Noto Serif JP", Georgia, serif',
                         fontSize: '45px',
@@ -1044,17 +1044,39 @@ export default function SummaryPage() {
           }
         }
         .watermark-hot { animation: watermark-hot-hold 100ms forwards; }
-        @keyframes weekday-zoom-burst {
-          0%   { transform: scale(1);    opacity: 0.9; }
-          60%  { transform: scale(1.08); opacity: 0.55; }
-          100% { transform: scale(1.12); opacity: 0; }
+        @keyframes weekday-flame-engulf {
+          0% {
+            opacity: 0.95;
+            filter:
+              drop-shadow(0 0 2px #fff4c9)
+              drop-shadow(0 0 4px #ffb060)
+              blur(0.3px);
+          }
+          35% {
+            opacity: 0.75;
+            filter:
+              drop-shadow(0 0 6px #ffb060)
+              drop-shadow(0 0 16px #ff6600)
+              drop-shadow(0 0 28px rgba(255, 80, 0, 0.7))
+              blur(1.5px);
+          }
+          70% {
+            opacity: 0.35;
+            filter:
+              drop-shadow(0 0 10px #ff4400)
+              drop-shadow(0 0 24px rgba(255, 60, 0, 0.45))
+              blur(3px);
+          }
+          100% {
+            opacity: 0;
+            filter:
+              drop-shadow(0 0 14px rgba(255, 40, 0, 0.2))
+              blur(5px);
+          }
         }
-        .weekday-zoom-burst {
-          transform-box: fill-box;
-          transform-origin: center;
-          animation: weekday-zoom-burst 220ms ease-out forwards;
-          fill: #ff5000;
-          filter: drop-shadow(0 0 4px #ff6600) drop-shadow(0 0 10px #ff4400);
+        .weekday-flame-engulf {
+          animation: weekday-flame-engulf 280ms ease-out forwards;
+          fill: #ffa840;
           pointer-events: none;
         }
       `}</style>
@@ -1096,16 +1118,14 @@ export default function SummaryPage() {
           ETCH
         </text>
         {watermarkIgnited[0] && (
-          <g transform="rotate(-8 38 24)">
-            <text
-              x="8" y="30"
-              textAnchor="start"
-              fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-              fontSize="18" fontWeight="600" letterSpacing="6"
-              className="weekday-zoom-burst">
-              ETCH
-            </text>
-          </g>
+          <text
+            x="8" y="30"
+            textAnchor="start"
+            fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+            fontSize="18" fontWeight="600" letterSpacing="6"
+            className="weekday-flame-engulf">
+            ETCH
+          </text>
         )}
         <text textAnchor="start"
           fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
@@ -1118,16 +1138,14 @@ export default function SummaryPage() {
           CYCLE
         </text>
         {watermarkIgnited[1] && (
-          <g transform="rotate(-8 46 56)">
-            <text
-              x="8" y="62"
-              textAnchor="start"
-              fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-              fontSize="18" fontWeight="600" letterSpacing="6"
-              className="weekday-zoom-burst">
-              CYCLE
-            </text>
-          </g>
+          <text
+            x="8" y="62"
+            textAnchor="start"
+            fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+            fontSize="18" fontWeight="600" letterSpacing="6"
+            className="weekday-flame-engulf">
+            CYCLE
+          </text>
         )}
         {/* Particles AFTER — clipped to letter silhouettes via the mask, paint on top of the
             void-black base so the flames show through the letter shapes. */}
