@@ -541,11 +541,11 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               </g>
             </>
           )}
-          {/* Weekday labels — base text hidden during the ignite window (inscription cheat)
-              so the particle flames are the only visible content inside the letter silhouettes.
-              Returns post-cool as dim red. Class on the group drives the hot→cool keyframe. */}
-          <g className={weekdaysCooled ? 'inscription-cooled' : (weekdaysIgnited ? 'inscription-hot' : '')}
-             style={{ opacity: (weekdaysIgnited && !weekdaysCooled) ? 0 : 1, transition: 'opacity 0ms' }}>
+          {/* Weekday labels — base text hidden once ignited (inscription cheat) so particle
+              flames are the only visible content inside the letter silhouettes. No cooled
+              transition on this page; flames burn until navigation. */}
+          <g className={weekdaysIgnited ? 'inscription-hot' : ''}
+             style={{ opacity: weekdaysIgnited ? 0 : 1, transition: 'opacity 0ms' }}>
             {dayLabels.map((dl, i) => {
               const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()]
               const isLeftSide = i < 3
@@ -578,8 +578,8 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
             })}
           </g>
           {/* Weekday particle flames AFTER — clipped to weekday letter silhouettes via the
-              weekday-window mask. Active between ignite (t=500) and cool (t=2000). */}
-          {weekdaysIgnited && !weekdaysCooled && (
+              weekday-window mask. Run indefinitely once ignited at t=500. */}
+          {weekdaysIgnited && (
             <g mask="url(#weekday-window)" style={{ pointerEvents: 'none' }}>
               {(() => {
                 const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
@@ -885,8 +885,7 @@ export default function SummaryPage() {
     }
     setTimeout(() => setGlowIntensity('off'),       2940)   // last zoom cascade slot ends (1500 + 220*5 + 340)
     setTimeout(() => setStampVisible(true),         2940)   // stamp flies in after zoom cascade finishes
-    setTimeout(() => setWeekdaysIgnited(true),       500)   // weekday labels ignite with day 0's flame (last flame in reverse cascade)
-    setTimeout(() => setWeekdaysCooled(true),       2000)   // weekday labels cool 1500ms later
+    setTimeout(() => setWeekdaysIgnited(true),       500)   // weekday labels ignite with day 0's flame — burn until navigation (no cooled transition)
 
     setTimeout(() => {
       play('stamp')
