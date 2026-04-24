@@ -43,8 +43,8 @@ function engulfVars(seed) {
   const r2 = h(seed * 11 + 17)
   const r3 = h(seed * 13 + 29)
   return {
-    '--engulf-dur': `${120 + r1 * 70}ms`,
-    '--engulf-opacity-start': `${0.85 + r2 * 0.15}`,
+    '--engulf-dur': `${220 + r1 * 120}ms`,
+    '--engulf-opacity-start': `${0.45 + r2 * 0.25}`,
     '--engulf-glow-1':  `${4  + r1 * 6}px`,
     '--engulf-glow-1b': `${12 + r2 * 10}px`,
     '--engulf-glow-1c': `${22 + r3 * 14}px`,
@@ -1068,37 +1068,49 @@ export default function SummaryPage() {
         }
         .watermark-hot { animation: watermark-hot-hold 100ms forwards; }
         @keyframes weekday-flame-engulf {
+          /* 0% — moment of ignition, small tight glow */
           0% {
-            opacity: var(--engulf-opacity-start, 0.95);
+            opacity: var(--engulf-opacity-start, 0.55);
             filter:
-              drop-shadow(0 0 var(--engulf-glow-0, 2px) #ff5000)
-              drop-shadow(0 0 var(--engulf-glow-0b, 4px) #ff5000)
-              blur(var(--engulf-blur-0, 0.3px));
+              drop-shadow(0 0 var(--engulf-glow-0, 1.5px) #ff5000)
+              drop-shadow(0 0 var(--engulf-glow-0b, 3px) rgba(255, 80, 0, 0.45))
+              blur(var(--engulf-blur-0, 0.2px));
           }
-          35% {
-            opacity: 0.75;
+          /* 12% — CATCH peak (briefly brighter, still tight) */
+          12% {
+            opacity: 1;
             filter:
-              drop-shadow(0 0 var(--engulf-glow-1, 6px) #ff5000)
-              drop-shadow(0 0 var(--engulf-glow-1b, 16px) #ff5000)
-              drop-shadow(0 0 var(--engulf-glow-1c, 28px) rgba(255, 80, 0, 0.6))
-              blur(var(--engulf-blur-1, 1.5px));
+              drop-shadow(0 0 var(--engulf-glow-catch, 5px) #ff5000)
+              drop-shadow(0 0 var(--engulf-glow-catch-b, 12px) rgba(255, 80, 0, 0.75))
+              blur(var(--engulf-blur-catch, 0.7px));
           }
-          70% {
-            opacity: 0.35;
+          /* 32% — wisp begins spreading */
+          32% {
+            opacity: 0.72;
             filter:
-              drop-shadow(0 0 var(--engulf-glow-2, 10px) #ff5000)
-              drop-shadow(0 0 var(--engulf-glow-2b, 24px) rgba(255, 80, 0, 0.4))
-              blur(var(--engulf-blur-2, 3px));
+              drop-shadow(0 0 var(--engulf-glow-1, 7px) #ff5000)
+              drop-shadow(0 0 var(--engulf-glow-1b, 18px) rgba(255, 80, 0, 0.55))
+              drop-shadow(0 0 var(--engulf-glow-1c, 26px) rgba(255, 80, 0, 0.35))
+              blur(var(--engulf-blur-1, 1.6px));
           }
+          /* 62% — mid wisp, glow diffusing, opacity dropping */
+          62% {
+            opacity: 0.38;
+            filter:
+              drop-shadow(0 0 var(--engulf-glow-2, 10px) rgba(255, 80, 0, 0.75))
+              drop-shadow(0 0 var(--engulf-glow-2b, 22px) rgba(255, 80, 0, 0.3))
+              blur(var(--engulf-blur-2, 3.2px));
+          }
+          /* 100% — wisped away */
           100% {
             opacity: 0;
             filter:
-              drop-shadow(0 0 var(--engulf-glow-3, 14px) rgba(255, 80, 0, 0.15))
-              blur(var(--engulf-blur-3, 5px));
+              drop-shadow(0 0 var(--engulf-glow-3, 14px) rgba(255, 80, 0, 0.1))
+              blur(var(--engulf-blur-3, 5.5px));
           }
         }
         .weekday-flame-engulf {
-          animation: weekday-flame-engulf var(--engulf-dur, 140ms) ease-out forwards;
+          animation: weekday-flame-engulf var(--engulf-dur, 260ms) cubic-bezier(0.1, 0.6, 0.35, 1) forwards;
           fill: #ff5000;
           pointer-events: none;
         }
