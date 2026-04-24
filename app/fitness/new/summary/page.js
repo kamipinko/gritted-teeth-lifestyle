@@ -1033,7 +1033,7 @@ export default function SummaryPage() {
         width={130} height={78}
         viewBox="0 0 130 78"
         style={{
-          bottom: 'calc(20px + 128px + 60px)',
+          bottom: 'calc(20px + 128px + 40px)',
           right: '20px',
           transform: 'rotate(8deg)',
           transformOrigin: 'right bottom',
@@ -1046,8 +1046,8 @@ export default function SummaryPage() {
             <text textAnchor="start"
               fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
               fontSize="18" fontWeight="600" letterSpacing="6" fill="white">
-              <tspan x="8"  y="30">ETCH</tspan>
-              <tspan x="34" y="62">CYCLE</tspan>
+              <tspan x="8" y="30">ETCH</tspan>
+              <tspan x="8" y="62">CYCLE</tspan>
             </text>
           </mask>
         </defs>
@@ -1067,7 +1067,7 @@ export default function SummaryPage() {
         <text textAnchor="start"
           fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
           fontSize="18" fontWeight="600" letterSpacing="6"
-          x="34" y="62"
+          x="8" y="62"
           className={watermarkIgnited[1] ? 'watermark-hot' : ''}
           fill='rgba(212, 24, 31, 0.65)'
           opacity={watermarkIgnited[1] ? 0 : 1}
@@ -1097,8 +1097,8 @@ export default function SummaryPage() {
                 if (!isEtchBand && !watermarkIgnited[1]) return null
                 const startY = isEtchBand ? 46 : 74
                 const rise   = isEtchBand ? (18 + rSize * 14) : (12 + rSize * 10)
-                const xBase  = isEtchBand ? 8 : 34
-                const xSpan  = isEtchBand ? 70 : 90
+                const xBase  = 8
+                const xSpan  = isEtchBand ? 70 : 85
                 const xOff   = xBase + rX * xSpan
                 const delay  = rDly * 300
                 const dur    = 130 + rDur * 150
