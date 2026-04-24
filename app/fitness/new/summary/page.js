@@ -586,10 +586,14 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                 const PARTS_PER_WEEKDAY = 45
                 return dayLabels.flatMap((dl, wi) => {
                   const isLeftSide = wi < 3
-                  // Shift baseX to the CENTER of each weekday's text silhouette — left-side
-                  // text extends RIGHT from x=1070 (anchor=start), right-side extends LEFT
-                  // from x=1664 (anchor=end). Text is ~130 viewBox units wide.
-                  const baseX = isLeftSide ? 1070 + 65 : 1664 - 65
+                  // Per-day labelX drifts across the blade's rotated right edge, so use the
+                  // SAME table the mask uses, then shift to the text center (±65 since text
+                  // is ~130 viewBox units wide). Without this, right-side particles all cluster
+                  // near x=1599 and miss the leftward-drifting 5th/6th labels.
+                  const LEFT_X  = [1001,  998, 1001]
+                  const RIGHT_X = [1597, 1572, 1542]
+                  const labelX  = isLeftSide ? LEFT_X[wi] : RIGHT_X[wi - 3]
+                  const baseX   = isLeftSide ? (labelX + 65) : (labelX - 65)
                   return Array.from({ length: PARTS_PER_WEEKDAY }).map((_, i) => {
                     const k = i + wi * 23
                     const rX    = hash01(k * 1)
