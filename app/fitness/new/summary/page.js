@@ -914,8 +914,12 @@ export default function SummaryPage() {
           poster-style tracking; fixed so it doesn't fight the blade container's absolute layout. */}
       <div
         aria-hidden="true"
-        className="fixed bottom-8 right-[120px] z-[20] pointer-events-none select-none font-mono text-[10px] tracking-[0.6em] uppercase text-[#ff7a00]/30"
-        style={{ whiteSpace: 'nowrap', textShadow: '0 0 4px rgba(255, 122, 0, 0.25)' }}
+        className="fixed bottom-8 right-[120px] z-[20] pointer-events-none select-none text-[10px] tracking-[0.6em] uppercase text-[#ff7a00]/30"
+        style={{
+          whiteSpace: 'nowrap',
+          textShadow: '0 0 4px rgba(255, 122, 0, 0.25)',
+          fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
+        }}
       >
         Etch Cycle
       </div>
