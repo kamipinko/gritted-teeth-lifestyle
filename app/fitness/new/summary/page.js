@@ -100,7 +100,7 @@ function DayCard({ iso, muscles, index }) {
    ══════════════════════════════════════════════════════════════════════════ */
 function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [] }) {
   const HOT_GLOW_FILTER    = 'drop-shadow(0 0 2px #ff8800) drop-shadow(0 0 5px rgba(255, 122, 0, 0.65)) drop-shadow(0 0 10px rgba(255, 80, 0, 0.25))'
-  const COOLED_GLOW_FILTER = 'drop-shadow(0 0 1px rgba(255, 136, 0, 0.85)) drop-shadow(0 0 3px rgba(255, 122, 0, 0.35))'
+  const COOLED_GLOW_FILTER = 'drop-shadow(0 0 1.5px #ff8800) drop-shadow(0 0 4px rgba(255, 122, 0, 0.55)) drop-shadow(0 0 7px rgba(255, 80, 0, 0.2))'
   const anyGlowing = glowingDays.some(Boolean)
   const first = days[0] ? parseDate(days[0]) : null
   const last  = days[days.length - 1] ? parseDate(days[days.length - 1]) : null
@@ -423,7 +423,7 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               <g key={dl.iso} style={{
                 mixBlendMode: hot ? 'normal' : 'difference',
                 opacity: flameOn ? 0 : 1,
-                transition: 'opacity 0ms, filter 400ms ease-out',
+                transition: 'opacity 0ms, filter 1200ms ease-out',
                 filter: !hot ? 'none' : (cooled ? COOLED_GLOW_FILTER : HOT_GLOW_FILTER),
               }}>
                 <g transform={`translate(${dl.cx},${dl.cy}) rotate(${textAngle})`}>
@@ -442,7 +442,7 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
           {lastDay && (
             <g style={{
               opacity: glowingDays[lastIdx] ? 0 : 1,
-              transition: 'opacity 0ms, filter 400ms ease-out',
+              transition: 'opacity 0ms, filter 1200ms ease-out',
               filter: !hotDays[lastIdx] ? 'none' : (cooledDays[lastIdx] ? COOLED_GLOW_FILTER : HOT_GLOW_FILTER),
             }}>
               <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
@@ -786,7 +786,7 @@ export default function SummaryPage() {
       }, at)
       setTimeout(() => {
         setCooledDays(prev => { const next = [...prev]; next[i] = true; return next })
-      }, at + 340)
+      }, at + 940)
     }
     setTimeout(() => setGlowIntensity('off'),       2940)   // last cascade slot ends (1500 + 220*5 + 340)
     setTimeout(() => setStampVisible(true),         2940)   // stamp flies in after cascade finishes
