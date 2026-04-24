@@ -166,12 +166,26 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off', h
     const stack = hot ? DEPTH_STACK_HOT : DEPTH_STACK_RED
     const layers = maskFill ? [{ dy: 0, fill: maskFill }] : stack
 
-    const renderText = (keyBase, x, y, fontSize, char) => layers.map((layer, li) => (
-      <text key={`${keyBase}-${li}`} x={x} y={y + layer.dy} textAnchor="middle" dominantBaseline="central" {...outlineProps}
-        style={{ fontFamily: font, fontSize: `${fontSize}px`, fontWeight: 600, fill: layer.fill, opacity: baseOpacity }}>
-        {char}
-      </text>
-    ))
+    // Dark stroke on the face layer of the HOT base inscription only. Creates a consistent
+    // dark neighborhood around each letter so simultaneous-contrast doesn't make the orange
+    // read as different colors over the red blade vs the black background. Mask/zoom passes
+    // use maskFill (no stroke); depth layers dy=3/2/1 stay stroke-free to keep the extrusion
+    // shadows clean.
+    const hotStrokeProps = (isFace) =>
+      (hot && !maskFill && isFace)
+        ? { stroke: '#1a0500', strokeWidth: 3, paintOrder: 'stroke' }
+        : {}
+
+    const renderText = (keyBase, x, y, fontSize, char) => layers.map((layer, li) => {
+      const isFace = li === layers.length - 1
+      return (
+        <text key={`${keyBase}-${li}`} x={x} y={y + layer.dy} textAnchor="middle" dominantBaseline="central"
+          {...outlineProps} {...hotStrokeProps(isFace)}
+          style={{ fontFamily: font, fontSize: `${fontSize}px`, fontWeight: 600, fill: layer.fill, opacity: baseOpacity }}>
+          {char}
+        </text>
+      )
+    })
 
     const numEls = renderText('num', 0, 0, 68, num)
 
