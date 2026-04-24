@@ -98,14 +98,7 @@ function DayCard({ iso, muscles, index }) {
    Source: public/reference/wakizashi.png → threshold → potrace → SVG.
    Diagonal pose: hilt upper-right, tip lower-left.
    ══════════════════════════════════════════════════════════════════════════ */
-function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [] }) {
-  const HOT_GLOW_FILTER = [
-    'drop-shadow(0 0 3px #ffb347)',
-    'drop-shadow(0 0 8px #ff8800)',
-    'drop-shadow(0 0 18px rgba(255, 120, 0, 0.75))',
-    'drop-shadow(0 0 32px rgba(255, 80, 0, 0.35))',
-  ].join(' ')
-  const COOLED_GLOW_FILTER = 'drop-shadow(0 0 1.5px #ff8800) drop-shadow(0 0 4px rgba(255, 122, 0, 0.55)) drop-shadow(0 0 7px rgba(255, 80, 0, 0.2))'
+function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [] }) {
   const anyGlowing = glowingDays.some(Boolean)
   const first = days[0] ? parseDate(days[0]) : null
   const last  = days[days.length - 1] ? parseDate(days[days.length - 1]) : null
@@ -418,19 +411,31 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
           {/* Base inscriptions — per-day wrapper so each day can flip to hot independently.
               Pre-ignition: difference-blend red (reads dark carved). Post-ignition: normal blend
               over dark-orange DEPTH_STACK_HOT + warm drop-shadow halo that ramps in over 300ms. */}
+          {/* Hot→cool dissipation runs as a single keyframe per inscription. Both start and end
+              frames declare four drop-shadows so CSS can actually interpolate (mismatched filter
+              lists would snap discretely). The tail shadow on the cooled frame is zero-alpha so
+              it contributes no visible glow while keeping the structural 4-shadow count. */}
+          <style>{`
+            @keyframes inscription-hot-to-cool {
+              0%   { filter: drop-shadow(0 0 3px #ffb347) drop-shadow(0 0 8px #ff8800) drop-shadow(0 0 18px rgba(255, 120, 0, 0.75)) drop-shadow(0 0 32px rgba(255, 80, 0, 0.35)); }
+              20%  { filter: drop-shadow(0 0 3px #ffb347) drop-shadow(0 0 8px #ff8800) drop-shadow(0 0 18px rgba(255, 120, 0, 0.75)) drop-shadow(0 0 32px rgba(255, 80, 0, 0.35)); }
+              100% { filter: drop-shadow(0 0 1.5px #ff8800) drop-shadow(0 0 4px rgba(255, 122, 0, 0.55)) drop-shadow(0 0 7px rgba(255, 80, 0, 0.2)) drop-shadow(0 0 7px rgba(255, 80, 0, 0)); }
+            }
+            .inscription-hot { animation: inscription-hot-to-cool 1400ms ease-out forwards; }
+          `}</style>
           {dayLabels.map((dl, i) => {
             const textAngle = dl.angle - 90
             const isLast = i === lastIdx
             const hot = !!hotDays[i]
-            const cooled = !!cooledDays[i]
             const flameOn = !!glowingDays[i]
             return (
-              <g key={dl.iso} style={{
-                mixBlendMode: hot ? 'normal' : 'difference',
-                opacity: flameOn ? 0 : 1,
-                transition: 'opacity 0ms, filter 1200ms ease-out',
-                filter: !hot ? 'none' : (cooled ? COOLED_GLOW_FILTER : HOT_GLOW_FILTER),
-              }}>
+              <g key={dl.iso}
+                 className={hot ? 'inscription-hot' : ''}
+                 style={{
+                   mixBlendMode: hot ? 'normal' : 'difference',
+                   opacity: flameOn ? 0 : 1,
+                   transition: 'opacity 0ms',
+                 }}>
                 <g transform={`translate(${dl.cx},${dl.cy}) rotate(${textAngle})`}>
                   {isLast ? (
                     <g clipPath="url(#last-day-right)">{renderDayInscription(dl, { hot })}</g>
@@ -445,11 +450,11 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               (no difference blend) even in the red state. Uses hotDays[lastIdx] to sync with the
               last day's right half. */}
           {lastDay && (
-            <g style={{
-              opacity: glowingDays[lastIdx] ? 0 : 1,
-              transition: 'opacity 0ms, filter 1200ms ease-out',
-              filter: !hotDays[lastIdx] ? 'none' : (cooledDays[lastIdx] ? COOLED_GLOW_FILTER : HOT_GLOW_FILTER),
-            }}>
+            <g className={hotDays[lastIdx] ? 'inscription-hot' : ''}
+               style={{
+                 opacity: glowingDays[lastIdx] ? 0 : 1,
+                 transition: 'opacity 0ms',
+               }}>
               <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
                 <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true, hot: !!hotDays[lastIdx] })}</g>
               </g>
@@ -737,10 +742,6 @@ export default function SummaryPage() {
   // Per-day ignition flags — each inscription flips hot at the same moment its zoom-burst
   // fires, so the color/glow transition cascades in sync with the zoom wave. Never flips back.
   const [hotDays, setHotDays] = useState(() => Array(6).fill(false))
-  // Cooldown flag per day — flips true 340ms after each inscription's zoom ends, dimming
-  // that day's glow from 'freshly branded' to a subtle ember halo. Transitions smoothly via
-  // CSS filter interpolation.
-  const [cooledDays, setCooledDays] = useState(() => Array(6).fill(false))
   const mainRef = useRef(null)
 
   useEffect(() => {
@@ -782,16 +783,13 @@ export default function SummaryPage() {
     setTimeout(() => setGlowingDays(Array(6).fill(true)), 200)   // flames begin (all inscriptions)
     setTimeout(() => setGlowIntensity('peak'),      1500)   // zoom-burst cascade begins (340ms per glyph, 220ms stagger)
     // Cascade per-inscription: flame off + hot on + zoom fires, all at t=1500 + i*220.
-    // Cooldown: each day's glow dims to ember state 340ms after its zoom begins (= zoom-end).
+    // Hot→cool dissipation runs as a single CSS keyframe triggered by the className flip.
     for (let i = 0; i < 6; i++) {
       const at = 1500 + i * 220
       setTimeout(() => {
         setGlowingDays(prev => { const next = [...prev]; next[i] = false; return next })
         setHotDays(prev => { const next = [...prev]; next[i] = true; return next })
       }, at)
-      setTimeout(() => {
-        setCooledDays(prev => { const next = [...prev]; next[i] = true; return next })
-      }, at + 940)
     }
     setTimeout(() => setGlowIntensity('off'),       2940)   // last cascade slot ends (1500 + 220*5 + 340)
     setTimeout(() => setStampVisible(true),         2940)   // stamp flies in after cascade finishes
@@ -862,7 +860,7 @@ export default function SummaryPage() {
 
       {/* ── THE BLADE (< 7 days) or DAY CARDS (>= 7 days) ── */}
       {days.length > 0 && days.length < 7 && (
-        <CycleBlade days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} />
+        <CycleBlade days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} />
       )}
 
       {days.length >= 7 && (
