@@ -326,6 +326,39 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                 </g>
               ) : null)}
             </mask>
+            {/* Weekday-label yakiire mask — white-filled weekday glyphs carved into the
+                overlay's viewBox. Particles clipped through this appear inside the SUN/MON/…
+                letters only. Mask is built unconditionally; the particle group below only
+                renders while weekdaysIgnited && !weekdaysCooled. */}
+            <mask id="weekday-window" maskUnits="userSpaceOnUse" x="668" y="-635" width="1136" height="2642">
+              <rect x="668" y="-635" width="1136" height="2642" fill="black"/>
+              {dayLabels.map((dl, i) => {
+                const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()]
+                const isLeftSide = i < 3
+                const yNudge = isLeftSide ? 0 : 10
+                const LEFT_X  = [1001,  998, 1001]
+                const RIGHT_X = [1597, 1572, 1542]
+                const labelX = isLeftSide ? LEFT_X[i] : RIGHT_X[i - 3]
+                const labelY = dl.cy + yNudge
+                return (
+                  <text key={`wd-mask-${dl.iso}`}
+                    x={labelX} y={labelY}
+                    textAnchor={isLeftSide ? 'start' : 'end'}
+                    dominantBaseline="central"
+                    transform={`rotate(-11 ${labelX} ${labelY})`}
+                    style={{
+                      fontFamily: '"Noto Serif JP", Georgia, serif',
+                      fontSize: '45px',
+                      fontWeight: 700,
+                      letterSpacing: '0.2em',
+                      fill: 'white',
+                    }}
+                  >
+                    {dow}
+                  </text>
+                )
+              })}
+            </mask>
           </defs>
           {/* Flame-aura overlay — mounts while ANY inscription is still glowing. Per-day
               particle subsets unmount as each day transitions out of glowing, so the flames
@@ -508,10 +541,46 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               </g>
             </>
           )}
+          {/* Weekday particle flames — clipped to weekday letter silhouettes via weekday-window
+              mask. Active only between ignite (t=500) and cool (t=2000), matching the brief
+              flare-up window all 6 labels share. */}
+          {weekdaysIgnited && !weekdaysCooled && (
+            <g mask="url(#weekday-window)" style={{ pointerEvents: 'none' }}>
+              {(() => {
+                const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
+                const PARTS_PER_WEEKDAY = 14
+                return dayLabels.flatMap((dl, wi) => {
+                  const isLeftSide = wi < 3
+                  const baseX = isLeftSide ? 1070 : 1664
+                  return Array.from({ length: PARTS_PER_WEEKDAY }).map((_, i) => {
+                    const k = i + wi * 23
+                    const rX    = hash01(k * 1)
+                    const rDly  = hash01(k * 3 + 11)
+                    const rDur  = hash01(k * 5 + 17)
+                    const rSize = hash01(k * 11 + 23)
+                    const rPeak = hash01(k * 13 + 29)
+                    const xOff  = (rX - 0.5) * 140
+                    const delay = rDly * 600
+                    const dur   = 400 + rDur * 300
+                    const size  = 14 + rSize * 18
+                    const peakA = 0.55 + rPeak * 0.45
+                    return (
+                      <circle key={`wd${wi}-${i}`} cx={baseX + xOff} cy={dl.cy + 120} r={size} fill="#ff5000" opacity={0}>
+                        <animateTransform attributeName="transform" type="translate"
+                          values={`0 0; 0 -${180 + rSize * 40}`}
+                          dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                        <animate attributeName="opacity"
+                          values={`0; ${peakA.toFixed(2)}; 0`}
+                          keyTimes="0; 0.2; 1"
+                          dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                      </circle>
+                    )
+                  })
+                })
+              })()}
+            </g>
+          )}
           {/* Weekday side labels — share the viewBox so they align vertically with each inscription.
-              Per-row x calibration equalizes the on-screen gap between each label and the blade
-              silhouette; a single x isn't enough because the 11deg blade rotation makes the right-
-              side blade edge recede as y increases. See verify_weekday_gaps.py for the measurement.
               Wrapped in a <g> so all 6 labels can ignite + cool simultaneously via the same
               .inscription-hot / .inscription-cooled keyframes used by the inscription glyphs. */}
           <g className={weekdaysCooled ? 'inscription-cooled' : (weekdaysIgnited ? 'inscription-hot' : '')}>
@@ -816,8 +885,8 @@ export default function SummaryPage() {
     }
     setTimeout(() => setGlowIntensity('off'),       2940)   // last zoom cascade slot ends (1500 + 220*5 + 340)
     setTimeout(() => setStampVisible(true),         2940)   // stamp flies in after zoom cascade finishes
-    setTimeout(() => setWeekdaysIgnited(true),      2600)   // weekday labels ignite when last inscription peaks
-    setTimeout(() => setWeekdaysCooled(true),       4100)   // weekday labels cool 1500ms later
+    setTimeout(() => setWeekdaysIgnited(true),       500)   // weekday labels ignite with day 0's flame (last flame in reverse cascade)
+    setTimeout(() => setWeekdaysCooled(true),       2000)   // weekday labels cool 1500ms later
 
     setTimeout(() => {
       play('stamp')
@@ -914,58 +983,80 @@ export default function SummaryPage() {
         </section>
       )}
 
-      {/* Watermark label: dim red gradient at rest; on press, a bright flame-colored band
-          scrolls horizontally through the letter shapes via background-clip: text. */}
+      {/* Watermark — full yakiire: SVG mask carved into ETCH CYCLE letters, particle flames
+          rise through the silhouettes while the button is flickering, hot-glow drop-shadow on
+          the visible text. Idle: dim red; press: bright orange with particle fire. */}
       <style>{`
-        .watermark-idle {
-          color: transparent;
-          background: linear-gradient(90deg, #8a0f14 0%, #d4181f 50%, #8a0f14 100%);
-          -webkit-background-clip: text;
-                  background-clip: text;
-          text-shadow: 0 0 3px rgba(212, 24, 31, 0.25);
+        @keyframes watermark-hot-hold {
+          from, to {
+            filter: drop-shadow(0 0 3px #fff4c9)
+                    drop-shadow(0 0 7px #ffa840)
+                    drop-shadow(0 0 14px rgba(255, 120, 0, 0.8))
+                    drop-shadow(0 0 22px rgba(255, 80, 0, 0.4));
+          }
         }
-        .watermark-ignited {
-          color: transparent;
-          background-image: linear-gradient(90deg,
-            #7a0e14 0%,
-            #ff2200 15%,
-            #ff8800 30%,
-            #ffcc00 45%,
-            #fff4c9 52%,
-            #ffcc00 60%,
-            #ff8800 75%,
-            #ff2200 90%,
-            #7a0e14 100%
-          );
-          background-size: 300% 100%;
-          background-position: 0% 0%;
-          -webkit-background-clip: text;
-                  background-clip: text;
-          animation: watermark-shimmer 900ms linear;
-          text-shadow:
-            0 0 6px rgba(255, 200, 100, 0.9),
-            0 0 14px rgba(255, 140, 60, 0.6),
-            0 0 24px rgba(255, 80, 0, 0.4);
-        }
-        @keyframes watermark-shimmer {
-          0%   { background-position: 100% 0%; }
-          100% { background-position: -100% 0%; }
-        }
+        .watermark-hot { animation: watermark-hot-hold 100ms forwards; }
       `}</style>
-      <div
+      <svg
         aria-hidden="true"
-        className={`fixed z-[20] pointer-events-none select-none text-[12px] tracking-[0.5em] uppercase ${flickering ? 'watermark-ignited' : 'watermark-idle'}`}
+        className="fixed z-[20] pointer-events-none select-none"
+        width={220} height={70}
+        viewBox="0 0 220 70"
         style={{
           bottom: 'calc(20px + 128px + 32px)',
           right: '20px',
-          whiteSpace: 'nowrap',
-          fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
           transform: 'rotate(-12deg)',
           transformOrigin: 'right bottom',
+          overflow: 'visible',
         }}
       >
-        Etch Cycle
-      </div>
+        <defs>
+          <mask id="watermark-window" maskUnits="userSpaceOnUse" x="0" y="0" width="220" height="70">
+            <rect x="0" y="0" width="220" height="70" fill="black"/>
+            <text x="110" y="48" textAnchor="middle"
+              fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+              fontSize="20" fontWeight="600" letterSpacing="9" fill="white">ETCH CYCLE</text>
+          </mask>
+        </defs>
+        {flickering && (
+          <g mask="url(#watermark-window)">
+            {(() => {
+              const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
+              const PARTS = 16
+              return Array.from({ length: PARTS }).map((_, i) => {
+                const rX    = hash01(i * 1)
+                const rDly  = hash01(i * 3 + 11)
+                const rDur  = hash01(i * 5 + 17)
+                const rSize = hash01(i * 11 + 23)
+                const rPeak = hash01(i * 13 + 29)
+                const xOff  = rX * 220
+                const delay = rDly * 500
+                const dur   = 350 + rDur * 300
+                const size  = 5 + rSize * 7
+                const peakA = 0.55 + rPeak * 0.45
+                return (
+                  <circle key={`wm${i}`} cx={xOff} cy={80} r={size} fill="#ff5000" opacity={0}>
+                    <animateTransform attributeName="transform" type="translate"
+                      values={`0 0; 0 -${70 + rSize * 25}`}
+                      dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                    <animate attributeName="opacity"
+                      values={`0; ${peakA.toFixed(2)}; 0`}
+                      keyTimes="0; 0.2; 1"
+                      dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                  </circle>
+                )
+              })
+            })()}
+          </g>
+        )}
+        <text x="110" y="48" textAnchor="middle"
+          fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+          fontSize="20" fontWeight="600" letterSpacing="9"
+          className={flickering ? 'watermark-hot' : ''}
+          fill={flickering ? '#ff6600' : 'rgba(212, 24, 31, 0.65)'}>
+          ETCH CYCLE
+        </text>
+      </svg>
 
       {/* ── ETCH CYCLE (fixed bottom-right CTA) ── */}
       <BeginButton
