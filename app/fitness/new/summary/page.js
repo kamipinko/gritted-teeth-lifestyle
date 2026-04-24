@@ -435,14 +435,16 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off' })
               <style>{`
                 @keyframes inscription-zoom {
                   0%   { transform: scale(1);    opacity: 0.9; }
-                  30%  { transform: scale(1.08); opacity: 1.0; }
-                  70%  { transform: scale(1.18); opacity: 0.4; }
-                  100% { transform: scale(1.25); opacity: 0; }
+                  30%  { transform: scale(1.05); opacity: 1.0; }
+                  70%  { transform: scale(1.11); opacity: 0.4; }
+                  100% { transform: scale(1.15); opacity: 0; }
                 }
                 .inscription-zoom-burst .zoom-glyph {
                   transform-box: fill-box;
                   transform-origin: center;
                   animation: inscription-zoom 500ms ease-out forwards;
+                  mix-blend-mode: plus-lighter;
+                  filter: drop-shadow(0 0 4px #fff4c9) drop-shadow(0 0 10px #ffb347) drop-shadow(0 0 18px rgba(255, 140, 50, 0.6));
                 }
               `}</style>
               <g className="inscription-zoom-burst" style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
