@@ -173,7 +173,7 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
     // shadows clean.
     const hotStrokeProps = (isFace) =>
       (hot && !maskFill && isFace)
-        ? { stroke: '#1a0500', strokeWidth: 3, paintOrder: 'stroke' }
+        ? { stroke: '#1a0500', strokeWidth: 2, paintOrder: 'stroke' }
         : {}
 
     const renderText = (keyBase, x, y, fontSize, char) => layers.map((layer, li) => {
