@@ -1006,7 +1006,7 @@ export default function SummaryPage() {
         viewBox="0 0 160 60"
         style={{
           bottom: 'calc(20px + 128px + 60px)',
-          right: '16px',
+          right: '40px',
           transform: 'rotate(-12deg)',
           transformOrigin: 'right bottom',
           overflow: 'visible',
@@ -1038,7 +1038,7 @@ export default function SummaryPage() {
           <g mask="url(#watermark-window)">
             {(() => {
               const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
-              const PARTS = 50
+              const PARTS = 95
               return Array.from({ length: PARTS }).map((_, i) => {
                 const rX    = hash01(i * 1)
                 const rDly  = hash01(i * 3 + 11)
@@ -1051,9 +1051,9 @@ export default function SummaryPage() {
                 const size  = 12 + rSize * 14
                 const peakA = 0.55 + rPeak * 0.45
                 return (
-                  <circle key={`wm${i}`} cx={xOff} cy={80} r={size} fill="#ff5000" opacity={0}>
+                  <circle key={`wm${i}`} cx={xOff} cy={62} r={size} fill="#ff5000" opacity={0}>
                     <animateTransform attributeName="transform" type="translate"
-                      values={`0 0; 0 -${70 + rSize * 25}`}
+                      values={`0 0; 0 -${50 + rSize * 20}`}
                       dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
                     <animate attributeName="opacity"
                       values={`0; ${peakA.toFixed(2)}; 0`}
