@@ -749,11 +749,17 @@ export default function SummaryPage() {
 
     // handleBegin fires immediately on press (no onFire delay).
     // All timers are press-absolute from t=0.
-    setTimeout(() => setInscriptionsGlowing(true),   200)   // glow begins (overlaps tail of flicker)
-    setTimeout(() => setInscriptionsGlowing(false), 1700)   // glow complete (1500ms window)
-    setTimeout(() => setBursting(true),             1700)   // god-ray burst fires as glow ends
-    setTimeout(() => setBursting(false),            2200)   // burst ends after 500ms
-    setTimeout(() => setStampVisible(true),         1700)   // stamp flies in
+    // Press-absolute beat sequence:
+    //  0-200    flame flicker (button)
+    //  200-1500 particles rise through inscription windows (1300ms)
+    //  1500-2000 god-ray burst per inscription (500ms, clear canvas before stamp)
+    //  2000-2665 stamp flies in (665ms deadline-slam)
+    //  4700     fire transition / navigate
+    setTimeout(() => setInscriptionsGlowing(true),   200)   // glow begins
+    setTimeout(() => setInscriptionsGlowing(false), 1500)   // particles fade (was 1700)
+    setTimeout(() => setBursting(true),             1500)   // burst replaces particles (was 1700)
+    setTimeout(() => setBursting(false),            2000)   // burst done after 500ms (was 2200)
+    setTimeout(() => setStampVisible(true),         2000)   // stamp flies in AFTER burst (was 1700)
 
     setTimeout(() => {
       play('stamp')
@@ -775,10 +781,10 @@ export default function SummaryPage() {
           { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
         )
       }
-    }, 2365)   // stamp lands (665ms after fly-in)
+    }, 2665)   // stamp lands (665ms after fly-in; was 2365)
 
-    setTimeout(() => play('stamp'),       2450)
-    setTimeout(() => setFireActive(true), 3600)
+    setTimeout(() => play('stamp'),       2750)   // was 2450
+    setTimeout(() => setFireActive(true), 4700)   // was 3600 — shifted 300ms + extra breathing
   }
 
   const cols = days.length <= 5 ? days.length
