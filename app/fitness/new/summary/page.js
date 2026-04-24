@@ -98,8 +98,9 @@ function DayCard({ iso, muscles, index }) {
    Source: public/reference/wakizashi.png → threshold → potrace → SVG.
    Diagonal pose: hilt upper-right, tip lower-left.
    ══════════════════════════════════════════════════════════════════════════ */
-function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off', hotDays = [] }) {
+function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [] }) {
   const HOT_GLOW_FILTER = 'drop-shadow(0 0 2px #ff8800) drop-shadow(0 0 5px rgba(255, 122, 0, 0.65)) drop-shadow(0 0 10px rgba(255, 80, 0, 0.25))'
+  const anyGlowing = glowingDays.some(Boolean)
   const first = days[0] ? parseDate(days[0]) : null
   const last  = days[days.length - 1] ? parseDate(days[days.length - 1]) : null
   const dateRange = first && last
@@ -317,34 +318,28 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off', h
                 outside. Used to turn the inscriptions into flame-filled windows. */}
             <mask id="inscription-window" maskUnits="userSpaceOnUse" x="668" y="-635" width="1136" height="2642">
               <rect x="668" y="-635" width="1136" height="2642" fill="black"/>
-              {dayLabels.map((dl) => (
+              {/* Only currently-glowing days contribute to the mask. Once a day transitions to
+                  hot, dropping it from the mask lets the dark-underlay rect stop bleeding through
+                  that glyph, exposing the hot-orange base inscription cleanly. */}
+              {dayLabels.map((dl, i) => glowingDays[i] ? (
                 <g key={`mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
                   {renderDayInscription(dl, { maskFill: 'white' })}
                 </g>
-              ))}
+              ) : null)}
             </mask>
           </defs>
-          {/* Flame-aura overlay — mounts only while `glowing` is true. Sits BEHIND the
-              difference-blend text so the dancing tongues lick around the crisp etched
-              glyphs without obscuring them. */}
-          {glowing && (
+          {/* Flame-aura overlay — mounts while ANY inscription is still glowing. Per-day
+              particle subsets unmount as each day transitions out of glowing, so the flames
+              retract one-by-one in sync with the cascade. */}
+          {anyGlowing && (
             <>
-              <style>{`
-                @keyframes inscription-etch {
-                  0%   { opacity: 0; }
-                  12%  { opacity: 1; }
-                  85%  { opacity: 1; }
-                  100% { opacity: 0; }
-                }
-                .inscription-etching { animation: inscription-etch 1500ms ease-in-out forwards; }
-              `}</style>
               {/* Particles clipped to the inscription silhouettes via SVG mask.
                   Wide horizontal spread (±90 viewBox units, broader than glyph width)
                   gives the particles material to flow through the glyph 'windows'.
                   SVG <animateTransform> ensures the rise direction is in the blade's
                   tilted local frame — particles flow up-along-blade through the cutouts.
                   Deterministic per-index delay keeps SSR/CSR consistent. */}
-              <g mask="url(#inscription-window)" className="inscription-etching" style={{ pointerEvents: 'none' }}>
+              <g mask="url(#inscription-window)" style={{ pointerEvents: 'none' }}>
                 {/* Dark underlay — same rect as the mask region, filled gtl-void so the
                     glyph windows show near-black instead of the red blade. Orange particles
                     on black = high contrast regardless of position; orange on red bled. */}
@@ -358,6 +353,7 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off', h
                     return x - Math.floor(x)
                   }
                   return dayLabels.flatMap((dl, dayIdx) => {
+                    if (!glowingDays[dayIdx]) return []
                     const PARTS = 12
                     return Array.from({ length: PARTS }).map((_, i) => {
                       const k = i + dayIdx * 23
@@ -420,10 +416,11 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off', h
             const textAngle = dl.angle - 90
             const isLast = i === lastIdx
             const hot = !!hotDays[i]
+            const flameOn = !!glowingDays[i]
             return (
               <g key={dl.iso} style={{
                 mixBlendMode: hot ? 'normal' : 'difference',
-                opacity: glowing ? 0 : 1,
+                opacity: flameOn ? 0 : 1,
                 transition: 'opacity 0ms, filter 300ms ease-out',
                 filter: hot ? HOT_GLOW_FILTER : 'none',
               }}>
@@ -442,7 +439,7 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off', h
               last day's right half. */}
           {lastDay && (
             <g style={{
-              opacity: glowing ? 0 : 1,
+              opacity: glowingDays[lastIdx] ? 0 : 1,
               transition: 'opacity 0ms, filter 300ms ease-out',
               filter: hotDays[lastIdx] ? HOT_GLOW_FILTER : 'none',
             }}>
@@ -724,7 +721,10 @@ export default function SummaryPage() {
   const [fireActive,  setFireActive] = useState(false)
   const [stampVisible, setStampVisible] = useState(false)
   const [stampLanded,  setStampLanded]  = useState(false)
-  const [inscriptionsGlowing, setInscriptionsGlowing] = useState(false)
+  // Per-day flame gate — activates all at t=200 for a unified flame phase, then deactivates
+  // one-by-one on the same 140ms stagger as hotDays / zoom-burst so flame-off, hot-on, and
+  // zoom-fire all happen at the same moment per inscription.
+  const [glowingDays, setGlowingDays] = useState(() => Array(6).fill(false))
   // Glow state machine: 'off' → 'peak' (zoom-burst one-shot) → 'off' again.
   const [glowIntensity, setGlowIntensity] = useState('off')
   // Per-day ignition flags — each inscription flips hot at the same moment its zoom-burst
@@ -768,18 +768,15 @@ export default function SummaryPage() {
 
     // handleBegin fires immediately on press (no onFire delay).
     // All timers are press-absolute from t=0.
-    setTimeout(() => setInscriptionsGlowing(true),   200)   // flames begin (particles through mask windows)
-    setTimeout(() => setInscriptionsGlowing(false), 1500)   // flames end, inscriptions reveal
+    setTimeout(() => setGlowingDays(Array(6).fill(true)), 200)   // flames begin (all inscriptions)
     setTimeout(() => setGlowIntensity('peak'),      1500)   // zoom-burst cascade begins (340ms per glyph, 140ms stagger)
-    // Cascade the hot transition across inscriptions, locked to the zoom stagger.
+    // Cascade per-inscription: flame off + hot on + zoom fires, all at t=1500 + i*140.
     for (let i = 0; i < 6; i++) {
+      const at = 1500 + i * 140
       setTimeout(() => {
-        setHotDays(prev => {
-          const next = [...prev]
-          next[i] = true
-          return next
-        })
-      }, 1500 + i * 140)
+        setGlowingDays(prev => { const next = [...prev]; next[i] = false; return next })
+        setHotDays(prev => { const next = [...prev]; next[i] = true; return next })
+      }, at)
     }
     setTimeout(() => setGlowIntensity('off'),       2540)   // last cascade slot ends (1500 + 140*5 + 340)
     setTimeout(() => setStampVisible(true),         2540)   // stamp flies in after cascade finishes
@@ -850,7 +847,7 @@ export default function SummaryPage() {
 
       {/* ── THE BLADE (< 7 days) or DAY CARDS (>= 7 days) ── */}
       {days.length > 0 && days.length < 7 && (
-        <CycleBlade days={days} dailyPlan={dailyPlan} glowing={inscriptionsGlowing} glowIntensity={glowIntensity} hotDays={hotDays} />
+        <CycleBlade days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} />
       )}
 
       {days.length >= 7 && (
