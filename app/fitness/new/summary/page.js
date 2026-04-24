@@ -98,7 +98,8 @@ function DayCard({ iso, muscles, index }) {
    Source: public/reference/wakizashi.png → threshold → potrace → SVG.
    Diagonal pose: hilt upper-right, tip lower-left.
    ══════════════════════════════════════════════════════════════════════════ */
-function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off', hot = false }) {
+function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off', hotDays = [] }) {
+  const HOT_GLOW_FILTER = 'drop-shadow(0 0 3px #ff7a00) drop-shadow(0 0 8px rgba(255, 122, 0, 0.55)) drop-shadow(0 0 16px rgba(255, 80, 0, 0.3))'
   const first = days[0] ? parseDate(days[0]) : null
   const last  = days[days.length - 1] ? parseDate(days[days.length - 1]) : null
   const dateRange = first && last
@@ -398,44 +399,42 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off', h
               </g>
             </>
           )}
-          {/* Base inscriptions. Pre-ignition: difference-blend red (reads dark carved). After ignition
-              (hot=true): normal blend over dark-orange DEPTH_STACK_HOT so the letters glow warm without
-              any difference(warm, red)→green contamination. Opacity snaps binary on `glowing` only —
-              base is hidden only during the flame particle window, snaps back the instant flames end. */}
-          <g style={{
-            mixBlendMode: hot ? 'normal' : 'difference',
-            opacity: glowing ? 0 : 1,
-            transition: 'opacity 0ms, filter 300ms ease-out',
-            filter: hot
-              ? 'drop-shadow(0 0 3px #ff7a00) drop-shadow(0 0 8px rgba(255, 122, 0, 0.55)) drop-shadow(0 0 16px rgba(255, 80, 0, 0.3))'
-              : 'none',
-          }}>
-            {dayLabels.map((dl, i) => {
-              const textAngle = dl.angle - 90
-              const isLast = i === lastIdx
-              return (
-                <g key={dl.iso} transform={`translate(${dl.cx},${dl.cy}) rotate(${textAngle})`}>
+          {/* Base inscriptions — per-day wrapper so each day can flip to hot independently.
+              Pre-ignition: difference-blend red (reads dark carved). Post-ignition: normal blend
+              over dark-orange DEPTH_STACK_HOT + warm drop-shadow halo that ramps in over 300ms. */}
+          {dayLabels.map((dl, i) => {
+            const textAngle = dl.angle - 90
+            const isLast = i === lastIdx
+            const hot = !!hotDays[i]
+            return (
+              <g key={dl.iso} style={{
+                mixBlendMode: hot ? 'normal' : 'difference',
+                opacity: glowing ? 0 : 1,
+                transition: 'opacity 0ms, filter 300ms ease-out',
+                filter: hot ? HOT_GLOW_FILTER : 'none',
+              }}>
+                <g transform={`translate(${dl.cx},${dl.cy}) rotate(${textAngle})`}>
                   {isLast ? (
                     <g clipPath="url(#last-day-right)">{renderDayInscription(dl, { hot })}</g>
                   ) : (
                     renderDayInscription(dl, { hot })
                   )}
                 </g>
-              )
-            })}
-          </g>
+              </g>
+            )
+          })}
           {/* Last day's LEFT half — outside the main group so the design-line crossing stays plain
-              (no difference blend) even in the red state. */}
+              (no difference blend) even in the red state. Uses hotDays[lastIdx] to sync with the
+              last day's right half. */}
           {lastDay && (
-            <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}
-               style={{
-                 opacity: glowing ? 0 : 1,
-                 transition: 'opacity 0ms, filter 300ms ease-out',
-                 filter: hot
-                   ? 'drop-shadow(0 0 3px #ff7a00) drop-shadow(0 0 8px rgba(255, 122, 0, 0.55)) drop-shadow(0 0 16px rgba(255, 80, 0, 0.3))'
-                   : 'none',
-               }}>
-              <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true, hot })}</g>
+            <g style={{
+              opacity: glowing ? 0 : 1,
+              transition: 'opacity 0ms, filter 300ms ease-out',
+              filter: hotDays[lastIdx] ? HOT_GLOW_FILTER : 'none',
+            }}>
+              <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
+                <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true, hot: !!hotDays[lastIdx] })}</g>
+              </g>
             </g>
           )}
           {/* Zoom-burst finale — fires during the 'peak' glow phase. Each inscription
@@ -714,9 +713,9 @@ export default function SummaryPage() {
   const [inscriptionsGlowing, setInscriptionsGlowing] = useState(false)
   // Glow state machine: 'off' → 'peak' (zoom-burst one-shot) → 'off' again.
   const [glowIntensity, setGlowIntensity] = useState('off')
-  // Persistent dark-orange 'ignited' color on base inscriptions. Flips true at peak start
-  // (t=1500) and never flips back on this page — survives the stamp + fire transition.
-  const [inscriptionsHot, setInscriptionsHot] = useState(false)
+  // Per-day ignition flags — each inscription flips hot at the same moment its zoom-burst
+  // fires, so the color/glow transition cascades in sync with the zoom wave. Never flips back.
+  const [hotDays, setHotDays] = useState(() => Array(6).fill(false))
   const mainRef = useRef(null)
 
   useEffect(() => {
@@ -758,7 +757,16 @@ export default function SummaryPage() {
     setTimeout(() => setInscriptionsGlowing(true),   200)   // flames begin (particles through mask windows)
     setTimeout(() => setInscriptionsGlowing(false), 1500)   // flames end, inscriptions reveal
     setTimeout(() => setGlowIntensity('peak'),      1500)   // zoom-burst cascade begins (280ms per glyph, 80ms stagger)
-    setTimeout(() => setInscriptionsHot(true),      1500)   // base inscriptions ignite (dark orange); stays hot
+    // Cascade the hot transition across inscriptions, locked to the zoom stagger.
+    for (let i = 0; i < 6; i++) {
+      setTimeout(() => {
+        setHotDays(prev => {
+          const next = [...prev]
+          next[i] = true
+          return next
+        })
+      }, 1500 + i * 80)
+    }
     setTimeout(() => setGlowIntensity('off'),       2180)   // last cascade slot ends (1500 + 80*5 + 280)
     setTimeout(() => setStampVisible(true),         2180)   // stamp flies in after cascade finishes
 
@@ -828,7 +836,7 @@ export default function SummaryPage() {
 
       {/* ── THE BLADE (< 7 days) or DAY CARDS (>= 7 days) ── */}
       {days.length > 0 && days.length < 7 && (
-        <CycleBlade days={days} dailyPlan={dailyPlan} glowing={inscriptionsGlowing} glowIntensity={glowIntensity} hot={inscriptionsHot} />
+        <CycleBlade days={days} dailyPlan={dailyPlan} glowing={inscriptionsGlowing} glowIntensity={glowIntensity} hotDays={hotDays} />
       )}
 
       {days.length >= 7 && (
