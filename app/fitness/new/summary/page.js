@@ -418,10 +418,10 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
           <style>{`
             @keyframes inscription-hot-to-cool {
               0%   { filter: drop-shadow(0 0 3px #ffb347) drop-shadow(0 0 8px #ff8800) drop-shadow(0 0 18px rgba(255, 120, 0, 0.75)) drop-shadow(0 0 32px rgba(255, 80, 0, 0.35)); }
-              20%  { filter: drop-shadow(0 0 3px #ffb347) drop-shadow(0 0 8px #ff8800) drop-shadow(0 0 18px rgba(255, 120, 0, 0.75)) drop-shadow(0 0 32px rgba(255, 80, 0, 0.35)); }
+              60%  { filter: drop-shadow(0 0 3px #ffb347) drop-shadow(0 0 8px #ff8800) drop-shadow(0 0 18px rgba(255, 120, 0, 0.75)) drop-shadow(0 0 32px rgba(255, 80, 0, 0.35)); }
               100% { filter: drop-shadow(0 0 1.5px #ff8800) drop-shadow(0 0 4px rgba(255, 122, 0, 0.55)) drop-shadow(0 0 7px rgba(255, 80, 0, 0.2)) drop-shadow(0 0 7px rgba(255, 80, 0, 0)); }
             }
-            .inscription-hot { animation: inscription-hot-to-cool 1400ms ease-out forwards; }
+            .inscription-hot { animation: inscription-hot-to-cool 1800ms ease-out forwards; }
           `}</style>
           {dayLabels.map((dl, i) => {
             const textAngle = dl.angle - 90
