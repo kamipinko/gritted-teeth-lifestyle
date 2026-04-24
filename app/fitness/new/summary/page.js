@@ -447,9 +447,9 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off', h
               <style>{`
                 @keyframes inscription-zoom {
                   0%   { transform: scale(1);    opacity: 0.9; }
-                  30%  { transform: scale(1.12); opacity: 1.0; }
-                  70%  { transform: scale(1.22); opacity: 0.4; }
-                  100% { transform: scale(1.3);  opacity: 0; }
+                  30%  { transform: scale(1.22); opacity: 1.0; }
+                  70%  { transform: scale(1.42); opacity: 0.4; }
+                  100% { transform: scale(1.55); opacity: 0; }
                 }
                 .inscription-zoom-burst .zoom-glyph {
                   transform-box: fill-box;
