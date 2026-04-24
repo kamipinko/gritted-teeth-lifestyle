@@ -461,9 +461,9 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off', h
               <style>{`
                 @keyframes inscription-zoom {
                   0%   { transform: scale(1);    opacity: 0.9; }
-                  30%  { transform: scale(1.22); opacity: 1.0; }
-                  70%  { transform: scale(1.42); opacity: 0.4; }
-                  100% { transform: scale(1.55); opacity: 0; }
+                  30%  { transform: scale(1.4);  opacity: 1.0; }
+                  70%  { transform: scale(1.68); opacity: 0.4; }
+                  100% { transform: scale(1.85); opacity: 0; }
                 }
                 .inscription-zoom-burst .zoom-glyph {
                   transform-box: fill-box;
@@ -479,14 +479,14 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off', h
               <g className="inscription-zoom-burst" style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
                 {dayLabels.map((dl, i) => (
                   <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
-                    <g className="zoom-glyph" style={{ animationDelay: `${i * 110}ms` }}>
+                    <g className="zoom-glyph" style={{ animationDelay: `${i * 140}ms` }}>
                       {renderDayInscription(dl, { maskFill: '#ff6600' })}
                     </g>
                   </g>
                 ))}
                 {lastDay && (
                   <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
-                    <g className="zoom-glyph" style={{ animationDelay: `${lastIdx * 110}ms` }}>
+                    <g className="zoom-glyph" style={{ animationDelay: `${lastIdx * 140}ms` }}>
                       <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { maskFill: '#ff6600' })}</g>
                     </g>
                   </g>
@@ -770,7 +770,7 @@ export default function SummaryPage() {
     // All timers are press-absolute from t=0.
     setTimeout(() => setInscriptionsGlowing(true),   200)   // flames begin (particles through mask windows)
     setTimeout(() => setInscriptionsGlowing(false), 1500)   // flames end, inscriptions reveal
-    setTimeout(() => setGlowIntensity('peak'),      1500)   // zoom-burst cascade begins (340ms per glyph, 110ms stagger)
+    setTimeout(() => setGlowIntensity('peak'),      1500)   // zoom-burst cascade begins (340ms per glyph, 140ms stagger)
     // Cascade the hot transition across inscriptions, locked to the zoom stagger.
     for (let i = 0; i < 6; i++) {
       setTimeout(() => {
@@ -779,10 +779,10 @@ export default function SummaryPage() {
           next[i] = true
           return next
         })
-      }, 1500 + i * 110)
+      }, 1500 + i * 140)
     }
-    setTimeout(() => setGlowIntensity('off'),       2390)   // last cascade slot ends (1500 + 110*5 + 340)
-    setTimeout(() => setStampVisible(true),         2390)   // stamp flies in after cascade finishes
+    setTimeout(() => setGlowIntensity('off'),       2540)   // last cascade slot ends (1500 + 140*5 + 340)
+    setTimeout(() => setStampVisible(true),         2540)   // stamp flies in after cascade finishes
 
     setTimeout(() => {
       play('stamp')
@@ -804,10 +804,10 @@ export default function SummaryPage() {
           { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
         )
       }
-    }, 3055)   // stamp lands (665ms after fly-in)
+    }, 3205)   // stamp lands (665ms after fly-in)
 
-    setTimeout(() => play('stamp'),       3140)
-    setTimeout(() => setFireActive(true), 5090)
+    setTimeout(() => play('stamp'),       3290)
+    setTimeout(() => setFireActive(true), 5240)
   }
 
   const cols = days.length <= 5 ? days.length
