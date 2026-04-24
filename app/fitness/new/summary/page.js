@@ -1007,7 +1007,7 @@ export default function SummaryPage() {
         style={{
           bottom: 'calc(20px + 128px + 60px)',
           right: '40px',
-          transform: 'rotate(-12deg)',
+          transform: 'rotate(12deg)',
           transformOrigin: 'right bottom',
           overflow: 'visible',
         }}
