@@ -913,10 +913,10 @@ export default function SummaryPage() {
     }, 700)
     setTimeout(() => {
       setWeekdaysIgnited(prev => { const next = [...prev]; next[1] = true; next[4] = true; return next })
-    }, 935)
+    }, 875)
     setTimeout(() => {
       setWeekdaysIgnited(prev => { const next = [...prev]; next[0] = true; next[5] = true; return next })
-    }, 1135)
+    }, 1025)
 
     setTimeout(() => {
       play('stamp')
