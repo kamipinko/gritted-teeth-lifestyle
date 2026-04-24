@@ -909,14 +909,14 @@ export default function SummaryPage() {
       const wi = 5 - step
       setTimeout(() => {
         setWeekdaysIgnited(prev => { const next = [...prev]; next[wi] = true; return next })
-      }, 500 + step * 200)
+      }, 500 + step * 140)
     }
     setTimeout(() => {
       setWatermarkIgnited(prev => { const next = [...prev]; next[0] = true; return next })
-    }, 500 + 6 * 200)   // ETCH at t=1700
+    }, 500 + 6 * 140)   // ETCH at t=1700
     setTimeout(() => {
       setWatermarkIgnited(prev => { const next = [...prev]; next[1] = true; return next })
-    }, 500 + 7 * 200)   // CYCLE at t=1900
+    }, 500 + 7 * 140)   // CYCLE at t=1900
 
     setTimeout(() => {
       play('stamp')
