@@ -836,6 +836,8 @@ export default function SummaryPage() {
   // Weekday side labels ignite all-at-once right after the last inscription's cascade slot.
   const [weekdaysIgnited, setWeekdaysIgnited] = useState(() => Array(6).fill(false))
   const [weekdaysCooled, setWeekdaysCooled] = useState(false)
+  // Watermark per-line ignition: [ETCH, CYCLE]. Joins the weekday cascade as steps 6 and 7.
+  const [watermarkIgnited, setWatermarkIgnited] = useState(() => [false, false])
   const mainRef = useRef(null)
 
   useEffect(() => {
@@ -900,15 +902,21 @@ export default function SummaryPage() {
     }
     setTimeout(() => setGlowIntensity('off'),       2940)   // last zoom cascade slot ends (1500 + 220*5 + 340)
     setTimeout(() => setStampVisible(true),         2940)   // stamp flies in after zoom cascade finishes
-    // Weekday labels cascade in REVERSE order (wi=5 first at t=500, wi=0 last at t=800),
-    // matching the blade's tip-to-handle flame activation. Starts exactly when day 0's
-    // inscription flame fires (last in the inscription reverse cascade). Burns until nav.
+    // Unified slow cascade: 6 weekdays (reverse order) + watermark ETCH + watermark CYCLE.
+    // 200ms stagger starting at t=500 (coincides with day 0's inscription flame firing).
+    // Each element burns indefinitely once ignited.
     for (let step = 0; step < 6; step++) {
       const wi = 5 - step
       setTimeout(() => {
         setWeekdaysIgnited(prev => { const next = [...prev]; next[wi] = true; return next })
-      }, 500 + step * 60)
+      }, 500 + step * 200)
     }
+    setTimeout(() => {
+      setWatermarkIgnited(prev => { const next = [...prev]; next[0] = true; return next })
+    }, 500 + 6 * 200)   // ETCH at t=1700
+    setTimeout(() => {
+      setWatermarkIgnited(prev => { const next = [...prev]; next[1] = true; return next })
+    }, 500 + 7 * 200)   // CYCLE at t=1900
 
     setTimeout(() => {
       play('stamp')
@@ -1043,22 +1051,32 @@ export default function SummaryPage() {
             </text>
           </mask>
         </defs>
-        {/* Base text — dim red idle, fully hidden while flickering so the particle flames
-            (rendered AFTER through the mask) are the sole visible content inside letter shapes.
-            Two stacked tspans create the ETCH / CYCLE indented layout. */}
+        {/* Base text — each line rendered as its own <text> so ETCH and CYCLE can be gated
+            independently against watermarkIgnited[0] and [1]. Hidden once its own line ignites
+            (inscription cheat) so the particle flames are the only visible content. */}
         <text textAnchor="start"
           fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
           fontSize="18" fontWeight="600" letterSpacing="6"
-          className={flickering ? 'watermark-hot' : ''}
+          x="8" y="30"
+          className={watermarkIgnited[0] ? 'watermark-hot' : ''}
           fill='rgba(212, 24, 31, 0.65)'
-          opacity={flickering ? 0 : 1}
+          opacity={watermarkIgnited[0] ? 0 : 1}
           style={{ transition: 'opacity 0ms' }}>
-          <tspan x="8"  y="30">ETCH</tspan>
-          <tspan x="34" y="62">CYCLE</tspan>
+          ETCH
+        </text>
+        <text textAnchor="start"
+          fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+          fontSize="18" fontWeight="600" letterSpacing="6"
+          x="34" y="62"
+          className={watermarkIgnited[1] ? 'watermark-hot' : ''}
+          fill='rgba(212, 24, 31, 0.65)'
+          opacity={watermarkIgnited[1] ? 0 : 1}
+          style={{ transition: 'opacity 0ms' }}>
+          CYCLE
         </text>
         {/* Particles AFTER — clipped to letter silhouettes via the mask, paint on top of the
             void-black base so the flames show through the letter shapes. */}
-        {flickering && (
+        {watermarkIgnited.some(Boolean) && (
           <g mask="url(#watermark-window)">
             {(() => {
               const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
@@ -1075,6 +1093,8 @@ export default function SummaryPage() {
                 // rather than a continuous orange wash.
                 const isEtchBand = (i % 2 === 1)
                 if (!isEtchBand && (i % 4 === 2)) return null
+                if (isEtchBand && !watermarkIgnited[0]) return null
+                if (!isEtchBand && !watermarkIgnited[1]) return null
                 const startY = isEtchBand ? 46 : 74
                 const rise   = isEtchBand ? (18 + rSize * 14) : (12 + rSize * 10)
                 const xBase  = isEtchBand ? 8 : 34
