@@ -948,16 +948,16 @@ export default function SummaryPage() {
     // Step 1 (t=770): days 2+5. Step 2 (t=840): outermost pair (days 1+6).
     setTimeout(() => {
       setWeekdaysIgnited(prev => { const next = [...prev]; next[2] = true; next[3] = true; return next })
-    }, 1780)
+    }, 1560)
     setTimeout(() => {
       setWatermarkIgnited(() => [true, true])
-    }, 1780)
+    }, 1560)
     setTimeout(() => {
       setWeekdaysIgnited(prev => { const next = [...prev]; next[1] = true; next[4] = true; return next })
-    }, 1955)
+    }, 1735)
     setTimeout(() => {
       setWeekdaysIgnited(prev => { const next = [...prev]; next[0] = true; next[5] = true; return next })
-    }, 2105)
+    }, 1885)
 
     setTimeout(() => {
       play('stamp')
