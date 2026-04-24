@@ -663,11 +663,11 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
                 const rStartJ = hash01(i * 19 + 37)
 
                 const cxBase = 23.2 + 104.4                              // viewBox horizontal center
-                const xOff   = (rX - 0.5) * 140 + (rXj - 0.5) * 40       // within flame silhouette width
+                const xOff   = (rX - 0.5) * 190 + (rXj - 0.5) * 60       // ±125 spread — fills the 128px button silhouette
                 const delay  = (rDly * 540) % 600                        // ~600ms window
                 const dur    = 130 + rDur * 150                          // 130-280ms (matches inscriptions)
                 const rise   = 200 + rRise * 100                         // 200-300 viewBox units
-                const size   = 14 + rSize * 26                           // r 14-40
+                const size   = 20 + rSize * 34                           // r 20-54 — bigger min for a fuller fire
                 const peakA  = 0.5 + rPeak * 0.5                         // 0.5-1.0
                 const driftX = (rDrft - 0.5) * 80                        // ±40 lateral
                 const startY = 630 + (rStartJ - 0.5) * 60                // near the BOTTOM of the flame (high viewBox y)
@@ -916,7 +916,7 @@ export default function SummaryPage() {
         aria-hidden="true"
         className="fixed z-[20] pointer-events-none select-none text-[12px] tracking-[0.5em] uppercase text-[#ff7a00]/40"
         style={{
-          bottom: 'calc(20px + 128px + 8px)',
+          bottom: 'calc(20px + 128px + 32px)',
           right: '20px',
           whiteSpace: 'nowrap',
           textShadow: '0 0 5px rgba(255, 122, 0, 0.3)',
