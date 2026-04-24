@@ -1142,7 +1142,7 @@ export default function SummaryPage() {
 
         return (
           <div className="fixed inset-0 z-[9997] flex items-center justify-center pointer-events-none"
-               style={{ transform: 'translate(-50px, -200px)' }}>
+               style={{ transform: 'translate(-40px, -250px)' }}>
             <style>{`
               @keyframes deadline-slam {
                 0%   { transform: translateY(-320px) scale(9) rotate(-18deg); opacity: 0; filter: blur(24px); }
