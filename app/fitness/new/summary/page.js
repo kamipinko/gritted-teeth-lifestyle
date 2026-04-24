@@ -417,10 +417,10 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               so CSS can smoothly interpolate between HOT and COOLED filter stacks. */}
           <style>{`
             @keyframes inscription-hot-hold {
-              from, to { filter: drop-shadow(0 0 3px #ffb347) drop-shadow(0 0 8px #ff8800) drop-shadow(0 0 18px rgba(255, 120, 0, 0.75)) drop-shadow(0 0 32px rgba(255, 80, 0, 0.35)); }
+              from, to { filter: drop-shadow(0 0 4px #fff4c9) drop-shadow(0 0 10px #ffa840) drop-shadow(0 0 22px rgba(255, 120, 0, 0.85)) drop-shadow(0 0 36px rgba(255, 80, 0, 0.5)); }
             }
             @keyframes inscription-cool-down {
-              0%   { filter: drop-shadow(0 0 3px #ffb347) drop-shadow(0 0 8px #ff8800) drop-shadow(0 0 18px rgba(255, 120, 0, 0.75)) drop-shadow(0 0 32px rgba(255, 80, 0, 0.35)); }
+              0%   { filter: drop-shadow(0 0 4px #fff4c9) drop-shadow(0 0 10px #ffa840) drop-shadow(0 0 22px rgba(255, 120, 0, 0.85)) drop-shadow(0 0 36px rgba(255, 80, 0, 0.5)); }
               100% { filter: drop-shadow(0 0 1.5px #ff8800) drop-shadow(0 0 4px rgba(255, 122, 0, 0.55)) drop-shadow(0 0 7px rgba(255, 80, 0, 0.2)) drop-shadow(0 0 7px rgba(255, 80, 0, 0)); }
             }
             .inscription-hot    { animation: inscription-hot-hold 100ms forwards; }
