@@ -902,29 +902,21 @@ export default function SummaryPage() {
     }
     setTimeout(() => setGlowIntensity('off'),       2940)   // last zoom cascade slot ends (1500 + 220*5 + 340)
     setTimeout(() => setStampVisible(true),         2940)   // stamp flies in after zoom cascade finishes
-    // Unified cascade: 6 weekdays + ETCH + CYCLE, 140ms stagger from t=500.
-    // ETCH and CYCLE fire in the MIDDLE (steps 3-4), splitting the weekday cascade in half.
-    // First half of weekdays: wi=5, 4, 3 (steps 0-2)
-    for (let step = 0; step < 3; step++) {
-      const wi = 5 - step
-      setTimeout(() => {
-        setWeekdaysIgnited(prev => { const next = [...prev]; next[wi] = true; return next })
-      }, 700 + step * 70)
-    }
-    // Middle: ETCH then CYCLE (steps 3-4)
+    // Middle-out symmetric cascade, 70ms stagger, starts t=700.
+    // Step 0 (t=700): innermost pair (days 3+4) + ETCH + CYCLE ignite together.
+    // Step 1 (t=770): days 2+5. Step 2 (t=840): outermost pair (days 1+6).
     setTimeout(() => {
-      setWatermarkIgnited(prev => { const next = [...prev]; next[0] = true; return next })
-    }, 700 + 3 * 70)   // ETCH at t=910
+      setWeekdaysIgnited(prev => { const next = [...prev]; next[2] = true; next[3] = true; return next })
+    }, 700)
     setTimeout(() => {
-      setWatermarkIgnited(prev => { const next = [...prev]; next[1] = true; return next })
-    }, 700 + 4 * 70)   // CYCLE at t=980
-    // Second half of weekdays: wi=2, 1, 0 (steps 5-7)
-    for (let step = 5; step < 8; step++) {
-      const wi = 7 - step
-      setTimeout(() => {
-        setWeekdaysIgnited(prev => { const next = [...prev]; next[wi] = true; return next })
-      }, 700 + step * 70)
-    }
+      setWatermarkIgnited(() => [true, true])
+    }, 700)
+    setTimeout(() => {
+      setWeekdaysIgnited(prev => { const next = [...prev]; next[1] = true; next[4] = true; return next })
+    }, 770)
+    setTimeout(() => {
+      setWeekdaysIgnited(prev => { const next = [...prev]; next[0] = true; next[5] = true; return next })
+    }, 840)
 
     setTimeout(() => {
       play('stamp')
