@@ -541,10 +541,11 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               </g>
             </>
           )}
-          {/* Weekday labels — base text FIRST, painted void-black during the ignite window
-              so particles (rendered AFTER) pop against the dark letter silhouettes. Wrapped
-              in a <g> whose class drives the hot→cool keyframe on all 6 labels together. */}
-          <g className={weekdaysCooled ? 'inscription-cooled' : (weekdaysIgnited ? 'inscription-hot' : '')}>
+          {/* Weekday labels — base text hidden during the ignite window (inscription cheat)
+              so the particle flames are the only visible content inside the letter silhouettes.
+              Returns post-cool as dim red. Class on the group drives the hot→cool keyframe. */}
+          <g className={weekdaysCooled ? 'inscription-cooled' : (weekdaysIgnited ? 'inscription-hot' : '')}
+             style={{ opacity: (weekdaysIgnited && !weekdaysCooled) ? 0 : 1, transition: 'opacity 0ms' }}>
             {dayLabels.map((dl, i) => {
               const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()]
               const isLeftSide = i < 3
@@ -553,10 +554,7 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               const RIGHT_X = [1597, 1572, 1542]
               const labelX = isLeftSide ? LEFT_X[i] : RIGHT_X[i - 3]
               const labelY = dl.cy + yNudge
-              const fill =
-                weekdaysCooled ? '#d4181f' :
-                weekdaysIgnited ? '#0a0a0a' :
-                '#b0a898'
+              const fill = weekdaysCooled ? '#d4181f' : '#b0a898'
               return (
                 <text
                   key={`dow-${dl.iso}`}
@@ -571,7 +569,7 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                     fontWeight: 700,
                     fill,
                     letterSpacing: '0.2em',
-                    opacity: weekdaysIgnited ? 1 : 0.7,
+                    opacity: weekdaysCooled ? 1 : 0.7,
                   }}
                 >
                   {dow}
@@ -1020,13 +1018,16 @@ export default function SummaryPage() {
               fontSize="20" fontWeight="600" letterSpacing="9" fill="white">ETCH CYCLE</text>
           </mask>
         </defs>
-        {/* Base text FIRST — void-black silhouette while flickering so particles pop against
-            dark letter-windows (same pattern as the flame button). Red idle otherwise. */}
+        {/* Base text — dim red idle, fully hidden while flickering so the particle flames
+            (rendered AFTER through the mask) are the sole visible content inside letter shapes.
+            Same cheat the blade inscriptions use during their flame phase. */}
         <text x="110" y="48" textAnchor="middle"
           fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
           fontSize="20" fontWeight="600" letterSpacing="9"
           className={flickering ? 'watermark-hot' : ''}
-          fill={flickering ? '#0a0a0a' : 'rgba(212, 24, 31, 0.65)'}>
+          fill='rgba(212, 24, 31, 0.65)'
+          opacity={flickering ? 0 : 1}
+          style={{ transition: 'opacity 0ms' }}>
           ETCH CYCLE
         </text>
         {/* Particles AFTER — clipped to letter silhouettes via the mask, paint on top of the
