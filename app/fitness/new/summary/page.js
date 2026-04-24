@@ -442,9 +442,13 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off' })
                 .inscription-zoom-burst .zoom-glyph {
                   transform-box: fill-box;
                   transform-origin: center;
-                  animation: inscription-zoom 500ms ease-out forwards;
+                  animation: inscription-zoom 280ms ease-out forwards;
                   mix-blend-mode: plus-lighter;
-                  filter: drop-shadow(0 0 4px #fff4c9) drop-shadow(0 0 10px #ffb347) drop-shadow(0 0 18px rgba(255, 140, 50, 0.6));
+                  filter:
+                    drop-shadow(0 0 3px #ffffff)
+                    drop-shadow(0 0 8px #ffcc00)
+                    drop-shadow(0 0 18px #ff6600)
+                    drop-shadow(0 0 32px #ff4400);
                 }
               `}</style>
               <g className="inscription-zoom-burst" style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
