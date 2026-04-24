@@ -518,8 +518,9 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
   const [flickering, setFlickering] = useState(false)
 
   const triggerFlicker = () => {
+    // Ignite. No reset timer — flame burns through the full etch sequence until
+    // the page navigates away and BeginButton unmounts.
     setFlickering(true)
-    setTimeout(() => setFlickering(false), 900)
   }
 
   return (
