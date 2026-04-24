@@ -558,17 +558,7 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               const labelY = dl.cy + yNudge
               const fill = weekdaysCooled ? '#d4181f' : '#b0a898'
               const baseAlpha = weekdaysCooled ? 1 : 0.7
-              const style = {
-                fontFamily: '"Noto Serif JP", Georgia, serif',
-                fontSize: '45px',
-                fontWeight: 700,
-                fill,
-                letterSpacing: '0.2em',
-                transition: 'opacity 0ms',
-              }
-              // When igniting, leave opacity to the CSS animation (which fades 1 → 0 with
-              // drop-shadow glow). Otherwise pin to the base alpha.
-              if (!isIgnited) style.opacity = baseAlpha
+              const textOpacity = isIgnited ? 0 : baseAlpha
               return (
                 <text
                   key={`dow-${dl.iso}`}
@@ -577,8 +567,16 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                   textAnchor={isLeftSide ? 'start' : 'end'}
                   dominantBaseline="central"
                   transform={`rotate(-11 ${labelX} ${labelY})`}
-                  className={isIgnited ? 'weekday-igniting' : ''}
-                  style={style}
+                  className={isIgnited ? 'inscription-hot' : ''}
+                  style={{
+                    fontFamily: '"Noto Serif JP", Georgia, serif',
+                    fontSize: '45px',
+                    fontWeight: 700,
+                    fill,
+                    letterSpacing: '0.2em',
+                    opacity: textOpacity,
+                    transition: 'opacity 0ms',
+                  }}
                 >
                   {dow}
                 </text>
@@ -1036,29 +1034,6 @@ export default function SummaryPage() {
           }
         }
         .watermark-hot { animation: watermark-hot-hold 100ms forwards; }
-        @keyframes weekday-ignite-burst {
-          0%   {
-            opacity: 1;
-            filter:
-              drop-shadow(0 0 6px #fff4c9)
-              drop-shadow(0 0 14px #ff8800)
-              drop-shadow(0 0 28px rgba(255, 80, 0, 0.75));
-            transform-box: fill-box;
-            transform-origin: center;
-          }
-          25%  {
-            opacity: 0.75;
-            filter:
-              drop-shadow(0 0 4px #ffa840)
-              drop-shadow(0 0 10px rgba(255, 120, 0, 0.55));
-          }
-          55%  {
-            opacity: 0.25;
-            filter: drop-shadow(0 0 2px rgba(255, 120, 0, 0.35));
-          }
-          100% { opacity: 0; filter: none; }
-        }
-        .weekday-igniting { animation: weekday-ignite-burst 220ms forwards; }
       `}</style>
       <svg
         aria-hidden="true"
@@ -1091,9 +1066,9 @@ export default function SummaryPage() {
           fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
           fontSize="18" fontWeight="600" letterSpacing="6"
           x="8" y="30"
-          className={watermarkIgnited[0] ? 'weekday-igniting' : ''}
+          className={watermarkIgnited[0] ? 'watermark-hot' : ''}
           fill='rgba(212, 24, 31, 0.65)'
-          opacity={watermarkIgnited[0] ? undefined : 1}
+          opacity={watermarkIgnited[0] ? 0 : 1}
           style={{ transition: 'opacity 0ms' }}>
           ETCH
         </text>
@@ -1101,9 +1076,9 @@ export default function SummaryPage() {
           fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
           fontSize="18" fontWeight="600" letterSpacing="6"
           x="34" y="62"
-          className={watermarkIgnited[1] ? 'weekday-igniting' : ''}
+          className={watermarkIgnited[1] ? 'watermark-hot' : ''}
           fill='rgba(212, 24, 31, 0.65)'
-          opacity={watermarkIgnited[1] ? undefined : 1}
+          opacity={watermarkIgnited[1] ? 0 : 1}
           style={{ transition: 'opacity 0ms' }}>
           CYCLE
         </text>
