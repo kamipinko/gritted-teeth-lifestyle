@@ -99,9 +99,10 @@ function DayCard({ iso, muscles, index }) {
    Diagonal pose: hilt upper-right, tip lower-left.
    ══════════════════════════════════════════════════════════════════════════ */
 function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off' }) {
-  const glowFilter = glowIntensity === 'peak'
-    ? 'drop-shadow(0 0 8px #ffc266) drop-shadow(0 0 18px #ff8833)'
-    : 'none'
+  // Base inscriptions hide during BOTH flame window and peak zoom window: difference-blend over
+  // red blade makes them black, and if a warm zoom duplicate lights the area behind them at the
+  // same time, difference(warm, red) → green contamination. Hiding during peak removes the source.
+  const baseHidden = glowing || glowIntensity === 'peak'
   const first = days[0] ? parseDate(days[0]) : null
   const last  = days[days.length - 1] ? parseDate(days[days.length - 1]) : null
   const dateRange = first && last
@@ -395,12 +396,11 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off' })
               </g>
             </>
           )}
-          {/* Difference-blend base inscriptions. Hidden during glow: the masked
-              particle layer above supplies the glyph visuals (flame-filled windows),
-              and keeping the black etched text visible would occlude them. Fade
-              smoothly back in once the glow ends. Drop-shadow glow filter layered
-              on top for the peak/residual phases of the glow state machine. */}
-          <g style={{ mixBlendMode: 'difference', opacity: glowing ? 0 : 1, transition: 'opacity 150ms ease-out, filter 300ms ease-out', filter: glowFilter }}>
+          {/* Difference-blend base inscriptions. Hidden during BOTH flame window and peak zoom:
+              the masked particle layer supplies the flame visuals, and the zoom duplicates supply
+              the peak visuals. Keeping the black etched text visible during peak would read as
+              green contamination (difference(warm-zoom-over, red-blade) = green). */}
+          <g style={{ mixBlendMode: 'difference', opacity: baseHidden ? 0 : 1, transition: 'opacity 150ms ease-out' }}>
             {dayLabels.map((dl, i) => {
               const textAngle = dl.angle - 90
               const isLast = i === lastIdx
@@ -420,7 +420,7 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off' })
               Same opacity gating as the difference-blend group above so the masked particles show cleanly. */}
           {lastDay && (
             <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}
-               style={{ opacity: glowing ? 0 : 1, transition: 'opacity 150ms ease-out, filter 300ms ease-out', filter: glowFilter }}>
+               style={{ opacity: baseHidden ? 0 : 1, transition: 'opacity 150ms ease-out' }}>
               <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { outline: true })}</g>
             </g>
           )}
@@ -434,9 +434,9 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off' })
               <style>{`
                 @keyframes inscription-zoom {
                   0%   { transform: scale(1);    opacity: 0.9; }
-                  30%  { transform: scale(1.05); opacity: 1.0; }
-                  70%  { transform: scale(1.11); opacity: 0.4; }
-                  100% { transform: scale(1.15); opacity: 0; }
+                  30%  { transform: scale(1.12); opacity: 1.0; }
+                  70%  { transform: scale(1.22); opacity: 0.4; }
+                  100% { transform: scale(1.3);  opacity: 0; }
                 }
                 .inscription-zoom-burst .zoom-glyph {
                   transform-box: fill-box;
