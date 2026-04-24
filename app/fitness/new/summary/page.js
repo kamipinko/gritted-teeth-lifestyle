@@ -616,12 +616,12 @@ function BeginButton({ onFire, onHover, label = 'ETCH CYCLE' }) {
       onMouseEnter={onHover}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); triggerFlicker(); onFire() } }}
       className="fixed bottom-5 right-5 z-40 no-print cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-paper focus-visible:outline-offset-2"
-      style={{ width: 96, height: 96 }}
+      style={{ width: 128, height: 128 }}
     >
       <svg
         viewBox="23.2 388.8 208.8 307.9"
-        width={96}
-        height={96}
+        width={128}
+        height={128}
         className="relative z-10 block"
         aria-hidden="true"
         style={{
@@ -914,11 +914,15 @@ export default function SummaryPage() {
           poster-style tracking; fixed so it doesn't fight the blade container's absolute layout. */}
       <div
         aria-hidden="true"
-        className="fixed bottom-8 right-[120px] z-[20] pointer-events-none select-none text-[10px] tracking-[0.6em] uppercase text-[#ff7a00]/30"
+        className="fixed z-[20] pointer-events-none select-none text-[12px] tracking-[0.5em] uppercase text-[#ff7a00]/40"
         style={{
+          bottom: 'calc(20px + 128px + 8px)',
+          right: '20px',
           whiteSpace: 'nowrap',
-          textShadow: '0 0 4px rgba(255, 122, 0, 0.25)',
+          textShadow: '0 0 5px rgba(255, 122, 0, 0.3)',
           fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
+          transform: 'rotate(-12deg)',
+          transformOrigin: 'right bottom',
         }}
       >
         Etch Cycle
