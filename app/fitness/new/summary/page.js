@@ -510,36 +510,48 @@ function CycleBlade({ days, dailyPlan, glowing = false, bursting = false }) {
               25%  { opacity: 1; }
               100% { opacity: 0; }
             }
+            .burst-anchor { overflow: visible; }
+            .burst-anchor .burst-positioner {
+              position: absolute;
+              left: -100px;
+              top: -200px;
+              width: 200px;
+              height: 200px;
+              overflow: visible;
+            }
             .burst-anchor .sunrays {
               position: absolute;
               top: 0; left: 0;
-              width: 80px;
-              height: 80px;
-              perspective: 2px;
+              width: 200px;
+              height: 200px;
+              perspective: 4px;
               perspective-origin: 50% 100%;
               transform-style: preserve-3d;
               display: flex;
               align-items: flex-end;
+              overflow: visible;
               animation: burst-fade 500ms ease-out forwards;
             }
-            .burst-anchor .sr-1 { transform: translate(-50%, -80%) rotate(-18deg); }
-            .burst-anchor .sr-2 { transform: translate(-50%, -80%) rotate(18deg); }
+            .burst-anchor .sr-1 { transform: rotate(-18deg); transform-origin: 50% 100%; }
+            .burst-anchor .sr-2 { transform: rotate(18deg);  transform-origin: 50% 100%; }
             .burst-anchor .sunrays > .light {
               flex: 0 0 15%;
               height: 80%;
-              box-shadow: 40px -4px 8px rgba(255, 250, 220, 0.95);
+              box-shadow: 90px -8px 18px rgba(255, 250, 220, 0.95);
               transform-origin: 0% 100% 0px;
               transform: rotateX(90deg) translateZ(0);
             }
             .burst-anchor .sunrays > .light:nth-child(2n) { box-shadow: none; }
             .burst-anchor .burst-sun {
               position: absolute;
-              top: -4px; left: -6px;
-              width: 12px;
-              height: 12px;
+              bottom: -8px;
+              left: 50%;
+              transform: translateX(-50%);
+              width: 16px;
+              height: 16px;
               border-radius: 50%;
               background: radial-gradient(circle, white 20%, #ffd700 50%, transparent 75%);
-              box-shadow: 0 0 18px 6px rgba(255, 220, 150, 0.9);
+              box-shadow: 0 0 24px 8px rgba(255, 220, 150, 0.9);
               mix-blend-mode: plus-lighter;
               animation: burst-fade 500ms ease-out forwards;
             }
@@ -551,13 +563,15 @@ function CycleBlade({ days, dailyPlan, glowing = false, bursting = false }) {
                 className="burst-anchor"
                 style={{ position: 'absolute', left: a.x, top: a.y, width: 1, height: 1 }}
               >
-                <div className="sunrays sr-1">
-                  {Array.from({ length: 6 }).map((_, i) => <div key={i} className="light"/>)}
+                <div className="burst-positioner">
+                  <div className="sunrays sr-1">
+                    {Array.from({ length: 6 }).map((_, i) => <div key={i} className="light"/>)}
+                  </div>
+                  <div className="sunrays sr-2">
+                    {Array.from({ length: 6 }).map((_, i) => <div key={i} className="light"/>)}
+                  </div>
+                  <div className="burst-sun"/>
                 </div>
-                <div className="sunrays sr-2">
-                  {Array.from({ length: 6 }).map((_, i) => <div key={i} className="light"/>)}
-                </div>
-                <div className="burst-sun"/>
               </div>
             ))}
           </div>
