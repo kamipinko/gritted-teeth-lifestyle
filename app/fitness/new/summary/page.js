@@ -560,26 +560,45 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               const baseAlpha = weekdaysCooled ? 1 : 0.7
               const textOpacity = isIgnited ? 0 : baseAlpha
               return (
-                <text
-                  key={`dow-${dl.iso}`}
-                  x={labelX}
-                  y={labelY}
-                  textAnchor={isLeftSide ? 'start' : 'end'}
-                  dominantBaseline="central"
-                  transform={`rotate(-11 ${labelX} ${labelY})`}
-                  className={isIgnited ? 'inscription-hot' : ''}
-                  style={{
-                    fontFamily: '"Noto Serif JP", Georgia, serif',
-                    fontSize: '45px',
-                    fontWeight: 700,
-                    fill,
-                    letterSpacing: '0.2em',
-                    opacity: textOpacity,
-                    transition: 'opacity 0ms',
-                  }}
-                >
-                  {dow}
-                </text>
+                <g key={`dow-${dl.iso}`}>
+                  <text
+                    x={labelX}
+                    y={labelY}
+                    textAnchor={isLeftSide ? 'start' : 'end'}
+                    dominantBaseline="central"
+                    transform={`rotate(-11 ${labelX} ${labelY})`}
+                    className={isIgnited ? 'inscription-hot' : ''}
+                    style={{
+                      fontFamily: '"Noto Serif JP", Georgia, serif',
+                      fontSize: '45px',
+                      fontWeight: 700,
+                      fill,
+                      letterSpacing: '0.2em',
+                      opacity: textOpacity,
+                      transition: 'opacity 0ms',
+                    }}
+                  >
+                    {dow}
+                  </text>
+                  {isIgnited && (
+                    <text
+                      x={labelX}
+                      y={labelY}
+                      textAnchor={isLeftSide ? 'start' : 'end'}
+                      dominantBaseline="central"
+                      transform={`rotate(-11 ${labelX} ${labelY})`}
+                      className="weekday-zoom-burst"
+                      style={{
+                        fontFamily: '"Noto Serif JP", Georgia, serif',
+                        fontSize: '45px',
+                        fontWeight: 700,
+                        letterSpacing: '0.2em',
+                      }}
+                    >
+                      {dow}
+                    </text>
+                  )}
+                </g>
               )
             })}
           </g>
@@ -1026,6 +1045,19 @@ export default function SummaryPage() {
           }
         }
         .watermark-hot { animation: watermark-hot-hold 100ms forwards; }
+        @keyframes weekday-zoom-burst {
+          0%   { transform: scale(1);    opacity: 0.9; }
+          60%  { transform: scale(1.18); opacity: 0.55; }
+          100% { transform: scale(1.25); opacity: 0; }
+        }
+        .weekday-zoom-burst {
+          transform-box: fill-box;
+          transform-origin: center;
+          animation: weekday-zoom-burst 220ms ease-out forwards;
+          fill: #ff5000;
+          filter: drop-shadow(0 0 4px #ff6600) drop-shadow(0 0 10px #ff4400);
+          pointer-events: none;
+        }
       `}</style>
       <svg
         aria-hidden="true"
@@ -1064,6 +1096,16 @@ export default function SummaryPage() {
           style={{ transition: 'opacity 0ms' }}>
           ETCH
         </text>
+        {watermarkIgnited[0] && (
+          <text
+            x="8" y="30"
+            textAnchor="start"
+            fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+            fontSize="18" fontWeight="600" letterSpacing="6"
+            className="weekday-zoom-burst">
+            ETCH
+          </text>
+        )}
         <text textAnchor="start"
           fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
           fontSize="18" fontWeight="600" letterSpacing="6"
@@ -1074,6 +1116,16 @@ export default function SummaryPage() {
           style={{ transition: 'opacity 0ms' }}>
           CYCLE
         </text>
+        {watermarkIgnited[1] && (
+          <text
+            x="8" y="62"
+            textAnchor="start"
+            fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+            fontSize="18" fontWeight="600" letterSpacing="6"
+            className="weekday-zoom-burst">
+            CYCLE
+          </text>
+        )}
         {/* Particles AFTER — clipped to letter silhouettes via the mask, paint on top of the
             void-black base so the flames show through the letter shapes. */}
         {watermarkIgnited.some(Boolean) && (
