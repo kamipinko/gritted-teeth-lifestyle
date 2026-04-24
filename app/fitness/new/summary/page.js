@@ -586,7 +586,10 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                 const PARTS_PER_WEEKDAY = 14
                 return dayLabels.flatMap((dl, wi) => {
                   const isLeftSide = wi < 3
-                  const baseX = isLeftSide ? 1070 : 1664
+                  // Shift baseX to the CENTER of each weekday's text silhouette — left-side
+                  // text extends RIGHT from x=1070 (anchor=start), right-side extends LEFT
+                  // from x=1664 (anchor=end). Text is ~130 viewBox units wide.
+                  const baseX = isLeftSide ? 1070 + 65 : 1664 - 65
                   return Array.from({ length: PARTS_PER_WEEKDAY }).map((_, i) => {
                     const k = i + wi * 23
                     const rX    = hash01(k * 1)
