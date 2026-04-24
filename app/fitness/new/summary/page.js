@@ -916,7 +916,7 @@ export default function SummaryPage() {
     }, 1050)
     setTimeout(() => {
       setWeekdaysIgnited(prev => { const next = [...prev]; next[0] = true; next[5] = true; return next })
-    }, 1200)
+    }, 1350)
 
     setTimeout(() => {
       play('stamp')
