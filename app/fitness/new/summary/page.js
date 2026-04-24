@@ -541,9 +541,46 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               </g>
             </>
           )}
-          {/* Weekday particle flames — clipped to weekday letter silhouettes via weekday-window
-              mask. Active only between ignite (t=500) and cool (t=2000), matching the brief
-              flare-up window all 6 labels share. */}
+          {/* Weekday labels — base text FIRST, painted void-black during the ignite window
+              so particles (rendered AFTER) pop against the dark letter silhouettes. Wrapped
+              in a <g> whose class drives the hot→cool keyframe on all 6 labels together. */}
+          <g className={weekdaysCooled ? 'inscription-cooled' : (weekdaysIgnited ? 'inscription-hot' : '')}>
+            {dayLabels.map((dl, i) => {
+              const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()]
+              const isLeftSide = i < 3
+              const yNudge = isLeftSide ? 0 : 10
+              const LEFT_X  = [1001,  998, 1001]
+              const RIGHT_X = [1597, 1572, 1542]
+              const labelX = isLeftSide ? LEFT_X[i] : RIGHT_X[i - 3]
+              const labelY = dl.cy + yNudge
+              const fill =
+                weekdaysCooled ? '#d4181f' :
+                weekdaysIgnited ? '#0a0a0a' :
+                '#b0a898'
+              return (
+                <text
+                  key={`dow-${dl.iso}`}
+                  x={labelX}
+                  y={labelY}
+                  textAnchor={isLeftSide ? 'start' : 'end'}
+                  dominantBaseline="central"
+                  transform={`rotate(-11 ${labelX} ${labelY})`}
+                  style={{
+                    fontFamily: '"Noto Serif JP", Georgia, serif',
+                    fontSize: '45px',
+                    fontWeight: 700,
+                    fill,
+                    letterSpacing: '0.2em',
+                    opacity: weekdaysIgnited ? 1 : 0.7,
+                  }}
+                >
+                  {dow}
+                </text>
+              )
+            })}
+          </g>
+          {/* Weekday particle flames AFTER — clipped to weekday letter silhouettes via the
+              weekday-window mask. Active between ignite (t=500) and cool (t=2000). */}
           {weekdaysIgnited && !weekdaysCooled && (
             <g mask="url(#weekday-window)" style={{ pointerEvents: 'none' }}>
               {(() => {
@@ -580,41 +617,6 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               })()}
             </g>
           )}
-          {/* Weekday side labels — share the viewBox so they align vertically with each inscription.
-              Wrapped in a <g> so all 6 labels can ignite + cool simultaneously via the same
-              .inscription-hot / .inscription-cooled keyframes used by the inscription glyphs. */}
-          <g className={weekdaysCooled ? 'inscription-cooled' : (weekdaysIgnited ? 'inscription-hot' : '')}>
-            {dayLabels.map((dl, i) => {
-              const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()]
-              const isLeftSide = i < 3
-              const yNudge = isLeftSide ? 0 : 10
-              const LEFT_X  = [1001,  998, 1001]
-              const RIGHT_X = [1597, 1572, 1542]
-              const labelX = isLeftSide ? LEFT_X[i] : RIGHT_X[i - 3]
-              const labelY = dl.cy + yNudge
-              const fill = weekdaysCooled ? '#d4181f' : (weekdaysIgnited ? '#ff6600' : '#b0a898')
-              return (
-                <text
-                  key={`dow-${dl.iso}`}
-                  x={labelX}
-                  y={labelY}
-                  textAnchor={isLeftSide ? 'start' : 'end'}
-                  dominantBaseline="central"
-                  transform={`rotate(-11 ${labelX} ${labelY})`}
-                  style={{
-                    fontFamily: '"Noto Serif JP", Georgia, serif',
-                    fontSize: '45px',
-                    fontWeight: 700,
-                    fill,
-                    letterSpacing: '0.2em',
-                    opacity: weekdaysIgnited ? 1 : 0.7,
-                  }}
-                >
-                  {dow}
-                </text>
-              )
-            })}
-          </g>
         </svg>
         </div>
       </div>
@@ -1018,6 +1020,17 @@ export default function SummaryPage() {
               fontSize="20" fontWeight="600" letterSpacing="9" fill="white">ETCH CYCLE</text>
           </mask>
         </defs>
+        {/* Base text FIRST — void-black silhouette while flickering so particles pop against
+            dark letter-windows (same pattern as the flame button). Red idle otherwise. */}
+        <text x="110" y="48" textAnchor="middle"
+          fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+          fontSize="20" fontWeight="600" letterSpacing="9"
+          className={flickering ? 'watermark-hot' : ''}
+          fill={flickering ? '#0a0a0a' : 'rgba(212, 24, 31, 0.65)'}>
+          ETCH CYCLE
+        </text>
+        {/* Particles AFTER — clipped to letter silhouettes via the mask, paint on top of the
+            void-black base so the flames show through the letter shapes. */}
         {flickering && (
           <g mask="url(#watermark-window)">
             {(() => {
@@ -1032,7 +1045,7 @@ export default function SummaryPage() {
                 const xOff  = rX * 220
                 const delay = rDly * 500
                 const dur   = 350 + rDur * 300
-                const size  = 5 + rSize * 7
+                const size  = 10 + rSize * 14
                 const peakA = 0.55 + rPeak * 0.45
                 return (
                   <circle key={`wm${i}`} cx={xOff} cy={80} r={size} fill="#ff5000" opacity={0}>
@@ -1049,13 +1062,6 @@ export default function SummaryPage() {
             })()}
           </g>
         )}
-        <text x="110" y="48" textAnchor="middle"
-          fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-          fontSize="20" fontWeight="600" letterSpacing="9"
-          className={flickering ? 'watermark-hot' : ''}
-          fill={flickering ? '#ff6600' : 'rgba(212, 24, 31, 0.65)'}>
-          ETCH CYCLE
-        </text>
       </svg>
 
       {/* ── ETCH CYCLE (fixed bottom-right CTA) ── */}
