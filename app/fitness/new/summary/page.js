@@ -98,7 +98,7 @@ function DayCard({ iso, muscles, index }) {
    Source: public/reference/wakizashi.png → threshold → potrace → SVG.
    Diagonal pose: hilt upper-right, tip lower-left.
    ══════════════════════════════════════════════════════════════════════════ */
-function CycleBlade({ days, dailyPlan, glowing = false }) {
+function CycleBlade({ days, dailyPlan, glowing = false, bursting = false }) {
   const first = days[0] ? parseDate(days[0]) : null
   const last  = days[days.length - 1] ? parseDate(days[days.length - 1]) : null
   const dateRange = first && last
@@ -308,6 +308,19 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                 </g>
               ))}
             </mask>
+            {/* Mummy-M god-ray burst gradients. Radial halo is the central bloom;
+                linear ray is a top-fade used on each of the 8 radiating triangles. */}
+            <radialGradient id="burst-halo" cx="50%" cy="50%" r="50%">
+              <stop offset="0%"   stopColor="white"   stopOpacity="1"/>
+              <stop offset="30%"  stopColor="#ffd700" stopOpacity="0.85"/>
+              <stop offset="65%"  stopColor="#ff8c00" stopOpacity="0.35"/>
+              <stop offset="100%" stopColor="#ff8c00" stopOpacity="0"/>
+            </radialGradient>
+            <linearGradient id="burst-ray" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0%"   stopColor="white"   stopOpacity="0.9"/>
+              <stop offset="50%"  stopColor="#ffd700" stopOpacity="0.5"/>
+              <stop offset="100%" stopColor="#ffd700" stopOpacity="0"/>
+            </linearGradient>
           </defs>
           {/* Flame-aura overlay — mounts only while `glowing` is true. Sits BEHIND the
               difference-blend text so the dancing tongues lick around the crisp etched
@@ -397,6 +410,46 @@ function CycleBlade({ days, dailyPlan, glowing = false }) {
                 })()}
               </g>
             </>
+          )}
+          {/* Mummy-M god-ray burst — fires when the rising-flame phase ends.
+              Per inscription: one radial halo expanding outward + 8 radiating
+              ray triangles at 45° increments. All 6 inscriptions burst at once
+              for this test (no stagger). screen blend-mode makes overlapping
+              rays additively brighten. */}
+          {bursting && (
+            <g style={{ mixBlendMode: 'screen', pointerEvents: 'none' }}>
+              {dayLabels.map((dl) => (
+                <g key={`burst-${dl.iso}`}>
+                  <circle cx={dl.cx} cy={dl.cy} r="0" fill="url(#burst-halo)">
+                    <animate attributeName="r"       values="0; 180; 240"  keyTimes="0; 0.4; 1" dur="500ms" repeatCount="1" fill="freeze"/>
+                    <animate attributeName="opacity" values="0; 1; 0"      keyTimes="0; 0.3; 1" dur="500ms" repeatCount="1" fill="freeze"/>
+                  </circle>
+                  {Array.from({ length: 8 }).map((_, i) => {
+                    const angle = i * 45
+                    const rayWidth = 14
+                    const rayLen = 170
+                    const points = `${dl.cx - rayWidth},${dl.cy} ${dl.cx + rayWidth},${dl.cy} ${dl.cx},${dl.cy - rayLen}`
+                    // Pre-baked per-ray rotation via the static transform attribute;
+                    // scale animation goes in on top via additive='sum'.
+                    return (
+                      <polygon
+                        key={`ray-${dl.iso}-${i}`}
+                        points={points}
+                        fill="url(#burst-ray)"
+                        opacity="0"
+                        transform={`rotate(${angle} ${dl.cx} ${dl.cy})`}
+                      >
+                        <animate attributeName="opacity" values="0; 0.95; 0" keyTimes="0; 0.3; 1" dur="500ms" repeatCount="1" fill="freeze"/>
+                        <animateTransform
+                          attributeName="transform" type="scale"
+                          values="0.2; 1.8; 2.2" keyTimes="0; 0.45; 1"
+                          dur="500ms" additive="sum" repeatCount="1" fill="freeze"/>
+                      </polygon>
+                    )
+                  })}
+                </g>
+              ))}
+            </g>
           )}
           {/* Difference-blend base inscriptions. Hidden during glow: the masked
               particle layer above supplies the glyph visuals (flame-filled windows),
@@ -657,6 +710,7 @@ export default function SummaryPage() {
   const [stampVisible, setStampVisible] = useState(false)
   const [stampLanded,  setStampLanded]  = useState(false)
   const [inscriptionsGlowing, setInscriptionsGlowing] = useState(false)
+  const [bursting, setBursting] = useState(false)
   const mainRef = useRef(null)
 
   useEffect(() => {
@@ -697,6 +751,8 @@ export default function SummaryPage() {
     // All timers are press-absolute from t=0.
     setTimeout(() => setInscriptionsGlowing(true),   200)   // glow begins (overlaps tail of flicker)
     setTimeout(() => setInscriptionsGlowing(false), 1700)   // glow complete (1500ms window)
+    setTimeout(() => setBursting(true),             1700)   // god-ray burst fires as glow ends
+    setTimeout(() => setBursting(false),            2200)   // burst ends after 500ms
     setTimeout(() => setStampVisible(true),         1700)   // stamp flies in
 
     setTimeout(() => {
@@ -765,7 +821,7 @@ export default function SummaryPage() {
 
       {/* ── THE BLADE (< 7 days) or DAY CARDS (>= 7 days) ── */}
       {days.length > 0 && days.length < 7 && (
-        <CycleBlade days={days} dailyPlan={dailyPlan} glowing={inscriptionsGlowing} />
+        <CycleBlade days={days} dailyPlan={dailyPlan} glowing={inscriptionsGlowing} bursting={bursting} />
       )}
 
       {days.length >= 7 && (
