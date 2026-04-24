@@ -1049,19 +1049,22 @@ export default function SummaryPage() {
                 const rDur  = hash01(i * 5 + 17)
                 const rSize = hash01(i * 11 + 23)
                 const rPeak = hash01(i * 13 + 29)
-                // Partition by index parity so each band (ETCH top, CYCLE below) gets its own
-                // dedicated particle pool. Short rise confines trails to their home line so
-                // CYCLE reads as individual flickers instead of a continuous orange wash.
+                // Partition by index parity: odd → ETCH band (top), even → CYCLE band (bottom).
+                // CYCLE band is deliberately thinned out (~half the particles dropped) and tuned
+                // toward smaller/slower/dimmer sparks so visible dark gaps show between flashes
+                // rather than a continuous orange wash.
                 const isEtchBand = (i % 2 === 1)
+                if (!isEtchBand && (i % 4 === 2)) return null
                 const startY = isEtchBand ? 46 : 74
-                const rise   = 18 + rSize * 14
+                const rise   = isEtchBand ? (18 + rSize * 14) : (12 + rSize * 10)
                 const xBase  = isEtchBand ? 8 : 34
                 const xSpan  = isEtchBand ? 70 : 90
                 const xOff   = xBase + rX * xSpan
-                const delay  = rDly * 250
-                const dur    = 350 + rDur * 300
-                const size   = 9 + rSize * 11
-                const peakA  = 0.55 + rPeak * 0.45
+                const delay  = isEtchBand ? rDly * 250 : rDly * 600
+                const dur    = isEtchBand ? (350 + rDur * 300) : (650 + rDur * 500)
+                const size   = isEtchBand ? (9 + rSize * 11) : (5 + rSize * 6)
+                const peakA  = isEtchBand ? (0.55 + rPeak * 0.45) : (0.40 + rPeak * 0.40)
+                const peakKeyTime = isEtchBand ? 0.25 : 0.15
                 return (
                   <circle key={`wm${i}`} cx={xOff} cy={startY} r={size} fill="#ff5000" opacity={0}>
                     <animateTransform attributeName="transform" type="translate"
@@ -1069,7 +1072,7 @@ export default function SummaryPage() {
                       dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
                     <animate attributeName="opacity"
                       values={`0; ${peakA.toFixed(2)}; 0`}
-                      keyTimes="0; 0.25; 1"
+                      keyTimes={`0; ${peakKeyTime}; 1`}
                       dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
                   </circle>
                 )
