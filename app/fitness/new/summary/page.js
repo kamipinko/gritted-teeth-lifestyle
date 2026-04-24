@@ -946,18 +946,27 @@ export default function SummaryPage() {
     // Middle-out symmetric cascade, 70ms stagger, starts t=700.
     // Step 0 (t=700): innermost pair (days 3+4) + ETCH + CYCLE ignite together.
     // Step 1 (t=770): days 2+5. Step 2 (t=840): outermost pair (days 1+6).
+    // Day-4-focal cascade: ETCH/CYCLE anchored to day 4 (wi=3), radiating out symmetrically
+    // through days 3+5, 2+6, then day 1 alone (no day 7 partner).
+    // Step 0 — day 4 alone + ETCH + CYCLE
     setTimeout(() => {
-      setWeekdaysIgnited(prev => { const next = [...prev]; next[2] = true; next[3] = true; return next })
+      setWeekdaysIgnited(prev => { const next = [...prev]; next[3] = true; return next })
     }, 800)
     setTimeout(() => {
       setWatermarkIgnited(() => [true, true])
     }, 800)
+    // Step 1 — days 3 + 5
     setTimeout(() => {
-      setWeekdaysIgnited(prev => { const next = [...prev]; next[1] = true; next[4] = true; return next })
+      setWeekdaysIgnited(prev => { const next = [...prev]; next[2] = true; next[4] = true; return next })
     }, 975)
+    // Step 2 — days 2 + 6
     setTimeout(() => {
-      setWeekdaysIgnited(prev => { const next = [...prev]; next[0] = true; next[5] = true; return next })
+      setWeekdaysIgnited(prev => { const next = [...prev]; next[1] = true; next[5] = true; return next })
     }, 1125)
+    // Step 3 — day 1 alone
+    setTimeout(() => {
+      setWeekdaysIgnited(prev => { const next = [...prev]; next[0] = true; return next })
+    }, 1275)
 
     setTimeout(() => {
       play('stamp')
