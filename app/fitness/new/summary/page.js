@@ -499,59 +499,58 @@ function CycleBlade({ days, dailyPlan, glowing = false, bursting = false }) {
         </svg>
         </div>
       </div>
-      {/* God-rays burst — HTML overlay using CSS 3D perspective to project
-          box-shadow 'beams' as light streaks. One cluster per inscription,
-          positioned at the screen-space anchor computed via getScreenCTM. */}
+      {/* God-rays burst — HTML overlay. Each inscription anchor is projected to
+          screen pixels via getScreenCTM; a conic-gradient ray-disc + radial mask
+          paints the sun-ray pattern, brightening the blade via plus-lighter. */}
       {bursting && burstAnchors.length > 0 && (
         <>
           <style>{`
             @keyframes burst-fade {
-              0%   { opacity: 0; }
-              25%  { opacity: 1; }
-              100% { opacity: 0; }
+              0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+              25%  { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
+              100% { opacity: 0; transform: translate(-50%, -50%) scale(1.35); }
             }
-            .burst-anchor { overflow: visible; }
-            .burst-anchor .burst-positioner {
+            @keyframes burst-rotate {
+              from { transform: translate(-50%, -50%) rotate(0deg); }
+              to   { transform: translate(-50%, -50%) rotate(20deg); }
+            }
+            .burst-anchor .burst-rays {
               position: absolute;
-              left: -100px;
-              top: -200px;
-              width: 200px;
-              height: 200px;
-              overflow: visible;
+              top: 0;
+              left: 0;
+              width: 220px;
+              height: 220px;
+              background: conic-gradient(
+                from 0deg,
+                transparent 0deg, rgba(255,250,220,0.9) 1deg, rgba(255,250,220,0.9) 2.5deg, transparent 3.5deg,
+                transparent 29deg, rgba(255,250,220,0.85) 30deg, rgba(255,250,220,0.85) 31.5deg, transparent 32.5deg,
+                transparent 58deg, rgba(255,250,220,0.9) 60deg, rgba(255,250,220,0.9) 61.5deg, transparent 62.5deg,
+                transparent 89deg, rgba(255,250,220,0.8) 90deg, rgba(255,250,220,0.8) 92deg, transparent 93deg,
+                transparent 118deg, rgba(255,250,220,0.85) 120deg, rgba(255,250,220,0.85) 121.5deg, transparent 122.5deg,
+                transparent 149deg, rgba(255,250,220,0.9) 150deg, rgba(255,250,220,0.9) 151.5deg, transparent 152.5deg,
+                transparent 178deg, rgba(255,250,220,0.9) 180deg, rgba(255,250,220,0.9) 181.5deg, transparent 182.5deg,
+                transparent 208deg, rgba(255,250,220,0.85) 210deg, rgba(255,250,220,0.85) 211.5deg, transparent 212.5deg,
+                transparent 238deg, rgba(255,250,220,0.9) 240deg, rgba(255,250,220,0.9) 241.5deg, transparent 242.5deg,
+                transparent 268deg, rgba(255,250,220,0.8) 270deg, rgba(255,250,220,0.8) 272deg, transparent 273deg,
+                transparent 298deg, rgba(255,250,220,0.85) 300deg, rgba(255,250,220,0.85) 301.5deg, transparent 302.5deg,
+                transparent 328deg, rgba(255,250,220,0.9) 330deg, rgba(255,250,220,0.9) 331.5deg, transparent 332.5deg,
+                transparent 360deg
+              );
+              -webkit-mask-image: radial-gradient(circle, transparent 6%, white 20%, white 45%, transparent 75%);
+                      mask-image: radial-gradient(circle, transparent 6%, white 20%, white 45%, transparent 75%);
+              mix-blend-mode: plus-lighter;
+              animation: burst-fade 500ms ease-out forwards, burst-rotate 500ms linear forwards;
             }
-            .burst-anchor .sunrays {
-              position: absolute;
-              top: 0; left: 0;
-              width: 200px;
-              height: 200px;
-              perspective: 4px;
-              perspective-origin: 50% 100%;
-              transform-style: preserve-3d;
-              display: flex;
-              align-items: flex-end;
-              overflow: visible;
-              animation: burst-fade 500ms ease-out forwards;
-            }
-            .burst-anchor .sr-1 { transform: rotate(-18deg); transform-origin: 50% 100%; }
-            .burst-anchor .sr-2 { transform: rotate(18deg);  transform-origin: 50% 100%; }
-            .burst-anchor .sunrays > .light {
-              flex: 0 0 15%;
-              height: 80%;
-              box-shadow: 90px -8px 18px rgba(255, 250, 220, 0.95);
-              transform-origin: 0% 100% 0px;
-              transform: rotateX(90deg) translateZ(0);
-            }
-            .burst-anchor .sunrays > .light:nth-child(2n) { box-shadow: none; }
             .burst-anchor .burst-sun {
               position: absolute;
-              bottom: -8px;
-              left: 50%;
-              transform: translateX(-50%);
-              width: 16px;
-              height: 16px;
+              top: 0;
+              left: 0;
+              width: 18px;
+              height: 18px;
               border-radius: 50%;
-              background: radial-gradient(circle, white 20%, #ffd700 50%, transparent 75%);
-              box-shadow: 0 0 24px 8px rgba(255, 220, 150, 0.9);
+              background: radial-gradient(circle, white 10%, #fffbe0 35%, #ffd700 65%, transparent 85%);
+              box-shadow: 0 0 28px 10px rgba(255, 220, 150, 0.85);
+              transform: translate(-50%, -50%);
               mix-blend-mode: plus-lighter;
               animation: burst-fade 500ms ease-out forwards;
             }
@@ -563,15 +562,8 @@ function CycleBlade({ days, dailyPlan, glowing = false, bursting = false }) {
                 className="burst-anchor"
                 style={{ position: 'absolute', left: a.x, top: a.y, width: 1, height: 1 }}
               >
-                <div className="burst-positioner">
-                  <div className="sunrays sr-1">
-                    {Array.from({ length: 6 }).map((_, i) => <div key={i} className="light"/>)}
-                  </div>
-                  <div className="sunrays sr-2">
-                    {Array.from({ length: 6 }).map((_, i) => <div key={i} className="light"/>)}
-                  </div>
-                  <div className="burst-sun"/>
-                </div>
+                <div className="burst-rays"/>
+                <div className="burst-sun"/>
               </div>
             ))}
           </div>
