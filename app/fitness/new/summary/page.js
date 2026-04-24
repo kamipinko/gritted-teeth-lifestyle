@@ -454,7 +454,7 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off', h
                 .inscription-zoom-burst .zoom-glyph {
                   transform-box: fill-box;
                   transform-origin: center;
-                  animation: inscription-zoom 280ms ease-out forwards;
+                  animation: inscription-zoom 340ms ease-out forwards;
                   mix-blend-mode: plus-lighter;
                   filter: drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 16px #ff4400);
                   /* Invisible before (during staggered delay) and after the animation — only
@@ -465,14 +465,14 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off', h
               <g className="inscription-zoom-burst" style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
                 {dayLabels.map((dl, i) => (
                   <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
-                    <g className="zoom-glyph" style={{ animationDelay: `${i * 80}ms` }}>
+                    <g className="zoom-glyph" style={{ animationDelay: `${i * 110}ms` }}>
                       {renderDayInscription(dl, { maskFill: '#ff6600' })}
                     </g>
                   </g>
                 ))}
                 {lastDay && (
                   <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
-                    <g className="zoom-glyph" style={{ animationDelay: `${lastIdx * 80}ms` }}>
+                    <g className="zoom-glyph" style={{ animationDelay: `${lastIdx * 110}ms` }}>
                       <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { maskFill: '#ff6600' })}</g>
                     </g>
                   </g>
@@ -756,7 +756,7 @@ export default function SummaryPage() {
     // All timers are press-absolute from t=0.
     setTimeout(() => setInscriptionsGlowing(true),   200)   // flames begin (particles through mask windows)
     setTimeout(() => setInscriptionsGlowing(false), 1500)   // flames end, inscriptions reveal
-    setTimeout(() => setGlowIntensity('peak'),      1500)   // zoom-burst cascade begins (280ms per glyph, 80ms stagger)
+    setTimeout(() => setGlowIntensity('peak'),      1500)   // zoom-burst cascade begins (340ms per glyph, 110ms stagger)
     // Cascade the hot transition across inscriptions, locked to the zoom stagger.
     for (let i = 0; i < 6; i++) {
       setTimeout(() => {
@@ -765,10 +765,10 @@ export default function SummaryPage() {
           next[i] = true
           return next
         })
-      }, 1500 + i * 80)
+      }, 1500 + i * 110)
     }
-    setTimeout(() => setGlowIntensity('off'),       2180)   // last cascade slot ends (1500 + 80*5 + 280)
-    setTimeout(() => setStampVisible(true),         2180)   // stamp flies in after cascade finishes
+    setTimeout(() => setGlowIntensity('off'),       2390)   // last cascade slot ends (1500 + 110*5 + 340)
+    setTimeout(() => setStampVisible(true),         2390)   // stamp flies in after cascade finishes
 
     setTimeout(() => {
       play('stamp')
@@ -790,10 +790,10 @@ export default function SummaryPage() {
           { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
         )
       }
-    }, 2845)   // stamp lands (665ms after fly-in)
+    }, 3055)   // stamp lands (665ms after fly-in)
 
-    setTimeout(() => play('stamp'),       2930)
-    setTimeout(() => setFireActive(true), 4880)
+    setTimeout(() => play('stamp'),       3140)
+    setTimeout(() => setFireActive(true), 5090)
   }
 
   const cols = days.length <= 5 ? days.length
