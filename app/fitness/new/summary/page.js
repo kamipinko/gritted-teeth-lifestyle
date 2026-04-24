@@ -909,21 +909,21 @@ export default function SummaryPage() {
       const wi = 5 - step
       setTimeout(() => {
         setWeekdaysIgnited(prev => { const next = [...prev]; next[wi] = true; return next })
-      }, 500 + step * 100)
+      }, 500 + step * 70)
     }
     // Middle: ETCH then CYCLE (steps 3-4)
     setTimeout(() => {
       setWatermarkIgnited(prev => { const next = [...prev]; next[0] = true; return next })
-    }, 500 + 3 * 100)   // ETCH at t=800
+    }, 500 + 3 * 70)   // ETCH at t=710
     setTimeout(() => {
       setWatermarkIgnited(prev => { const next = [...prev]; next[1] = true; return next })
-    }, 500 + 4 * 100)   // CYCLE at t=900
+    }, 500 + 4 * 70)   // CYCLE at t=780
     // Second half of weekdays: wi=2, 1, 0 (steps 5-7)
     for (let step = 5; step < 8; step++) {
       const wi = 7 - step
       setTimeout(() => {
         setWeekdaysIgnited(prev => { const next = [...prev]; next[wi] = true; return next })
-      }, 500 + step * 100)
+      }, 500 + step * 70)
     }
 
     setTimeout(() => {
