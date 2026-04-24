@@ -435,10 +435,9 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off' })
               <style>{`
                 @keyframes inscription-zoom {
                   0%   { transform: scale(1);   opacity: 0.9; }
-                  15%  { transform: scale(1.4); opacity: 0.95; }
-                  40%  { transform: scale(4);   opacity: 0.5; }
-                  70%  { transform: scale(8);   opacity: 0.15; }
-                  100% { transform: scale(12);  opacity: 0; }
+                  25%  { transform: scale(1.3); opacity: 1.0; }
+                  60%  { transform: scale(1.8); opacity: 0.4; }
+                  100% { transform: scale(2.3); opacity: 0; }
                 }
                 .inscription-zoom-burst .zoom-glyph {
                   transform-box: fill-box;
