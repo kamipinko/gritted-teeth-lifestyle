@@ -902,21 +902,29 @@ export default function SummaryPage() {
     }
     setTimeout(() => setGlowIntensity('off'),       2940)   // last zoom cascade slot ends (1500 + 220*5 + 340)
     setTimeout(() => setStampVisible(true),         2940)   // stamp flies in after zoom cascade finishes
-    // Unified slow cascade: 6 weekdays (reverse order) + watermark ETCH + watermark CYCLE.
-    // 200ms stagger starting at t=500 (coincides with day 0's inscription flame firing).
-    // Each element burns indefinitely once ignited.
-    for (let step = 0; step < 6; step++) {
+    // Unified cascade: 6 weekdays + ETCH + CYCLE, 140ms stagger from t=500.
+    // ETCH and CYCLE fire in the MIDDLE (steps 3-4), splitting the weekday cascade in half.
+    // First half of weekdays: wi=5, 4, 3 (steps 0-2)
+    for (let step = 0; step < 3; step++) {
       const wi = 5 - step
       setTimeout(() => {
         setWeekdaysIgnited(prev => { const next = [...prev]; next[wi] = true; return next })
       }, 500 + step * 140)
     }
+    // Middle: ETCH then CYCLE (steps 3-4)
     setTimeout(() => {
       setWatermarkIgnited(prev => { const next = [...prev]; next[0] = true; return next })
-    }, 500 + 6 * 140)   // ETCH at t=1700
+    }, 500 + 3 * 140)   // ETCH at t=920
     setTimeout(() => {
       setWatermarkIgnited(prev => { const next = [...prev]; next[1] = true; return next })
-    }, 500 + 7 * 140)   // CYCLE at t=1900
+    }, 500 + 4 * 140)   // CYCLE at t=1060
+    // Second half of weekdays: wi=2, 1, 0 (steps 5-7)
+    for (let step = 5; step < 8; step++) {
+      const wi = 7 - step
+      setTimeout(() => {
+        setWeekdaysIgnited(prev => { const next = [...prev]; next[wi] = true; return next })
+      }, 500 + step * 140)
+    }
 
     setTimeout(() => {
       play('stamp')
