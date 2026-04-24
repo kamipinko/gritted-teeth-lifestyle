@@ -99,7 +99,7 @@ function DayCard({ iso, muscles, index }) {
    Diagonal pose: hilt upper-right, tip lower-left.
    ══════════════════════════════════════════════════════════════════════════ */
 function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off', hotDays = [] }) {
-  const HOT_GLOW_FILTER = 'drop-shadow(0 0 3px #ff7a00) drop-shadow(0 0 8px rgba(255, 122, 0, 0.55)) drop-shadow(0 0 16px rgba(255, 80, 0, 0.3))'
+  const HOT_GLOW_FILTER = 'drop-shadow(0 0 2px #ff8800) drop-shadow(0 0 5px rgba(255, 122, 0, 0.65)) drop-shadow(0 0 10px rgba(255, 80, 0, 0.25))'
   const first = days[0] ? parseDate(days[0]) : null
   const last  = days[days.length - 1] ? parseDate(days[days.length - 1]) : null
   const dateRange = first && last
@@ -160,8 +160,8 @@ function CycleBlade({ days, dailyPlan, glowing = false, glowIntensity = 'off', h
     const DEPTH_STACK_HOT = [
       { dy: 3, fill: '#ffffff' },
       { dy: 2, fill: '#ffe0a0' },
-      { dy: 1, fill: '#c86818' },
-      { dy: 0, fill: '#b84a00' },
+      { dy: 1, fill: '#d85a10' },
+      { dy: 0, fill: '#ff6600' },
     ]
     const stack = hot ? DEPTH_STACK_HOT : DEPTH_STACK_RED
     const layers = maskFill ? [{ dy: 0, fill: maskFill }] : stack
