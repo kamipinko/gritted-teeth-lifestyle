@@ -98,8 +98,9 @@ function DayCard({ iso, muscles, index }) {
    Source: public/reference/wakizashi.png → threshold → potrace → SVG.
    Diagonal pose: hilt upper-right, tip lower-left.
    ══════════════════════════════════════════════════════════════════════════ */
-function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [], weekdaysIgnited = false, weekdaysCooled = false }) {
+function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [], weekdaysIgnited = [], weekdaysCooled = false }) {
   const anyGlowing = glowingDays.some(Boolean)
+  const anyWeekdayIgnited = Array.isArray(weekdaysIgnited) && weekdaysIgnited.some(Boolean)
   const first = days[0] ? parseDate(days[0]) : null
   const last  = days[days.length - 1] ? parseDate(days[days.length - 1]) : null
   const dateRange = first && last
@@ -541,12 +542,13 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               </g>
             </>
           )}
-          {/* Weekday labels — base text hidden once ignited (inscription cheat) so particle
-              flames are the only visible content inside the letter silhouettes. No cooled
-              transition on this page; flames burn until navigation. */}
-          <g className={weekdaysIgnited ? 'inscription-hot' : ''}
-             style={{ opacity: weekdaysIgnited ? 0 : 1, transition: 'opacity 0ms' }}>
+          {/* Weekday labels — per-day ignition gate. Each text hides once its own weekday
+              ignites (inscription cheat), so the staggered particle flames are the sole
+              visible content inside that letter silhouette. Class goes on the <text> level
+              so each weekday's hot-glow keyframe fires on its own schedule. */}
+          <g>
             {dayLabels.map((dl, i) => {
+              const isIgnited = !!(Array.isArray(weekdaysIgnited) ? weekdaysIgnited[i] : weekdaysIgnited)
               const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()]
               const isLeftSide = i < 3
               const yNudge = isLeftSide ? 0 : 10
@@ -555,6 +557,8 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               const labelX = isLeftSide ? LEFT_X[i] : RIGHT_X[i - 3]
               const labelY = dl.cy + yNudge
               const fill = weekdaysCooled ? '#d4181f' : '#b0a898'
+              const baseAlpha = weekdaysCooled ? 1 : 0.7
+              const textOpacity = isIgnited ? 0 : baseAlpha
               return (
                 <text
                   key={`dow-${dl.iso}`}
@@ -563,13 +567,15 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                   textAnchor={isLeftSide ? 'start' : 'end'}
                   dominantBaseline="central"
                   transform={`rotate(-11 ${labelX} ${labelY})`}
+                  className={isIgnited ? 'inscription-hot' : ''}
                   style={{
                     fontFamily: '"Noto Serif JP", Georgia, serif',
                     fontSize: '45px',
                     fontWeight: 700,
                     fill,
                     letterSpacing: '0.2em',
-                    opacity: weekdaysCooled ? 1 : 0.7,
+                    opacity: textOpacity,
+                    transition: 'opacity 0ms',
                   }}
                 >
                   {dow}
@@ -578,13 +584,15 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
             })}
           </g>
           {/* Weekday particle flames AFTER — clipped to weekday letter silhouettes via the
-              weekday-window mask. Run indefinitely once ignited at t=500. */}
-          {weekdaysIgnited && (
+              weekday-window mask. Each weekday's particle subset mounts when its own
+              weekdaysIgnited[wi] flips, producing the 60ms cascade. */}
+          {anyWeekdayIgnited && (
             <g mask="url(#weekday-window)" style={{ pointerEvents: 'none' }}>
               {(() => {
                 const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
                 const PARTS_PER_WEEKDAY = 45
                 return dayLabels.flatMap((dl, wi) => {
+                  if (!weekdaysIgnited[wi]) return []
                   const isLeftSide = wi < 3
                   // Per-day labelX drifts across the blade's rotated right edge, so use the
                   // SAME table the mask uses, then shift to the text center (±65 since text
@@ -826,7 +834,7 @@ export default function SummaryPage() {
   // Button flicker state lifted to SummaryPage so the watermark can co-ignite with the button.
   const [flickering, setFlickering] = useState(false)
   // Weekday side labels ignite all-at-once right after the last inscription's cascade slot.
-  const [weekdaysIgnited, setWeekdaysIgnited] = useState(false)
+  const [weekdaysIgnited, setWeekdaysIgnited] = useState(() => Array(6).fill(false))
   const [weekdaysCooled, setWeekdaysCooled] = useState(false)
   const mainRef = useRef(null)
 
@@ -892,7 +900,14 @@ export default function SummaryPage() {
     }
     setTimeout(() => setGlowIntensity('off'),       2940)   // last zoom cascade slot ends (1500 + 220*5 + 340)
     setTimeout(() => setStampVisible(true),         2940)   // stamp flies in after zoom cascade finishes
-    setTimeout(() => setWeekdaysIgnited(true),       500)   // weekday labels ignite with day 0's flame — burn until navigation (no cooled transition)
+    // Weekday labels cascade one-by-one starting at t=500 (exactly when day 0's inscription
+    // flame fires — the last in the reverse-order flame cascade), with a 60ms forward stagger
+    // matching the inscription flame activation rhythm. Each weekday burns until navigation.
+    for (let wi = 0; wi < 6; wi++) {
+      setTimeout(() => {
+        setWeekdaysIgnited(prev => { const next = [...prev]; next[wi] = true; return next })
+      }, 500 + wi * 60)
+    }
 
     setTimeout(() => {
       play('stamp')
