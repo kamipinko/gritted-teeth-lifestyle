@@ -583,7 +583,7 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
             <g mask="url(#weekday-window)" style={{ pointerEvents: 'none' }}>
               {(() => {
                 const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
-                const PARTS_PER_WEEKDAY = 28
+                const PARTS_PER_WEEKDAY = 45
                 return dayLabels.flatMap((dl, wi) => {
                   const isLeftSide = wi < 3
                   // Shift baseX to the CENTER of each weekday's text silhouette — left-side
@@ -597,10 +597,10 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                     const rDur  = hash01(k * 5 + 17)
                     const rSize = hash01(k * 11 + 23)
                     const rPeak = hash01(k * 13 + 29)
-                    const xOff  = (rX - 0.5) * 170
-                    const delay = rDly * 400
+                    const xOff  = (rX - 0.5) * 220
+                    const delay = rDly * 300
                     const dur   = 400 + rDur * 300
-                    const size  = 16 + rSize * 22
+                    const size  = 18 + rSize * 24
                     const peakA = 0.55 + rPeak * 0.45
                     return (
                       <circle key={`wd${wi}-${i}`} cx={baseX + xOff} cy={dl.cy + 120} r={size} fill="#ff5000" opacity={0}>
@@ -1005,8 +1005,8 @@ export default function SummaryPage() {
         width={220} height={70}
         viewBox="0 0 220 70"
         style={{
-          bottom: 'calc(20px + 128px + 48px)',
-          right: '80px',
+          bottom: 'calc(20px + 128px + 80px)',
+          right: '160px',
           transform: 'rotate(-12deg)',
           transformOrigin: 'right bottom',
           overflow: 'visible',
@@ -1038,7 +1038,7 @@ export default function SummaryPage() {
           <g mask="url(#watermark-window)">
             {(() => {
               const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
-              const PARTS = 30
+              const PARTS = 50
               return Array.from({ length: PARTS }).map((_, i) => {
                 const rX    = hash01(i * 1)
                 const rDly  = hash01(i * 3 + 11)
@@ -1046,9 +1046,9 @@ export default function SummaryPage() {
                 const rSize = hash01(i * 11 + 23)
                 const rPeak = hash01(i * 13 + 29)
                 const xOff  = rX * 220
-                const delay = rDly * 300
+                const delay = rDly * 250
                 const dur   = 350 + rDur * 300
-                const size  = 12 + rSize * 17
+                const size  = 12 + rSize * 14
                 const peakA = 0.55 + rPeak * 0.45
                 return (
                   <circle key={`wm${i}`} cx={xOff} cy={80} r={size} fill="#ff5000" opacity={0}>
