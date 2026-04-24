@@ -110,12 +110,6 @@ function CycleBlade({ days, dailyPlan, glowing = false, bursting = false }) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
 
-  // Overlay SVG ref + screen-coord anchors for the burst sunrays HTML overlay.
-  // Projected via getScreenCTM so the HTML <div>s can sit at the exact on-screen
-  // position of each inscription, regardless of the blade's rotation/scale.
-  const overlaySvgRef = useRef(null)
-  const [burstAnchors, setBurstAnchors] = useState([])
-
   // Interior anchors — on the mune-side edge of the hi (fuller/blood groove).
   // This is the red-to-dark transition line INSIDE the blade face, ~45% from mune edge.
   // ~140px margin to mune, ~175px margin to ha — plenty of room for inscriptions.
@@ -141,35 +135,6 @@ function CycleBlade({ days, dailyPlan, glowing = false, bursting = false }) {
     const anchor = INTERIOR_ANCHORS[i] || INTERIOR_ANCHORS[INTERIOR_ANCHORS.length - 1]
     return { num, hasWork, kanjiStr, iso, cx: anchor.x, cy: anchor.y, angle: anchor.angle }
   })
-
-  // Project each inscription's viewBox (cx, cy) to screen pixels via SVG CTM.
-  // Required for the HTML sunrays overlay to sit at the exact spot each glyph
-  // occupies on-screen, regardless of the blade's rotation+scale transforms.
-  useEffect(() => {
-    if (!overlaySvgRef.current || dayLabels.length === 0) return
-    const compute = () => {
-      const svg = overlaySvgRef.current
-      if (!svg) return
-      const ctm = svg.getScreenCTM()
-      if (!ctm) return
-      const anchors = dayLabels.map((dl) => {
-        const pt = svg.createSVGPoint(); pt.x = dl.cx; pt.y = dl.cy
-        const s = pt.matrixTransform(ctm)
-        return { iso: dl.iso, x: s.x, y: s.y }
-      })
-      setBurstAnchors(anchors)
-    }
-    // Run after layout — rAF gives the browser a chance to compute the CTM
-    // with all transforms resolved (including the rotate(11deg)/scale(0.5625)
-    // on the container).
-    const id = requestAnimationFrame(compute)
-    window.addEventListener('resize', compute)
-    return () => {
-      cancelAnimationFrame(id)
-      window.removeEventListener('resize', compute)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [days.length, mounted])
 
   const renderDayInscription = (dl, { outline = false, glow = false, glowFill = null, maskFill = null } = {}) => {
     const { num, kanjiStr } = dl
@@ -310,7 +275,6 @@ function CycleBlade({ days, dailyPlan, glowing = false, bursting = false }) {
 
         {/* Engraved day labels along the blade spine — same viewBox as weapon SVG */}
         <svg
-          ref={overlaySvgRef}
           viewBox="668 -635 1136 2642"
           className="absolute inset-0 w-full h-full pointer-events-none"
           style={{ top: '-15px', left: '0px' }}
@@ -344,6 +308,14 @@ function CycleBlade({ days, dailyPlan, glowing = false, bursting = false }) {
                 </g>
               ))}
             </mask>
+            {/* Ray shaft gradient — bright at the base (polygon's narrow end, near the
+                inscription), fading to transparent at the tip. objectBoundingBox runs
+                the gradient along each polygon's local y-axis regardless of rotation. */}
+            <linearGradient id="ray-shaft" x1="0.5" y1="1" x2="0.5" y2="0" gradientUnits="objectBoundingBox">
+              <stop offset="0%"   stopColor="white"   stopOpacity="0.95"/>
+              <stop offset="35%"  stopColor="#fff4c9" stopOpacity="0.6"/>
+              <stop offset="100%" stopColor="#ffd700" stopOpacity="0"/>
+            </linearGradient>
           </defs>
           {/* Flame-aura overlay — mounts only while `glowing` is true. Sits BEHIND the
               difference-blend text so the dancing tongues lick around the crisp etched
@@ -496,79 +468,48 @@ function CycleBlade({ days, dailyPlan, glowing = false, bursting = false }) {
               </text>
             )
           })}
+          {/* God-rays burst — tapered polygon rays per inscription. Polygon is narrow
+              at the base (y=0, near inscription) and wider at the tip (y=-180), which
+              reads as a 3D shaft approaching the viewer. 12 rays per inscription at 30°
+              spacing. plus-lighter blend brightens blade + inscription holes behind. */}
+          {bursting && (
+            <>
+              <style>{`
+                @keyframes burst-appear {
+                  0%   { opacity: 0; }
+                  25%  { opacity: 1; }
+                  75%  { opacity: 1; }
+                  100% { opacity: 0; }
+                }
+                .burst-group { animation: burst-appear 500ms ease-out forwards; }
+              `}</style>
+              <g className="burst-group" style={{ mixBlendMode: 'plus-lighter' }}>
+                {dayLabels.map((dl) => {
+                  const RAYS = 12
+                  return (
+                    <g key={`burst-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
+                      {Array.from({ length: RAYS }).map((_, i) => {
+                        const angle = (360 / RAYS) * i
+                        return (
+                          <polygon
+                            key={i}
+                            points="-2,0 2,0 15,-180 -15,-180"
+                            fill="url(#ray-shaft)"
+                            transform={`rotate(${angle})`}
+                          />
+                        )
+                      })}
+                      <circle cx="0" cy="0" r="10" fill="white" opacity="0.9"/>
+                      <circle cx="0" cy="0" r="5"  fill="#fffbe0"/>
+                    </g>
+                  )
+                })}
+              </g>
+            </>
+          )}
         </svg>
         </div>
       </div>
-      {/* God-rays burst — HTML overlay. Each inscription anchor is projected to
-          screen pixels via getScreenCTM; a conic-gradient ray-disc + radial mask
-          paints the sun-ray pattern, brightening the blade via plus-lighter. */}
-      {bursting && burstAnchors.length > 0 && (
-        <>
-          <style>{`
-            @keyframes burst-fade {
-              0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
-              25%  { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
-              100% { opacity: 0; transform: translate(-50%, -50%) scale(1.35); }
-            }
-            @keyframes burst-rotate {
-              from { transform: translate(-50%, -50%) rotate(0deg); }
-              to   { transform: translate(-50%, -50%) rotate(20deg); }
-            }
-            .burst-anchor .burst-rays {
-              position: absolute;
-              top: 0;
-              left: 0;
-              width: 220px;
-              height: 220px;
-              background: conic-gradient(
-                from 0deg,
-                transparent 0deg, rgba(255,250,220,0.9) 1deg, rgba(255,250,220,0.9) 2.5deg, transparent 3.5deg,
-                transparent 29deg, rgba(255,250,220,0.85) 30deg, rgba(255,250,220,0.85) 31.5deg, transparent 32.5deg,
-                transparent 58deg, rgba(255,250,220,0.9) 60deg, rgba(255,250,220,0.9) 61.5deg, transparent 62.5deg,
-                transparent 89deg, rgba(255,250,220,0.8) 90deg, rgba(255,250,220,0.8) 92deg, transparent 93deg,
-                transparent 118deg, rgba(255,250,220,0.85) 120deg, rgba(255,250,220,0.85) 121.5deg, transparent 122.5deg,
-                transparent 149deg, rgba(255,250,220,0.9) 150deg, rgba(255,250,220,0.9) 151.5deg, transparent 152.5deg,
-                transparent 178deg, rgba(255,250,220,0.9) 180deg, rgba(255,250,220,0.9) 181.5deg, transparent 182.5deg,
-                transparent 208deg, rgba(255,250,220,0.85) 210deg, rgba(255,250,220,0.85) 211.5deg, transparent 212.5deg,
-                transparent 238deg, rgba(255,250,220,0.9) 240deg, rgba(255,250,220,0.9) 241.5deg, transparent 242.5deg,
-                transparent 268deg, rgba(255,250,220,0.8) 270deg, rgba(255,250,220,0.8) 272deg, transparent 273deg,
-                transparent 298deg, rgba(255,250,220,0.85) 300deg, rgba(255,250,220,0.85) 301.5deg, transparent 302.5deg,
-                transparent 328deg, rgba(255,250,220,0.9) 330deg, rgba(255,250,220,0.9) 331.5deg, transparent 332.5deg,
-                transparent 360deg
-              );
-              -webkit-mask-image: radial-gradient(circle, transparent 6%, white 20%, white 45%, transparent 75%);
-                      mask-image: radial-gradient(circle, transparent 6%, white 20%, white 45%, transparent 75%);
-              mix-blend-mode: plus-lighter;
-              animation: burst-fade 500ms ease-out forwards, burst-rotate 500ms linear forwards;
-            }
-            .burst-anchor .burst-sun {
-              position: absolute;
-              top: 0;
-              left: 0;
-              width: 18px;
-              height: 18px;
-              border-radius: 50%;
-              background: radial-gradient(circle, white 10%, #fffbe0 35%, #ffd700 65%, transparent 85%);
-              box-shadow: 0 0 28px 10px rgba(255, 220, 150, 0.85);
-              transform: translate(-50%, -50%);
-              mix-blend-mode: plus-lighter;
-              animation: burst-fade 500ms ease-out forwards;
-            }
-          `}</style>
-          <div className="fixed inset-0 pointer-events-none z-[20]" aria-hidden="true">
-            {burstAnchors.map((a) => (
-              <div
-                key={a.iso}
-                className="burst-anchor"
-                style={{ position: 'absolute', left: a.x, top: a.y, width: 1, height: 1 }}
-              >
-                <div className="burst-rays"/>
-                <div className="burst-sun"/>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
     </section>
   )
 }
