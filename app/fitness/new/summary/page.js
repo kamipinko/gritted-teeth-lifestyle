@@ -895,26 +895,21 @@ export default function SummaryPage() {
   const [fireActive,  setFireActive] = useState(false)
   const [stampVisible, setStampVisible] = useState(false)
   const [stampLanded,  setStampLanded]  = useState(false)
-  // Per-day flame gate — activates all at t=200 for a unified flame phase, then deactivates
-  // one-by-one on the same 140ms stagger as hotDays / zoom-burst so flame-off, hot-on, and
-  // zoom-fire all happen at the same moment per inscription.
-  const [glowingDays, setGlowingDays] = useState(() => Array(6).fill(false))
+  // Per-day flame/hot/cooled state arrays — sized to days.length so both CycleBlade
+  // (≤7 days) and CycleDrill (8-13 days) can read from the same state regardless of
+  // which renders. Re-allocates on resize to keep array length in sync with days.
+  const [glowingDays, setGlowingDays] = useState(() => Array(0).fill(false))
   // Glow state machine: 'off' → 'peak' (zoom-burst one-shot) → 'off' again.
   const [glowIntensity, setGlowIntensity] = useState('off')
-  // Per-day ignition flags — each inscription flips hot at the same moment its zoom-burst
-  // fires, so the color/glow transition cascades in sync with the zoom wave. Never flips back.
-  const [hotDays, setHotDays] = useState(() => Array(6).fill(false))
-  // Dissipation — slow cascade, decoupled from zoom/hot. Flips true 800+i*450ms after press
-  // so each inscription holds its full hot state well after the faster zoom cascade completes.
-  const [cooledDays, setCooledDays] = useState(() => Array(6).fill(false))
+  const [hotDays,    setHotDays]    = useState(() => Array(0).fill(false))
+  const [cooledDays, setCooledDays] = useState(() => Array(0).fill(false))
   // Button flicker state lifted to SummaryPage so the watermark can co-ignite with the button.
   const [flickering, setFlickering] = useState(false)
-  // Weekday side labels ignite all-at-once right after the last inscription's cascade slot.
-  // Per-letter weekday lifecycle. 6 days × 3 letters = 18 entries, indexed `dayIdx * 3 + letterIdx`.
+  // Per-letter weekday lifecycle — N days × 3 letters, indexed `dayIdx * 3 + letterIdx`.
   // Direction inside each day: left-side days right-to-left, right-side days left-to-right (50ms stagger).
-  const [weekdayLetterIgnited, setWeekdayLetterIgnited] = useState(() => Array(18).fill(false))
-  const [weekdayLetterZoomed,  setWeekdayLetterZoomed]  = useState(() => Array(18).fill(false))
-  const [weekdayLetterCooled,  setWeekdayLetterCooled]  = useState(() => Array(18).fill(false))
+  const [weekdayLetterIgnited, setWeekdayLetterIgnited] = useState(() => Array(0).fill(false))
+  const [weekdayLetterZoomed,  setWeekdayLetterZoomed]  = useState(() => Array(0).fill(false))
+  const [weekdayLetterCooled,  setWeekdayLetterCooled]  = useState(() => Array(0).fill(false))
   // Watermark per-line ignition: [ETCH, CYCLE]. Joins the weekday cascade as steps 6 and 7.
   // Per-letter ETCH/CYCLE ignition (was 2-element whole-word `watermarkIgnited`).
   const [etchIgnited,  setEtchIgnited]  = useState(() => Array(4).fill(false))
@@ -939,6 +934,17 @@ export default function SummaryPage() {
     } catch (_) {}
   }, [])
 
+  // Resize per-day state arrays whenever days.length changes (covers blade ≤7 and drill 8-13).
+  useEffect(() => {
+    const N = days.length
+    setGlowingDays(prev => prev.length === N ? prev : Array(N).fill(false))
+    setHotDays(prev    => prev.length === N ? prev : Array(N).fill(false))
+    setCooledDays(prev => prev.length === N ? prev : Array(N).fill(false))
+    setWeekdayLetterIgnited(prev => prev.length === N * 3 ? prev : Array(N * 3).fill(false))
+    setWeekdayLetterZoomed(prev  => prev.length === N * 3 ? prev : Array(N * 3).fill(false))
+    setWeekdayLetterCooled(prev  => prev.length === N * 3 ? prev : Array(N * 3).fill(false))
+  }, [days.length])
+
   const handleBegin = () => {
     play('card-confirm')
     try {
@@ -961,33 +967,40 @@ export default function SummaryPage() {
     } catch (_) {}
 
     // handleBegin fires immediately on press (no onFire delay).
-    // All timers are press-absolute from t=0.
-    // Flame activation: REVERSE order, 100ms stagger. Day 5 (tip) ignites first at t=200,
-    // cascading up to day 0 (handle) at t=700. Faster than the main 220ms deactivation cascade.
-    for (let step = 0; step < 6; step++) {
-      const dayIdx = 5 - step
+    // All timers are press-absolute from t=0. N = days.length scales the cascade so
+    // both CycleBlade (≤7 days) and CycleDrill (8-13 days) drive the same state.
+    const N = Math.max(days.length, 1)
+    // Flame activation: REVERSE order, 60ms stagger. Last inscription ignites first at t=200,
+    // cascading up to day 0 at t=200 + (N-1)*60.
+    for (let step = 0; step < N; step++) {
+      const dayIdx = N - 1 - step
       setTimeout(() => {
         setGlowingDays(prev => { const next = [...prev]; next[dayIdx] = true; return next })
       }, 200 + step * 60)
     }
     setTimeout(() => setGlowIntensity('peak'),      1600)   // zoom-burst cascade begins (340ms per glyph, 220ms stagger)
     // Fast cascade: flame off + hot on + zoom fires at t=1600 + i*220.
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < N; i++) {
       const at = 1600 + i * 220
       setTimeout(() => {
         setGlowingDays(prev => { const next = [...prev]; next[i] = false; return next })
         setHotDays(prev => { const next = [...prev]; next[i] = true; return next })
       }, at)
     }
-    // Slow dissipation: each inscription cools 800+i*450ms after press — day 0 holds 800ms
-    // of hot, later days hold longer since hot fires staggered but cool fires further staggered.
-    for (let i = 0; i < 6; i++) {
+    // Slow dissipation: each inscription cools 1600+i*350ms after the zoom cascade starts.
+    for (let i = 0; i < N; i++) {
       setTimeout(() => {
         setCooledDays(prev => { const next = [...prev]; next[i] = true; return next })
       }, 1600 + 1600 + i * 350)
     }
-    setTimeout(() => setGlowIntensity('off'),       3040)   // last zoom cascade slot ends (1600 + 220*5 + 340)
-    setTimeout(() => setStampVisible(true),         4290)   // stamp flies in after weekday/watermark zoom cascade finishes (avoids compositor collision)
+    // Last inscription's zoom cascade ends at 1600 + (N-1)*220 + 340.
+    const glowOffAt   = 1600 + (N - 1) * 220 + 340
+    const lastCooledAt = 3200 + (N - 1) * 350
+    setTimeout(() => setGlowIntensity('off'),       Math.max(3040, glowOffAt))
+    // Stamp lands after the LAST cooled trigger plus a small breath. For N=6 this resolves
+    // to 4290 (canonical); for N=13 it pushes out so the stamp doesn't collide with cooling.
+    const stampVisibleAt = Math.max(4290, lastCooledAt + 90)
+    setTimeout(() => setStampVisible(true),         stampVisibleAt)
     // Middle-out symmetric cascade, 70ms stagger, starts t=700.
     // Step 0 (t=700): innermost pair (days 3+4) + ETCH + CYCLE ignite together.
     // Step 1 (t=770): days 2+5. Step 2 (t=840): outermost pair (days 1+6).
@@ -1006,47 +1019,53 @@ export default function SummaryPage() {
       }, 1035 + i * 50)
     }
 
-    // Per-letter weekday cascade with TWO stagger speeds:
-    // - Flame: slow (50ms per letter) — gives the ignite a deliberate sweep
-    // - Zoom + cooled: fast (20ms per letter) — snappy reveal/fade
+    // Per-letter weekday cascade with two stagger speeds (canonical, see project_gtl_yakiire_per_letter):
+    //   Flame: 50ms per letter, Zoom: 50ms per letter, Cooled: 75ms per letter.
     // Direction depends on day side: left-side R-to-L, right-side L-to-R.
-    const letterStaggerOffsetFast = (dayIdx, L) => {
-      const isLeftSide = dayIdx < 3
-      return isLeftSide ? (2 - L) * 50 : L * 50
+    // Pairs cascade middle-out: pair 0 = innermost, pair k+1 starts 50ms after pair k.
+    const halfN = Math.floor(N / 2)
+    const isLeftSide = (dayIdx) => dayIdx < halfN
+    const letterStaggerOffsetFast = (dayIdx, L) => isLeftSide(dayIdx) ? (2 - L) * 50 : L * 50
+    const letterStaggerOffsetCooled = (dayIdx, L) => isLeftSide(dayIdx) ? (2 - L) * 75 : L * 75
+    const letterStaggerOffsetSlow = (dayIdx, L) => isLeftSide(dayIdx) ? (2 - L) * 50 : L * 50
+
+    // Build middle-out pair list for any N.
+    const buildMiddleOutPairs = (n) => {
+      const pairs = []
+      if (n % 2 === 0) {
+        const m = n / 2
+        for (let k = 0; k < m; k++) pairs.push([m - 1 - k, m + k])
+      } else {
+        const m = (n - 1) / 2
+        pairs.push([m])
+        for (let k = 1; k <= m; k++) pairs.push([m - k, m + k])
+      }
+      return pairs
     }
-    const letterStaggerOffsetCooled = (dayIdx, L) => {
-      const isLeftSide = dayIdx < 3
-      return isLeftSide ? (2 - L) * 75 : L * 75
-    }
-    const letterStaggerOffsetSlow = (dayIdx, L) => {
-      const isLeftSide = dayIdx < 3
-      return isLeftSide ? (2 - L) * 50 : L * 50
-    }
-    const WEEKDAY_PAIRS = [
-      { days: [2, 3], flame: 900,  zoom: 3000, cooled: 3650 },
-      { days: [1, 4], flame: 950,  zoom: 3050, cooled: 3725 },
-      { days: [0, 5], flame: 1000, zoom: 3100, cooled: 3800 },
-    ]
-    WEEKDAY_PAIRS.forEach(({ days, flame, zoom, cooled }) => {
-      days.forEach(dayIdx => {
+    const WEEKDAY_PAIRS = buildMiddleOutPairs(N).map((daysInPair, k) => ({
+      days: daysInPair,
+      flame:  900  + k * 50,
+      zoom:   3000 + k * 50,
+      cooled: 3650 + k * 75,
+    }))
+    WEEKDAY_PAIRS.forEach(({ days: pairDays, flame, zoom, cooled }) => {
+      pairDays.forEach(dayIdx => {
         for (let L = 0; L < 3; L++) {
           const flatIdx = dayIdx * 3 + L
-          // Flame on (slow stagger)
           setTimeout(() => {
             setWeekdayLetterIgnited(prev => { const next = [...prev]; next[flatIdx] = true; return next })
           }, flame + letterStaggerOffsetSlow(dayIdx, L))
-          // Zoom on + flame off (fast stagger)
           setTimeout(() => {
             setWeekdayLetterIgnited(prev => { const next = [...prev]; next[flatIdx] = false; return next })
             setWeekdayLetterZoomed(prev  => { const next = [...prev]; next[flatIdx] = true;  return next })
           }, zoom + letterStaggerOffsetFast(dayIdx, L))
-          // Cooled on (75ms stagger)
           setTimeout(() => {
             setWeekdayLetterCooled(prev => { const next = [...prev]; next[flatIdx] = true; return next })
           }, cooled + letterStaggerOffsetCooled(dayIdx, L))
         }
       })
     })
+    const lastPairCooledAt = 3650 + (WEEKDAY_PAIRS.length - 1) * 75 + 2 * 75
 
     // Weekday + ETCH/CYCLE zoom-burst cascade — fires after the blade's final inscription
     // zoom (t=2600), mirroring the same middle-out 175/150ms stagger. Each step also flips
@@ -1080,6 +1099,11 @@ export default function SummaryPage() {
       }, 3815 + i * 75)
     }
 
+    // Stamp/fire anchors derive from stampVisibleAt so larger N pushes them out together.
+    const stampLandedAt = stampVisibleAt + 665
+    const stampPlayAt   = stampVisibleAt + 750
+    const fireActiveAt  = stampVisibleAt + 1710
+    void lastPairCooledAt
     setTimeout(() => {
       play('stamp')
       setStampLanded(true)
@@ -1100,10 +1124,10 @@ export default function SummaryPage() {
           { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
         )
       }
-    }, 4955)   // stamp lands (665ms after fly-in)
+    }, stampLandedAt)
 
-    setTimeout(() => play('stamp'),       5040)
-    setTimeout(() => setFireActive(true), 6000)
+    setTimeout(() => play('stamp'),       stampPlayAt)
+    setTimeout(() => setFireActive(true), fireActiveAt)
   }
 
   const cols = days.length <= 5 ? days.length
