@@ -1005,7 +1005,7 @@ export default function SummaryPage() {
     // Direction depends on day side: left-side R-to-L, right-side L-to-R.
     const letterStaggerOffsetFast = (dayIdx, L) => {
       const isLeftSide = dayIdx < 3
-      return isLeftSide ? (2 - L) * 12 : L * 12
+      return isLeftSide ? (2 - L) * 6 : L * 6
     }
     const letterStaggerOffsetSlow = (dayIdx, L) => {
       const isLeftSide = dayIdx < 3
@@ -1048,7 +1048,7 @@ export default function SummaryPage() {
         if (i === 3) {
           setWatermarkIgnited(prev => { const next = [...prev]; next[0] = false; return next })
         }
-      }, 3050 + i * 12)
+      }, 3050 + i * 6)
     }
     // CYCLE per-letter zoom cascade (50ms stagger, t=3350). Flame off after last letter.
     for (let i = 0; i < 5; i++) {
@@ -1057,20 +1057,20 @@ export default function SummaryPage() {
         if (i === 4) {
           setWatermarkIgnited(prev => { const next = [...prev]; next[1] = false; return next })
         }
-      }, 3350 + i * 12)
+      }, 3350 + i * 6)
     }
     // Cooled cascade — 700ms after each zoom step (matches blade's hot→cooled fade duration).
     // ETCH per-letter cooled cascade (50ms stagger, t=3690).
     for (let i = 0; i < 4; i++) {
       setTimeout(() => {
         setEtchCooled(prev => { const next = [...prev]; next[i] = true; return next })
-      }, 3490 + i * 12)
+      }, 3490 + i * 6)
     }
     // CYCLE per-letter cooled cascade (50ms stagger, t=3850).
     for (let i = 0; i < 5; i++) {
       setTimeout(() => {
         setCycleCooled(prev => { const next = [...prev]; next[i] = true; return next })
-      }, 3650 + i * 12)
+      }, 3650 + i * 6)
     }
 
     setTimeout(() => {
