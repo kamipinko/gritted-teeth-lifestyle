@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1000" preserveAspectRatio="xMidYMid meet">
+  <!-- Drill silhouette: Gurren Lagann core-drill style. Cone with 7 banded stripes
+       above a rectangular base with a small port-hole on the upper-right.
+       Built parametrically so band positions are deterministic and inscription
+       anchors lock to band centers. -->
+
+  <!-- Outer silhouette: cone (apex at top) merged with rectangular base.
+       Base has slight outward flare at top corners and a small flange on bottom-left. -->
+  <path d="
+    M 300 40
+    L 178 580
+    L 158 600
+    L 158 612
+    L 158 920
+    Q 158 942 178 942
+    L 218 942
+    L 218 956
+    Q 218 974 238 974
+    L 254 974
+    Q 268 974 268 962
+    L 268 942
+    L 422 942
+    Q 442 942 442 920
+    L 442 612
+    L 442 600
+    L 422 580
+    Z"
+    fill="#0a0a0a"
+    stroke="#e8e0c8"
+    stroke-width="6"
+    stroke-linejoin="round"/>
+
+  <!-- Cone band stripes — 6 diagonal separators dividing the cone into 7 bands.
+       Each stripe slants from upper-left to lower-right, rooted on the cone edges.
+       Cone geometry: apex (300, 40), base-left (178, 580), base-right (422, 580).
+       Cone width at y: 244 * (y - 40) / 540. Slant ≈ 25 viewBox units. -->
+  <g stroke="#e8e0c8" stroke-width="5" stroke-linecap="round" fill="none">
+    <line x1="285" y1="105"  x2="320" y2="130"/>
+    <line x1="268" y1="182"  x2="338" y2="207"/>
+    <line x1="250" y1="260"  x2="356" y2="285"/>
+    <line x1="232" y1="338"  x2="374" y2="362"/>
+    <line x1="214" y1="416"  x2="392" y2="438"/>
+    <line x1="196" y1="494"  x2="410" y2="514"/>
+  </g>
+
+  <!-- Base section divider — horizontal line where cone meets rectangular base. -->
+  <line x1="166" y1="612" x2="434" y2="612" stroke="#e8e0c8" stroke-width="5"/>
+
+  <!-- Small circular port-hole on upper-right of base (decorative axis port). -->
+  <circle cx="410" cy="640" r="14" fill="#000000" stroke="#e8e0c8" stroke-width="4"/>
+
+  <!-- Subtle highlight strip on the cone's left edge for dimensionality. -->
+  <path d="
+    M 300 60
+    L 188 570
+    L 198 580
+    L 305 80
+    Z"
+    fill="#1a1a1c"
+    opacity="0.5"/>
+</svg>

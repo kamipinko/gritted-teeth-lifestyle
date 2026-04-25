@@ -1529,10 +1529,6 @@ export default function SummaryPage() {
                   </div>
                   <div className="font-display text-3xl text-gtl-paper/80 leading-none mt-3"
                     style={{ textShadow: '2px 2px 0 #070708' }}>{dayName} · {year}</div>
-                  <div className="mt-6 h-0.5 bg-gtl-paper/30" />
-                  <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-paper/40 mt-2">
-                    GRITTED TEETH LIFESTYLE / YOUR FINAL BATTLEDAY
-                  </div>
                 </div>
               </div>
             </div>
