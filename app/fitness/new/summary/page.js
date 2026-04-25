@@ -119,7 +119,7 @@ function DayCard({ iso, muscles, index }) {
    Source: public/reference/wakizashi.png → threshold → potrace → SVG.
    Diagonal pose: hilt upper-right, tip lower-left.
    ══════════════════════════════════════════════════════════════════════════ */
-function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [], weekdaysIgnited = [], weekdaysCooled = false }) {
+function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [], weekdaysIgnited = [], weekdaysZoomed = [], weekdaysCooled = [] }) {
   const anyGlowing = glowingDays.some(Boolean)
   const anyWeekdayIgnited = Array.isArray(weekdaysIgnited) && weekdaysIgnited.some(Boolean)
   const first = days[0] ? parseDate(days[0]) : null
@@ -570,6 +570,8 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
           <g>
             {dayLabels.map((dl, i) => {
               const isIgnited = !!(Array.isArray(weekdaysIgnited) ? weekdaysIgnited[i] : weekdaysIgnited)
+              const isZoomed  = !!(Array.isArray(weekdaysZoomed) && weekdaysZoomed[i])
+              const isCooled  = !!(Array.isArray(weekdaysCooled) && weekdaysCooled[i])
               const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()]
               const isLeftSide = i < 3
               const yNudge = isLeftSide ? 0 : 10
@@ -577,9 +579,11 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               const RIGHT_X = [1597, 1572, 1542]
               const labelX = isLeftSide ? LEFT_X[i] : RIGHT_X[i - 3]
               const labelY = dl.cy + yNudge
-              const fill = weekdaysCooled ? '#d4181f' : '#b0a898'
-              const baseAlpha = weekdaysCooled ? 1 : 0.7
-              const textOpacity = isIgnited ? 0 : baseAlpha
+              const fill = isCooled ? '#d4181f' : '#b0a898'
+              const baseAlpha = isCooled ? 1 : 0.7
+              // Once cooled, base text re-emerges; before that, hide while ignited (cheat).
+              const textOpacity = isCooled ? 1 : (isIgnited ? 0 : baseAlpha)
+              const textClass = isCooled ? 'inscription-cooled' : (isIgnited ? 'inscription-hot' : '')
               return (
                 <g key={`dow-${dl.iso}`}>
                   <text
@@ -588,7 +592,7 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                     textAnchor={isLeftSide ? 'start' : 'end'}
                     dominantBaseline="central"
                     transform={`rotate(-11 ${labelX} ${labelY})`}
-                    className={isIgnited ? 'inscription-hot' : ''}
+                    className={textClass}
                     style={{
                       fontFamily: '"Noto Serif JP", Georgia, serif',
                       fontSize: '45px',
@@ -601,6 +605,28 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                   >
                     {dow}
                   </text>
+                  {isZoomed && (
+                    <g className="inscription-zoom-burst" style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
+                      <g className="zoom-glyph">
+                        <text
+                          x={labelX}
+                          y={labelY}
+                          textAnchor={isLeftSide ? 'start' : 'end'}
+                          dominantBaseline="central"
+                          transform={`rotate(-11 ${labelX} ${labelY})`}
+                          style={{
+                            fontFamily: '"Noto Serif JP", Georgia, serif',
+                            fontSize: '45px',
+                            fontWeight: 700,
+                            fill: '#ff6600',
+                            letterSpacing: '0.2em',
+                          }}
+                        >
+                          {dow}
+                        </text>
+                      </g>
+                    </g>
+                  )}
                   {isIgnited && (
                     <text
                       x={labelX}
@@ -876,9 +902,13 @@ export default function SummaryPage() {
   const [flickering, setFlickering] = useState(false)
   // Weekday side labels ignite all-at-once right after the last inscription's cascade slot.
   const [weekdaysIgnited, setWeekdaysIgnited] = useState(() => Array(6).fill(false))
-  const [weekdaysCooled, setWeekdaysCooled] = useState(false)
+  // Per-day zoom-burst + cooled flags — fire after the blade's final inscription zoom (t=2600).
+  const [weekdaysZoomed, setWeekdaysZoomed] = useState(() => Array(6).fill(false))
+  const [weekdaysCooledArr, setWeekdaysCooledArr] = useState(() => Array(6).fill(false))
   // Watermark per-line ignition: [ETCH, CYCLE]. Joins the weekday cascade as steps 6 and 7.
   const [watermarkIgnited, setWatermarkIgnited] = useState(() => [false, false])
+  const [watermarkZoomed, setWatermarkZoomed] = useState(() => [false, false])
+  const [watermarkCooled, setWatermarkCooled] = useState(() => [false, false])
   const mainRef = useRef(null)
 
   useEffect(() => {
@@ -967,6 +997,40 @@ export default function SummaryPage() {
       setWatermarkIgnited(prev => { const next = [...prev]; next[1] = true; return next })
     }, 1125)
 
+    // Weekday + ETCH/CYCLE zoom-burst cascade — fires after the blade's final inscription
+    // zoom (t=2600), mirroring the same middle-out 175/150ms stagger.
+    setTimeout(() => {
+      setWeekdaysZoomed(prev => { const next = [...prev]; next[2] = true; next[3] = true; return next })
+    }, 2700)
+    setTimeout(() => {
+      setWeekdaysZoomed(prev => { const next = [...prev]; next[1] = true; next[4] = true; return next })
+    }, 2875)
+    setTimeout(() => {
+      setWatermarkZoomed(prev => { const next = [...prev]; next[0] = true; return next })
+    }, 2875)
+    setTimeout(() => {
+      setWeekdaysZoomed(prev => { const next = [...prev]; next[0] = true; next[5] = true; return next })
+    }, 3025)
+    setTimeout(() => {
+      setWatermarkZoomed(prev => { const next = [...prev]; next[1] = true; return next })
+    }, 3025)
+    // Cooled cascade — 700ms after each zoom step (matches blade's hot→cooled fade duration).
+    setTimeout(() => {
+      setWeekdaysCooledArr(prev => { const next = [...prev]; next[2] = true; next[3] = true; return next })
+    }, 3400)
+    setTimeout(() => {
+      setWeekdaysCooledArr(prev => { const next = [...prev]; next[1] = true; next[4] = true; return next })
+    }, 3575)
+    setTimeout(() => {
+      setWatermarkCooled(prev => { const next = [...prev]; next[0] = true; return next })
+    }, 3575)
+    setTimeout(() => {
+      setWeekdaysCooledArr(prev => { const next = [...prev]; next[0] = true; next[5] = true; return next })
+    }, 3725)
+    setTimeout(() => {
+      setWatermarkCooled(prev => { const next = [...prev]; next[1] = true; return next })
+    }, 3725)
+
     setTimeout(() => {
       play('stamp')
       setStampLanded(true)
@@ -1033,7 +1097,7 @@ export default function SummaryPage() {
 
       {/* ── THE BLADE (< 7 days) or DAY CARDS (>= 7 days) ── */}
       {days.length > 0 && days.length < 7 && (
-        <CycleBlade days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdaysIgnited={weekdaysIgnited} weekdaysCooled={weekdaysCooled} />
+        <CycleBlade days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdaysIgnited={weekdaysIgnited} weekdaysZoomed={weekdaysZoomed} weekdaysCooled={weekdaysCooledArr} />
       )}
 
       {days.length >= 7 && (
@@ -1154,9 +1218,9 @@ export default function SummaryPage() {
           fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
           fontSize="18" fontWeight="600" letterSpacing="6"
           x="8" y="30"
-          className={watermarkIgnited[0] ? 'watermark-hot' : ''}
-          fill='rgba(212, 24, 31, 0.65)'
-          opacity={watermarkIgnited[0] ? 0 : 1}
+          className={watermarkCooled[0] ? 'inscription-cooled' : (watermarkIgnited[0] ? 'watermark-hot' : '')}
+          fill={watermarkCooled[0] ? '#d4181f' : 'rgba(212, 24, 31, 0.65)'}
+          opacity={watermarkCooled[0] ? 1 : (watermarkIgnited[0] ? 0 : 1)}
           style={{ transition: 'opacity 0ms' }}>
           ETCH
         </text>
@@ -1173,13 +1237,23 @@ export default function SummaryPage() {
             </text>
           </g>
         )}
+        {watermarkZoomed[0] && (
+          <g className="inscription-zoom-burst" style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
+            <g className="zoom-glyph">
+              <text x="8" y="30" textAnchor="start"
+                fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+                fontSize="18" fontWeight="600" letterSpacing="6"
+                fill="#ff6600">ETCH</text>
+            </g>
+          </g>
+        )}
         <text textAnchor="start"
           fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
           fontSize="18" fontWeight="600" letterSpacing="6"
           x="8" y="62"
-          className={watermarkIgnited[1] ? 'watermark-hot' : ''}
-          fill='rgba(212, 24, 31, 0.65)'
-          opacity={watermarkIgnited[1] ? 0 : 1}
+          className={watermarkCooled[1] ? 'inscription-cooled' : (watermarkIgnited[1] ? 'watermark-hot' : '')}
+          fill={watermarkCooled[1] ? '#d4181f' : 'rgba(212, 24, 31, 0.65)'}
+          opacity={watermarkCooled[1] ? 1 : (watermarkIgnited[1] ? 0 : 1)}
           style={{ transition: 'opacity 0ms' }}>
           CYCLE
         </text>
@@ -1194,6 +1268,16 @@ export default function SummaryPage() {
               style={engulfVars(92)}>
               CYCLE
             </text>
+          </g>
+        )}
+        {watermarkZoomed[1] && (
+          <g className="inscription-zoom-burst" style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
+            <g className="zoom-glyph">
+              <text x="8" y="62" textAnchor="start"
+                fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+                fontSize="18" fontWeight="600" letterSpacing="6"
+                fill="#ff6600">CYCLE</text>
+            </g>
           </g>
         )}
         {/* Particles AFTER — clipped to letter silhouettes via the mask, paint on top of the
