@@ -22,8 +22,16 @@ import { useSound } from '../lib/useSound'
  * Render the title as a sequence of letters with deliberately mismatched
  * fonts/weights/colors/rotations to evoke a ransom-note pasting.
  */
-function RansomTitle({ text }) {
-  const recipes = [
+function RansomTitle({ text, compact = false }) {
+  const recipes = compact ? [
+    { font: 'font-display',  size: 'text-4xl', tilt: '-rotate-2',     bg: 'bg-gtl-ink',  color: 'text-gtl-paper', pad: 'px-1 py-0' },
+    { font: 'font-athletic font-black', size: 'text-5xl', tilt: 'rotate-1',  bg: 'bg-gtl-paper', color: 'text-gtl-ink',  pad: 'px-1 py-0' },
+    { font: 'font-display',  size: 'text-3xl', tilt: 'rotate-3',      bg: 'bg-gtl-red',  color: 'text-gtl-paper', pad: 'px-1 py-0' },
+    { font: 'font-athletic font-black', size: 'text-4xl', tilt: '-rotate-1', bg: 'bg-gtl-paper', color: 'text-gtl-ink',  pad: 'px-1 py-0' },
+    { font: 'font-display',  size: 'text-5xl', tilt: 'rotate-2',      bg: 'bg-gtl-ink',  color: 'text-gtl-red',   pad: 'px-1 py-0' },
+    { font: 'font-athletic font-black', size: 'text-4xl', tilt: '-rotate-3', bg: 'bg-gtl-paper', color: 'text-gtl-ink',  pad: 'px-1 py-0' },
+    { font: 'font-display',  size: 'text-4xl', tilt: 'rotate-1',      bg: 'bg-gtl-red',  color: 'text-gtl-paper', pad: 'px-1 py-0' },
+  ] : [
     { font: 'font-display',  size: 'text-6xl', tilt: '-rotate-2',     bg: 'bg-gtl-ink',  color: 'text-gtl-paper', pad: 'px-2 py-0' },
     { font: 'font-athletic font-black', size: 'text-7xl', tilt: 'rotate-1',  bg: 'bg-gtl-paper', color: 'text-gtl-ink',  pad: 'px-1 py-0' },
     { font: 'font-display',  size: 'text-5xl', tilt: 'rotate-3',      bg: 'bg-gtl-red',  color: 'text-gtl-paper', pad: 'px-2 py-0' },
@@ -34,7 +42,7 @@ function RansomTitle({ text }) {
   ]
   const letters = text.toUpperCase().split('')
   return (
-    <div className="flex flex-wrap items-end gap-x-1 leading-none">
+    <div className="flex flex-nowrap items-end gap-x-1 leading-none">
       {letters.map((letter, i) => {
         const r = recipes[i % recipes.length]
         return (
@@ -60,6 +68,7 @@ export default function CallingCard({
   signOff = 'WITH GRITTED TEETH',
   onActivate,
   rotate = '-rotate-2',
+  compact = false,
 }) {
   const { play } = useSound()
   const [hovered, setHovered] = useState(false)
@@ -191,7 +200,7 @@ export default function CallingCard({
 
         {/* Ransom-note title */}
         <div className="relative mb-6">
-          <RansomTitle text={title} />
+          <RansomTitle text={title} compact={compact} />
         </div>
 
         {/* Slash divider — grows on hover */}

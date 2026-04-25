@@ -541,7 +541,6 @@ export default function MusclesPage() {
   }, [router])
 
   const handleStamp = () => {
-    play('stamp')
     if (mainRef.current) {
       mainRef.current.animate(
         [

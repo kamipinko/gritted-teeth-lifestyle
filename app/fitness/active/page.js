@@ -406,7 +406,6 @@ function RepsPopup({ exerciseName, initialReps, rowRect, onClose, onSave }) {
 
   const handleSetReps = () => {
     play('stamp')
-    setTimeout(() => play('stamp'), 120)
     onSave(reps)
     setSlamming(true)
     setTimeout(onClose, 550)
@@ -767,7 +766,6 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
 
   const handleSetWeight = () => {
     play('stamp')
-    setTimeout(() => play('stamp'), 120)
     onSave(weight)
     setSlamming(true)
     setTimeout(onClose, 550)
