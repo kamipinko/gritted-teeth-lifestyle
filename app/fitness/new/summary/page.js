@@ -580,8 +580,8 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               const RIGHT_X = [1597, 1572, 1542]
               const labelX = isLeftSide ? LEFT_X[i] : RIGHT_X[i - 3]
               const labelY = dl.cy + yNudge
-              const fill = isCooled ? '#d4181f' : '#b0a898'
-              const baseAlpha = isCooled ? 1 : 0.7
+              const fill = (isHot || isCooled) ? '#d4181f' : '#b0a898'
+              const baseAlpha = (isHot || isCooled) ? 1 : 0.7
               // Hidden only while flame is burning; reveals at zoom onward (hot or cooled).
               const textOpacity = isFlaming ? 0 : baseAlpha
               const textClass = isCooled ? 'inscription-cooled' : (isHot ? 'inscription-hot' : '')
@@ -1245,7 +1245,7 @@ export default function SummaryPage() {
               fontSize="18" fontWeight="600" letterSpacing="6"
               x="8" y="30"
               className={isCooled ? 'inscription-cooled' : (isHot ? 'inscription-hot' : '')}
-              fill={isCooled ? '#d4181f' : 'rgba(212, 24, 31, 0.65)'}
+              fill={(isHot || isCooled) ? '#d4181f' : 'rgba(212, 24, 31, 0.65)'}
               opacity={isFlaming ? 0 : 1}
               style={{ transition: 'opacity 0ms' }}>
               ETCH
@@ -1285,7 +1285,7 @@ export default function SummaryPage() {
               fontSize="18" fontWeight="600" letterSpacing="6"
               x="8" y="62"
               className={isCooled ? 'inscription-cooled' : (isHot ? 'inscription-hot' : '')}
-              fill={isCooled ? '#d4181f' : 'rgba(212, 24, 31, 0.65)'}
+              fill={(isHot || isCooled) ? '#d4181f' : 'rgba(212, 24, 31, 0.65)'}
               opacity={isFlaming ? 0 : 1}
               style={{ transition: 'opacity 0ms' }}>
               CYCLE
