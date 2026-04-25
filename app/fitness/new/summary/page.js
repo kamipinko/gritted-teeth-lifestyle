@@ -607,23 +607,24 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                     {dow}
                   </text>
                   {isZoomed && (
-                    <text
-                      x={labelX}
-                      y={labelY}
-                      textAnchor={isLeftSide ? 'start' : 'end'}
-                      dominantBaseline="central"
-                      transform={`rotate(-11 ${labelX} ${labelY})`}
-                      className="weekday-zoom-burst"
-                      style={{
-                        fontFamily: '"Noto Serif JP", Georgia, serif',
-                        fontSize: '45px',
-                        fontWeight: 700,
-                        fill: '#ff6600',
-                        letterSpacing: '0.2em',
-                      }}
-                    >
-                      {dow}
-                    </text>
+                    <g transform={`rotate(-11 ${labelX} ${labelY})`}>
+                      <text
+                        x={labelX}
+                        y={labelY}
+                        textAnchor={isLeftSide ? 'start' : 'end'}
+                        dominantBaseline="central"
+                        className="weekday-zoom-burst"
+                        style={{
+                          fontFamily: '"Noto Serif JP", Georgia, serif',
+                          fontSize: '45px',
+                          fontWeight: 700,
+                          fill: '#ff6600',
+                          letterSpacing: '0.2em',
+                        }}
+                      >
+                        {dow}
+                      </text>
+                    </g>
                   )}
                   {isFlaming && (
                     <text
@@ -1193,9 +1194,9 @@ export default function SummaryPage() {
         }
         @keyframes weekday-zoom {
           0%   { transform: scale(1);    opacity: 1.0; }
-          30%  { transform: scale(1.4);  opacity: 1.0; }
-          70%  { transform: scale(1.68); opacity: 0.9; }
-          100% { transform: scale(1.85); opacity: 0; }
+          30%  { transform: scale(1.20); opacity: 1.0; }
+          70%  { transform: scale(1.34); opacity: 0.9; }
+          100% { transform: scale(1.43); opacity: 0; }
         }
         .weekday-zoom-burst {
           transform-box: fill-box;
@@ -1265,11 +1266,13 @@ export default function SummaryPage() {
           </g>
         )}
         {watermarkZoomed[0] && (
-          <text x="8" y="30" textAnchor="start"
-            fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-            fontSize="18" fontWeight="600" letterSpacing="6"
-            fill="#ff6600"
-            className="weekday-zoom-burst">ETCH</text>
+          <g transform="rotate(-8 38 24)">
+            <text x="8" y="30" textAnchor="start"
+              fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+              fontSize="18" fontWeight="600" letterSpacing="6"
+              fill="#ff6600"
+              className="weekday-zoom-burst">ETCH</text>
+          </g>
         )}
         {(() => {
           const isFlaming = !!watermarkIgnited[1]
@@ -1303,11 +1306,13 @@ export default function SummaryPage() {
           </g>
         )}
         {watermarkZoomed[1] && (
-          <text x="8" y="62" textAnchor="start"
-            fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-            fontSize="18" fontWeight="600" letterSpacing="6"
-            fill="#ff6600"
-            className="weekday-zoom-burst">CYCLE</text>
+          <g transform="rotate(-8 46 56)">
+            <text x="8" y="62" textAnchor="start"
+              fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+              fontSize="18" fontWeight="600" letterSpacing="6"
+              fill="#ff6600"
+              className="weekday-zoom-burst">CYCLE</text>
+          </g>
         )}
         {/* Particles AFTER — clipped to letter silhouettes via the mask, paint on top of the
             void-black base so the flames show through the letter shapes. */}
