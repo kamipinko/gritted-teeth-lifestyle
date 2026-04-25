@@ -985,7 +985,7 @@ export default function SummaryPage() {
       }, 1600 + 1600 + i * 350)
     }
     setTimeout(() => setGlowIntensity('off'),       3040)   // last zoom cascade slot ends (1600 + 220*5 + 340)
-    setTimeout(() => setStampVisible(true),         4190)   // stamp flies in after weekday/watermark zoom cascade finishes (avoids compositor collision)
+    setTimeout(() => setStampVisible(true),         3990)   // stamp flies in after weekday/watermark zoom cascade finishes (avoids compositor collision)
     // Middle-out symmetric cascade, 70ms stagger, starts t=700.
     // Step 0 (t=700): innermost pair (days 3+4) + ETCH + CYCLE ignite together.
     // Step 1 (t=770): days 2+5. Step 2 (t=840): outermost pair (days 1+6).
@@ -999,33 +999,40 @@ export default function SummaryPage() {
       setWatermarkIgnited(prev => { const next = [...prev]; next[1] = true; return next })
     }, 1150)
 
-    // Per-letter weekday cascade. Direction depends on day side:
-    // - Left-side days (1, 2, 3 user-facing = indices 0, 1, 2): right-to-left
-    // - Right-side days (4, 5, 6 user-facing = indices 3, 4, 5): left-to-right
-    const letterStaggerOffset = (dayIdx, L) => {
+    // Per-letter weekday cascade with TWO stagger speeds:
+    // - Flame: slow (50ms per letter) — gives the ignite a deliberate sweep
+    // - Zoom + cooled: fast (20ms per letter) — snappy reveal/fade
+    // Direction depends on day side: left-side R-to-L, right-side L-to-R.
+    const letterStaggerOffsetFast = (dayIdx, L) => {
       const isLeftSide = dayIdx < 3
-      return isLeftSide ? (2 - L) * 35 : L * 35
+      return isLeftSide ? (2 - L) * 20 : L * 20
+    }
+    const letterStaggerOffsetSlow = (dayIdx, L) => {
+      const isLeftSide = dayIdx < 3
+      return isLeftSide ? (2 - L) * 50 : L * 50
     }
     const WEEKDAY_PAIRS = [
-      { days: [2, 3], flame: 900,  zoom: 2900, cooled: 3600 },
-      { days: [1, 4], flame: 1075, zoom: 3200, cooled: 3775 },
-      { days: [0, 5], flame: 1225, zoom: 3500, cooled: 3925 },
+      { days: [2, 3], flame: 900,  zoom: 2900, cooled: 3400 },
+      { days: [1, 4], flame: 1075, zoom: 3200, cooled: 3575 },
+      { days: [0, 5], flame: 1225, zoom: 3500, cooled: 3725 },
     ]
     WEEKDAY_PAIRS.forEach(({ days, flame, zoom, cooled }) => {
       days.forEach(dayIdx => {
         for (let L = 0; L < 3; L++) {
-          const offset = letterStaggerOffset(dayIdx, L)
           const flatIdx = dayIdx * 3 + L
+          // Flame on (slow stagger)
           setTimeout(() => {
             setWeekdayLetterIgnited(prev => { const next = [...prev]; next[flatIdx] = true; return next })
-          }, flame + offset)
+          }, flame + letterStaggerOffsetSlow(dayIdx, L))
+          // Zoom on + flame off (fast stagger)
           setTimeout(() => {
             setWeekdayLetterIgnited(prev => { const next = [...prev]; next[flatIdx] = false; return next })
             setWeekdayLetterZoomed(prev  => { const next = [...prev]; next[flatIdx] = true;  return next })
-          }, zoom + offset)
+          }, zoom + letterStaggerOffsetFast(dayIdx, L))
+          // Cooled on (fast stagger)
           setTimeout(() => {
             setWeekdayLetterCooled(prev => { const next = [...prev]; next[flatIdx] = true; return next })
-          }, cooled + offset)
+          }, cooled + letterStaggerOffsetFast(dayIdx, L))
         }
       })
     })
@@ -1041,7 +1048,7 @@ export default function SummaryPage() {
         if (i === 3) {
           setWatermarkIgnited(prev => { const next = [...prev]; next[0] = false; return next })
         }
-      }, 3050 + i * 35)
+      }, 3050 + i * 20)
     }
     // CYCLE per-letter zoom cascade (50ms stagger, t=3350). Flame off after last letter.
     for (let i = 0; i < 5; i++) {
@@ -1050,20 +1057,20 @@ export default function SummaryPage() {
         if (i === 4) {
           setWatermarkIgnited(prev => { const next = [...prev]; next[1] = false; return next })
         }
-      }, 3350 + i * 35)
+      }, 3350 + i * 20)
     }
     // Cooled cascade — 700ms after each zoom step (matches blade's hot→cooled fade duration).
     // ETCH per-letter cooled cascade (50ms stagger, t=3690).
     for (let i = 0; i < 4; i++) {
       setTimeout(() => {
         setEtchCooled(prev => { const next = [...prev]; next[i] = true; return next })
-      }, 3690 + i * 35)
+      }, 3490 + i * 20)
     }
     // CYCLE per-letter cooled cascade (50ms stagger, t=3850).
     for (let i = 0; i < 5; i++) {
       setTimeout(() => {
         setCycleCooled(prev => { const next = [...prev]; next[i] = true; return next })
-      }, 3850 + i * 35)
+      }, 3650 + i * 20)
     }
 
     setTimeout(() => {
@@ -1086,10 +1093,10 @@ export default function SummaryPage() {
           { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
         )
       }
-    }, 4855)   // stamp lands (665ms after fly-in)
+    }, 4655)   // stamp lands (665ms after fly-in)
 
-    setTimeout(() => play('stamp'),       4940)
-    setTimeout(() => setFireActive(true), 5900)
+    setTimeout(() => play('stamp'),       4740)
+    setTimeout(() => setFireActive(true), 5700)
   }
 
   const cols = days.length <= 5 ? days.length
