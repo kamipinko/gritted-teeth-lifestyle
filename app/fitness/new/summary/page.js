@@ -996,7 +996,7 @@ export default function SummaryPage() {
     }, 1125)
     setTimeout(() => {
       setWatermarkIgnited(prev => { const next = [...prev]; next[1] = true; return next })
-    }, 1275)
+    }, 1375)
 
     // Weekday + ETCH/CYCLE zoom-burst cascade — fires after the blade's final inscription
     // zoom (t=2600), mirroring the same middle-out 175/150ms stagger. Each step also flips
@@ -1021,7 +1021,7 @@ export default function SummaryPage() {
     setTimeout(() => {
       setWatermarkIgnited(prev => { const next = [...prev]; next[1] = false; return next })
       setWatermarkZoomed(prev => { const next = [...prev]; next[1] = true;  return next })
-    }, 3175)
+    }, 3275)
     // Cooled cascade — 700ms after each zoom step (matches blade's hot→cooled fade duration).
     setTimeout(() => {
       setWeekdaysCooledArr(prev => { const next = [...prev]; next[2] = true; next[3] = true; return next })
@@ -1037,7 +1037,7 @@ export default function SummaryPage() {
     }, 3725)
     setTimeout(() => {
       setWatermarkCooled(prev => { const next = [...prev]; next[1] = true; return next })
-    }, 3875)
+    }, 4375)
 
     setTimeout(() => {
       play('stamp')
