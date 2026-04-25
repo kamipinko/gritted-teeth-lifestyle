@@ -916,7 +916,9 @@ export default function SummaryPage() {
   const [weekdayLetterZoomed,  setWeekdayLetterZoomed]  = useState(() => Array(18).fill(false))
   const [weekdayLetterCooled,  setWeekdayLetterCooled]  = useState(() => Array(18).fill(false))
   // Watermark per-line ignition: [ETCH, CYCLE]. Joins the weekday cascade as steps 6 and 7.
-  const [watermarkIgnited, setWatermarkIgnited] = useState(() => [false, false])
+  // Per-letter ETCH/CYCLE ignition (was 2-element whole-word `watermarkIgnited`).
+  const [etchIgnited,  setEtchIgnited]  = useState(() => Array(4).fill(false))
+  const [cycleIgnited, setCycleIgnited] = useState(() => Array(5).fill(false))
   // Per-letter zoom/cooled. ETCH=4 letters, CYCLE=5. Flame stays whole-word via watermarkIgnited[2].
   const [etchZoomed,  setEtchZoomed]  = useState(() => Array(4).fill(false))
   const [etchCooled,  setEtchCooled]  = useState(() => Array(4).fill(false))
@@ -991,13 +993,18 @@ export default function SummaryPage() {
     // Step 1 (t=770): days 2+5. Step 2 (t=840): outermost pair (days 1+6).
     // Middle-out pairs with ETCH and CYCLE on separate steps — ETCH anchored to day 5,
     // CYCLE anchored to day 6.
-    // ETCH/CYCLE flame-on (interleaved between weekday pairs).
-    setTimeout(() => {
-      setWatermarkIgnited(prev => { const next = [...prev]; next[0] = true; return next })
-    }, 985)
-    setTimeout(() => {
-      setWatermarkIgnited(prev => { const next = [...prev]; next[1] = true; return next })
-    }, 1150)
+    // ETCH per-letter flame (50ms stagger, t=985).
+    for (let i = 0; i < 4; i++) {
+      setTimeout(() => {
+        setEtchIgnited(prev => { const next = [...prev]; next[i] = true; return next })
+      }, 985 + i * 50)
+    }
+    // CYCLE per-letter flame (50ms stagger, t=1035 — letter 1 fires at ETCH letter 2 time).
+    for (let i = 0; i < 5; i++) {
+      setTimeout(() => {
+        setCycleIgnited(prev => { const next = [...prev]; next[i] = true; return next })
+      }, 1035 + i * 50)
+    }
 
     // Per-letter weekday cascade with TWO stagger speeds:
     // - Flame: slow (50ms per letter) — gives the ignite a deliberate sweep
@@ -1041,23 +1048,19 @@ export default function SummaryPage() {
     // zoom (t=2600), mirroring the same middle-out 175/150ms stagger. Each step also flips
     // its ignited flag false so the particle group unmounts at the same moment the zoom
     // fires (matches the blade's flame-off + hot-on pattern).
-    // ETCH per-letter zoom cascade (50ms stagger, t=3050). Flame off after last letter.
+    // ETCH per-letter zoom cascade (35ms stagger, t=3050). Flame off per-letter.
     for (let i = 0; i < 4; i++) {
       setTimeout(() => {
-        setEtchZoomed(prev => { const next = [...prev]; next[i] = true; return next })
-        if (i === 3) {
-          setWatermarkIgnited(prev => { const next = [...prev]; next[0] = false; return next })
-        }
+        setEtchIgnited(prev => { const next = [...prev]; next[i] = false; return next })
+        setEtchZoomed(prev  => { const next = [...prev]; next[i] = true;  return next })
       }, 3050 + i * 35)
     }
-    // CYCLE per-letter zoom cascade (50ms stagger, t=3350). Flame off after last letter.
+    // CYCLE per-letter zoom cascade (35ms stagger, t=3085 — letter 1 at ETCH letter 2 time).
     for (let i = 0; i < 5; i++) {
       setTimeout(() => {
-        setCycleZoomed(prev => { const next = [...prev]; next[i] = true; return next })
-        if (i === 4) {
-          setWatermarkIgnited(prev => { const next = [...prev]; next[1] = false; return next })
-        }
-      }, 3350 + i * 35)
+        setCycleIgnited(prev => { const next = [...prev]; next[i] = false; return next })
+        setCycleZoomed(prev  => { const next = [...prev]; next[i] = true;  return next })
+      }, 3085 + i * 35)
     }
     // Cooled cascade — 700ms after each zoom step (matches blade's hot→cooled fade duration).
     // ETCH per-letter cooled cascade (50ms stagger, t=3690).
@@ -1070,7 +1073,7 @@ export default function SummaryPage() {
     for (let i = 0; i < 5; i++) {
       setTimeout(() => {
         setCycleCooled(prev => { const next = [...prev]; next[i] = true; return next })
-      }, 3650 + i * 35)
+      }, 3525 + i * 35)
     }
 
     setTimeout(() => {
@@ -1284,8 +1287,7 @@ export default function SummaryPage() {
               { ch: 'L', x: 61, y: 72, w: 1, i: 3 },
               { ch: 'E', x: 79, y: 72, w: 1, i: 4 },
             ].map((g, k) => {
-              const zoomed = g.w === 0 ? etchZoomed[g.i] : cycleZoomed[g.i]
-              const lit = !!watermarkIgnited[g.w] && !zoomed
+              const lit = g.w === 0 ? !!etchIgnited[g.i] : !!cycleIgnited[g.i]
               return (
                 <text key={`mask-${k}`} x={g.x} y={g.y} textAnchor="start"
                   fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
@@ -1305,7 +1307,7 @@ export default function SummaryPage() {
           const x = [8, 26, 44, 62][i]
           const isZoomed  = !!etchZoomed[i]
           const isCooled  = !!etchCooled[i]
-          const isFlaming = !!watermarkIgnited[0] && !isZoomed
+          const isFlaming = !!etchIgnited[i]
           const isHot     = isZoomed && !isCooled
           return (
             <text key={`etch-base-${i}`} x={x} y={40} textAnchor="start"
@@ -1321,7 +1323,7 @@ export default function SummaryPage() {
         })}
         {/* Per-letter ETCH engulf bloom — each letter unmounts as it zooms. */}
         {['E','T','C','H'].map((ch, i) => {
-          if (!watermarkIgnited[0] || etchZoomed[i]) return null
+          if (!etchIgnited[i]) return null
           const x = [8, 26, 44, 62][i]
           return (
             <g key={`etch-engulf-${i}`} transform={`rotate(-8 ${x + 6} 34)`}>
@@ -1352,7 +1354,7 @@ export default function SummaryPage() {
           const x = [8, 25, 43, 61, 79][i]
           const isZoomed  = !!cycleZoomed[i]
           const isCooled  = !!cycleCooled[i]
-          const isFlaming = !!watermarkIgnited[1] && !isZoomed
+          const isFlaming = !!cycleIgnited[i]
           const isHot     = isZoomed && !isCooled
           return (
             <text key={`cycle-base-${i}`} x={x} y={72} textAnchor="start"
@@ -1368,7 +1370,7 @@ export default function SummaryPage() {
         })}
         {/* Per-letter CYCLE engulf bloom — each letter unmounts as it zooms. */}
         {['C','Y','C','L','E'].map((ch, i) => {
-          if (!watermarkIgnited[1] || cycleZoomed[i]) return null
+          if (!cycleIgnited[i]) return null
           const x = [8, 25, 43, 61, 79][i]
           return (
             <g key={`cycle-engulf-${i}`} transform={`rotate(-8 ${x + 6} 66)`}>
@@ -1396,7 +1398,7 @@ export default function SummaryPage() {
         })}
         {/* Particles AFTER — clipped to letter silhouettes via the mask, paint on top of the
             void-black base so the flames show through the letter shapes. */}
-        {watermarkIgnited.some(Boolean) && (
+        {(etchIgnited.some(Boolean) || cycleIgnited.some(Boolean)) && (
           <g mask="url(#watermark-window)">
             {(() => {
               const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
@@ -1413,8 +1415,8 @@ export default function SummaryPage() {
                 // rather than a continuous orange wash.
                 const isEtchBand = (i % 2 === 1)
                 if (!isEtchBand && (i % 4 === 2)) return null
-                if (isEtchBand && !watermarkIgnited[0]) return null
-                if (!isEtchBand && !watermarkIgnited[1]) return null
+                if (isEtchBand && !etchIgnited.some(Boolean)) return null
+                if (!isEtchBand && !cycleIgnited.some(Boolean)) return null
                 const startY = isEtchBand ? 46 : 74
                 const rise   = isEtchBand ? (18 + rSize * 14) : (12 + rSize * 10)
                 const xBase  = 8
