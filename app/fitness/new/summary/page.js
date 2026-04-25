@@ -486,7 +486,7 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               100% { filter: drop-shadow(0 0 1.5px #ff8800) drop-shadow(0 0 4px rgba(255, 122, 0, 0.55)) drop-shadow(0 0 7px rgba(255, 80, 0, 0.2)) drop-shadow(0 0 7px rgba(255, 80, 0, 0)); }
             }
             .inscription-hot    { animation: inscription-hot-hold 100ms forwards; }
-            .inscription-cooled { animation: inscription-cool-down 700ms ease-out forwards; }
+            .inscription-cooled { animation: inscription-cool-down 1000ms ease-out forwards; }
           `}</style>
           {dayLabels.map((dl, i) => {
             const textAngle = dl.angle - 90
