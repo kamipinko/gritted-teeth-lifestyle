@@ -1014,14 +1014,18 @@ export default function SummaryPage() {
       const isLeftSide = dayIdx < 3
       return isLeftSide ? (2 - L) * 50 : L * 50
     }
+    const letterStaggerOffsetCooled = (dayIdx, L) => {
+      const isLeftSide = dayIdx < 3
+      return isLeftSide ? (2 - L) * 75 : L * 75
+    }
     const letterStaggerOffsetSlow = (dayIdx, L) => {
       const isLeftSide = dayIdx < 3
       return isLeftSide ? (2 - L) * 50 : L * 50
     }
     const WEEKDAY_PAIRS = [
       { days: [2, 3], flame: 900,  zoom: 2900, cooled: 3400 },
-      { days: [1, 4], flame: 950,  zoom: 2950, cooled: 3450 },
-      { days: [0, 5], flame: 1000, zoom: 3000, cooled: 3500 },
+      { days: [1, 4], flame: 950,  zoom: 2950, cooled: 3475 },
+      { days: [0, 5], flame: 1000, zoom: 3000, cooled: 3550 },
     ]
     WEEKDAY_PAIRS.forEach(({ days, flame, zoom, cooled }) => {
       days.forEach(dayIdx => {
@@ -1036,10 +1040,10 @@ export default function SummaryPage() {
             setWeekdayLetterIgnited(prev => { const next = [...prev]; next[flatIdx] = false; return next })
             setWeekdayLetterZoomed(prev  => { const next = [...prev]; next[flatIdx] = true;  return next })
           }, zoom + letterStaggerOffsetFast(dayIdx, L))
-          // Cooled on (fast stagger)
+          // Cooled on (75ms stagger)
           setTimeout(() => {
             setWeekdayLetterCooled(prev => { const next = [...prev]; next[flatIdx] = true; return next })
-          }, cooled + letterStaggerOffsetFast(dayIdx, L))
+          }, cooled + letterStaggerOffsetCooled(dayIdx, L))
         }
       })
     })
@@ -1067,13 +1071,13 @@ export default function SummaryPage() {
     for (let i = 0; i < 4; i++) {
       setTimeout(() => {
         setEtchCooled(prev => { const next = [...prev]; next[i] = true; return next })
-      }, 3490 + i * 50)
+      }, 3490 + i * 75)
     }
     // CYCLE per-letter cooled cascade (50ms stagger, t=3850).
     for (let i = 0; i < 5; i++) {
       setTimeout(() => {
         setCycleCooled(prev => { const next = [...prev]; next[i] = true; return next })
-      }, 3540 + i * 50)
+      }, 3565 + i * 75)
     }
 
     setTimeout(() => {
