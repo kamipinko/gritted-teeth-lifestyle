@@ -569,9 +569,10 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               so each weekday's hot-glow keyframe fires on its own schedule. */}
           <g>
             {dayLabels.map((dl, i) => {
-              const isIgnited = !!(Array.isArray(weekdaysIgnited) ? weekdaysIgnited[i] : weekdaysIgnited)
+              const isFlaming = !!(Array.isArray(weekdaysIgnited) ? weekdaysIgnited[i] : weekdaysIgnited)
               const isZoomed  = !!(Array.isArray(weekdaysZoomed) && weekdaysZoomed[i])
               const isCooled  = !!(Array.isArray(weekdaysCooled) && weekdaysCooled[i])
+              const isHot     = isZoomed && !isCooled
               const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()]
               const isLeftSide = i < 3
               const yNudge = isLeftSide ? 0 : 10
@@ -581,9 +582,9 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               const labelY = dl.cy + yNudge
               const fill = isCooled ? '#d4181f' : '#b0a898'
               const baseAlpha = isCooled ? 1 : 0.7
-              // Once cooled, base text re-emerges; before that, hide while ignited (cheat).
-              const textOpacity = isCooled ? 1 : (isIgnited ? 0 : baseAlpha)
-              const textClass = isCooled ? 'inscription-cooled' : (isIgnited ? 'inscription-hot' : '')
+              // Hidden only while flame is burning; reveals at zoom onward (hot or cooled).
+              const textOpacity = isFlaming ? 0 : baseAlpha
+              const textClass = isCooled ? 'inscription-cooled' : (isHot ? 'inscription-hot' : '')
               return (
                 <g key={`dow-${dl.iso}`}>
                   <text
@@ -627,7 +628,7 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                       </g>
                     </g>
                   )}
-                  {isIgnited && (
+                  {isFlaming && (
                     <text
                       x={labelX}
                       y={labelY}
@@ -998,21 +999,28 @@ export default function SummaryPage() {
     }, 1125)
 
     // Weekday + ETCH/CYCLE zoom-burst cascade — fires after the blade's final inscription
-    // zoom (t=2600), mirroring the same middle-out 175/150ms stagger.
+    // zoom (t=2600), mirroring the same middle-out 175/150ms stagger. Each step also flips
+    // its ignited flag false so the particle group unmounts at the same moment the zoom
+    // fires (matches the blade's flame-off + hot-on pattern).
     setTimeout(() => {
-      setWeekdaysZoomed(prev => { const next = [...prev]; next[2] = true; next[3] = true; return next })
+      setWeekdaysIgnited(prev => { const next = [...prev]; next[2] = false; next[3] = false; return next })
+      setWeekdaysZoomed(prev => { const next = [...prev]; next[2] = true;  next[3] = true;  return next })
     }, 2700)
     setTimeout(() => {
-      setWeekdaysZoomed(prev => { const next = [...prev]; next[1] = true; next[4] = true; return next })
+      setWeekdaysIgnited(prev => { const next = [...prev]; next[1] = false; next[4] = false; return next })
+      setWeekdaysZoomed(prev => { const next = [...prev]; next[1] = true;  next[4] = true;  return next })
     }, 2875)
     setTimeout(() => {
-      setWatermarkZoomed(prev => { const next = [...prev]; next[0] = true; return next })
+      setWatermarkIgnited(prev => { const next = [...prev]; next[0] = false; return next })
+      setWatermarkZoomed(prev => { const next = [...prev]; next[0] = true;  return next })
     }, 2875)
     setTimeout(() => {
-      setWeekdaysZoomed(prev => { const next = [...prev]; next[0] = true; next[5] = true; return next })
+      setWeekdaysIgnited(prev => { const next = [...prev]; next[0] = false; next[5] = false; return next })
+      setWeekdaysZoomed(prev => { const next = [...prev]; next[0] = true;  next[5] = true;  return next })
     }, 3025)
     setTimeout(() => {
-      setWatermarkZoomed(prev => { const next = [...prev]; next[1] = true; return next })
+      setWatermarkIgnited(prev => { const next = [...prev]; next[1] = false; return next })
+      setWatermarkZoomed(prev => { const next = [...prev]; next[1] = true;  return next })
     }, 3025)
     // Cooled cascade — 700ms after each zoom step (matches blade's hot→cooled fade duration).
     setTimeout(() => {
@@ -1214,16 +1222,24 @@ export default function SummaryPage() {
         {/* Base text — each line rendered as its own <text> so ETCH and CYCLE can be gated
             independently against watermarkIgnited[0] and [1]. Hidden once its own line ignites
             (inscription cheat) so the particle flames are the only visible content. */}
-        <text textAnchor="start"
-          fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-          fontSize="18" fontWeight="600" letterSpacing="6"
-          x="8" y="30"
-          className={watermarkCooled[0] ? 'inscription-cooled' : (watermarkIgnited[0] ? 'watermark-hot' : '')}
-          fill={watermarkCooled[0] ? '#d4181f' : 'rgba(212, 24, 31, 0.65)'}
-          opacity={watermarkCooled[0] ? 1 : (watermarkIgnited[0] ? 0 : 1)}
-          style={{ transition: 'opacity 0ms' }}>
-          ETCH
-        </text>
+        {(() => {
+          const isFlaming = !!watermarkIgnited[0]
+          const isZoomed  = !!watermarkZoomed[0]
+          const isCooled  = !!watermarkCooled[0]
+          const isHot     = isZoomed && !isCooled
+          return (
+            <text textAnchor="start"
+              fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+              fontSize="18" fontWeight="600" letterSpacing="6"
+              x="8" y="30"
+              className={isCooled ? 'inscription-cooled' : (isHot ? 'inscription-hot' : '')}
+              fill={isCooled ? '#d4181f' : 'rgba(212, 24, 31, 0.65)'}
+              opacity={isFlaming ? 0 : 1}
+              style={{ transition: 'opacity 0ms' }}>
+              ETCH
+            </text>
+          )
+        })()}
         {watermarkIgnited[0] && (
           <g transform="rotate(-8 38 24)">
             <text
@@ -1247,16 +1263,24 @@ export default function SummaryPage() {
             </g>
           </g>
         )}
-        <text textAnchor="start"
-          fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-          fontSize="18" fontWeight="600" letterSpacing="6"
-          x="8" y="62"
-          className={watermarkCooled[1] ? 'inscription-cooled' : (watermarkIgnited[1] ? 'watermark-hot' : '')}
-          fill={watermarkCooled[1] ? '#d4181f' : 'rgba(212, 24, 31, 0.65)'}
-          opacity={watermarkCooled[1] ? 1 : (watermarkIgnited[1] ? 0 : 1)}
-          style={{ transition: 'opacity 0ms' }}>
-          CYCLE
-        </text>
+        {(() => {
+          const isFlaming = !!watermarkIgnited[1]
+          const isZoomed  = !!watermarkZoomed[1]
+          const isCooled  = !!watermarkCooled[1]
+          const isHot     = isZoomed && !isCooled
+          return (
+            <text textAnchor="start"
+              fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+              fontSize="18" fontWeight="600" letterSpacing="6"
+              x="8" y="62"
+              className={isCooled ? 'inscription-cooled' : (isHot ? 'inscription-hot' : '')}
+              fill={isCooled ? '#d4181f' : 'rgba(212, 24, 31, 0.65)'}
+              opacity={isFlaming ? 0 : 1}
+              style={{ transition: 'opacity 0ms' }}>
+              CYCLE
+            </text>
+          )
+        })()}
         {watermarkIgnited[1] && (
           <g transform="rotate(-8 46 56)">
             <text
