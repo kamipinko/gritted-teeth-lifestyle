@@ -607,26 +607,23 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                     {dow}
                   </text>
                   {isZoomed && (
-                    <g className="inscription-zoom-burst" style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
-                      <g className="zoom-glyph">
-                        <text
-                          x={labelX}
-                          y={labelY}
-                          textAnchor={isLeftSide ? 'start' : 'end'}
-                          dominantBaseline="central"
-                          transform={`rotate(-11 ${labelX} ${labelY})`}
-                          style={{
-                            fontFamily: '"Noto Serif JP", Georgia, serif',
-                            fontSize: '45px',
-                            fontWeight: 700,
-                            fill: '#ff6600',
-                            letterSpacing: '0.2em',
-                          }}
-                        >
-                          {dow}
-                        </text>
-                      </g>
-                    </g>
+                    <text
+                      x={labelX}
+                      y={labelY}
+                      textAnchor={isLeftSide ? 'start' : 'end'}
+                      dominantBaseline="central"
+                      transform={`rotate(-11 ${labelX} ${labelY})`}
+                      className="weekday-zoom-burst"
+                      style={{
+                        fontFamily: '"Noto Serif JP", Georgia, serif',
+                        fontSize: '45px',
+                        fontWeight: 700,
+                        fill: '#ff6600',
+                        letterSpacing: '0.2em',
+                      }}
+                    >
+                      {dow}
+                    </text>
                   )}
                   {isFlaming && (
                     <text
@@ -1194,6 +1191,20 @@ export default function SummaryPage() {
           fill: #ff5000;
           pointer-events: none;
         }
+        @keyframes weekday-zoom {
+          0%   { transform: scale(1);    opacity: 1.0; }
+          30%  { transform: scale(1.4);  opacity: 1.0; }
+          70%  { transform: scale(1.68); opacity: 0.9; }
+          100% { transform: scale(1.85); opacity: 0; }
+        }
+        .weekday-zoom-burst {
+          transform-box: fill-box;
+          transform-origin: center;
+          animation: weekday-zoom 340ms ease-out forwards;
+          mix-blend-mode: plus-lighter;
+          filter: drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 16px #ff4400);
+          pointer-events: none;
+        }
       `}</style>
       <svg
         aria-hidden="true"
@@ -1254,14 +1265,11 @@ export default function SummaryPage() {
           </g>
         )}
         {watermarkZoomed[0] && (
-          <g className="inscription-zoom-burst" style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
-            <g className="zoom-glyph">
-              <text x="8" y="30" textAnchor="start"
-                fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-                fontSize="18" fontWeight="600" letterSpacing="6"
-                fill="#ff6600">ETCH</text>
-            </g>
-          </g>
+          <text x="8" y="30" textAnchor="start"
+            fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+            fontSize="18" fontWeight="600" letterSpacing="6"
+            fill="#ff6600"
+            className="weekday-zoom-burst">ETCH</text>
         )}
         {(() => {
           const isFlaming = !!watermarkIgnited[1]
@@ -1295,14 +1303,11 @@ export default function SummaryPage() {
           </g>
         )}
         {watermarkZoomed[1] && (
-          <g className="inscription-zoom-burst" style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
-            <g className="zoom-glyph">
-              <text x="8" y="62" textAnchor="start"
-                fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-                fontSize="18" fontWeight="600" letterSpacing="6"
-                fill="#ff6600">CYCLE</text>
-            </g>
-          </g>
+          <text x="8" y="62" textAnchor="start"
+            fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+            fontSize="18" fontWeight="600" letterSpacing="6"
+            fill="#ff6600"
+            className="weekday-zoom-burst">CYCLE</text>
         )}
         {/* Particles AFTER — clipped to letter silhouettes via the mask, paint on top of the
             void-black base so the flames show through the letter shapes. */}
