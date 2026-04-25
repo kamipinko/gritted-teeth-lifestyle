@@ -1914,8 +1914,8 @@ export default function SummaryPage() {
                   aria-hidden="true" />
                 <div className="relative px-8 md:px-14 py-10 bg-gtl-red border-4 border-gtl-red-deep"
                   style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)' }}>
-                  <div className="font-mono text-[11px] tracking-[0.6em] uppercase text-gtl-paper/50 mb-2"
-                    style={{ letterSpacing: '0.6em' }}>◼ DEADLINE ◼</div>
+                  <div className="font-mono text-[18px] font-bold tracking-[0.5em] uppercase text-gtl-paper mb-3"
+                    style={{ letterSpacing: '0.5em', textShadow: '2px 2px 0 #070708' }}>◼ DEADLINE ◼</div>
                   <div className="font-display text-3xl md:text-5xl text-gtl-paper leading-none"
                     style={{ textShadow: '3px 3px 0 #070708' }}>{month}</div>
                   <div className="flex items-center gap-16">
