@@ -971,7 +971,7 @@ export default function SummaryPage() {
       }, 1500 + 1600 + i * 350)
     }
     setTimeout(() => setGlowIntensity('off'),       2940)   // last zoom cascade slot ends (1500 + 220*5 + 340)
-    setTimeout(() => setStampVisible(true),         3990)   // stamp flies in after weekday/watermark zoom cascade finishes (avoids compositor collision)
+    setTimeout(() => setStampVisible(true),         4090)   // stamp flies in after weekday/watermark zoom cascade finishes (avoids compositor collision)
     // Middle-out symmetric cascade, 70ms stagger, starts t=700.
     // Step 0 (t=700): innermost pair (days 3+4) + ETCH + CYCLE ignite together.
     // Step 1 (t=770): days 2+5. Step 2 (t=840): outermost pair (days 1+6).
@@ -1003,39 +1003,39 @@ export default function SummaryPage() {
     setTimeout(() => {
       setWeekdaysIgnited(prev => { const next = [...prev]; next[2] = false; next[3] = false; return next })
       setWeekdaysZoomed(prev => { const next = [...prev]; next[2] = true;  next[3] = true;  return next })
-    }, 2700)
+    }, 2800)
     setTimeout(() => {
       setWeekdaysIgnited(prev => { const next = [...prev]; next[1] = false; next[4] = false; return next })
       setWeekdaysZoomed(prev => { const next = [...prev]; next[1] = true;  next[4] = true;  return next })
-    }, 3000)
+    }, 3100)
     setTimeout(() => {
       setWatermarkIgnited(prev => { const next = [...prev]; next[0] = false; return next })
       setWatermarkZoomed(prev => { const next = [...prev]; next[0] = true;  return next })
-    }, 3000)
+    }, 3100)
     setTimeout(() => {
       setWeekdaysIgnited(prev => { const next = [...prev]; next[0] = false; next[5] = false; return next })
       setWeekdaysZoomed(prev => { const next = [...prev]; next[0] = true;  next[5] = true;  return next })
-    }, 3300)
+    }, 3400)
     setTimeout(() => {
       setWatermarkIgnited(prev => { const next = [...prev]; next[1] = false; return next })
       setWatermarkZoomed(prev => { const next = [...prev]; next[1] = true;  return next })
-    }, 3600)
+    }, 3700)
     // Cooled cascade — 700ms after each zoom step (matches blade's hot→cooled fade duration).
     setTimeout(() => {
       setWeekdaysCooledArr(prev => { const next = [...prev]; next[2] = true; next[3] = true; return next })
-    }, 3400)
+    }, 3500)
     setTimeout(() => {
       setWeekdaysCooledArr(prev => { const next = [...prev]; next[1] = true; next[4] = true; return next })
-    }, 3575)
+    }, 3675)
     setTimeout(() => {
       setWatermarkCooled(prev => { const next = [...prev]; next[0] = true; return next })
-    }, 3575)
+    }, 3675)
     setTimeout(() => {
       setWeekdaysCooledArr(prev => { const next = [...prev]; next[0] = true; next[5] = true; return next })
-    }, 3725)
+    }, 3825)
     setTimeout(() => {
       setWatermarkCooled(prev => { const next = [...prev]; next[1] = true; return next })
-    }, 4375)
+    }, 4475)
 
     setTimeout(() => {
       play('stamp')
@@ -1057,9 +1057,9 @@ export default function SummaryPage() {
           { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
         )
       }
-    }, 4655)   // stamp lands (665ms after fly-in)
+    }, 4755)   // stamp lands (665ms after fly-in)
 
-    setTimeout(() => play('stamp'),       4740)
+    setTimeout(() => play('stamp'),       4840)
     setTimeout(() => setFireActive(true), 5900)
   }
 
