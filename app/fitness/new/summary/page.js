@@ -980,21 +980,21 @@ export default function SummaryPage() {
     // Step 0 — innermost pair (days 3+4) only
     setTimeout(() => {
       setWeekdaysIgnited(prev => { const next = [...prev]; next[2] = true; next[3] = true; return next })
-    }, 800)
+    }, 900)
     // Step 1 — middle pair (days 2+5) + ETCH
     setTimeout(() => {
       setWeekdaysIgnited(prev => { const next = [...prev]; next[1] = true; next[4] = true; return next })
-    }, 975)
+    }, 1075)
     setTimeout(() => {
       setWatermarkIgnited(prev => { const next = [...prev]; next[0] = true; return next })
-    }, 975)
+    }, 1075)
     // Step 2 — outer pair (days 1+6) + CYCLE
     setTimeout(() => {
       setWeekdaysIgnited(prev => { const next = [...prev]; next[0] = true; next[5] = true; return next })
-    }, 1125)
+    }, 1225)
     setTimeout(() => {
       setWatermarkIgnited(prev => { const next = [...prev]; next[1] = true; return next })
-    }, 1375)
+    }, 1475)
 
     // Weekday + ETCH/CYCLE zoom-burst cascade — fires after the blade's final inscription
     // zoom (t=2600), mirroring the same middle-out 175/150ms stagger. Each step also flips
