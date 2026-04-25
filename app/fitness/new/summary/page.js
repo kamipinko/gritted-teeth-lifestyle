@@ -1194,9 +1194,9 @@ export default function SummaryPage() {
         }
         @keyframes weekday-zoom {
           0%   { transform: scale(1);    opacity: 1.0; }
-          30%  { transform: scale(1.20); opacity: 1.0; }
-          70%  { transform: scale(1.34); opacity: 0.9; }
-          100% { transform: scale(1.43); opacity: 0; }
+          30%  { transform: scale(1.06); opacity: 1.0; }
+          70%  { transform: scale(1.10); opacity: 0.9; }
+          100% { transform: scale(1.12); opacity: 0; }
         }
         .weekday-zoom-burst {
           transform-box: fill-box;
