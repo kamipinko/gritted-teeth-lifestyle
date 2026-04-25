@@ -1013,8 +1013,8 @@ export default function SummaryPage() {
     }
     const WEEKDAY_PAIRS = [
       { days: [2, 3], flame: 900,  zoom: 2900, cooled: 3400 },
-      { days: [1, 4], flame: 1075, zoom: 3200, cooled: 3575 },
-      { days: [0, 5], flame: 1225, zoom: 3500, cooled: 3725 },
+      { days: [1, 4], flame: 950,  zoom: 2935, cooled: 3435 },
+      { days: [0, 5], flame: 1000, zoom: 2970, cooled: 3470 },
     ]
     WEEKDAY_PAIRS.forEach(({ days, flame, zoom, cooled }) => {
       days.forEach(dayIdx => {
