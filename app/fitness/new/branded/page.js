@@ -461,11 +461,9 @@ export default function SchedulePage() {
 
   const prevMonth = () => {
     setDisplayDate((prev) => { const d = new Date(prev); d.setMonth(d.getMonth() - 1); return d })
-    setSelectedDays(new Set())
   }
   const nextMonth = () => {
     setDisplayDate((prev) => { const d = new Date(prev); d.setMonth(d.getMonth() + 1); return d })
-    setSelectedDays(new Set())
   }
 
   const sheetOpen = selectedDays.size > 0
