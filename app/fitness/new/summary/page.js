@@ -1240,8 +1240,8 @@ export default function SummaryPage() {
             <text textAnchor="start"
               fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
               fontSize="18" fontWeight="600" letterSpacing="6" fill="white">
-              <tspan x="8" y="30">ETCH</tspan>
-              <tspan x="8" y="62">CYCLE</tspan>
+              <tspan x="8" y="40">ETCH</tspan>
+              <tspan x="8" y="72">CYCLE</tspan>
             </text>
           </mask>
         </defs>
@@ -1257,7 +1257,7 @@ export default function SummaryPage() {
             <text textAnchor="start"
               fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
               fontSize="18" fontWeight="600" letterSpacing="6"
-              x="8" y="30"
+              x="8" y="40"
               className={isCooled ? 'inscription-cooled' : (isHot ? 'inscription-hot' : '')}
               fill={(isHot || isCooled) ? '#d4181f' : 'rgba(212, 24, 31, 0.65)'}
               opacity={isFlaming ? 0 : 1}
@@ -1267,9 +1267,9 @@ export default function SummaryPage() {
           )
         })()}
         {watermarkIgnited[0] && (
-          <g transform="rotate(-8 38 24)">
+          <g transform="rotate(-8 38 34)">
             <text
-              x="8" y="30"
+              x="8" y="40"
               textAnchor="start"
               fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
               fontSize="18" fontWeight="600" letterSpacing="6"
@@ -1280,7 +1280,7 @@ export default function SummaryPage() {
           </g>
         )}
         {watermarkZoomed[0] && (
-          <text x="8" y="30" textAnchor="start"
+          <text x="8" y="40" textAnchor="start"
             fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
             fontSize="18" fontWeight="600" letterSpacing="6"
             fill="#ff6600"
@@ -1295,7 +1295,7 @@ export default function SummaryPage() {
             <text textAnchor="start"
               fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
               fontSize="18" fontWeight="600" letterSpacing="6"
-              x="8" y="62"
+              x="8" y="72"
               className={isCooled ? 'inscription-cooled' : (isHot ? 'inscription-hot' : '')}
               fill={(isHot || isCooled) ? '#d4181f' : 'rgba(212, 24, 31, 0.65)'}
               opacity={isFlaming ? 0 : 1}
@@ -1305,9 +1305,9 @@ export default function SummaryPage() {
           )
         })()}
         {watermarkIgnited[1] && (
-          <g transform="rotate(-8 46 56)">
+          <g transform="rotate(-8 46 66)">
             <text
-              x="8" y="62"
+              x="8" y="72"
               textAnchor="start"
               fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
               fontSize="18" fontWeight="600" letterSpacing="6"
@@ -1318,7 +1318,7 @@ export default function SummaryPage() {
           </g>
         )}
         {watermarkZoomed[1] && (
-          <text x="8" y="62" textAnchor="start"
+          <text x="8" y="72" textAnchor="start"
             fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
             fontSize="18" fontWeight="600" letterSpacing="6"
             fill="#ff6600"
