@@ -906,8 +906,11 @@ export default function SummaryPage() {
   const [weekdaysCooledArr, setWeekdaysCooledArr] = useState(() => Array(6).fill(false))
   // Watermark per-line ignition: [ETCH, CYCLE]. Joins the weekday cascade as steps 6 and 7.
   const [watermarkIgnited, setWatermarkIgnited] = useState(() => [false, false])
-  const [watermarkZoomed, setWatermarkZoomed] = useState(() => [false, false])
-  const [watermarkCooled, setWatermarkCooled] = useState(() => [false, false])
+  // Per-letter zoom/cooled. ETCH=4 letters, CYCLE=5. Flame stays whole-word via watermarkIgnited[2].
+  const [etchZoomed,  setEtchZoomed]  = useState(() => Array(4).fill(false))
+  const [etchCooled,  setEtchCooled]  = useState(() => Array(4).fill(false))
+  const [cycleZoomed, setCycleZoomed] = useState(() => Array(5).fill(false))
+  const [cycleCooled, setCycleCooled] = useState(() => Array(5).fill(false))
   const mainRef = useRef(null)
 
   useEffect(() => {
@@ -1008,18 +1011,28 @@ export default function SummaryPage() {
       setWeekdaysIgnited(prev => { const next = [...prev]; next[1] = false; next[4] = false; return next })
       setWeekdaysZoomed(prev => { const next = [...prev]; next[1] = true;  next[4] = true;  return next })
     }, 3200)
-    setTimeout(() => {
-      setWatermarkIgnited(prev => { const next = [...prev]; next[0] = false; return next })
-      setWatermarkZoomed(prev => { const next = [...prev]; next[0] = true;  return next })
-    }, 3050)
+    // ETCH per-letter zoom cascade (50ms stagger, t=3050). Flame off after last letter.
+    for (let i = 0; i < 4; i++) {
+      setTimeout(() => {
+        setEtchZoomed(prev => { const next = [...prev]; next[i] = true; return next })
+        if (i === 3) {
+          setWatermarkIgnited(prev => { const next = [...prev]; next[0] = false; return next })
+        }
+      }, 3050 + i * 50)
+    }
     setTimeout(() => {
       setWeekdaysIgnited(prev => { const next = [...prev]; next[0] = false; next[5] = false; return next })
       setWeekdaysZoomed(prev => { const next = [...prev]; next[0] = true;  next[5] = true;  return next })
     }, 3500)
-    setTimeout(() => {
-      setWatermarkIgnited(prev => { const next = [...prev]; next[1] = false; return next })
-      setWatermarkZoomed(prev => { const next = [...prev]; next[1] = true;  return next })
-    }, 3350)
+    // CYCLE per-letter zoom cascade (50ms stagger, t=3350). Flame off after last letter.
+    for (let i = 0; i < 5; i++) {
+      setTimeout(() => {
+        setCycleZoomed(prev => { const next = [...prev]; next[i] = true; return next })
+        if (i === 4) {
+          setWatermarkIgnited(prev => { const next = [...prev]; next[1] = false; return next })
+        }
+      }, 3350 + i * 50)
+    }
     // Cooled cascade — 700ms after each zoom step (matches blade's hot→cooled fade duration).
     setTimeout(() => {
       setWeekdaysCooledArr(prev => { const next = [...prev]; next[2] = true; next[3] = true; return next })
@@ -1027,15 +1040,21 @@ export default function SummaryPage() {
     setTimeout(() => {
       setWeekdaysCooledArr(prev => { const next = [...prev]; next[1] = true; next[4] = true; return next })
     }, 3775)
-    setTimeout(() => {
-      setWatermarkCooled(prev => { const next = [...prev]; next[0] = true; return next })
-    }, 3690)
+    // ETCH per-letter cooled cascade (50ms stagger, t=3690).
+    for (let i = 0; i < 4; i++) {
+      setTimeout(() => {
+        setEtchCooled(prev => { const next = [...prev]; next[i] = true; return next })
+      }, 3690 + i * 50)
+    }
     setTimeout(() => {
       setWeekdaysCooledArr(prev => { const next = [...prev]; next[0] = true; next[5] = true; return next })
     }, 3925)
-    setTimeout(() => {
-      setWatermarkCooled(prev => { const next = [...prev]; next[1] = true; return next })
-    }, 3850)
+    // CYCLE per-letter cooled cascade (50ms stagger, t=3850).
+    for (let i = 0; i < 5; i++) {
+      setTimeout(() => {
+        setCycleCooled(prev => { const next = [...prev]; next[i] = true; return next })
+      }, 3850 + i * 50)
+    }
 
     setTimeout(() => {
       play('stamp')
@@ -1237,93 +1256,127 @@ export default function SummaryPage() {
         <defs>
           <mask id="watermark-window" maskUnits="userSpaceOnUse" x="0" y="0" width="130" height="78">
             <rect x="0" y="0" width="130" height="78" fill="black"/>
-            <text textAnchor="start"
-              fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-              fontSize="18" fontWeight="600" letterSpacing="6" fill="white">
-              <tspan x="8" y="40">ETCH</tspan>
-              <tspan x="8" y="72">CYCLE</tspan>
-            </text>
+            {[
+              { ch: 'E', x: 8,  y: 40, w: 0, i: 0 },
+              { ch: 'T', x: 26, y: 40, w: 0, i: 1 },
+              { ch: 'C', x: 44, y: 40, w: 0, i: 2 },
+              { ch: 'H', x: 62, y: 40, w: 0, i: 3 },
+              { ch: 'C', x: 8,  y: 72, w: 1, i: 0 },
+              { ch: 'Y', x: 25, y: 72, w: 1, i: 1 },
+              { ch: 'C', x: 43, y: 72, w: 1, i: 2 },
+              { ch: 'L', x: 61, y: 72, w: 1, i: 3 },
+              { ch: 'E', x: 79, y: 72, w: 1, i: 4 },
+            ].map((g, k) => {
+              const zoomed = g.w === 0 ? etchZoomed[g.i] : cycleZoomed[g.i]
+              const lit = !!watermarkIgnited[g.w] && !zoomed
+              return (
+                <text key={`mask-${k}`} x={g.x} y={g.y} textAnchor="start"
+                  fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+                  fontSize="18" fontWeight="600"
+                  fill="white" opacity={lit ? 1 : 0}>
+                  {g.ch}
+                </text>
+              )
+            })}
           </mask>
         </defs>
         {/* Base text — each line rendered as its own <text> so ETCH and CYCLE can be gated
             independently against watermarkIgnited[0] and [1]. Hidden once its own line ignites
             (inscription cheat) so the particle flames are the only visible content. */}
-        {(() => {
-          const isFlaming = !!watermarkIgnited[0]
-          const isZoomed  = !!watermarkZoomed[0]
-          const isCooled  = !!watermarkCooled[0]
+        {/* Per-letter ETCH base text — each letter independently flips zoomed → cooled. */}
+        {['E','T','C','H'].map((ch, i) => {
+          const x = [8, 26, 44, 62][i]
+          const isZoomed  = !!etchZoomed[i]
+          const isCooled  = !!etchCooled[i]
+          const isFlaming = !!watermarkIgnited[0] && !isZoomed
           const isHot     = isZoomed && !isCooled
           return (
-            <text textAnchor="start"
+            <text key={`etch-base-${i}`} x={x} y={40} textAnchor="start"
               fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-              fontSize="18" fontWeight="600" letterSpacing="6"
-              x="8" y="40"
+              fontSize="18" fontWeight="600"
               className={isCooled ? 'inscription-cooled' : (isHot ? 'inscription-hot' : '')}
               fill={(isHot || isCooled) ? '#d4181f' : 'rgba(212, 24, 31, 0.65)'}
               opacity={isFlaming ? 0 : 1}
               style={{ transition: 'opacity 0ms' }}>
-              ETCH
+              {ch}
             </text>
           )
-        })()}
-        {watermarkIgnited[0] && (
-          <g transform="rotate(-8 38 34)">
-            <text
-              x="8" y="40"
-              textAnchor="start"
+        })}
+        {/* Per-letter ETCH engulf bloom — each letter unmounts as it zooms. */}
+        {['E','T','C','H'].map((ch, i) => {
+          if (!watermarkIgnited[0] || etchZoomed[i]) return null
+          const x = [8, 26, 44, 62][i]
+          return (
+            <g key={`etch-engulf-${i}`} transform={`rotate(-8 ${x + 6} 34)`}>
+              <text x={x} y={40} textAnchor="start"
+                fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+                fontSize="18" fontWeight="600"
+                className="weekday-flame-engulf"
+                style={engulfVars(91 + i)}>
+                {ch}
+              </text>
+            </g>
+          )
+        })}
+        {/* Per-letter ETCH zoom-burst — fires per letter on its 50ms cascade. */}
+        {['E','T','C','H'].map((ch, i) => {
+          if (!etchZoomed[i]) return null
+          const x = [8, 26, 44, 62][i]
+          return (
+            <text key={`etch-zoom-${i}`} x={x} y={40} textAnchor="start"
               fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-              fontSize="18" fontWeight="600" letterSpacing="6"
-              className="weekday-flame-engulf"
-              style={engulfVars(91)}>
-              ETCH
-            </text>
-          </g>
-        )}
-        {watermarkZoomed[0] && (
-          <text x="8" y="40" textAnchor="start"
-            fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-            fontSize="18" fontWeight="600" letterSpacing="6"
-            fill="#ff6600"
-            className="watermark-zoom-burst">ETCH</text>
-        )}
-        {(() => {
-          const isFlaming = !!watermarkIgnited[1]
-          const isZoomed  = !!watermarkZoomed[1]
-          const isCooled  = !!watermarkCooled[1]
+              fontSize="18" fontWeight="600"
+              fill="#ff6600"
+              className="watermark-zoom-burst">{ch}</text>
+          )
+        })}
+        {/* Per-letter CYCLE base text — each letter independently flips zoomed → cooled. */}
+        {['C','Y','C','L','E'].map((ch, i) => {
+          const x = [8, 25, 43, 61, 79][i]
+          const isZoomed  = !!cycleZoomed[i]
+          const isCooled  = !!cycleCooled[i]
+          const isFlaming = !!watermarkIgnited[1] && !isZoomed
           const isHot     = isZoomed && !isCooled
           return (
-            <text textAnchor="start"
+            <text key={`cycle-base-${i}`} x={x} y={72} textAnchor="start"
               fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-              fontSize="18" fontWeight="600" letterSpacing="6"
-              x="8" y="72"
+              fontSize="18" fontWeight="600"
               className={isCooled ? 'inscription-cooled' : (isHot ? 'inscription-hot' : '')}
               fill={(isHot || isCooled) ? '#d4181f' : 'rgba(212, 24, 31, 0.65)'}
               opacity={isFlaming ? 0 : 1}
               style={{ transition: 'opacity 0ms' }}>
-              CYCLE
+              {ch}
             </text>
           )
-        })()}
-        {watermarkIgnited[1] && (
-          <g transform="rotate(-8 46 66)">
-            <text
-              x="8" y="72"
-              textAnchor="start"
+        })}
+        {/* Per-letter CYCLE engulf bloom — each letter unmounts as it zooms. */}
+        {['C','Y','C','L','E'].map((ch, i) => {
+          if (!watermarkIgnited[1] || cycleZoomed[i]) return null
+          const x = [8, 25, 43, 61, 79][i]
+          return (
+            <g key={`cycle-engulf-${i}`} transform={`rotate(-8 ${x + 6} 66)`}>
+              <text x={x} y={72} textAnchor="start"
+                fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+                fontSize="18" fontWeight="600"
+                className="weekday-flame-engulf"
+                style={engulfVars(95 + i)}>
+                {ch}
+              </text>
+            </g>
+          )
+        })}
+        {/* Per-letter CYCLE zoom-burst — fires per letter on its 50ms cascade. */}
+        {['C','Y','C','L','E'].map((ch, i) => {
+          if (!cycleZoomed[i]) return null
+          const x = [8, 25, 43, 61, 79][i]
+          return (
+            <text key={`cycle-zoom-${i}`} x={x} y={72} textAnchor="start"
               fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-              fontSize="18" fontWeight="600" letterSpacing="6"
-              className="weekday-flame-engulf"
-              style={engulfVars(92)}>
-              CYCLE
-            </text>
-          </g>
-        )}
-        {watermarkZoomed[1] && (
-          <text x="8" y="72" textAnchor="start"
-            fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-            fontSize="18" fontWeight="600" letterSpacing="6"
-            fill="#ff6600"
-            className="watermark-zoom-burst">CYCLE</text>
-        )}
+              fontSize="18" fontWeight="600"
+              fill="#ff6600"
+              className="watermark-zoom-burst">{ch}</text>
+          )
+        })}
         {/* Particles AFTER — clipped to letter silhouettes via the mask, paint on top of the
             void-black base so the flames show through the letter shapes. */}
         {watermarkIgnited.some(Boolean) && (
