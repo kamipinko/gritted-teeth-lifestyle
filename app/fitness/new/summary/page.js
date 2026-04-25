@@ -1012,7 +1012,7 @@ export default function SummaryPage() {
     // Direction depends on day side: left-side R-to-L, right-side L-to-R.
     const letterStaggerOffsetFast = (dayIdx, L) => {
       const isLeftSide = dayIdx < 3
-      return isLeftSide ? (2 - L) * 35 : L * 35
+      return isLeftSide ? (2 - L) * 50 : L * 50
     }
     const letterStaggerOffsetSlow = (dayIdx, L) => {
       const isLeftSide = dayIdx < 3
@@ -1020,8 +1020,8 @@ export default function SummaryPage() {
     }
     const WEEKDAY_PAIRS = [
       { days: [2, 3], flame: 900,  zoom: 2900, cooled: 3400 },
-      { days: [1, 4], flame: 950,  zoom: 2935, cooled: 3435 },
-      { days: [0, 5], flame: 1000, zoom: 2970, cooled: 3470 },
+      { days: [1, 4], flame: 950,  zoom: 2950, cooled: 3450 },
+      { days: [0, 5], flame: 1000, zoom: 3000, cooled: 3500 },
     ]
     WEEKDAY_PAIRS.forEach(({ days, flame, zoom, cooled }) => {
       days.forEach(dayIdx => {
@@ -1053,27 +1053,27 @@ export default function SummaryPage() {
       setTimeout(() => {
         setEtchIgnited(prev => { const next = [...prev]; next[i] = false; return next })
         setEtchZoomed(prev  => { const next = [...prev]; next[i] = true;  return next })
-      }, 3050 + i * 35)
+      }, 3050 + i * 50)
     }
     // CYCLE per-letter zoom cascade (35ms stagger, t=3085 — letter 1 at ETCH letter 2 time).
     for (let i = 0; i < 5; i++) {
       setTimeout(() => {
         setCycleIgnited(prev => { const next = [...prev]; next[i] = false; return next })
         setCycleZoomed(prev  => { const next = [...prev]; next[i] = true;  return next })
-      }, 3085 + i * 35)
+      }, 3100 + i * 50)
     }
     // Cooled cascade — 700ms after each zoom step (matches blade's hot→cooled fade duration).
     // ETCH per-letter cooled cascade (50ms stagger, t=3690).
     for (let i = 0; i < 4; i++) {
       setTimeout(() => {
         setEtchCooled(prev => { const next = [...prev]; next[i] = true; return next })
-      }, 3490 + i * 35)
+      }, 3490 + i * 50)
     }
     // CYCLE per-letter cooled cascade (50ms stagger, t=3850).
     for (let i = 0; i < 5; i++) {
       setTimeout(() => {
         setCycleCooled(prev => { const next = [...prev]; next[i] = true; return next })
-      }, 3525 + i * 35)
+      }, 3540 + i * 50)
     }
 
     setTimeout(() => {
