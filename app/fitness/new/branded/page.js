@@ -355,20 +355,29 @@ export default function SchedulePage() {
     return cellDate < todayFlat
   }
 
-  // Tap: toggle in/out of selection batch. Keep assigned muscles on deselect.
+  // Tap: toggle in/out of selection batch. Unselecting clears that day's muscles.
   const tapDay = useCallback((d) => {
     if (isPast(d)) return
     play('option-select')
     const key = isoKey(d)
+    const wasSelected = selectedDays.has(key)
     setSelectedDays((prev) => {
       const n = new Set(prev)
       if (n.has(key)) n.delete(key)
       else n.add(key)
       return n
     })
-  }, [year, month, today, play])
+    if (wasSelected) {
+      setAssignments((prev) => {
+        if (!(key in prev)) return prev
+        const next = { ...prev }
+        delete next[key]
+        return next
+      })
+    }
+  }, [year, month, today, play, selectedDays])
 
-  // Swipe helpers: add or remove based on mode
+  // Swipe helpers: add or remove based on mode. Removing clears assigned muscles.
   const swipeApply = useCallback((d, mode) => {
     if (isPast(d)) return
     const key = isoKey(d)
@@ -378,6 +387,14 @@ export default function SchedulePage() {
       else n.delete(key)
       return n
     })
+    if (mode === 'remove') {
+      setAssignments((prev) => {
+        if (!(key in prev)) return prev
+        const next = { ...prev }
+        delete next[key]
+        return next
+      })
+    }
   }, [year, month, today])
 
   // Touch handlers for swipe-to-select/deselect.
