@@ -1266,13 +1266,11 @@ export default function SummaryPage() {
           </g>
         )}
         {watermarkZoomed[0] && (
-          <g transform="rotate(-8 38 24)">
-            <text x="8" y="30" textAnchor="start"
-              fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-              fontSize="18" fontWeight="600" letterSpacing="6"
-              fill="#ff6600"
-              className="weekday-zoom-burst">ETCH</text>
-          </g>
+          <text x="8" y="30" textAnchor="start"
+            fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+            fontSize="18" fontWeight="600" letterSpacing="6"
+            fill="#ff6600"
+            className="weekday-zoom-burst">ETCH</text>
         )}
         {(() => {
           const isFlaming = !!watermarkIgnited[1]
@@ -1306,13 +1304,11 @@ export default function SummaryPage() {
           </g>
         )}
         {watermarkZoomed[1] && (
-          <g transform="rotate(-8 46 56)">
-            <text x="8" y="62" textAnchor="start"
-              fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-              fontSize="18" fontWeight="600" letterSpacing="6"
-              fill="#ff6600"
-              className="weekday-zoom-burst">CYCLE</text>
-          </g>
+          <text x="8" y="62" textAnchor="start"
+            fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+            fontSize="18" fontWeight="600" letterSpacing="6"
+            fill="#ff6600"
+            className="weekday-zoom-burst">CYCLE</text>
         )}
         {/* Particles AFTER — clipped to letter silhouettes via the mask, paint on top of the
             void-black base so the flames show through the letter shapes. */}
