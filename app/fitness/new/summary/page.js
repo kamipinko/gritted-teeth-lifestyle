@@ -987,7 +987,7 @@ export default function SummaryPage() {
       }, 1600 + 1600 + i * 350)
     }
     setTimeout(() => setGlowIntensity('off'),       3040)   // last zoom cascade slot ends (1600 + 220*5 + 340)
-    setTimeout(() => setStampVisible(true),         4040)   // stamp flies in after weekday/watermark zoom cascade finishes (avoids compositor collision)
+    setTimeout(() => setStampVisible(true),         4190)   // stamp flies in after weekday/watermark zoom cascade finishes (avoids compositor collision)
     // Middle-out symmetric cascade, 70ms stagger, starts t=700.
     // Step 0 (t=700): innermost pair (days 3+4) + ETCH + CYCLE ignite together.
     // Step 1 (t=770): days 2+5. Step 2 (t=840): outermost pair (days 1+6).
@@ -1023,9 +1023,9 @@ export default function SummaryPage() {
       return isLeftSide ? (2 - L) * 50 : L * 50
     }
     const WEEKDAY_PAIRS = [
-      { days: [2, 3], flame: 900,  zoom: 2900, cooled: 3400 },
-      { days: [1, 4], flame: 950,  zoom: 2950, cooled: 3475 },
-      { days: [0, 5], flame: 1000, zoom: 3000, cooled: 3550 },
+      { days: [2, 3], flame: 900,  zoom: 2900, cooled: 3550 },
+      { days: [1, 4], flame: 950,  zoom: 2950, cooled: 3625 },
+      { days: [0, 5], flame: 1000, zoom: 3000, cooled: 3700 },
     ]
     WEEKDAY_PAIRS.forEach(({ days, flame, zoom, cooled }) => {
       days.forEach(dayIdx => {
@@ -1071,13 +1071,13 @@ export default function SummaryPage() {
     for (let i = 0; i < 4; i++) {
       setTimeout(() => {
         setEtchCooled(prev => { const next = [...prev]; next[i] = true; return next })
-      }, 3490 + i * 75)
+      }, 3640 + i * 75)
     }
     // CYCLE per-letter cooled cascade (50ms stagger, t=3850).
     for (let i = 0; i < 5; i++) {
       setTimeout(() => {
         setCycleCooled(prev => { const next = [...prev]; next[i] = true; return next })
-      }, 3565 + i * 75)
+      }, 3715 + i * 75)
     }
 
     setTimeout(() => {
@@ -1100,10 +1100,10 @@ export default function SummaryPage() {
           { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
         )
       }
-    }, 4705)   // stamp lands (665ms after fly-in)
+    }, 4855)   // stamp lands (665ms after fly-in)
 
-    setTimeout(() => play('stamp'),       4790)
-    setTimeout(() => setFireActive(true), 5750)
+    setTimeout(() => play('stamp'),       4940)
+    setTimeout(() => setFireActive(true), 5900)
   }
 
   const cols = days.length <= 5 ? days.length
