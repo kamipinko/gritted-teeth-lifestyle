@@ -946,31 +946,26 @@ export default function SummaryPage() {
     // Middle-out symmetric cascade, 70ms stagger, starts t=700.
     // Step 0 (t=700): innermost pair (days 3+4) + ETCH + CYCLE ignite together.
     // Step 1 (t=770): days 2+5. Step 2 (t=840): outermost pair (days 1+6).
-    // Day-5-focal cascade: ETCH/CYCLE anchored to day 5 (wi=4), radiating outward through
-    // the symmetric 4+6 pair, then continuing left through days 3, 2, 1 one-by-one.
-    // Step 0 — day 5 alone + ETCH + CYCLE
+    // Middle-out pairs with split watermark: ETCH fires with the inner pair, CYCLE follows
+    // a step later with the middle pair (so each watermark line is anchored to a weekday).
+    // Step 0 — inner pair (days 3+4) + ETCH
     setTimeout(() => {
-      setWeekdaysIgnited(prev => { const next = [...prev]; next[4] = true; return next })
+      setWeekdaysIgnited(prev => { const next = [...prev]; next[2] = true; next[3] = true; return next })
     }, 800)
     setTimeout(() => {
-      setWatermarkIgnited(() => [true, true])
+      setWatermarkIgnited(prev => { const next = [...prev]; next[0] = true; return next })
     }, 800)
-    // Step 1 — days 4 + 6
+    // Step 1 — middle pair (days 2+5) + CYCLE
     setTimeout(() => {
-      setWeekdaysIgnited(prev => { const next = [...prev]; next[3] = true; next[5] = true; return next })
+      setWeekdaysIgnited(prev => { const next = [...prev]; next[1] = true; next[4] = true; return next })
     }, 975)
-    // Step 2 — day 3
     setTimeout(() => {
-      setWeekdaysIgnited(prev => { const next = [...prev]; next[2] = true; return next })
+      setWatermarkIgnited(prev => { const next = [...prev]; next[1] = true; return next })
+    }, 975)
+    // Step 2 — outer pair (days 1+6)
+    setTimeout(() => {
+      setWeekdaysIgnited(prev => { const next = [...prev]; next[0] = true; next[5] = true; return next })
     }, 1125)
-    // Step 3 — day 2
-    setTimeout(() => {
-      setWeekdaysIgnited(prev => { const next = [...prev]; next[1] = true; return next })
-    }, 1275)
-    // Step 4 — day 1
-    setTimeout(() => {
-      setWeekdaysIgnited(prev => { const next = [...prev]; next[0] = true; return next })
-    }, 1425)
 
     setTimeout(() => {
       play('stamp')
@@ -1135,7 +1130,7 @@ export default function SummaryPage() {
         viewBox="0 0 130 78"
         style={{
           bottom: 'calc(20px + 128px + 40px)',
-          right: '20px',
+          right: '12px',
           transform: 'rotate(8deg)',
           transformOrigin: 'right bottom',
           overflow: 'visible',
