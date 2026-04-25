@@ -987,14 +987,14 @@ export default function SummaryPage() {
     }, 1075)
     setTimeout(() => {
       setWatermarkIgnited(prev => { const next = [...prev]; next[0] = true; return next })
-    }, 1075)
+    }, 985)
     // Step 2 — outer pair (days 1+6) + CYCLE
     setTimeout(() => {
       setWeekdaysIgnited(prev => { const next = [...prev]; next[0] = true; next[5] = true; return next })
     }, 1225)
     setTimeout(() => {
       setWatermarkIgnited(prev => { const next = [...prev]; next[1] = true; return next })
-    }, 1475)
+    }, 1150)
 
     // Weekday + ETCH/CYCLE zoom-burst cascade — fires after the blade's final inscription
     // zoom (t=2600), mirroring the same middle-out 175/150ms stagger. Each step also flips
@@ -1011,7 +1011,7 @@ export default function SummaryPage() {
     setTimeout(() => {
       setWatermarkIgnited(prev => { const next = [...prev]; next[0] = false; return next })
       setWatermarkZoomed(prev => { const next = [...prev]; next[0] = true;  return next })
-    }, 3200)
+    }, 3050)
     setTimeout(() => {
       setWeekdaysIgnited(prev => { const next = [...prev]; next[0] = false; next[5] = false; return next })
       setWeekdaysZoomed(prev => { const next = [...prev]; next[0] = true;  next[5] = true;  return next })
@@ -1019,7 +1019,7 @@ export default function SummaryPage() {
     setTimeout(() => {
       setWatermarkIgnited(prev => { const next = [...prev]; next[1] = false; return next })
       setWatermarkZoomed(prev => { const next = [...prev]; next[1] = true;  return next })
-    }, 3800)
+    }, 3350)
     // Cooled cascade — 700ms after each zoom step (matches blade's hot→cooled fade duration).
     setTimeout(() => {
       setWeekdaysCooledArr(prev => { const next = [...prev]; next[2] = true; next[3] = true; return next })
@@ -1029,13 +1029,13 @@ export default function SummaryPage() {
     }, 3775)
     setTimeout(() => {
       setWatermarkCooled(prev => { const next = [...prev]; next[0] = true; return next })
-    }, 3775)
+    }, 3690)
     setTimeout(() => {
       setWeekdaysCooledArr(prev => { const next = [...prev]; next[0] = true; next[5] = true; return next })
     }, 3925)
     setTimeout(() => {
       setWatermarkCooled(prev => { const next = [...prev]; next[1] = true; return next })
-    }, 4575)
+    }, 3850)
 
     setTimeout(() => {
       play('stamp')
