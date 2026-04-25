@@ -946,21 +946,17 @@ export default function SummaryPage() {
     // Middle-out symmetric cascade, 70ms stagger, starts t=700.
     // Step 0 (t=700): innermost pair (days 3+4) + ETCH + CYCLE ignite together.
     // Step 1 (t=770): days 2+5. Step 2 (t=840): outermost pair (days 1+6).
-    // Middle-out pairs with split watermark: ETCH fires with the inner pair, CYCLE follows
-    // a step later with the middle pair (so each watermark line is anchored to a weekday).
-    // Step 0 — inner pair (days 3+4) + ETCH
+    // Middle-out pairs. ETCH+CYCLE fire together as a unit, locked to day 5's step (step 1).
+    // Step 0 — innermost pair (days 3+4) only
     setTimeout(() => {
       setWeekdaysIgnited(prev => { const next = [...prev]; next[2] = true; next[3] = true; return next })
     }, 800)
-    setTimeout(() => {
-      setWatermarkIgnited(prev => { const next = [...prev]; next[0] = true; return next })
-    }, 800)
-    // Step 1 — middle pair (days 2+5) + CYCLE
+    // Step 1 — middle pair (days 2+5) + ETCH + CYCLE together
     setTimeout(() => {
       setWeekdaysIgnited(prev => { const next = [...prev]; next[1] = true; next[4] = true; return next })
     }, 975)
     setTimeout(() => {
-      setWatermarkIgnited(prev => { const next = [...prev]; next[1] = true; return next })
+      setWatermarkIgnited(() => [true, true])
     }, 975)
     // Step 2 — outer pair (days 1+6)
     setTimeout(() => {
