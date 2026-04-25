@@ -1206,6 +1206,20 @@ export default function SummaryPage() {
           filter: drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 16px #ff4400);
           pointer-events: none;
         }
+        @keyframes watermark-zoom {
+          0%   { transform: scale(1);    opacity: 1.0; }
+          30%  { transform: scale(1.03); opacity: 1.0; }
+          70%  { transform: scale(1.05); opacity: 0.9; }
+          100% { transform: scale(1.06); opacity: 0; }
+        }
+        .watermark-zoom-burst {
+          transform-box: fill-box;
+          transform-origin: center;
+          animation: watermark-zoom 340ms ease-out forwards;
+          mix-blend-mode: plus-lighter;
+          filter: drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 16px #ff4400);
+          pointer-events: none;
+        }
       `}</style>
       <svg
         aria-hidden="true"
@@ -1213,7 +1227,7 @@ export default function SummaryPage() {
         width={130} height={78}
         viewBox="0 0 130 78"
         style={{
-          bottom: 'calc(20px + 128px + 40px)',
+          bottom: 'calc(20px + 128px + 25px)',
           right: '12px',
           transform: 'rotate(8deg)',
           transformOrigin: 'right bottom',
@@ -1270,7 +1284,7 @@ export default function SummaryPage() {
             fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
             fontSize="18" fontWeight="600" letterSpacing="6"
             fill="#ff6600"
-            className="weekday-zoom-burst">ETCH</text>
+            className="watermark-zoom-burst">ETCH</text>
         )}
         {(() => {
           const isFlaming = !!watermarkIgnited[1]
@@ -1308,7 +1322,7 @@ export default function SummaryPage() {
             fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
             fontSize="18" fontWeight="600" letterSpacing="6"
             fill="#ff6600"
-            className="weekday-zoom-burst">CYCLE</text>
+            className="watermark-zoom-burst">CYCLE</text>
         )}
         {/* Particles AFTER — clipped to letter silhouettes via the mask, paint on top of the
             void-black base so the flames show through the letter shapes. */}
