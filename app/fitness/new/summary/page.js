@@ -973,7 +973,7 @@ export default function SummaryPage() {
       }, 1500 + 1600 + i * 350)
     }
     setTimeout(() => setGlowIntensity('off'),       2940)   // last zoom cascade slot ends (1500 + 220*5 + 340)
-    setTimeout(() => setStampVisible(true),         2940)   // stamp flies in after zoom cascade finishes
+    setTimeout(() => setStampVisible(true),         3400)   // stamp flies in after weekday/watermark zoom cascade finishes (avoids compositor collision)
     // Middle-out symmetric cascade, 70ms stagger, starts t=700.
     // Step 0 (t=700): innermost pair (days 3+4) + ETCH + CYCLE ignite together.
     // Step 1 (t=770): days 2+5. Step 2 (t=840): outermost pair (days 1+6).
@@ -1059,9 +1059,9 @@ export default function SummaryPage() {
           { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
         )
       }
-    }, 3605)   // stamp lands (665ms after fly-in)
+    }, 4065)   // stamp lands (665ms after fly-in)
 
-    setTimeout(() => play('stamp'),       3690)
+    setTimeout(() => play('stamp'),       4150)
     setTimeout(() => setFireActive(true), 5900)
   }
 
