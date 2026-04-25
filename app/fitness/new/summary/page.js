@@ -973,7 +973,7 @@ export default function SummaryPage() {
       }, 1500 + 1600 + i * 350)
     }
     setTimeout(() => setGlowIntensity('off'),       2940)   // last zoom cascade slot ends (1500 + 220*5 + 340)
-    setTimeout(() => setStampVisible(true),         3400)   // stamp flies in after weekday/watermark zoom cascade finishes (avoids compositor collision)
+    setTimeout(() => setStampVisible(true),         3990)   // stamp flies in after weekday/watermark zoom cascade finishes (avoids compositor collision)
     // Middle-out symmetric cascade, 70ms stagger, starts t=700.
     // Step 0 (t=700): innermost pair (days 3+4) + ETCH + CYCLE ignite together.
     // Step 1 (t=770): days 2+5. Step 2 (t=840): outermost pair (days 1+6).
@@ -1009,19 +1009,19 @@ export default function SummaryPage() {
     setTimeout(() => {
       setWeekdaysIgnited(prev => { const next = [...prev]; next[1] = false; next[4] = false; return next })
       setWeekdaysZoomed(prev => { const next = [...prev]; next[1] = true;  next[4] = true;  return next })
-    }, 2875)
+    }, 3000)
     setTimeout(() => {
       setWatermarkIgnited(prev => { const next = [...prev]; next[0] = false; return next })
       setWatermarkZoomed(prev => { const next = [...prev]; next[0] = true;  return next })
-    }, 2875)
+    }, 3000)
     setTimeout(() => {
       setWeekdaysIgnited(prev => { const next = [...prev]; next[0] = false; next[5] = false; return next })
       setWeekdaysZoomed(prev => { const next = [...prev]; next[0] = true;  next[5] = true;  return next })
-    }, 3025)
+    }, 3300)
     setTimeout(() => {
       setWatermarkIgnited(prev => { const next = [...prev]; next[1] = false; return next })
       setWatermarkZoomed(prev => { const next = [...prev]; next[1] = true;  return next })
-    }, 3275)
+    }, 3600)
     // Cooled cascade — 700ms after each zoom step (matches blade's hot→cooled fade duration).
     setTimeout(() => {
       setWeekdaysCooledArr(prev => { const next = [...prev]; next[2] = true; next[3] = true; return next })
@@ -1059,9 +1059,9 @@ export default function SummaryPage() {
           { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' }
         )
       }
-    }, 4065)   // stamp lands (665ms after fly-in)
+    }, 4655)   // stamp lands (665ms after fly-in)
 
-    setTimeout(() => play('stamp'),       4150)
+    setTimeout(() => play('stamp'),       4740)
     setTimeout(() => setFireActive(true), 5900)
   }
 
