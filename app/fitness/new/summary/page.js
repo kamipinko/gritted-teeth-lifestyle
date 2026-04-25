@@ -713,6 +713,359 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
   )
 }
 
+/* ── CYCLE DRILL (8–13 days) ──
+ * Sister of CycleBlade. Renders the Gurren-Lagann core-drill silhouette as
+ * substrate (public/reference/drill.svg, viewBox 600x1000), with day inscriptions
+ * locked to cone-band centers and a 2x3 grid in the rectangular base. Weekday
+ * labels alternate along anchor sides. Per-letter yakiire (canonical 50ms flame /
+ * 50ms zoom / 75ms cooled stagger) cascades on weekday labels exactly like blade.
+ */
+function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [], weekdayLetterIgnited = [], weekdayLetterZoomed = [], weekdayLetterCooled = [] }) {
+  const N = days.length
+  const anyGlowing = glowingDays.some(Boolean)
+  const anyWeekdayIgnited = Array.isArray(weekdayLetterIgnited) && weekdayLetterIgnited.some(Boolean)
+
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
+  // 13 anchor slots — 7 cone bands (top→bottom) + 6 base grid cells (2 cols × 3 rows).
+  // Cone anchors center on x=300; base anchors split into left (x=224) and right (x=370).
+  // Sides alternate top→bottom on the cone and follow column membership in the base.
+  const ALL_ANCHORS = [
+    { x: 300, y: 78,  side: 'right' }, // cone band 0 (apex)
+    { x: 300, y: 155, side: 'left'  },
+    { x: 300, y: 233, side: 'right' },
+    { x: 300, y: 310, side: 'left'  },
+    { x: 300, y: 387, side: 'right' },
+    { x: 300, y: 464, side: 'left'  },
+    { x: 300, y: 541, side: 'right' }, // cone band 6 (widest)
+    { x: 224, y: 688, side: 'left'  }, // base row 0 col L
+    { x: 370, y: 688, side: 'right' }, // base row 0 col R
+    { x: 224, y: 782, side: 'left'  },
+    { x: 370, y: 782, side: 'right' },
+    { x: 224, y: 876, side: 'left'  },
+    { x: 370, y: 876, side: 'right' },
+  ]
+  const anchors = ALL_ANCHORS.slice(0, Math.min(N, ALL_ANCHORS.length))
+
+  const dayLabels = days.map((iso, i) => {
+    const d = parseDate(iso)
+    const num = String(d.getDate())
+    const muscles = dailyPlan[iso] || []
+    const hasWork = muscles.length > 0
+    const kanjiStr = hasWork
+      ? muscles.map((m) => MUSCLE_KANJI[m] || '?').join('')
+      : '休'
+    const a = anchors[i] || anchors[anchors.length - 1]
+    return { num, hasWork, kanjiStr, iso, cx: a.x, cy: a.y, side: a.side }
+  })
+
+  // Day-number rendering — single-letter inscription at anchor with depth stack
+  // (mirrors CycleBlade's renderText pattern but smaller). hot=true paints the
+  // post-flame orange stack; cooled cools it via the .inscription-cooled keyframe.
+  const NUM_FONT_SIZE = 32
+  const NUM_FONT = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+  const renderNum = (numStr, { hot = false, maskFill = null } = {}) => {
+    const DEPTH_STACK_RED = [
+      { dy: 2, fill: '#3a0608' },
+      { dy: 1, fill: '#9e1118' },
+      { dy: 0, fill: '#d4181f' },
+    ]
+    const DEPTH_STACK_HOT = [
+      { dy: 2, fill: '#ffe0a0' },
+      { dy: 1, fill: '#d85a10' },
+      { dy: 0, fill: '#ff6600' },
+    ]
+    const stack = maskFill ? [{ dy: 0, fill: maskFill }] : (hot ? DEPTH_STACK_HOT : DEPTH_STACK_RED)
+    return stack.map((layer, li) => (
+      <text key={`num-${li}`} x={0} y={layer.dy} textAnchor="middle" dominantBaseline="central"
+        style={{ fontFamily: NUM_FONT, fontSize: `${NUM_FONT_SIZE}px`, fontWeight: 700, fill: layer.fill }}>
+        {numStr}
+      </text>
+    ))
+  }
+
+  // Weekday-label horizontal advance per letter and label position helper.
+  // Weekday labels sit just outside the drill silhouette on the chosen side.
+  const WEEKDAY_FONT_SIZE = 30
+  const WEEKDAY_ADVANCE = 30
+  const weekdayLabelX = (side) => side === 'left' ? 154 : 446
+  const weekdayLetterX = (side, labelX, L) =>
+    side === 'left' ? labelX - (2 - L) * WEEKDAY_ADVANCE : labelX + L * WEEKDAY_ADVANCE
+
+  return (
+    <section className="relative z-10 py-2 px-2 pointer-events-none min-h-[calc(100vh-7px)]">
+      <div>
+        {/* Drill container — full-viewport-width, bottom-anchored so the base sits near
+            the lower portion of the screen and the apex extends upward through the safe area. */}
+        <div style={{ position: 'absolute', top: '40px', left: 0, width: '100vw', maxWidth: 'none' }}>
+          {/* Drill silhouette substrate — same SVG file we render below, but as <img>
+              so paint/raster-layout precedes the overlay's text/particles. */}
+          {mounted && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src="/reference/drill.svg"
+              alt="Drill"
+              className="block w-full h-auto"
+              style={{ filter: 'drop-shadow(0 4px 14px rgba(0,0,0,0.55))' }}
+            />
+          )}
+
+          {/* Overlay — same viewBox as the drill SVG so anchor coords match exactly. */}
+          <svg
+            viewBox="0 0 600 1000"
+            className="absolute inset-0 w-full h-auto pointer-events-none"
+            aria-hidden="true"
+          >
+            <defs>
+              {/* Inscription mask — particles flow through ignited day-number silhouettes. */}
+              <mask id="drill-inscription-window" maskUnits="userSpaceOnUse" x="0" y="0" width="600" height="1000">
+                <rect x="0" y="0" width="600" height="1000" fill="black"/>
+                {dayLabels.map((dl, i) => glowingDays[i] ? (
+                  <g key={`drill-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
+                    <text x={0} y={0} textAnchor="middle" dominantBaseline="central"
+                      style={{ fontFamily: NUM_FONT, fontSize: `${NUM_FONT_SIZE}px`, fontWeight: 700, fill: 'white' }}>
+                      {dl.num}
+                    </text>
+                  </g>
+                ) : null)}
+              </mask>
+              {/* Weekday-label mask — particles clipped to weekday letter silhouettes. */}
+              <mask id="drill-weekday-window" maskUnits="userSpaceOnUse" x="0" y="0" width="600" height="1000">
+                <rect x="0" y="0" width="600" height="1000" fill="black"/>
+                {dayLabels.map((dl, i) => {
+                  const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
+                  const labelX = weekdayLabelX(dl.side)
+                  return (
+                    <g key={`drill-wd-mask-${dl.iso}`}>
+                      {dow.split('').map((ch, L) => {
+                        const lit = !!weekdayLetterIgnited[i * 3 + L]
+                        const x = weekdayLetterX(dl.side, labelX, L)
+                        return (
+                          <text key={`drill-wd-mask-${dl.iso}-${L}`}
+                            x={x} y={dl.cy}
+                            textAnchor={dl.side === 'left' ? 'start' : 'start'}
+                            dominantBaseline="central"
+                            style={{
+                              fontFamily: '"Noto Serif JP", Georgia, serif',
+                              fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                              fontWeight: 700,
+                              fill: 'white',
+                              opacity: lit ? 1 : 0,
+                            }}>
+                            {ch}
+                          </text>
+                        )
+                      })}
+                    </g>
+                  )
+                })}
+              </mask>
+            </defs>
+
+            {/* Inscription particle aura — clipped to day-number silhouettes. */}
+            {anyGlowing && (
+              <g mask="url(#drill-inscription-window)" style={{ pointerEvents: 'none' }}>
+                <rect x="0" y="0" width="600" height="1000" fill="#0a0a0a"/>
+                {(() => {
+                  const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
+                  return dayLabels.flatMap((dl, dayIdx) => {
+                    if (!glowingDays[dayIdx]) return []
+                    const PARTS = 8
+                    return Array.from({ length: PARTS }).map((_, i) => {
+                      const k = i + dayIdx * 23
+                      const rX    = hash01(k * 1)
+                      const rDly  = hash01(k * 3 + 11)
+                      const rDur  = hash01(k * 5 + 17)
+                      const rRise = hash01(k * 7 + 19)
+                      const rSize = hash01(k * 11 + 23)
+                      const rPeak = hash01(k * 13 + 29)
+                      const xOff  = (rX - 0.5) * 60
+                      const delay = (rDly * 540) % 600
+                      const dur   = 130 + rDur * 150
+                      const rise  = 60 + rRise * 50
+                      const size  = 7 + rSize * 11
+                      const peakA = 0.5 + rPeak * 0.5
+                      return (
+                        <circle key={`${dl.iso}-sp${i}`} cx={dl.cx + xOff} cy={dl.cy + 28} r={size} fill="#ff5000" opacity={0}>
+                          <animateTransform attributeName="transform" type="translate"
+                            values={`0 0; 0 -${rise.toFixed(0)}`}
+                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                          <animate attributeName="opacity"
+                            values={`0; ${peakA.toFixed(2)}; 0`}
+                            keyTimes="0; 0.2; 1"
+                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                        </circle>
+                      )
+                    })
+                  })
+                })()}
+              </g>
+            )}
+
+            {/* Day-number base inscriptions — per-day hot/cooled gating. */}
+            <style>{`
+              .drill-inscription-hot    { animation: inscription-hot-hold 100ms forwards; }
+              .drill-inscription-cooled { animation: inscription-cool-down 1000ms ease-out forwards; }
+            `}</style>
+            {dayLabels.map((dl, i) => {
+              const hot = !!hotDays[i]
+              const cooled = !!cooledDays[i]
+              const flameOn = !!glowingDays[i]
+              const cls = cooled ? 'drill-inscription-cooled' : (hot ? 'drill-inscription-hot' : '')
+              return (
+                <g key={dl.iso}
+                   className={cls}
+                   style={{
+                     mixBlendMode: hot ? 'normal' : 'difference',
+                     opacity: flameOn ? 0 : 1,
+                     transition: 'opacity 0ms',
+                   }}>
+                  <g transform={`translate(${dl.cx},${dl.cy})`}>
+                    {renderNum(dl.num, { hot })}
+                  </g>
+                </g>
+              )
+            })}
+
+            {/* Zoom-burst — fires during 'peak' glow phase. */}
+            {glowIntensity === 'peak' && (
+              <g style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
+                {dayLabels.map((dl, i) => (
+                  <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
+                    <g className="zoom-glyph" style={{ animationDelay: `${i * 220}ms`,
+                          transformBox: 'fill-box', transformOrigin: 'center',
+                          animation: `inscription-zoom 340ms ease-out forwards ${i * 220}ms`,
+                          mixBlendMode: 'plus-lighter',
+                          filter: 'drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 16px #ff4400)',
+                          opacity: 0,
+                       }}>
+                      {renderNum(dl.num, { maskFill: '#ff6600' })}
+                    </g>
+                  </g>
+                ))}
+              </g>
+            )}
+
+            {/* Weekday labels — per-letter yakiire mirrors CycleBlade pattern. */}
+            <g>
+              {dayLabels.map((dl, i) => {
+                const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
+                const labelX = weekdayLabelX(dl.side)
+                return (
+                  <g key={`dow-${dl.iso}`}>
+                    {dow.split('').map((ch, L) => {
+                      const flatIdx = i * 3 + L
+                      const isFlaming = !!weekdayLetterIgnited[flatIdx]
+                      const isZoomed  = !!weekdayLetterZoomed[flatIdx]
+                      const isCooled  = !!weekdayLetterCooled[flatIdx]
+                      const isHot     = isZoomed && !isCooled
+                      const fill      = (isHot || isCooled) ? '#d4181f' : '#b0a898'
+                      const baseAlpha = (isHot || isCooled) ? 1 : 0.7
+                      const textOpacity = isFlaming ? 0 : baseAlpha
+                      const textClass = isCooled ? 'drill-inscription-cooled' : (isHot ? 'drill-inscription-hot' : '')
+                      const x = weekdayLetterX(dl.side, labelX, L)
+                      return (
+                        <g key={`dow-${dl.iso}-${L}`}>
+                          <text
+                            x={x} y={dl.cy}
+                            textAnchor="start"
+                            dominantBaseline="central"
+                            className={textClass}
+                            style={{
+                              fontFamily: '"Noto Serif JP", Georgia, serif',
+                              fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                              fontWeight: 700,
+                              fill,
+                              opacity: textOpacity,
+                              transition: 'opacity 0ms',
+                            }}>
+                            {ch}
+                          </text>
+                          {isZoomed && (
+                            <text
+                              x={x} y={dl.cy}
+                              textAnchor="start"
+                              dominantBaseline="central"
+                              className="weekday-zoom-burst"
+                              style={{
+                                fontFamily: '"Noto Serif JP", Georgia, serif',
+                                fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                                fontWeight: 700,
+                                fill: '#ff6600',
+                              }}>
+                              {ch}
+                            </text>
+                          )}
+                          {isFlaming && (
+                            <text
+                              x={x} y={dl.cy}
+                              textAnchor="start"
+                              dominantBaseline="central"
+                              className="weekday-flame-engulf"
+                              style={{
+                                ...engulfVars(i * 13 + L + 7),
+                                fontFamily: '"Noto Serif JP", Georgia, serif',
+                                fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                                fontWeight: 700,
+                              }}>
+                              {ch}
+                            </text>
+                          )}
+                        </g>
+                      )
+                    })}
+                  </g>
+                )
+              })}
+            </g>
+
+            {/* Weekday particle aura — clipped to weekday letter silhouettes. */}
+            {anyWeekdayIgnited && (
+              <g mask="url(#drill-weekday-window)" style={{ pointerEvents: 'none' }}>
+                {(() => {
+                  const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
+                  const PARTS_PER_WEEKDAY = 28
+                  return dayLabels.flatMap((dl, wi) => {
+                    const dayLit = weekdayLetterIgnited.slice(wi * 3, wi * 3 + 3).some(Boolean)
+                    if (!dayLit) return []
+                    const labelX = weekdayLabelX(dl.side)
+                    const baseX = labelX + (dl.side === 'left' ? -45 : 45)
+                    return Array.from({ length: PARTS_PER_WEEKDAY }).map((_, i) => {
+                      const k = i + wi * 23
+                      const rX    = hash01(k * 1)
+                      const rDly  = hash01(k * 3 + 11)
+                      const rDur  = hash01(k * 5 + 17)
+                      const rSize = hash01(k * 11 + 23)
+                      const rPeak = hash01(k * 13 + 29)
+                      const xOff  = (rX - 0.5) * 110
+                      const delay = rDly * 300
+                      const dur   = 130 + rDur * 150
+                      const size  = 8 + rSize * 12
+                      const peakA = 0.55 + rPeak * 0.45
+                      return (
+                        <circle key={`drill-wd${wi}-${i}`} cx={baseX + xOff} cy={dl.cy + 25} r={size} fill="#ff5000" opacity={0}>
+                          <animateTransform attributeName="transform" type="translate"
+                            values={`0 0; 0 -${50 + rSize * 25}`}
+                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                          <animate attributeName="opacity"
+                            values={`0; ${peakA.toFixed(2)}; 0`}
+                            keyTimes="0; 0.2; 1"
+                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                        </circle>
+                      )
+                    })
+                  })
+                })()}
+              </g>
+            )}
+          </svg>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 /* ── EXPORT ── */
 function ExportButton() {
   const [hovered, setHovered] = useState(false)
@@ -1168,12 +1521,16 @@ export default function SummaryPage() {
         </div>
       </section>
 
-      {/* ── THE BLADE (< 7 days) or DAY CARDS (>= 7 days) ── */}
-      {days.length > 0 && days.length < 7 && (
+      {/* ── BLADE (≤7 days) / DRILL (8–13 days) / FALLBACK GRID (14+ days) ── */}
+      {days.length > 0 && days.length <= 7 && (
         <CycleBlade days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
       )}
 
-      {days.length >= 7 && (
+      {days.length >= 8 && days.length <= 13 && (
+        <CycleDrill days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
+      )}
+
+      {days.length >= 14 && (
         <section className="relative z-10 px-8 mb-12">
           <div
             className="grid gap-4"
@@ -1203,6 +1560,24 @@ export default function SummaryPage() {
           rise through the silhouettes while the button is flickering, hot-glow drop-shadow on
           the visible text. Idle: dim red; press: bright orange with particle fire. */}
       <style>{`
+        /* Inscription keyframes lifted from CycleBlade so CycleDrill (and the
+           ETCH/CYCLE watermark) can use the same hot-hold / cool-down animations
+           regardless of whether the blade is mounted. */
+        @keyframes inscription-hot-hold {
+          from, to { filter: drop-shadow(0 0 4px #fff4c9) drop-shadow(0 0 10px #ffa840) drop-shadow(0 0 22px rgba(255, 120, 0, 0.85)) drop-shadow(0 0 36px rgba(255, 80, 0, 0.5)); }
+        }
+        @keyframes inscription-cool-down {
+          0%   { filter: drop-shadow(0 0 4px #fff4c9) drop-shadow(0 0 10px #ffa840) drop-shadow(0 0 22px rgba(255, 120, 0, 0.85)) drop-shadow(0 0 36px rgba(255, 80, 0, 0.5)); }
+          100% { filter: drop-shadow(0 0 1.5px #ff8800) drop-shadow(0 0 4px rgba(255, 122, 0, 0.55)) drop-shadow(0 0 7px rgba(255, 80, 0, 0.2)) drop-shadow(0 0 7px rgba(255, 80, 0, 0)); }
+        }
+        @keyframes inscription-zoom {
+          0%   { transform: scale(1);    opacity: 1.0; }
+          30%  { transform: scale(1.4);  opacity: 1.0; }
+          70%  { transform: scale(1.68); opacity: 0.9; }
+          100% { transform: scale(1.85); opacity: 0; }
+        }
+        .inscription-hot    { animation: inscription-hot-hold 100ms forwards; }
+        .inscription-cooled { animation: inscription-cool-down 1000ms ease-out forwards; }
         @keyframes watermark-hot-hold {
           from, to {
             filter: drop-shadow(0 0 3px #fff4c9)
