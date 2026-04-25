@@ -119,9 +119,9 @@ function DayCard({ iso, muscles, index }) {
    Source: public/reference/wakizashi.png → threshold → potrace → SVG.
    Diagonal pose: hilt upper-right, tip lower-left.
    ══════════════════════════════════════════════════════════════════════════ */
-function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [], weekdaysIgnited = [], weekdaysZoomed = [], weekdaysCooled = [] }) {
+function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [], weekdayLetterIgnited = [], weekdayLetterZoomed = [], weekdayLetterCooled = [] }) {
   const anyGlowing = glowingDays.some(Boolean)
-  const anyWeekdayIgnited = Array.isArray(weekdaysIgnited) && weekdaysIgnited.some(Boolean)
+  const anyWeekdayIgnited = Array.isArray(weekdayLetterIgnited) && weekdayLetterIgnited.some(Boolean)
   const first = days[0] ? parseDate(days[0]) : null
   const last  = days[days.length - 1] ? parseDate(days[days.length - 1]) : null
   const dateRange = first && last
@@ -355,29 +355,36 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
             <mask id="weekday-window" maskUnits="userSpaceOnUse" x="668" y="-635" width="1136" height="2642">
               <rect x="668" y="-635" width="1136" height="2642" fill="black"/>
               {dayLabels.map((dl, i) => {
-                const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()]
+                const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
                 const isLeftSide = i < 3
                 const yNudge = isLeftSide ? 0 : 10
                 const LEFT_X  = [1001,  998, 1001]
                 const RIGHT_X = [1597, 1572, 1542]
                 const labelX = isLeftSide ? LEFT_X[i] : RIGHT_X[i - 3]
                 const labelY = dl.cy + yNudge
+                const ADVANCE = 46
                 return (
-                  <text key={`wd-mask-${dl.iso}`}
-                    x={labelX} y={labelY}
-                    textAnchor={isLeftSide ? 'start' : 'end'}
-                    dominantBaseline="central"
-                    transform={`rotate(-11 ${labelX} ${labelY})`}
-                    style={{
-                      fontFamily: '"Noto Serif JP", Georgia, serif',
-                      fontSize: '45px',
-                      fontWeight: 700,
-                      letterSpacing: '0.2em',
-                      fill: 'white',
-                    }}
-                  >
-                    {dow}
-                  </text>
+                  <g key={`wd-mask-${dl.iso}`} transform={`rotate(-11 ${labelX} ${labelY})`}>
+                    {dow.split('').map((ch, L) => {
+                      const lit = !!weekdayLetterIgnited[i * 3 + L]
+                      const x = labelX + (isLeftSide ? L : -(2 - L)) * ADVANCE
+                      return (
+                        <text key={`wd-mask-${dl.iso}-${L}`}
+                          x={x} y={labelY}
+                          textAnchor={isLeftSide ? 'start' : 'end'}
+                          dominantBaseline="central"
+                          style={{
+                            fontFamily: '"Noto Serif JP", Georgia, serif',
+                            fontSize: '45px',
+                            fontWeight: 700,
+                            fill: 'white',
+                            opacity: lit ? 1 : 0,
+                          }}>
+                          {ch}
+                        </text>
+                      )
+                    })}
+                  </g>
                 )
               })}
             </mask>
@@ -569,10 +576,6 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               so each weekday's hot-glow keyframe fires on its own schedule. */}
           <g>
             {dayLabels.map((dl, i) => {
-              const isFlaming = !!(Array.isArray(weekdaysIgnited) ? weekdaysIgnited[i] : weekdaysIgnited)
-              const isZoomed  = !!(Array.isArray(weekdaysZoomed) && weekdaysZoomed[i])
-              const isCooled  = !!(Array.isArray(weekdaysCooled) && weekdaysCooled[i])
-              const isHot     = isZoomed && !isCooled
               const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()]
               const isLeftSide = i < 3
               const yNudge = isLeftSide ? 0 : 10
@@ -580,71 +583,77 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               const RIGHT_X = [1597, 1572, 1542]
               const labelX = isLeftSide ? LEFT_X[i] : RIGHT_X[i - 3]
               const labelY = dl.cy + yNudge
-              const fill = (isHot || isCooled) ? '#d4181f' : '#b0a898'
-              const baseAlpha = (isHot || isCooled) ? 1 : 0.7
-              // Hidden only while flame is burning; reveals at zoom onward (hot or cooled).
-              const textOpacity = isFlaming ? 0 : baseAlpha
-              const textClass = isCooled ? 'inscription-cooled' : (isHot ? 'inscription-hot' : '')
+              const ADVANCE = 46
               return (
                 <g key={`dow-${dl.iso}`}>
-                  <text
-                    x={labelX}
-                    y={labelY}
-                    textAnchor={isLeftSide ? 'start' : 'end'}
-                    dominantBaseline="central"
-                    transform={`rotate(-11 ${labelX} ${labelY})`}
-                    className={textClass}
-                    style={{
-                      fontFamily: '"Noto Serif JP", Georgia, serif',
-                      fontSize: '45px',
-                      fontWeight: 700,
-                      fill,
-                      letterSpacing: '0.2em',
-                      opacity: textOpacity,
-                      transition: 'opacity 0ms',
-                    }}
-                  >
-                    {dow}
-                  </text>
-                  {isZoomed && (
-                    <g transform={`rotate(-11 ${labelX} ${labelY})`}>
-                      <text
-                        x={labelX}
-                        y={labelY}
-                        textAnchor={isLeftSide ? 'start' : 'end'}
-                        dominantBaseline="central"
-                        className="weekday-zoom-burst"
-                        style={{
-                          fontFamily: '"Noto Serif JP", Georgia, serif',
-                          fontSize: '45px',
-                          fontWeight: 700,
-                          fill: '#ff6600',
-                          letterSpacing: '0.2em',
-                        }}
-                      >
-                        {dow}
-                      </text>
-                    </g>
-                  )}
-                  {isFlaming && (
-                    <text
-                      x={labelX}
-                      y={labelY}
-                      textAnchor={isLeftSide ? 'start' : 'end'}
-                      dominantBaseline="central"
-                      transform={`rotate(-11 ${labelX} ${labelY})`}
-                      className="weekday-flame-engulf"
-                      style={{
-                        ...engulfVars(i + 7),
-                        fontFamily: '"Noto Serif JP", Georgia, serif',
-                        fontSize: '45px',
-                        fontWeight: 700,
-                        letterSpacing: '0.2em',
-                      }}
-                    >
-                      {dow}
-                    </text>
-                  )}
+                  {dow.split('').map((ch, L) => {
+                    const flatIdx   = i * 3 + L
+                    const isFlaming = !!weekdayLetterIgnited[flatIdx]
+                    const isZoomed  = !!weekdayLetterZoomed[flatIdx]
+                    const isCooled  = !!weekdayLetterCooled[flatIdx]
+                    const isHot     = isZoomed && !isCooled
+                    const fill      = (isHot || isCooled) ? '#d4181f' : '#b0a898'
+                    const baseAlpha = (isHot || isCooled) ? 1 : 0.7
+                    const textOpacity = isFlaming ? 0 : baseAlpha
+                    const textClass = isCooled ? 'inscription-cooled' : (isHot ? 'inscription-hot' : '')
+                    const x = labelX + (isLeftSide ? L : -(2 - L)) * ADVANCE
+                    return (
+                      <g key={`dow-${dl.iso}-${L}`}>
+                        <text
+                          x={x} y={labelY}
+                          textAnchor={isLeftSide ? 'start' : 'end'}
+                          dominantBaseline="central"
+                          transform={`rotate(-11 ${labelX} ${labelY})`}
+                          className={textClass}
+                          style={{
+                            fontFamily: '"Noto Serif JP", Georgia, serif',
+                            fontSize: '45px',
+                            fontWeight: 700,
+                            fill,
+                            opacity: textOpacity,
+                            transition: 'opacity 0ms',
+                          }}
+                        >
+                          {ch}
+                        </text>
+                        {isZoomed && (
+                          <g transform={`rotate(-11 ${labelX} ${labelY})`}>
+                            <text
+                              x={x} y={labelY}
+                              textAnchor={isLeftSide ? 'start' : 'end'}
+                              dominantBaseline="central"
+                              className="weekday-zoom-burst"
+                              style={{
+                                fontFamily: '"Noto Serif JP", Georgia, serif',
+                                fontSize: '45px',
+                                fontWeight: 700,
+                                fill: '#ff6600',
+                              }}
+                            >
+                              {ch}
+                            </text>
+                          </g>
+                        )}
+                        {isFlaming && (
+                          <text
+                            x={x} y={labelY}
+                            textAnchor={isLeftSide ? 'start' : 'end'}
+                            dominantBaseline="central"
+                            transform={`rotate(-11 ${labelX} ${labelY})`}
+                            className="weekday-flame-engulf"
+                            style={{
+                              ...engulfVars(i * 13 + L + 7),
+                              fontFamily: '"Noto Serif JP", Georgia, serif',
+                              fontSize: '45px',
+                              fontWeight: 700,
+                            }}
+                          >
+                            {ch}
+                          </text>
+                        )}
+                      </g>
+                    )
+                  })}
                 </g>
               )
             })}
@@ -658,7 +667,8 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                 const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
                 const PARTS_PER_WEEKDAY = 45
                 return dayLabels.flatMap((dl, wi) => {
-                  if (!weekdaysIgnited[wi]) return []
+                  const dayLit = weekdayLetterIgnited.slice(wi * 3, wi * 3 + 3).some(Boolean)
+                  if (!dayLit) return []
                   const isLeftSide = wi < 3
                   // Per-day labelX drifts across the blade's rotated right edge, so use the
                   // SAME table the mask uses, then shift to the text center (±65 since text
@@ -900,10 +910,11 @@ export default function SummaryPage() {
   // Button flicker state lifted to SummaryPage so the watermark can co-ignite with the button.
   const [flickering, setFlickering] = useState(false)
   // Weekday side labels ignite all-at-once right after the last inscription's cascade slot.
-  const [weekdaysIgnited, setWeekdaysIgnited] = useState(() => Array(6).fill(false))
-  // Per-day zoom-burst + cooled flags — fire after the blade's final inscription zoom (t=2600).
-  const [weekdaysZoomed, setWeekdaysZoomed] = useState(() => Array(6).fill(false))
-  const [weekdaysCooledArr, setWeekdaysCooledArr] = useState(() => Array(6).fill(false))
+  // Per-letter weekday lifecycle. 6 days × 3 letters = 18 entries, indexed `dayIdx * 3 + letterIdx`.
+  // Direction inside each day: left-side days right-to-left, right-side days left-to-right (50ms stagger).
+  const [weekdayLetterIgnited, setWeekdayLetterIgnited] = useState(() => Array(18).fill(false))
+  const [weekdayLetterZoomed,  setWeekdayLetterZoomed]  = useState(() => Array(18).fill(false))
+  const [weekdayLetterCooled,  setWeekdayLetterCooled]  = useState(() => Array(18).fill(false))
   // Watermark per-line ignition: [ETCH, CYCLE]. Joins the weekday cascade as steps 6 and 7.
   const [watermarkIgnited, setWatermarkIgnited] = useState(() => [false, false])
   // Per-letter zoom/cooled. ETCH=4 letters, CYCLE=5. Flame stays whole-word via watermarkIgnited[2].
@@ -980,37 +991,49 @@ export default function SummaryPage() {
     // Step 1 (t=770): days 2+5. Step 2 (t=840): outermost pair (days 1+6).
     // Middle-out pairs with ETCH and CYCLE on separate steps — ETCH anchored to day 5,
     // CYCLE anchored to day 6.
-    // Step 0 — innermost pair (days 3+4) only
-    setTimeout(() => {
-      setWeekdaysIgnited(prev => { const next = [...prev]; next[2] = true; next[3] = true; return next })
-    }, 900)
-    // Step 1 — middle pair (days 2+5) + ETCH
-    setTimeout(() => {
-      setWeekdaysIgnited(prev => { const next = [...prev]; next[1] = true; next[4] = true; return next })
-    }, 1075)
+    // ETCH/CYCLE flame-on (interleaved between weekday pairs).
     setTimeout(() => {
       setWatermarkIgnited(prev => { const next = [...prev]; next[0] = true; return next })
     }, 985)
-    // Step 2 — outer pair (days 1+6) + CYCLE
-    setTimeout(() => {
-      setWeekdaysIgnited(prev => { const next = [...prev]; next[0] = true; next[5] = true; return next })
-    }, 1225)
     setTimeout(() => {
       setWatermarkIgnited(prev => { const next = [...prev]; next[1] = true; return next })
     }, 1150)
+
+    // Per-letter weekday cascade. Direction depends on day side:
+    // - Left-side days (1, 2, 3 user-facing = indices 0, 1, 2): right-to-left
+    // - Right-side days (4, 5, 6 user-facing = indices 3, 4, 5): left-to-right
+    const letterStaggerOffset = (dayIdx, L) => {
+      const isLeftSide = dayIdx < 3
+      return isLeftSide ? (2 - L) * 50 : L * 50
+    }
+    const WEEKDAY_PAIRS = [
+      { days: [2, 3], flame: 900,  zoom: 2900, cooled: 3600 },
+      { days: [1, 4], flame: 1075, zoom: 3200, cooled: 3775 },
+      { days: [0, 5], flame: 1225, zoom: 3500, cooled: 3925 },
+    ]
+    WEEKDAY_PAIRS.forEach(({ days, flame, zoom, cooled }) => {
+      days.forEach(dayIdx => {
+        for (let L = 0; L < 3; L++) {
+          const offset = letterStaggerOffset(dayIdx, L)
+          const flatIdx = dayIdx * 3 + L
+          setTimeout(() => {
+            setWeekdayLetterIgnited(prev => { const next = [...prev]; next[flatIdx] = true; return next })
+          }, flame + offset)
+          setTimeout(() => {
+            setWeekdayLetterIgnited(prev => { const next = [...prev]; next[flatIdx] = false; return next })
+            setWeekdayLetterZoomed(prev  => { const next = [...prev]; next[flatIdx] = true;  return next })
+          }, zoom + offset)
+          setTimeout(() => {
+            setWeekdayLetterCooled(prev => { const next = [...prev]; next[flatIdx] = true; return next })
+          }, cooled + offset)
+        }
+      })
+    })
 
     // Weekday + ETCH/CYCLE zoom-burst cascade — fires after the blade's final inscription
     // zoom (t=2600), mirroring the same middle-out 175/150ms stagger. Each step also flips
     // its ignited flag false so the particle group unmounts at the same moment the zoom
     // fires (matches the blade's flame-off + hot-on pattern).
-    setTimeout(() => {
-      setWeekdaysIgnited(prev => { const next = [...prev]; next[2] = false; next[3] = false; return next })
-      setWeekdaysZoomed(prev => { const next = [...prev]; next[2] = true;  next[3] = true;  return next })
-    }, 2900)
-    setTimeout(() => {
-      setWeekdaysIgnited(prev => { const next = [...prev]; next[1] = false; next[4] = false; return next })
-      setWeekdaysZoomed(prev => { const next = [...prev]; next[1] = true;  next[4] = true;  return next })
-    }, 3200)
     // ETCH per-letter zoom cascade (50ms stagger, t=3050). Flame off after last letter.
     for (let i = 0; i < 4; i++) {
       setTimeout(() => {
@@ -1020,10 +1043,6 @@ export default function SummaryPage() {
         }
       }, 3050 + i * 50)
     }
-    setTimeout(() => {
-      setWeekdaysIgnited(prev => { const next = [...prev]; next[0] = false; next[5] = false; return next })
-      setWeekdaysZoomed(prev => { const next = [...prev]; next[0] = true;  next[5] = true;  return next })
-    }, 3500)
     // CYCLE per-letter zoom cascade (50ms stagger, t=3350). Flame off after last letter.
     for (let i = 0; i < 5; i++) {
       setTimeout(() => {
@@ -1034,21 +1053,12 @@ export default function SummaryPage() {
       }, 3350 + i * 50)
     }
     // Cooled cascade — 700ms after each zoom step (matches blade's hot→cooled fade duration).
-    setTimeout(() => {
-      setWeekdaysCooledArr(prev => { const next = [...prev]; next[2] = true; next[3] = true; return next })
-    }, 3600)
-    setTimeout(() => {
-      setWeekdaysCooledArr(prev => { const next = [...prev]; next[1] = true; next[4] = true; return next })
-    }, 3775)
     // ETCH per-letter cooled cascade (50ms stagger, t=3690).
     for (let i = 0; i < 4; i++) {
       setTimeout(() => {
         setEtchCooled(prev => { const next = [...prev]; next[i] = true; return next })
       }, 3690 + i * 50)
     }
-    setTimeout(() => {
-      setWeekdaysCooledArr(prev => { const next = [...prev]; next[0] = true; next[5] = true; return next })
-    }, 3925)
     // CYCLE per-letter cooled cascade (50ms stagger, t=3850).
     for (let i = 0; i < 5; i++) {
       setTimeout(() => {
@@ -1122,7 +1132,7 @@ export default function SummaryPage() {
 
       {/* ── THE BLADE (< 7 days) or DAY CARDS (>= 7 days) ── */}
       {days.length > 0 && days.length < 7 && (
-        <CycleBlade days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdaysIgnited={weekdaysIgnited} weekdaysZoomed={weekdaysZoomed} weekdaysCooled={weekdaysCooledArr} />
+        <CycleBlade days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
       )}
 
       {days.length >= 7 && (
