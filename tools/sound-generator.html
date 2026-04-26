@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sound Generator — Stop & Connect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Playfair+Display:wght@700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ── Theme Variables ─────────────────────────────────────── */
+    :root {
+      --gold:        #ECAA27;
+      --gold-h:      #ffc84d;
+      --gold-dim:    rgba(236,170,39,0.18);
+      --gold-border: rgba(236,170,39,0.30);
+      --red:         #680707;
+      --red-h:       #e05252;
+      --font-mono:   'Space Mono', 'Courier New', monospace;
+      --font-serif:  'Playfair Display', Georgia, serif;
+      --font-sans:   'Inter', system-ui, sans-serif;
+    }
+
+    [data-theme="dark"] {
+      --bg:         #000000;
+      --bg-2:       #050200;
+      --surface:    #0c0500;
+      --surface-2:  #120800;
+      --border:     rgba(236,170,39,0.22);
+      --border-h:   rgba(236,170,39,0.50);
+      --text:       #ECAA27;
+      --text-sub:   rgba(236,170,39,0.45);
+      --text-dim:   rgba(236,170,39,0.15);
+      --accent:     #ECAA27;
+      --accent-h:   #ffc84d;
+      --strike:     #680707;
+      --strike-h:   #e05252;
+      --btn-primary-bg:   #ECAA27;
+      --btn-primary-text: #000000;
+      --btn-play-bg:   #0c0800;
+      --btn-play-text: #ECAA27;
+      --btn-arm-bg:    #0a0000;
+      --btn-arm-text:  #5a2020;
+      --btn-arm-act:   #680707;
+      --btn-dl-bg:     #0a0000;
+      --btn-dl-text:   #680707;
+      --key-nat:    #0a0600;
+      --key-sharp:  #050300;
+      --slider-track: #1a0e00;
+      --slider-thumb: #ECAA27;
+    }
+
+    [data-theme="light"] {
+      --bg:         #680707;
+      --bg-2:       #5a0606;
+      --surface:    rgba(0,0,0,0.38);
+      --surface-2:  rgba(0,0,0,0.52);
+      --border:     rgba(236,170,39,0.45);
+      --border-h:   rgba(236,170,39,0.80);
+      --text:       #ECAA27;
+      --text-sub:   rgba(255,255,255,0.50);
+      --text-dim:   rgba(255,255,255,0.18);
+      --accent:     #ECAA27;
+      --accent-h:   #ffc84d;
+      --strike:     #000000;
+      --strike-h:   #1a0000;
+      --btn-primary-bg:   #ECAA27;
+      --btn-primary-text: #000000;
+      --btn-play-bg:   rgba(0,0,0,0.40);
+      --btn-play-text: #ECAA27;
+      --btn-arm-bg:    rgba(0,0,0,0.35);
+      --btn-arm-text:  rgba(255,255,255,0.35);
+      --btn-arm-act:   #000000;
+      --btn-dl-bg:     rgba(0,0,0,0.35);
+      --btn-dl-text:   rgba(255,255,255,0.55);
+      --key-nat:    rgba(0,0,0,0.32);
+      --key-sharp:  rgba(0,0,0,0.55);
+      --slider-track: rgba(0,0,0,0.35);
+      --slider-thumb: #ECAA27;
+    }
+
+    /* ── Base ────────────────────────────────────────────────── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      padding: 36px 40px;
+      min-height: 100vh;
+      transition: background 0.25s, color 0.25s;
+    }
+
+    /* ── Header ──────────────────────────────────────────────── */
+    .header-row {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: 30px; letter-spacing: 0.04em;
+      color: var(--accent);
+    }
+    .subtitle {
+      font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase;
+      color: var(--text-sub); margin-bottom: 8px;
+    }
+    .inspo {
+      font-size: 10px; letter-spacing: 0.15em; color: var(--text-dim);
+      text-transform: uppercase; margin-bottom: 28px;
+      border-left: 2px solid var(--gold-border); padding-left: 12px;
+    }
+    .inspo span { color: var(--text-sub); }
+
+    /* ── Theme Toggle ────────────────────────────────────────── */
+    .theme-toggle {
+      display: flex; align-items: center; gap: 8px; margin-top: 4px;
+    }
+    .theme-label {
+      font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--text-sub);
+    }
+    .toggle-track {
+      width: 42px; height: 22px; background: var(--surface-2);
+      border: 1px solid var(--border); border-radius: 11px;
+      cursor: pointer; position: relative; transition: background 0.2s;
+    }
+    .toggle-track:hover { border-color: var(--border-h); }
+    .toggle-thumb {
+      position: absolute; top: 3px; left: 3px;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--accent); transition: transform 0.2s;
+    }
+    [data-theme="light"] .toggle-thumb { transform: translateX(20px); }
+    .toggle-icon {
+      font-size: 13px; cursor: pointer; user-select: none;
+      color: var(--text-sub); transition: color 0.2s;
+    }
+    .toggle-icon:hover { color: var(--accent); }
+
+    /* ── Panels ──────────────────────────────────────────────── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 18px 20px;
+      margin-bottom: 18px;
+      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+      transition: background 0.25s, border-color 0.25s;
+    }
+    .panel-title {
+      font-size: 9px; letter-spacing: 0.38em; text-transform: uppercase;
+      color: var(--text-sub); margin-bottom: 14px;
+    }
+
+    /* ── Global Controls ─────────────────────────────────────── */
+    .controls-row { display: flex; gap: 32px; align-items: flex-end; flex-wrap: wrap; }
+    .ctrl-group { display: flex; flex-direction: column; gap: 7px; }
+    .ctrl-label {
+      font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .ctrl-value {
+      font-size: 13px; letter-spacing: 0.12em;
+      color: var(--accent); min-width: 64px; text-align: center;
+    }
+
+    .oct-row { display: flex; gap: 4px; align-items: center; }
+    .oct-btn {
+      width: 28px; height: 28px; background: var(--surface-2);
+      border: 1px solid var(--border); color: var(--text-sub);
+      font-family: var(--font-mono); font-size: 15px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      clip-path: polygon(3px 0%, 100% 0%, calc(100% - 3px) 100%, 0% 100%);
+      transition: all 80ms;
+    }
+    .oct-btn:hover { background: var(--gold-dim); color: var(--accent); border-color: var(--border-h); }
+    .oct-btn:active { background: var(--accent); color: #000; }
+    .oct-display {
+      font-size: 13px; letter-spacing: 0.1em; color: var(--accent);
+      min-width: 52px; text-align: center; padding: 0 6px;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none; appearance: none;
+      width: 170px; height: 2px;
+      background: var(--slider-track); outline: none; cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 12px; height: 22px;
+      background: var(--slider-thumb);
+      clip-path: polygon(2px 0%, 100% 0%, calc(100% - 2px) 100%, 0% 100%);
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb:hover { background: var(--gold-h); }
+
+    .reset-btn {
+      padding: 6px 14px; background: var(--surface-2);
+      border: 1px solid var(--border); color: var(--text-sub);
+      font-family: var(--font-mono); font-size: 9px;
+      letter-spacing: 0.22em; text-transform: uppercase; cursor: pointer;
+      clip-path: polygon(3px 0%, 100% 0%, calc(100% - 3px) 100%, 0% 100%);
+      transition: all 80ms; align-self: flex-end;
+    }
+    .reset-btn:hover { background: var(--gold-dim); color: var(--accent); border-color: var(--border-h); }
+    .reset-btn:active { background: var(--accent); color: #000; }
+
+    /* ── Note Keyboard ───────────────────────────────────────── */
+    .keyboard-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .armed-label {
+      font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--text-sub);
+    }
+    .armed-label span { color: var(--strike-h); }
+
+    .keys-container { display: flex; gap: 3px; flex-wrap: wrap; align-items: flex-end; }
+    .key {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: flex-end; padding-bottom: 5px;
+      cursor: pointer; border: 1px solid var(--border);
+      font-family: var(--font-mono); font-size: 8px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      clip-path: polygon(2px 0%, 100% 0%, calc(100% - 2px) 100%, 0% 100%);
+      user-select: none; transition: all 60ms; color: var(--text-dim);
+    }
+    .key.natural { width: 36px; height: 90px; background: var(--key-nat); }
+    .key.sharp   { width: 24px; height: 58px; background: var(--key-sharp); border-color: rgba(236,170,39,0.10); }
+    .key:hover   { background: var(--gold-dim); color: var(--accent); border-color: var(--border-h); }
+    .key:active, .key.active-note { background: var(--accent) !important; color: #000 !important; border-color: var(--accent) !important; }
+    .key.armed-key { border-color: var(--strike-h) !important; color: var(--strike-h) !important; }
+
+    /* ── Sound Cards ─────────────────────────────────────────── */
+    .section-title {
+      font-size: 9px; letter-spacing: 0.38em; text-transform: uppercase;
+      color: var(--text-sub); margin-bottom: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 10px; margin-bottom: 24px;
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 15px;
+      clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+      transition: border-color 0.15s, background 0.25s;
+    }
+    .card:hover { border-color: var(--border-h); }
+    .card.armed { border-color: rgba(104,7,7,0.70) !important; background: rgba(104,7,7,0.06); }
+    .card-name {
+      font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 3px;
+    }
+    .card-file {
+      font-size: 9px; letter-spacing: 0.15em; color: var(--text-dim);
+      margin-bottom: 3px; text-transform: uppercase;
+    }
+    .card-desc {
+      font-size: 9px; letter-spacing: 0.10em; color: var(--text-sub);
+      margin-bottom: 13px; text-transform: uppercase; line-height: 1.5;
+    }
+    .btn-row { display: flex; gap: 5px; }
+
+    button {
+      flex: 1; padding: 7px 8px;
+      border: 1px solid transparent;
+      font-family: var(--font-mono); font-size: 9px;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      cursor: pointer;
+      clip-path: polygon(4px 0%, 100% 0%, calc(100% - 4px) 100%, 0% 100%);
+      transition: all 80ms;
+    }
+    .btn-play {
+      background: var(--btn-play-bg); color: var(--btn-play-text);
+      border-color: var(--border);
+    }
+    .btn-play:hover  { background: var(--gold-dim); border-color: var(--border-h); }
+    .btn-play:active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+    .btn-arm {
+      flex: 0 0 auto; padding: 7px 11px;
+      background: var(--btn-arm-bg); color: var(--btn-arm-text);
+      border-color: rgba(104,7,7,0.20);
+    }
+    .btn-arm:hover  { background: rgba(104,7,7,0.18); color: var(--strike-h); border-color: rgba(104,7,7,0.50); }
+    .btn-arm:active { background: var(--strike); color: #fff; }
+    .btn-arm.armed  { background: rgba(104,7,7,0.22); color: var(--strike-h); border-color: rgba(104,7,7,0.55); }
+
+    .btn-dl {
+      flex: 0 0 auto; padding: 7px 11px;
+      background: var(--btn-dl-bg); color: var(--btn-dl-text);
+      border-color: rgba(104,7,7,0.18);
+    }
+    .btn-dl:hover  { background: rgba(104,7,7,0.14); color: var(--strike-h); border-color: rgba(104,7,7,0.40); }
+    .btn-dl:active { background: var(--strike); color: #fff; }
+
+    /* ── Import Panel ────────────────────────────────────────── */
+    .import-desc {
+      font-size: 9px; letter-spacing: 0.12em; color: var(--text-sub);
+      text-transform: uppercase; margin-bottom: 12px; line-height: 1.9;
+    }
+    .import-desc code { color: var(--text-dim); }
+    textarea {
+      width: 100%; height: 100px;
+      background: var(--surface-2); color: var(--text-sub);
+      border: 1px solid var(--border);
+      font-family: var(--font-mono); font-size: 10px;
+      padding: 10px; resize: vertical; outline: none; line-height: 1.5;
+      transition: background 0.25s, border-color 0.25s;
+    }
+    textarea:focus { border-color: var(--border-h); }
+    .import-row { display: flex; gap: 8px; margin-top: 8px; }
+    .btn-import {
+      flex: 1; padding: 10px;
+      background: var(--btn-play-bg); color: var(--accent);
+      border: 1px solid var(--border);
+      font-family: var(--font-mono); font-size: 10px;
+      letter-spacing: 0.25em; text-transform: uppercase;
+      cursor: pointer;
+      clip-path: polygon(5px 0%, 100% 0%, calc(100% - 5px) 100%, 0% 100%);
+      transition: all 80ms;
+    }
+    .btn-import:hover  { background: var(--gold-dim); border-color: var(--border-h); }
+    .btn-import:active { background: var(--accent); color: #000; }
+    .import-status {
+      font-size: 9px; letter-spacing: 0.16em; color: var(--text-sub);
+      padding: 10px 14px; border: 1px solid var(--border);
+      background: var(--surface-2);
+      clip-path: polygon(4px 0%, 100% 0%, calc(100% - 4px) 100%, 0% 100%);
+      display: flex; align-items: center; min-width: 140px;
+      justify-content: center; text-transform: uppercase;
+      transition: background 0.25s;
+    }
+
+    /* ── Footer ──────────────────────────────────────────────── */
+    .btn-dl-all {
+      display: block; width: 100%; margin-top: 4px; padding: 14px;
+      background: var(--gold-dim); color: var(--accent);
+      font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase;
+      cursor: pointer; border: 1px solid var(--gold-border);
+      font-family: var(--font-mono);
+      clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+      transition: all 0.15s;
+    }
+    .btn-dl-all:hover { background: rgba(236,170,39,0.28); border-color: var(--border-h); }
+    .btn-dl-all:active { background: var(--accent); color: #000; }
+
+    .footer-note {
+      margin-top: 16px; padding: 12px 14px;
+      border: 1px solid var(--border);
+      font-size: 9px; letter-spacing: 0.12em;
+      line-height: 2; color: var(--text-sub);
+      background: var(--surface);
+      clip-path: polygon(4px 0%, 100% 0%, calc(100% - 4px) 100%, 0% 100%);
+    }
+    .footer-note strong { color: var(--text); }
+    .footer-note code { color: var(--text-dim); }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────── -->
+<div class="header-row">
+  <div>
+    <h1>Sound Generator</h1>
+    <p class="subtitle">Stop &amp; Connect — UI Audio System</p>
+  </div>
+  <div class="theme-toggle">
+    <span class="toggle-icon" id="themeIconDark">☾</span>
+    <div class="toggle-track" id="themeToggle" title="Toggle light/dark">
+      <div class="toggle-thumb"></div>
+    </div>
+    <span class="toggle-icon" id="themeIconLight">☀</span>
+  </div>
+</div>
+<p class="inspo">Style: <span>Precision Industrial Sci-fi</span> — clean FM · subtle grit · electronic tones · clinical metallic texture</p>
+
+<!-- ── Global Controls ──────────────────────────────────────── -->
+<div class="panel">
+  <div class="panel-title">Global Tuning</div>
+  <div class="controls-row">
+
+    <div class="ctrl-group">
+      <div class="ctrl-label">Octave</div>
+      <div class="oct-row">
+        <button class="oct-btn" id="octDown">−</button>
+        <div class="oct-display" id="octDisplay">0</div>
+        <button class="oct-btn" id="octUp">+</button>
+      </div>
+    </div>
+
+    <div class="ctrl-group">
+      <div class="ctrl-label">Pitch (semitones)</div>
+      <input type="range" id="semitoneSlider" min="-12" max="12" step="1" value="0" />
+      <div class="ctrl-value" id="semitoneDisplay">0 st</div>
+    </div>
+
+    <div class="ctrl-group">
+      <div class="ctrl-label">Sharpness (FM depth)</div>
+      <input type="range" id="sharpSlider" min="10" max="400" step="5" value="100" />
+      <div class="ctrl-value" id="sharpDisplay">×1.00</div>
+    </div>
+
+    <button class="reset-btn" id="resetBtn">Reset All</button>
+  </div>
+</div>
+
+<!-- ── Note Keyboard ────────────────────────────────────────── -->
+<div class="panel">
+  <div class="keyboard-header">
+    <div class="panel-title" style="margin-bottom:0">Note Keyboard — arm a sound then click a note</div>
+    <div class="armed-label">Armed: <span id="armedName">none</span></div>
+  </div>
+  <div class="keys-container" id="keyboard"></div>
+</div>
+
+<!-- ── Preset Sounds ────────────────────────────────────────── -->
+<div class="section-title">Preset Sounds</div>
+<div class="grid" id="grid"></div>
+
+<!-- ── Import from Analysis ─────────────────────────────────── -->
+<div class="panel">
+  <div class="panel-title">Import from Analysis — <code style="color:var(--text-dim)">python audio.py analyze last_recording.wav</code></div>
+  <div class="import-desc">
+    Paste the contents of <code>analysis.json</code> from the claude-vision folder and click Generate.
+    A new sound card will be created using the FM synthesis parameters extracted from your recording.
+  </div>
+  <textarea id="analysisPaste" placeholder='{ "source_file": "...", "fm_params": { "carrier_hz": 440, ... } }'></textarea>
+  <div class="import-row">
+    <button class="btn-import" id="importBtn">↳ Generate Sound from Analysis</button>
+    <div class="import-status" id="importStatus">ready</div>
+  </div>
+</div>
+
+<div id="importedSection" style="display:none">
+  <div class="section-title" style="margin-top:4px">Imported Sounds</div>
+  <div class="grid" id="importedGrid"></div>
+</div>
+
+<button class="btn-dl-all" id="dlAll">↓ Download All Preset Sounds</button>
+<div class="footer-note">
+  <strong>Controls:</strong> Octave shifts all frequencies by 2× per step. Semitone for fine pitch. Sharpness multiplies FM mod depth (higher = more metallic). Note keyboard plays the armed sound transposed to that pitch. <br/>
+  <strong>Import:</strong> Run <code>python audio.py analyze</code> → paste <code>analysis.json</code> above → Generate creates a new FM sound card from your recording.
+</div>
+
+<script>
+// ─── THEME ───────────────────────────────────────────────────────────────────
+function getTheme() {
+  const saved = localStorage.getItem('sc_theme')
+  if (saved) return saved
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+}
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t)
+  localStorage.setItem('sc_theme', t)
+}
+applyTheme(getTheme())
+
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const cur = document.documentElement.getAttribute('data-theme')
+  applyTheme(cur === 'dark' ? 'light' : 'dark')
+})
+
+// ─── GLOBAL TUNING STATE ─────────────────────────────────────────────────────
+let globalOctave   = 0
+let globalSemitone = 0
+let globalSharp    = 1.0
+let armedDef       = null
+let lastNoteEl     = null
+
+function pitchMult(extraMult = 1) {
+  return Math.pow(2, globalOctave + globalSemitone / 12) * extraMult
+}
+
+let _PM = 1.0
+let _SM = 1.0
+
+// ─── DSP HELPERS ─────────────────────────────────────────────────────────────
+function softClipCurve(amt = 30) {
+  const n = 512, curve = new Float32Array(n)
+  for (let i = 0; i < n; i++) {
+    const x = (i * 2) / n - 1
+    curve[i] = ((Math.PI + amt) * x) / (Math.PI + amt * Math.abs(x))
+  }
+  return curve
+}
+
+function tone(ctx, type, f0, f1, t0, t1, vol) {
+  const o = ctx.createOscillator(), g = ctx.createGain()
+  o.type = type
+  o.frequency.setValueAtTime(f0 * _PM, t0)
+  if (f1 !== f0 && f0 > 0 && f1 > 0)
+    o.frequency.exponentialRampToValueAtTime(f1 * _PM, t1)
+  g.gain.setValueAtTime(0, t0)
+  g.gain.linearRampToValueAtTime(vol, t0 + 0.003)
+  g.gain.exponentialRampToValueAtTime(0.0001, t1)
+  o.connect(g); g.connect(ctx.destination)
+  o.start(t0); o.stop(t1 + 0.02)
+}
+
+function fm(ctx, carrierF, modF, modDepth, t0, t1, vol) {
+  const carrier = ctx.createOscillator()
+  const mod     = ctx.createOscillator()
+  const modGain = ctx.createGain()
+  const outGain = ctx.createGain()
+  const ws      = ctx.createWaveShaper()
+  carrier.type = 'sine'
+  carrier.frequency.setValueAtTime(carrierF * _PM, t0)
+  mod.type = 'sine'
+  mod.frequency.setValueAtTime(modF * _PM, t0)
+  modGain.gain.setValueAtTime(modDepth * _SM, t0)
+  ws.curve = softClipCurve(25)
+  mod.connect(modGain); modGain.connect(carrier.frequency)
+  outGain.gain.setValueAtTime(0, t0)
+  outGain.gain.linearRampToValueAtTime(vol, t0 + 0.003)
+  outGain.gain.exponentialRampToValueAtTime(0.0001, t1)
+  carrier.connect(ws); ws.connect(outGain); outGain.connect(ctx.destination)
+  carrier.start(t0); carrier.stop(t1 + 0.02)
+  mod.start(t0); mod.stop(t1 + 0.02)
+}
+
+function hiss(ctx, t0, dur, freqCenter, vol = 0.06) {
+  [0.5, 0.8, 1.2, 1.7, 2.3].forEach(s => {
+    const o = ctx.createOscillator(), g = ctx.createGain()
+    o.type = 'sawtooth'
+    o.frequency.setValueAtTime(freqCenter * s * _PM, t0)
+    g.gain.setValueAtTime(0, t0)
+    g.gain.linearRampToValueAtTime(vol / 5, t0 + 0.002)
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur)
+    o.connect(g); g.connect(ctx.destination)
+    o.start(t0); o.stop(t0 + dur + 0.02)
+  })
+}
+
+function precisionClick(ctx, t0, freq, vol = 0.45) {
+  tone(ctx, 'triangle', freq, freq * 0.5, t0, t0 + 0.028, vol)
+  tone(ctx, 'sine', freq * 1.8, freq * 0.9, t0, t0 + 0.018, vol * 0.2)
+}
+
+function blip(ctx, t0, freq, dur, vol) {
+  tone(ctx, 'sine', freq, freq * 1.05, t0, t0 + dur, vol)
+}
+
+// ── WAV File Player ───────────────────────────────────────────────────────────
+async function wavPlayer(ctx, url, pitchRate = 1.0, filterHz = 8000) {
+  const resp = await fetch(url)
+  const arrayBuf = await resp.arrayBuffer()
+  const audioBuf = await ctx.decodeAudioData(arrayBuf)
+  const src = ctx.createBufferSource()
+  src.buffer = audioBuf
+  src.playbackRate.value = pitchRate
+  const filter = ctx.createBiquadFilter()
+  filter.type = 'lowpass'
+  filter.frequency.value = filterHz
+  src.connect(filter)
+  filter.connect(ctx.destination)
+  if (ctx.state === 'suspended') await ctx.resume()
+  src.start(0)
+  return audioBuf.duration
+}
+
+// ─── WAV ENCODER ─────────────────────────────────────────────────────────────
+function audioBufferToWav(buffer) {
+  const numCh = buffer.numberOfChannels, SR = buffer.sampleRate
+  const dataSize = buffer.length * numCh * 2
+  const ab = new ArrayBuffer(44 + dataSize)
+  const v = new DataView(ab)
+  const s = (off, str) => { for (let i = 0; i < str.length; i++) v.setUint8(off + i, str.charCodeAt(i)) }
+  s(0,'RIFF'); v.setUint32(4,36+dataSize,true); s(8,'WAVE'); s(12,'fmt ')
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,numCh,true)
+  v.setUint32(24,SR,true); v.setUint32(28,SR*numCh*2,true)
+  v.setUint16(32,numCh*2,true); v.setUint16(34,16,true); s(36,'data'); v.setUint32(40,dataSize,true)
+  let off = 44
+  for (let i = 0; i < buffer.length; i++)
+    for (let ch = 0; ch < numCh; ch++) {
+      const x = Math.max(-1, Math.min(1, buffer.getChannelData(ch)[i]))
+      v.setInt16(off, x < 0 ? x*0x8000 : x*0x7fff, true); off += 2
+    }
+  return ab
+}
+
+// ─── SOUNDS ──────────────────────────────────────────────────────────────────
+const SOUNDS = [
+  { id:'button-hover', name:'button-hover.wav', label:'Cursor / Hover', desc:'Light electronic scan tick', duration:0.08,
+    render(ctx){ fm(ctx,1600,800,280,0,0.07,0.28); hiss(ctx,0,0.04,3000,0.05) }},
+  { id:'option-select', name:'option-select.wav', label:'Option Select', desc:'Precise row activation — click and FM tone', duration:0.13,
+    render(ctx){ precisionClick(ctx,0,1200,0.50); fm(ctx,900,450,320,0.02,0.11,0.38); blip(ctx,0.05,2800,0.07,0.18); hiss(ctx,0,0.04,1800,0.05) }},
+  { id:'button-confirm', name:'button-confirm.wav', label:'Button Confirm', desc:'Solid confirm — FM body with high precision tone', duration:0.18,
+    render(ctx){ precisionClick(ctx,0,900,0.55); fm(ctx,600,300,420,0,0.14,0.45); blip(ctx,0.04,3200,0.09,0.22); hiss(ctx,0,0.05,1400,0.06) }},
+  { id:'card-hover', name:'card-hover.wav', label:'Card Hover', desc:'Soft electronic scan', duration:0.08,
+    render(ctx){ fm(ctx,1200,600,200,0,0.07,0.22); hiss(ctx,0,0.05,2200,0.04) }},
+  { id:'card-tap', name:'card-tap.wav', label:'Card Tap', desc:'Clean mechanical tap', duration:0.15,
+    render(ctx){ precisionClick(ctx,0,800,0.55); fm(ctx,500,250,380,0,0.12,0.40); blip(ctx,0.04,2400,0.08,0.18); hiss(ctx,0,0.05,1000,0.06) }},
+  { id:'card-confirm', name:'card-confirm.wav', label:'Card Confirm', desc:'Data locked — ascending FM sequence', duration:0.26,
+    render(ctx){ fm(ctx,400,200,280,0,0.09,0.40); fm(ctx,700,350,380,0.09,0.18,0.44); fm(ctx,1100,550,480,0.18,0.26,0.48); blip(ctx,0.20,3600,0.06,0.22); precisionClick(ctx,0,600,0.38); hiss(ctx,0,0.04,1400,0.05) }},
+  { id:'menu-open', name:'menu-open.wav', label:'Menu Open', desc:'Panel initialise — clean electronic boot sweep', duration:0.30,
+    render(ctx){ fm(ctx,120,1800,600,0,0.22,0.30); tone(ctx,'sawtooth',200,2000,0,0.20,0.10); blip(ctx,0.20,3400,0.09,0.25); precisionClick(ctx,0,1200,0.45); hiss(ctx,0,0.08,900,0.08); fm(ctx,700,700,500,0.10,0.13,0.12); fm(ctx,900,900,500,0.13,0.16,0.10) }},
+  { id:'menu-close', name:'menu-close.wav', label:'Menu Close / Cancel', desc:'Clean power-down — falling sweep', duration:0.20,
+    render(ctx){ fm(ctx,1800,100,700,0,0.18,0.32); tone(ctx,'sine',2400,400,0,0.16,0.16); hiss(ctx,0,0.05,800,0.06); precisionClick(ctx,0,1600,0.38) }},
+  { id:'stamp', name:'stamp.wav', label:'Stamp / Lock-in', desc:'Mechanical lock — FM impact with industrial ring', duration:0.36,
+    render(ctx){ fm(ctx,100,50,1200,0,0.30,0.68); fm(ctx,280,140,700,0,0.22,0.45); precisionClick(ctx,0,600,0.50); hiss(ctx,0,0.06,500,0.08) }},
+  { id:'transition-slash', name:'transition-slash.wav', label:'Transition Slash', desc:'System cut — fast industrial scan with FM impact', duration:0.42,
+    render(ctx){ hiss(ctx,0,0.08,600,0.10); tone(ctx,'sawtooth',80,4000,0.04,0.22,0.18); fm(ctx,80,4000,1200,0.04,0.22,0.18); fm(ctx,300,150,1000,0.20,0.40,0.55); tone(ctx,'triangle',3600,1200,0.21,0.30,0.32); blip(ctx,0.22,3000,0.08,0.26); precisionClick(ctx,0.21,1800,0.55); hiss(ctx,0.22,0.14,2000,0.07) }},
+  { id:'mega-transition', name:'mega-transition.wav', label:'Mega Transition', desc:'Full system override — layered industrial sweep', duration:0.56,
+    render(ctx){ hiss(ctx,0,0.12,400,0.10); tone(ctx,'sawtooth',60,300,0,0.14,0.14); tone(ctx,'sawtooth',100,5000,0.10,0.30,0.20); fm(ctx,100,5000,1800,0.10,0.30,0.22); fm(ctx,200,100,1400,0.24,0.52,0.55); fm(ctx,500,250,800,0.26,0.50,0.38); tone(ctx,'triangle',4000,1000,0.28,0.38,0.30); precisionClick(ctx,0.28,2000,0.55); fm(ctx,2000,2000,500,0.28,0.31,0.18); fm(ctx,2600,2600,500,0.31,0.34,0.14); fm(ctx,1800,1800,500,0.34,0.37,0.10); blip(ctx,0.30,3600,0.07,0.28); hiss(ctx,0.28,0.18,2400,0.08) }},
+  { id:'brand-confirm', name:'brand-confirm.wav', label:'Brand Confirm', desc:'Mission complete — FM chime sequence with electronic shine', duration:0.48,
+    render(ctx){ fm(ctx,300,150,260,0,0.11,0.42); fm(ctx,520,260,360,0.10,0.22,0.46); fm(ctx,860,430,480,0.21,0.34,0.50); fm(ctx,1400,700,600,0.33,0.47,0.48); blip(ctx,0.10,2000,0.06,0.18); blip(ctx,0.22,2800,0.07,0.18); blip(ctx,0.34,3600,0.08,0.14); precisionClick(ctx,0,700,0.38); hiss(ctx,0.34,0.08,3000,0.06) }},
+
+  // ── Video Chimes — extracted from GTL video_audio.wav (52s, 37 onsets clustered into 4 distinct types)
+  //    Spectral analysis per clip; 65Hz analyze-tool "fundamental" is a background drone — carriers set to actual measured attack peaks.
+  { id:'chime-ping', name:'chime-ping.wav', label:'Video Chime — Bright Ping', desc:'E8~F8 · 5480Hz carrier · 7400Hz mod (ratio 1.35) · centroid 4600Hz · metallic ultra-bright ping', duration:0.38,
+    render(ctx){ fm(ctx,5480,7400,2800,0,0.36,0.32) }},
+  { id:'chime-high', name:'chime-high.wav', label:'Video Chime — Bright Bell', desc:'E5 · 660Hz carrier · 924Hz mod (Chowning 1.4) · centroid 4650Hz · broad-spectrum bright bell', duration:0.58,
+    render(ctx){ fm(ctx,660,924,2500,0,0.56,0.18); blip(ctx,0,3545,0.06,0.12) }},
+  { id:'chime-mid', name:'chime-mid.wav', label:'Video Chime — Mid Bell', desc:'E5 · 660Hz carrier · 660Hz mod (ratio 1.0) · centroid 1073Hz · warm mid bell', duration:0.78,
+    render(ctx){ fm(ctx,660,660,1200,0,0.76,0.18) }},
+  { id:'chime-low', name:'chime-low.wav', label:'Video Chime — Warm Bell', desc:'C5 · 530Hz carrier · 530Hz mod (ratio 1.0) · centroid 934Hz · warm low sustained bell', duration:0.98,
+    render(ctx){ fm(ctx,530,530,900,0,0.96,0.18) }},
+
+  // ── NieR: Automata — extracted via FM analysis
+  { id:'nier-confirm', name:'nier-confirm.wav', label:'NieR — Confirm', desc:'Deep resonant hit · F#2 91Hz carrier · ratio 1.8 · mod depth 1400 · mixed timbre', duration:0.72,
+    render(ctx){ fm(ctx,880,1584,500,0,0.10,0.52); fm(ctx,880,1584,240,0.10,0.52,0.26); blip(ctx,0,3400,0.09,0.20); hiss(ctx,0,0.05,2800,0.05) }},
+  { id:'nier-clips', name:'nier-clips.wav', label:'NieR — Clips', desc:'High metallic texture · C7 2045Hz carrier · ratio 3.14 · mod depth 399 · noisy', duration:0.47,
+    render(ctx){ fm(ctx,2045,6421,399,0,0.12,0.45); hiss(ctx,0,0.10,4000,0.08); fm(ctx,2045,6421,200,0.12,0.47,0.18) }},
+
+  // ── Camera Swoosh — airy rising whoosh, ref: P5 transition effect (centroid 2548Hz, harmonic 47%, gradual envelope)
+  { id:'camera-swoosh', name:'camera-swoosh.wav', label:'Camera Swoosh', desc:'Airy rising whoosh — hiss sweep · no click · P5-style transition breath', duration:0.38,
+    render(ctx){ tone(ctx,'sine',200,2000,0,0.35,0.18); hiss(ctx,0,0.20,2500,0.12); hiss(ctx,0.08,0.28,3800,0.08); fm(ctx,600,1080,300,0,0.30,0.22) }},
+
+  // ── Reference Sounds — Pinko's Custom Audio ─────────────────────────────────
+  { id:'return-retreat', name:'return-retreat.wav', label:'Return Retreat', desc:'Go-back / retreat navigation sound', duration:2.0,
+    wavUrl:'../public/sounds/return-retreat.wav',
+    render(ctx){ return wavPlayer(ctx, '../public/sounds/return-retreat.wav', pitchMult(), 8000 * globalSharp) }},
+  { id:'select-chime', name:'select-chime.wav', label:'Select Chime', desc:'Primary selection chime', duration:2.0,
+    wavUrl:'../public/sounds/select-chime.wav',
+    render(ctx){ return wavPlayer(ctx, '../public/sounds/select-chime.wav', pitchMult(), 8000 * globalSharp) }},
+  { id:'alt-option', name:'alt-option.wav', label:'Alt Option', desc:'Alternative option selection sound', duration:2.0,
+    wavUrl:'../public/sounds/alt-option.wav',
+    render(ctx){ return wavPlayer(ctx, '../public/sounds/alt-option.wav', pitchMult(), 8000 * globalSharp) }},
+  { id:'confirm-chime-menu', name:'confirm-chime-menu.wav', label:'Confirm Chime Menu', desc:'Menu confirm / acceptance chime', duration:2.0,
+    wavUrl:'../public/sounds/confirm-chime-menu.wav',
+    render(ctx){ return wavPlayer(ctx, '../public/sounds/confirm-chime-menu.wav', pitchMult(), 8000 * globalSharp) }},
+  { id:'option-return', name:'option-return.wav', label:'Option Return', desc:'Option-level return sound', duration:2.0,
+    wavUrl:'../public/sounds/option-return.wav',
+    render(ctx){ return wavPlayer(ctx, '../public/sounds/option-return.wav', pitchMult(), 8000 * globalSharp) }},
+  { id:'option-select-chime', name:'option-select-chime.wav', label:'Option Select Chime', desc:'Option selection chime', duration:2.0,
+    wavUrl:'../public/sounds/option-select-chime.wav',
+    render(ctx){ return wavPlayer(ctx, '../public/sounds/option-select-chime.wav', pitchMult(), 8000 * globalSharp) }},
+]
+
+// ─── ENGINE ──────────────────────────────────────────────────────────────────
+async function renderSound(def, opts = {}) {
+  _PM = opts.pitchMult !== undefined ? opts.pitchMult : pitchMult()
+  _SM = opts.sharpMult !== undefined ? opts.sharpMult : globalSharp
+  const SR = 44100
+  const ctx = new OfflineAudioContext(1, Math.ceil(def.duration * SR * 1.1), SR)
+  await Promise.resolve(def.render(ctx))
+  const buf = await ctx.startRendering()
+  _PM = 1.0; _SM = 1.0
+  return buf
+}
+
+async function downloadSound(def) {
+  const buf = await renderSound(def)
+  const blob = new Blob([audioBufferToWav(buf)], { type: 'audio/wav' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a'); a.href = url; a.download = def.name; a.click()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+async function playSound(def, opts = {}) {
+  const buf = await renderSound(def, opts)
+  const ctx = new AudioContext()
+  const src = ctx.createBufferSource()
+  src.buffer = buf; src.connect(ctx.destination); src.start(0)
+}
+
+// ─── NOTE KEYBOARD ────────────────────────────────────────────────────────────
+const NOTE_NAMES    = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
+const NOTE_NATURALS = new Set(['C','D','E','F','G','A','B'])
+
+function buildKeyboard() {
+  const kb = document.getElementById('keyboard')
+  for (let o = 0; o < 2; o++) {
+    for (let n = 0; n < 12; n++) {
+      const name = NOTE_NAMES[n]
+      const octave = 4 + o
+      const midiNote = (octave + 1) * 12 + n
+      const hz = 440 * Math.pow(2, (midiNote - 69) / 12)
+      const key = document.createElement('div')
+      key.className = `key ${NOTE_NATURALS.has(name) ? 'natural' : 'sharp'}`
+      key.dataset.hz = hz
+      key.textContent = NOTE_NATURALS.has(name) ? `${name}${octave}` : name
+      key.addEventListener('click', () => playNoteWithArmed(hz, key))
+      kb.appendChild(key)
+    }
+  }
+  // High C
+  const highHz = 440 * Math.pow(2, (7 * 12 - 69) / 12)
+  const highKey = document.createElement('div')
+  highKey.className = 'key natural'
+  highKey.dataset.hz = highHz
+  highKey.textContent = 'C6'
+  highKey.addEventListener('click', () => playNoteWithArmed(highHz, highKey))
+  kb.appendChild(highKey)
+}
+
+function playNoteWithArmed(noteHz, keyEl) {
+  if (!armedDef) {
+    const title = document.querySelector('.keyboard-header .panel-title')
+    const orig = title.style.color
+    title.style.color = 'var(--strike-h)'
+    setTimeout(() => { title.style.color = orig }, 500)
+    return
+  }
+  const opts = { pitchMult: pitchMult(noteHz / 440), sharpMult: globalSharp }
+  playSound(armedDef, opts)
+  if (lastNoteEl) lastNoteEl.classList.remove('active-note')
+  keyEl.classList.add('active-note')
+  lastNoteEl = keyEl
+  setTimeout(() => keyEl.classList.remove('active-note'), 240)
+}
+
+// ─── CARD BUILDER ─────────────────────────────────────────────────────────────
+function buildCard(def, container) {
+  const card = document.createElement('div')
+  card.className = 'card'
+  card.innerHTML = `
+    <div class="card-name">${def.label}</div>
+    <div class="card-file">${def.name}</div>
+    <div class="card-desc">${def.desc}</div>
+    <div class="btn-row">
+      <button class="btn-play">▶ Play</button>
+      <button class="btn-arm">◎ Arm</button>
+      <button class="btn-dl">↓ DL</button>
+    </div>`
+  const [playBtn, armBtn, dlBtn] = card.querySelectorAll('button')
+  playBtn.addEventListener('click', () => {
+    if (def.wavUrl) {
+      const ctx = new AudioContext()
+      wavPlayer(ctx, def.wavUrl, pitchMult(), 8000 * globalSharp)
+    } else {
+      playSound(def)
+    }
+  })
+  armBtn.addEventListener('click', () => {
+    document.querySelectorAll('.btn-arm').forEach(b => b.classList.remove('armed'))
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('armed'))
+    armBtn.classList.add('armed')
+    card.classList.add('armed')
+    armedDef = def
+    document.getElementById('armedName').textContent = def.label
+  })
+  dlBtn.addEventListener('click', () => downloadSound(def))
+  container.appendChild(card)
+}
+
+// ─── CONTROLS WIRING ─────────────────────────────────────────────────────────
+function updateOctaveDisplay() {
+  const d = document.getElementById('octDisplay')
+  d.textContent = globalOctave === 0 ? '0' : (globalOctave > 0 ? `+${globalOctave}` : `${globalOctave}`)
+}
+document.getElementById('octDown').addEventListener('click', () => { if (globalOctave > -4) { globalOctave--; updateOctaveDisplay() } })
+document.getElementById('octUp').addEventListener('click',   () => { if (globalOctave <  4) { globalOctave++; updateOctaveDisplay() } })
+
+document.getElementById('semitoneSlider').addEventListener('input', e => {
+  globalSemitone = parseInt(e.target.value)
+  const d = document.getElementById('semitoneDisplay')
+  d.textContent = globalSemitone === 0 ? '0 st' : (globalSemitone > 0 ? `+${globalSemitone} st` : `${globalSemitone} st`)
+})
+
+document.getElementById('sharpSlider').addEventListener('input', e => {
+  globalSharp = parseInt(e.target.value) / 100
+  document.getElementById('sharpDisplay').textContent = `×${globalSharp.toFixed(2)}`
+})
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  globalOctave = 0; globalSemitone = 0; globalSharp = 1.0
+  document.getElementById('semitoneSlider').value = 0
+  document.getElementById('sharpSlider').value = 100
+  updateOctaveDisplay()
+  document.getElementById('semitoneDisplay').textContent = '0 st'
+  document.getElementById('sharpDisplay').textContent = '×1.00'
+})
+
+// ─── IMPORT FROM ANALYSIS ─────────────────────────────────────────────────────
+document.getElementById('importBtn').addEventListener('click', () => {
+  const raw = document.getElementById('analysisPaste').value.trim()
+  const status = document.getElementById('importStatus')
+  if (!raw) { status.textContent = 'paste JSON first'; return }
+  let data
+  try { data = JSON.parse(raw) } catch(e) { status.textContent = 'invalid JSON'; return }
+  const p = data.fm_params
+  if (!p || !p.carrier_hz) { status.textContent = 'missing fm_params'; return }
+  const label    = (data.source_file || 'imported').replace(/\.[^.]+$/, '')
+  const noteTag  = data.note       ? ` (${data.note})` : ''
+  const typeTag  = data.sound_type ? data.sound_type    : 'analyzed'
+  const def = {
+    id:       `import-${Date.now()}`,
+    name:     `${label}.wav`,
+    label,
+    desc:     `${typeTag}${noteTag} — ${p.carrier_hz}Hz · ratio ${p.mod_ratio} · depth ${p.mod_depth}`,
+    duration: p.duration || 0.5,
+    render(ctx) {
+      fm(ctx, p.carrier_hz, p.mod_freq || p.carrier_hz * p.mod_ratio, p.mod_depth, 0, p.duration, p.vol || 0.5)
+      hiss(ctx, 0, p.duration * 0.6, p.carrier_hz * 2, 0.04)
+    }
+  }
+  buildCard(def, document.getElementById('importedGrid'))
+  document.getElementById('importedSection').style.display = 'block'
+  status.textContent = `added: ${label}`
+  document.getElementById('analysisPaste').value = ''
+})
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+buildKeyboard()
+SOUNDS.forEach(def => buildCard(def, document.getElementById('grid')))
+document.getElementById('dlAll').addEventListener('click', async () => {
+  for (const def of SOUNDS) { await downloadSound(def); await new Promise(r => setTimeout(r, 220)) }
+})
+updateOctaveDisplay()
+</script>
+</body>
+</html>

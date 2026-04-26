@@ -80,30 +80,31 @@ const MODELS = {
     rotationY: Math.PI,
     scaleMult: 1.0,
     // Off-origin GLB — Center component re-centers at runtime.
-    // Same hair-inflation Y correction as goku.
+    // Hitboxes ported from goku (same body proportions, no bone names available for SSJ).
+    // Use debug mode + drag gizmos to fine-tune if needed.
     hitboxes: [
-      { group: 'chest', position: [-0.111,1.052,-0.546], rotation: [0, 0, 0], scale: [0.109,0.140,0.316] },
-      { group: 'chest', position: [0.111,1.052,-0.546], rotation: [0, 0, 0], scale: [0.109,0.140,0.316] },
-      { group: 'shoulders', position: [-0.253,1.174,0.000], rotation: [0.000,0.000,-0.724], scale: [0.162,0.100,0.460] },
-      { group: 'shoulders', position: [0.253,1.174,0.000], rotation: [0.000,0.000,0.724], scale: [0.162,0.100,0.460] },
-      { group: 'biceps', position: [-0.293,0.810,0.000], rotation: [0, 0, 0], scale: [0.073,0.210,0.230] },
-      { group: 'biceps', position: [0.293,0.810,0.000], rotation: [0, 0, 0], scale: [0.073,0.210,0.230] },
-      { group: 'triceps', position: [-0.309,0.840,0.489], rotation: [0, 0, 0], scale: [0.051,0.190,0.230] },
-      { group: 'triceps', position: [0.309,0.840,0.489], rotation: [0, 0, 0], scale: [0.051,0.190,0.230] },
-      { group: 'forearms', position: [-0.379,0.332,0.115], rotation: [0, 0, 0], scale: [0.061,0.260,0.345] },
-      { group: 'forearms', position: [0.379,0.332,0.115], rotation: [0, 0, 0], scale: [0.061,0.260,0.345] },
-      { group: 'abs', position: [-0.051,0.450,-0.546], rotation: [0, 0, 0], scale: [0.061,0.250,0.259] },
-      { group: 'abs', position: [0.051,0.450,-0.546], rotation: [0, 0, 0], scale: [0.061,0.250,0.259] },
-      { group: 'glutes', position: [-0.091,-0.200,0.518], rotation: [0, 0, 0], scale: [0.076,0.160,0.316] },
-      { group: 'glutes', position: [0.091,-0.200,0.518], rotation: [0, 0, 0], scale: [0.076,0.160,0.316] },
-      { group: 'quads', position: [-0.081,-0.620,-0.345], rotation: [0, 0, 0], scale: [0.066,0.250,0.316] },
-      { group: 'quads', position: [0.081,-0.620,-0.345], rotation: [0, 0, 0], scale: [0.066,0.250,0.316] },
-      { group: 'hamstrings', position: [-0.081,-0.620,0.403], rotation: [0, 0, 0], scale: [0.061,0.250,0.288] },
-      { group: 'hamstrings', position: [0.081,-0.620,0.403], rotation: [0, 0, 0], scale: [0.061,0.250,0.288] },
-      { group: 'calves', position: [-0.066,-1.200,0.230], rotation: [0, 0, 0], scale: [0.048,0.230,0.276] },
-      { group: 'calves', position: [0.066,-1.200,0.230], rotation: [0, 0, 0], scale: [0.048,0.230,0.276] },
-      { group: 'back', position: [-0.137,0.900,0.403], rotation: [0, 0, 0], scale: [0.132,0.300,0.173] },
-      { group: 'back', position: [0.137,0.900,0.403], rotation: [0, 0, 0], scale: [0.132,0.300,0.173] },
+      { group: 'chest',      position: [-0.22,  1.01, -0.23], rotation: [-0.554, 0,  0],     scale: [0.25, 0.16, 0.13] },
+      { group: 'chest',      position: [ 0.22,  1.01, -0.23], rotation: [-0.554, 0,  0],     scale: [0.25, 0.16, 0.13] },
+      { group: 'shoulders',  position: [-0.67,  1.31, -0.13], rotation: [0, 0, -0.724],      scale: [0.45, 0.13, 0.18] },
+      { group: 'shoulders',  position: [ 0.67,  1.31, -0.13], rotation: [0, 0,  0.724],      scale: [0.45, 0.13, 0.18] },
+      { group: 'biceps',     position: [-0.96,  1.26, -0.19], rotation: [0, 0,  0],          scale: [0.48, 0.12, 0.13] },
+      { group: 'biceps',     position: [ 0.96,  1.26, -0.19], rotation: [0, 0,  0],          scale: [0.48, 0.12, 0.13] },
+      { group: 'triceps',    position: [-0.96,  1.26,  0.15], rotation: [0, 0,  0],          scale: [0.42, 0.10, 0.12] },
+      { group: 'triceps',    position: [ 0.96,  1.26,  0.15], rotation: [0, 0,  0],          scale: [0.42, 0.10, 0.12] },
+      { group: 'forearms',   position: [-1.50,  1.20, -0.13], rotation: [0, 0,  0],          scale: [0.42, 0.11, 0.12] },
+      { group: 'forearms',   position: [ 1.50,  1.20, -0.13], rotation: [0, 0,  0],          scale: [0.42, 0.11, 0.12] },
+      { group: 'abs',        position: [-0.18,  0.76, -0.17], rotation: [0, 0,  0],          scale: [0.22, 0.35, 0.08] },
+      { group: 'abs',        position: [ 0.18,  0.76, -0.17], rotation: [0, 0,  0],          scale: [0.22, 0.35, 0.08] },
+      { group: 'glutes',     position: [-0.28,  0.36,  0.16], rotation: [0, 0,  0],          scale: [0.18, 0.18, 0.13] },
+      { group: 'glutes',     position: [ 0.28,  0.36,  0.16], rotation: [0, 0,  0],          scale: [0.18, 0.18, 0.13] },
+      { group: 'quads',      position: [-0.44, -0.31, -0.08], rotation: [0, 0,  0],          scale: [0.16, 0.28, 0.13] },
+      { group: 'quads',      position: [ 0.44, -0.31, -0.08], rotation: [0, 0,  0],          scale: [0.16, 0.28, 0.13] },
+      { group: 'hamstrings', position: [-0.44, -0.31,  0.12], rotation: [0, 0,  0],          scale: [0.14, 0.28, 0.12] },
+      { group: 'hamstrings', position: [ 0.44, -0.31,  0.12], rotation: [0, 0,  0],          scale: [0.14, 0.28, 0.12] },
+      { group: 'calves',     position: [-0.53, -1.40,  0.08], rotation: [0, 0,  0],          scale: [0.12, 0.27, 0.12] },
+      { group: 'calves',     position: [ 0.53, -1.40,  0.08], rotation: [0, 0,  0],          scale: [0.12, 0.27, 0.12] },
+      { group: 'back',       position: [-0.22,  0.80,  0.16], rotation: [0, 0,  0],          scale: [0.22, 0.40, 0.13] },
+      { group: 'back',       position: [ 0.22,  0.80,  0.16], rotation: [0, 0,  0],          scale: [0.22, 0.40, 0.13] },
     ],
   },
   gohan: {
@@ -1333,7 +1334,9 @@ function SceneContent({ modelKey, focusedGroup, onFocus, debugMode, play }) {
 }
 
 export default function MuscleBody({ onFocus, focusedGroup, modelKey = 'goku' }) {
-  const [debugMode, setDebugMode] = useState(false)
+  const [debugMode, setDebugMode] = useState(
+    () => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debug') === '1'
+  )
   const { play } = useSound()
 
   useEffect(() => {
