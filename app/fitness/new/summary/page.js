@@ -1486,8 +1486,8 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
   const colsNeeded = Math.max(1, Math.ceil(N / ROWS_PER_COL))
   // Writing area shifted 14 viewBox units left (~7px on a 390-wide viewport at
   // the 143.325vw scroll container) so columns sit slightly off-center.
-  const WRITE_X0 = 266
-  const WRITE_X1 = 786
+  const WRITE_X0 = 286
+  const WRITE_X1 = 766
   const WRITE_Y0 = 215
   const WRITE_Y1 = 1075
   const colStep = (WRITE_X1 - WRITE_X0) / colsNeeded
