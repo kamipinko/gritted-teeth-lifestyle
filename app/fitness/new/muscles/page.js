@@ -148,7 +148,6 @@ function MuscleRow({ group, selected, focusedGroup, onToggle, onFocus, stampRevi
 
   const handleCheckboxClick = (e) => {
     e.stopPropagation()
-    play('option-select')
     if (!isSelected) {
       setIsStamping(true)
       setTimeout(() => {
@@ -541,6 +540,7 @@ export default function MusclesPage() {
   }, [router])
 
   const handleStamp = () => {
+    play('stamp')
     if (mainRef.current) {
       mainRef.current.animate(
         [

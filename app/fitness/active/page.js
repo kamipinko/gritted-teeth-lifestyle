@@ -390,7 +390,6 @@ function RepsPopup({ exerciseName, initialReps, rowRect, onClose, onSave }) {
   const flameOpacity = Math.min(0.3 + reps * 0.07, 1.0)
 
   const increment = () => {
-    play('option-select')
     setReps((n) => n + 1)
     setNumDir('up')
     setNumKey((k) => k + 1)
@@ -750,7 +749,6 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
   const flameOpacity = Math.min(0.3 + weight * 0.007, 1.0)
 
   const increment = () => {
-    play('option-select')
     setWeight((n) => n + 5)
     setNumDir('up')
     setNumKey((k) => k + 1)
