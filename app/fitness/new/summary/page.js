@@ -788,7 +788,7 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
   // the drill body. The cone-band ridges themselves run ~ -12° from horizontal, so
   // RIDGE_ANGLE = -12 + 90 = 78. Applied to base render, zoom-burst, and mask so
   // every layer rotates together.
-  const RIDGE_ANGLE = -78
+  const RIDGE_ANGLE = -70
   const renderInscription = (dl, { hot = false, maskFill = null } = {}) => {
     const { num, kanjiStr } = dl
     const kanjiChars = (kanjiStr || '').split('')
