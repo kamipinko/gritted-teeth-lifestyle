@@ -2258,7 +2258,7 @@ export default function SummaryPage() {
         </div>
       </section>
 
-      {/* ── BLADE (1–6 days) / OUROBOROS (exactly 7 days) / DRILL (8–13 days) / FALLBACK GRID (14+ days) ── */}
+      {/* ── BLADE (1–6) / OUROBOROS (7) / DRILL (8–13) / FALLBACK (14) / SCROLL (15+) ── */}
       {days.length > 0 && days.length < 7 && (
         <CycleBlade days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
       )}
@@ -2271,7 +2271,7 @@ export default function SummaryPage() {
         <CycleDrill days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
       )}
 
-      {days.length >= 14 && (
+      {days.length === 14 && (
         <section className="relative z-10 px-8 mb-12">
           <div
             className="grid gap-4"
@@ -2287,6 +2287,10 @@ export default function SummaryPage() {
             ))}
           </div>
         </section>
+      )}
+
+      {days.length > 14 && (
+        <CycleScroll days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
       )}
 
       {days.length === 0 && (
