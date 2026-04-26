@@ -1091,8 +1091,8 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
   const CY = 685
   const R_INSC = 510
   const R_WEEKDAY = 320
-  const WEEKDAY_FONT_SIZE = 48
-  const WEEKDAY_ADVANCE = 48
+  const WEEKDAY_FONT_SIZE = 62
+  const WEEKDAY_ADVANCE = 62
   // Seven anchors over a 240° arc, shifted ~40° CW from the original layout so the first
   // anchor (day 1) lands just behind the snake's head/bite junction at compass 350°.
   // Order is reversed: day 1 sits closest to the head, day 7 trails CW down the body.
@@ -1144,13 +1144,13 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
       </text>
     ))
 
-    const numEls = renderText('num', 0, -36, 70, num)
+    const numEls = renderText('num', 0, -47, 91, num)
 
     let kanjiEls
     if (n === 1) {
-      kanjiEls = renderText('kj0', 0, 32, 80, kanjiChars[0])
+      kanjiEls = renderText('kj0', 0, 42, 104, kanjiChars[0])
     } else if (n <= 4) {
-      const fontSize = 48, colSpacing = 48, baseY = 28, rowYStep = 48
+      const fontSize = 62, colSpacing = 62, baseY = 36, rowYStep = 62
       kanjiEls = kanjiChars.flatMap((k, ki) => {
         const row = Math.floor(ki / 2)
         const isOddLast = n % 2 === 1 && ki === n - 1
@@ -1159,7 +1159,7 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
         return renderText(`kj${ki}`, x, y, fontSize, k)
       })
     } else if (n <= 6) {
-      const fontSize = 38, colSpacing = n === 5 ? 45 : 38, baseY = 22, rowYStep = 38
+      const fontSize = 49, colSpacing = n === 5 ? 58 : 49, baseY = 29, rowYStep = 49
       kanjiEls = kanjiChars.flatMap((k, ki) => {
         const row = Math.floor(ki / 2)
         const isOddLast = n % 2 === 1 && ki === n - 1
@@ -1169,7 +1169,7 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
       })
     } else {
       // n >= 7 — 4 rows × 2 cols, last row centered if odd
-      const fontSize = 32, colSpacing = 35, baseY = 18, rowYStep = 32
+      const fontSize = 42, colSpacing = 46, baseY = 23, rowYStep = 42
       kanjiEls = kanjiChars.flatMap((k, ki) => {
         const row = Math.floor(ki / 2)
         const isOddLast = n % 2 === 1 && ki === n - 1
