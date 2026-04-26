@@ -715,7 +715,7 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
 
 /* ── CYCLE DRILL (8–13 days) ──
  * Sister of CycleBlade. Renders the Gurren-Lagann core-drill silhouette as
- * substrate (public/reference/drill.svg, viewBox 600x1000), with day inscriptions
+ * substrate (public/reference/drill.svg, viewBox 816x931), with day inscriptions
  * locked to cone-band centers and a 2x3 grid in the rectangular base. Weekday
  * labels alternate along anchor sides. Per-letter yakiire (canonical 50ms flame /
  * 50ms zoom / 75ms cooled stagger) cascades on weekday labels exactly like blade.
@@ -728,23 +728,25 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
 
-  // 13 anchor slots — 7 cone bands (top→bottom) + 6 base grid cells (2 cols × 3 rows).
-  // Cone anchors center on x=300; base anchors split into left (x=224) and right (x=370).
-  // Sides alternate top→bottom on the cone and follow column membership in the base.
+  // 13 anchor slots in the drill SVG's native viewBox (816×931 from the trace).
+  // Cone band centers (6 bands the trace produced from the source): y midpoints derived
+  // from each path's translate-y span. Cone is symmetric around x=408 (image centerline).
+  // Base section (path 7, translate y=568) holds the remaining 7 anchors: 1 centered top
+  // row plus 2 cols × 3 rows below, offset to clear the right-side port-hole carve-out.
   const ALL_ANCHORS = [
-    { x: 300, y: 78,  side: 'right' }, // cone band 0 (apex)
-    { x: 300, y: 155, side: 'left'  },
-    { x: 300, y: 233, side: 'right' },
-    { x: 300, y: 310, side: 'left'  },
-    { x: 300, y: 387, side: 'right' },
-    { x: 300, y: 464, side: 'left'  },
-    { x: 300, y: 541, side: 'right' }, // cone band 6 (widest)
-    { x: 224, y: 688, side: 'left'  }, // base row 0 col L
-    { x: 370, y: 688, side: 'right' }, // base row 0 col R
-    { x: 224, y: 782, side: 'left'  },
-    { x: 370, y: 782, side: 'right' },
-    { x: 224, y: 876, side: 'left'  },
-    { x: 370, y: 876, side: 'right' },
+    { x: 430, y: 92,  side: 'right' }, // cone band 0 (apex)
+    { x: 425, y: 172, side: 'left'  }, // cone band 1
+    { x: 420, y: 252, side: 'right' },
+    { x: 415, y: 345, side: 'left'  },
+    { x: 410, y: 445, side: 'right' },
+    { x: 408, y: 530, side: 'left'  }, // cone band 5 (widest)
+    { x: 408, y: 620, side: 'right' }, // base row 0 (centered, just below cone-base junction)
+    { x: 290, y: 710, side: 'left'  }, // base row 1 col L
+    { x: 525, y: 710, side: 'right' }, // base row 1 col R
+    { x: 290, y: 800, side: 'left'  },
+    { x: 525, y: 800, side: 'right' },
+    { x: 290, y: 890, side: 'left'  },
+    { x: 525, y: 890, side: 'right' },
   ]
   const anchors = ALL_ANCHORS.slice(0, Math.min(N, ALL_ANCHORS.length))
 
@@ -763,7 +765,9 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
   // Day-number rendering — single-letter inscription at anchor with depth stack
   // (mirrors CycleBlade's renderText pattern but smaller). hot=true paints the
   // post-flame orange stack; cooled cools it via the .inscription-cooled keyframe.
-  const NUM_FONT_SIZE = 32
+  // Font sizes are in viewBox units (816×931). 50px ≈ 35% of cone half-width at the
+  // widest band, leaves comfortable margin in the apex.
+  const NUM_FONT_SIZE = 50
   const NUM_FONT = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
   const renderNum = (numStr, { hot = false, maskFill = null } = {}) => {
     const DEPTH_STACK_RED = [
@@ -786,12 +790,13 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
   }
 
   // Weekday-label horizontal advance per letter and label position helper.
-  // Weekday labels sit just outside the drill silhouette on the chosen side.
-  const WEEKDAY_FONT_SIZE = 30
-  const WEEKDAY_ADVANCE = 30
-  const weekdayLabelX = (side) => side === 'left' ? 154 : 446
-  const weekdayLetterX = (side, labelX, L) =>
-    side === 'left' ? labelX - (2 - L) * WEEKDAY_ADVANCE : labelX + L * WEEKDAY_ADVANCE
+  // Drill silhouette extends roughly x=180-635 at its widest; the 125vw container
+  // shifts left by -12.5vw so the visible viewport spans roughly vb x=82-734. Pick
+  // label start positions inside that visible band but outside the silhouette.
+  const WEEKDAY_FONT_SIZE = 42
+  const WEEKDAY_ADVANCE = 42
+  const weekdayLabelX = (side) => side === 'left' ? 90 : 640
+  const weekdayLetterX = (side, labelX, L) => labelX + L * WEEKDAY_ADVANCE
 
   return (
     <section className="relative z-10 py-2 px-2 pointer-events-none min-h-[calc(100vh-7px)]">
@@ -813,16 +818,20 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
             />
           )}
 
-          {/* Overlay — same viewBox as the drill SVG so anchor coords match exactly. */}
+          {/* Overlay — viewBox MUST match the drill SVG (816×931 from the trace) so the
+              <img> substrate and the SVG overlay scale together. Earlier 600×1000 was the
+              hand-built parametric SVG's viewBox; replacing the substrate with a real raster
+              trace (commit c4c769e) shifted the geometry to 816×931 and any anchor coords
+              expressed against 600×1000 land outside the silhouette. */}
           <svg
-            viewBox="0 0 600 1000"
+            viewBox="0 0 816 931"
             className="absolute inset-0 w-full h-auto pointer-events-none"
             aria-hidden="true"
           >
             <defs>
               {/* Inscription mask — particles flow through ignited day-number silhouettes. */}
-              <mask id="drill-inscription-window" maskUnits="userSpaceOnUse" x="0" y="0" width="600" height="1000">
-                <rect x="0" y="0" width="600" height="1000" fill="black"/>
+              <mask id="drill-inscription-window" maskUnits="userSpaceOnUse" x="0" y="0" width="816" height="931">
+                <rect x="0" y="0" width="816" height="931" fill="black"/>
                 {dayLabels.map((dl, i) => glowingDays[i] ? (
                   <g key={`drill-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
                     <text x={0} y={0} textAnchor="middle" dominantBaseline="central"
@@ -833,8 +842,8 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                 ) : null)}
               </mask>
               {/* Weekday-label mask — particles clipped to weekday letter silhouettes. */}
-              <mask id="drill-weekday-window" maskUnits="userSpaceOnUse" x="0" y="0" width="600" height="1000">
-                <rect x="0" y="0" width="600" height="1000" fill="black"/>
+              <mask id="drill-weekday-window" maskUnits="userSpaceOnUse" x="0" y="0" width="816" height="931">
+                <rect x="0" y="0" width="816" height="931" fill="black"/>
                 {dayLabels.map((dl, i) => {
                   const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
                   const labelX = weekdayLabelX(dl.side)
@@ -868,7 +877,7 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
             {/* Inscription particle aura — clipped to day-number silhouettes. */}
             {anyGlowing && (
               <g mask="url(#drill-inscription-window)" style={{ pointerEvents: 'none' }}>
-                <rect x="0" y="0" width="600" height="1000" fill="#0a0a0a"/>
+                <rect x="0" y="0" width="816" height="931" fill="#0a0a0a"/>
                 {(() => {
                   const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
                   return dayLabels.flatMap((dl, dayIdx) => {
