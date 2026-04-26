@@ -1515,7 +1515,7 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
   // (screen). Note: container's 270° rotation inverts visual CW/CCW vs viewBox compass —
   // screen CCW = viewBox CW = compass increase by step.
   const COMPASS_LEFT  = [257, 309, 0, 51, 103, 154, 206]
-  const COMPASS_RIGHT = [206, 154, 103, 51, 0, 309, 257]
+  const COMPASS_RIGHT = [154, 103, 51, 0, 309, 257, 206]
 
   const dayLabels = days.slice(0, 14).map((iso, i) => {
     const d = parseDate(iso)
@@ -2261,6 +2261,12 @@ export default function SummaryPage() {
              : days.length <= 10 ? Math.ceil(days.length / 2)
              : Math.ceil(days.length / 3)
 
+  // Per-cycle classification used by the watermark style branch (and any future per-cycle
+  // overlay decisions). Mirrors the cycle-component conditional render.
+  const isScroll   = days.length > 14
+  const isDrill    = days.length >= 8 && days.length <= 13
+  const isInfinity = days.length === 14
+
   return (
     <main ref={mainRef} className="relative h-[100dvh] overflow-hidden bg-gtl-void">
 
@@ -2454,25 +2460,36 @@ export default function SummaryPage() {
           pointer-events: none;
         }
       `}</style>
-      {/* WATERMARK PLACEMENT — currently uniform across all cycles, sharing the canonical
-          drill values. When this is split into per-cycle branches (parallel work on GTL 2),
-          the 14-day cycle must share the DRILL branch (`isDrill || days.length === 14`) —
-          NOT the blade/ouroboros branch. The exact drill values to keep for both:
-            { bottom: 'calc(20px + 128px + 10px)', right: '2px',
-              transform: 'rotate(8deg)', transformOrigin: 'right bottom',
-              overflow: 'visible' } */}
+      {/* WATERMARK PLACEMENT — split per-cycle. Scroll (15+) gets its own slot; drill (8-13)
+          and infinity (14) share the same slot above the flame button at rotate(8°); blade
+          (1-6) and ouroboros (7) share the canonical bottom-right slot (currently identical
+          to the drill values). If GTL 2 lands a parallel split later, merge to keep 14-day
+          on the drill branch. */}
       <svg
         aria-hidden="true"
         className="fixed z-[20] pointer-events-none select-none"
         width={130} height={78}
         viewBox="0 0 130 78"
-        style={{
-          bottom: 'calc(20px + 128px + 10px)',
-          right: '2px',
-          transform: 'rotate(8deg)',
-          transformOrigin: 'right bottom',
-          overflow: 'visible',
-        }}
+        style={
+          isScroll
+            ? { bottom: '20px', right: 'calc(5px + 92px - 4px)', overflow: 'visible' }
+            : (isDrill || isInfinity)
+              ? {
+                  bottom: 'calc(20px + 128px + 10px)',
+                  right: '2px',
+                  transform: 'rotate(8deg)',
+                  transformOrigin: 'right bottom',
+                  overflow: 'visible',
+                }
+              : {
+                  // blade / ouroboros — keep current canonical placement.
+                  bottom: 'calc(20px + 128px + 10px)',
+                  right: '2px',
+                  transform: 'rotate(8deg)',
+                  transformOrigin: 'right bottom',
+                  overflow: 'visible',
+                }
+        }
       >
         <defs>
           <mask id="watermark-window" maskUnits="userSpaceOnUse" x="0" y="0" width="130" height="78">
