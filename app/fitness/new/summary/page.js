@@ -934,11 +934,11 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
   return (
     <section className="relative z-10 py-2 px-2 pointer-events-none min-h-[calc(100vh-7px)]">
       <div>
-        {/* Drill container — 188vw width (171 × 1.10) with -44vw left shift to keep it
-            horizontally centered while running ~88% larger than viewport. Inscription anchors
+        {/* Drill container — 179vw width (188 × 0.95) with -39.5vw left shift to keep it
+            horizontally centered while running ~79% larger than viewport. Inscription anchors
             live in the overlay's viewBox-local coords, so they scale with the container
             automatically. */}
-        <div style={{ position: 'absolute', top: '-50px', left: '-44vw', width: '188vw', maxWidth: 'none' }}>
+        <div style={{ position: 'absolute', top: '-50px', left: '-39.5vw', width: '179vw', maxWidth: 'none' }}>
           {/* Drill substrate + inscription overlay rendered inside ONE <svg>. The drill
               path data is inlined from public/reference/drill.svg so the inscription
               <g> elements (mixBlendMode: 'difference') blend against the red silhouette
