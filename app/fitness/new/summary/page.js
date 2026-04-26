@@ -1770,7 +1770,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                 const s         = dayScale(dl)
                 const fontSize  = WEEKDAY_FONT_SIZE * s
                 const lineH     = 28 * s    // taller line so letters don't collide
-                const xOff      = -45 * s   // closer to the inscriptions on their right
+                const xOff      = -37 * s   // closer to the inscriptions on their right
                 const yCenter   = 12 * s    // shifted up ~8px from the kanji vertical center
                 return (
                   <g key={`dow-${dl.iso}`}>
