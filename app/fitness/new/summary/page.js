@@ -2755,7 +2755,7 @@ export default function SummaryPage() {
           aria-hidden="true"
           className="fixed z-[20] pointer-events-none select-none"
           style={{
-            top: 'calc(37vw - 105px)',
+            top: 'calc(37vw - 55px)',
             left: 'calc(50% + 17px)',
             transform: 'translateX(-50%)',
             fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
