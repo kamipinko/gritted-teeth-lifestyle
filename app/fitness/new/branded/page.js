@@ -468,6 +468,14 @@ export default function SchedulePage() {
 
   const sheetOpen = selectedDays.size > 0
 
+  // Wrap-continuity pulse — bumps on month change so the paired (last-flow + wrapped) cells
+  // re-trigger their CSS animation. Used as part of the cell key so React re-mounts the
+  // wrap-continuity overlay when the month changes.
+  const [pulseKey, setPulseKey] = useState(0)
+  useEffect(() => {
+    setPulseKey((k) => k + 1)
+  }, [year, month])
+
   // Sorted selection drives the auto-rest gap fill: any unpicked day between the first
   // and last user-picked ISO date renders with a ✕ overlay (no red highlight) so it reads
   // as part of the cycle. P1 persistence: gap days are NOT saved, only user-picks are.
@@ -477,6 +485,18 @@ export default function SchedulePage() {
   }, [selectedDays])
   const firstSelectedKey = sortedSelected[0]
   const lastSelectedKey  = sortedSelected[sortedSelected.length - 1]
+
+  // Wrap-continuity: pair the last chronological cell that wasn't wrapped (e.g., May 30 in
+  // a layout where May 31 wrapped into row 1) with the wrapped cell(s). Both endpoints get
+  // matching ↗ glyphs and a left/right edge accent so the eye reads them as the same flow.
+  const wrapActive = wrappedDays.size > 0
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  let flowEndDay = null
+  if (wrapActive) {
+    for (let d = daysInMonth; d >= 1; d--) {
+      if (!wrappedDays.has(d)) { flowEndDay = d; break }
+    }
+  }
   const daysWithMuscles = Object.values(assignments).filter((s) => s.size > 0).length
   const carveEnabled = daysWithMuscles > 0
 
@@ -546,6 +566,12 @@ export default function SchedulePage() {
           0%, 100% { box-shadow: 0 0 8px rgba(228,176,34,0.4); }
           50%      { box-shadow: 0 0 20px rgba(228,176,34,0.8), 0 0 40px rgba(228,176,34,0.3); }
         }
+        @keyframes wrap-continuity-pulse {
+          0%   { box-shadow: inset 0 0 0 0 rgba(228, 176, 34, 0); }
+          20%  { box-shadow: inset 0 0 0 3px rgba(228, 176, 34, 0.85); }
+          100% { box-shadow: inset 0 0 0 0 rgba(228, 176, 34, 0); }
+        }
+        .wrap-continuity-pulse { animation: wrap-continuity-pulse 1000ms ease-out 200ms both; }
       `}</style>
       {/* Atmospherics */}
       <div className="absolute inset-0 gtl-noise" />
@@ -633,6 +659,8 @@ export default function SchedulePage() {
             const todayCell  = isToday(d)
             const past       = isPast(d)
             const isWrapped  = wrappedDays.has(d)
+            const isFlowEnd  = wrapActive && d === flowEndDay
+            const wrapPair   = isWrapped || isFlowEnd
             const badges     = badgeMuscles(key)
             const hasMuscles = badges.length > 0
 
@@ -651,11 +679,34 @@ export default function SchedulePage() {
                     : todayCell
                     ? 'bg-gtl-ink border-gtl-gold'
                     : 'bg-gtl-ink border-gtl-edge'}
+                  ${wrapPair ? 'wrap-continuity-pulse' : ''}
                 `}
                 style={{ clipPath: CELL_CLIP, height: `${ROW_H}px` }}
               >
                 {todayCell && !hasMuscles && !selected && (
                   <div className="absolute top-0 left-0 right-0 h-0.5 bg-gtl-gold" aria-hidden="true" />
+                )}
+
+                {/* Wrap-continuity cues — only on the paired flow-end / wrapped cells. */}
+                {isFlowEnd && (
+                  <>
+                    <div className="absolute top-0 right-0 bottom-0 w-[2px] pointer-events-none"
+                         style={{ background: '#e4b022', boxShadow: '0 0 6px rgba(228,176,34,0.7)' }}
+                         aria-hidden="true" />
+                    <span className="absolute top-1 right-1 font-mono text-[12px] font-semibold leading-none pointer-events-none select-none"
+                          style={{ color: '#e4b022' }}
+                          aria-hidden="true">↗</span>
+                  </>
+                )}
+                {isWrapped && (
+                  <>
+                    <div className="absolute top-0 left-0 bottom-0 w-[2px] pointer-events-none"
+                         style={{ background: '#e4b022', boxShadow: '0 0 6px rgba(228,176,34,0.7)' }}
+                         aria-hidden="true" />
+                    <span className="absolute bottom-1 left-1 font-mono text-[12px] font-semibold leading-none pointer-events-none select-none"
+                          style={{ color: '#e4b022' }}
+                          aria-hidden="true">↗</span>
+                  </>
                 )}
 
                 {/* Date watermark */}
