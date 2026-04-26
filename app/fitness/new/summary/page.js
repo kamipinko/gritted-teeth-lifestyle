@@ -2562,10 +2562,9 @@ export default function SummaryPage() {
           ? {
               // CycleScroll mode: small stacked watermark sitting to the LEFT of the
               // smaller 92px flame button (button at bottom:5, right:5, size 92).
+              // No tilt — sits flush against the button's left edge.
               bottom: '20px',
               right: 'calc(5px + 92px + 6px)',
-              transform: 'rotate(8deg)',
-              transformOrigin: 'right bottom',
               overflow: 'visible',
             }
           : {
