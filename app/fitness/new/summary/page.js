@@ -794,10 +794,15 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
     ...ridgeSlots(RIDGE4_BBOX, 4),
     ...ridgeSlots(RIDGE5_BBOX, 5),
   ].map(s => ({ ...s, side: sideFor(s.x) }))
-  // Mount kanjiRotation = 0 keeps the inscription stack axis-upright; numRotation = -90
-  // is consumed by wdParams so the weekday cluster lays sideways with its letter bottoms
-  // facing the kanji's left edge — same orientation as cone anchors.
-  const MOUNT_SLOT = { x: 408, y: 610, side: 'left', numRotation: -90, kanjiRotation: 0 }
+  // Mount inscription now tilts on the same RIDGE_STEEP angle as the cone anchors
+  // (kanjiRotation 18.9°, numRotation -71.1°). isMount keeps the larger base sizing
+  // for the weekday cluster — wdParams branches on it instead of kanjiRotation === 0.
+  const MOUNT_SLOT = {
+    x: 408, y: 610, side: 'left',
+    numRotation: RIDGE_STEEP - 90,
+    kanjiRotation: RIDGE_STEEP,
+    isMount: true,
+  }
   const anchors = days.map((_, i) => i < 12 ? CONE_SLOTS[i] : MOUNT_SLOT)
 
   const dayLabels = days.map((iso, i) => {
@@ -810,7 +815,8 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
       : '休'
     const a = anchors[i] || anchors[anchors.length - 1]
     return { num, hasWork, kanjiStr, iso, cx: a.x, cy: a.y, side: a.side,
-             numRotation: a.numRotation, kanjiRotation: a.kanjiRotation }
+             numRotation: a.numRotation, kanjiRotation: a.kanjiRotation,
+             isMount: !!a.isMount }
   })
 
   // Day-number + kanji at each anchor — vertically stacked: number CENTERED ABOVE
@@ -906,15 +912,13 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
   // the same numRotation the number used pre-stacking, so they slot into the cone
   // ridge sideways like the dates did before the stack commit.
   const wdParams = (dl) => {
-    // Mount = the only anchor with kanjiRotation 0; everything else is a cone slot.
-    // Cone weekdays use the smaller cone-glyph sizing; mount keeps the bigger base
-    // sizing because its inscription itself is bigger. Both use a sideways rotation
+    // Mount keeps the bigger base sizing because its inscription itself is bigger.
+    // Cone weekdays use the smaller cone-glyph sizing. Both use a sideways rotation
     // so the bottom of the weekday letters sits snug against the left of the kanji.
-    const isMount = (dl.kanjiRotation || 0) === 0
     return {
-      fontSize: isMount ? 22 : 13,
-      advance:  isMount ? 22 : 13,
-      offset:   isMount ? 36 : 28,
+      fontSize: dl.isMount ? 22 : 13,
+      advance:  dl.isMount ? 22 : 13,
+      offset:   dl.isMount ? 36 : 28,
       rotation: dl.numRotation || 0,
     }
   }
