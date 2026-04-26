@@ -932,7 +932,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                 fill to read against the red drill body, slight uppercase tracking. */}
             {cycleName && (
               <text
-                x={408} y={605}
+                x={408} y={610}
                 textAnchor="middle"
                 dominantBaseline="central"
                 style={{
