@@ -1510,8 +1510,8 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
   // not in the hollow. R_WEEKDAY kept for the legacy mask/particle blocks below; the visible
   // weekday text rides the inscription anchor.
   const R_WEEKDAY = 80
-  const WEEKDAY_FONT_SIZE = 12
-  const WEEKDAY_ADVANCE = 11
+  const WEEKDAY_FONT_SIZE = 16
+  const WEEKDAY_ADVANCE = 14
   const WEEKDAY_LOCAL_Y = -32  // local y in the inscription frame (above the number at y=-10)
   // 7 anchors per loop, even compass distribution. Days 1-7 trace the left loop CW; days
   // 8-14 trace the right loop CCW so the date order flows continuously around the figure-8.
@@ -1570,10 +1570,10 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
       </text>
     ))
 
-    const numEls = renderText('num', 0, -10, 22, num)
-    const kanjiSize = n === 1 ? 22 : n <= 4 ? 14 : 11
+    const numEls = renderText('num', 0, -8, 16, num)
+    const kanjiSize = n === 1 ? 30 : n <= 4 ? 20 : 15
     const colSpacing = kanjiSize
-    const baseY = 10
+    const baseY = n === 1 ? 18 : 14
     const rowYStep = kanjiSize
     const kanjiEls = kanjiChars.flatMap((k, ki) => {
       if (n === 1) return renderText('kj0', 0, baseY, kanjiSize, k)
