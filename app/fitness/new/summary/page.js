@@ -1536,7 +1536,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
   // The LAST day uses a 1.7× scale factor so it visually dominates the column.
   const NUM_FONT = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
   const renderInscription = (dl, { hot = false, maskFill = null } = {}) => {
-    const { num, kanjiStr, isBig } = dl
+    const { num, kanjiStr, isBig, isLast } = dl
     const kanjiChars = kanjiStr.split('')
     const n = kanjiChars.length
     // BIG day (≤35-day cycles) renders 1.7×; for 7+ columns everything also
@@ -1552,7 +1552,20 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
       { dy: 1, fill: '#d85a10' },
       { dy: 0, fill: '#ff6600' },
     ]
-    const stack = maskFill ? [{ dy: 0, fill: maskFill }] : (hot ? DEPTH_STACK_HOT : DEPTH_STACK_RED)
+    // Final-day inscription uses the GTL gold stack (matches BATTLEDAYS yellow
+    // on the load page) so the cycle's last day pops visually.
+    const DEPTH_STACK_GOLD = [
+      { dy: 2, fill: '#5a4015' },
+      { dy: 1, fill: '#a8782a' },
+      { dy: 0, fill: '#e4b022' },
+    ]
+    const stack = maskFill
+      ? [{ dy: 0, fill: maskFill }]
+      : hot
+        ? DEPTH_STACK_HOT
+        : isLast
+          ? DEPTH_STACK_GOLD
+          : DEPTH_STACK_RED
     const renderText = (keyBase, x, y, fontSize, char) => stack.map((layer, li) => (
       <text key={`${keyBase}-${li}`} x={x} y={y + layer.dy} textAnchor="middle" dominantBaseline="central"
         style={{ fontFamily: NUM_FONT, fontSize: `${fontSize}px`, fontWeight: 700, fill: layer.fill }}>
