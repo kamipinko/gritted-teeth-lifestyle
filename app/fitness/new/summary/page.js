@@ -1191,7 +1191,7 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
       <div>
         {/* Ouroboros container — square, full viewport width, top-anchored. The dispatched
             stamp card / fire button live below this section in the SummaryPage layout. */}
-        <div style={{ position: 'absolute', top: '100px', left: '-5px', width: '100vw', maxWidth: 'none', transform: 'scale(1.02)', transformOrigin: 'center' }}>
+        <div style={{ position: 'absolute', top: '100px', left: '-7px', width: '100vw', maxWidth: 'none', transform: 'scale(1.03)', transformOrigin: 'center' }}>
           {mounted && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
