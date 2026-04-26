@@ -1514,7 +1514,7 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
   // Bottom (left) loop shifted 3 steps CCW (screen); top (right) loop shifted 3 steps CW
   // (screen). Note: container's 270° rotation inverts visual CW/CCW vs viewBox compass —
   // screen CCW = viewBox CW = compass increase by step.
-  const COMPASS_LEFT  = [257, 309, 0, 51, 103, 154, 206]
+  const COMPASS_LEFT  = [51, 103, 154, 206, 257, 309, 0]
   const COMPASS_RIGHT = [154, 103, 51, 0, 309, 257, 206]
 
   const dayLabels = days.slice(0, 14).map((iso, i) => {
