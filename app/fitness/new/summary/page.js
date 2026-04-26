@@ -1517,7 +1517,7 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
   // Day 1 + day 8 stay put; the subsequent dates within each loop now traverse in the
   // opposite direction (bottom flipped CW→CCW; top flipped CCW→CW).
   const COMPASS_LEFT  = [51, 0, 309, 257, 206, 154, 103]
-  const COMPASS_RIGHT = [0, 51, 103, 154, 206, 257, 309]
+  const COMPASS_RIGHT = [309, 0, 51, 103, 154, 206, 257]
 
   const dayLabels = days.slice(0, 14).map((iso, i) => {
     const d = parseDate(iso)
@@ -2477,14 +2477,15 @@ export default function SummaryPage() {
             ? { bottom: '20px', right: 'calc(5px + 92px - 4px)', overflow: 'visible' }
             : (isDrill || isInfinity)
               ? {
-                  bottom: 'calc(20px + 128px + 10px)',
-                  right: '2px',
+                  // drill + infinity — beside (left of) the 128px flame button.
+                  bottom: '20px',
+                  right: 'calc(20px + 128px + 10px)',
                   transform: 'rotate(8deg)',
                   transformOrigin: 'right bottom',
                   overflow: 'visible',
                 }
               : {
-                  // blade / ouroboros — keep current canonical placement.
+                  // blade / ouroboros — above the flame button (canonical pre-split slot).
                   bottom: 'calc(20px + 128px + 10px)',
                   right: '2px',
                   transform: 'rotate(8deg)',
