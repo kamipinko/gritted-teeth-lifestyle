@@ -1689,7 +1689,26 @@ export default function SummaryPage() {
       const rawP = localStorage.getItem(pk('daily-plan'))
       if (name) setCycleName(name)
       if (rawT) setTargets(JSON.parse(rawT))
-      if (rawD) setDays(JSON.parse(rawD).sort())
+      if (rawD) {
+        // Derive the contiguous-span cycle from min/max of the user-picked days.
+        // Auto-rest gap days (any unpicked day between first and last) are filled here so
+        // the cascade scales with the cycle's effective length, not just the picked count.
+        const picked = JSON.parse(rawD).sort()
+        if (picked.length === 0) {
+          setDays([])
+        } else {
+          const first = picked[0]
+          const last  = picked[picked.length - 1]
+          const span = []
+          let cur = new Date(first + 'T00:00:00Z')
+          const end = new Date(last  + 'T00:00:00Z')
+          while (cur <= end) {
+            span.push(cur.toISOString().slice(0, 10))
+            cur.setUTCDate(cur.getUTCDate() + 1)
+          }
+          setDays(span)
+        }
+      }
       if (rawP) setDailyPlan(JSON.parse(rawP))
     } catch (_) {}
   }, [])
