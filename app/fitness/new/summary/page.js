@@ -744,24 +744,26 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
   useEffect(() => { setMounted(true) }, [])
 
   // 13 anchor slots in the drill SVG's native viewBox (816×931 from the trace).
-  // Cone band centers (6 bands the trace produced from the source): y midpoints derived
-  // from each path's translate-y span. Cone is symmetric around x=408 (image centerline).
-  // Base section (path 7, translate y=568) holds the remaining 7 anchors: 1 centered top
-  // row plus 2 cols × 3 rows below, offset to clear the right-side port-hole carve-out.
+  // Cone band centers come from the actual ridge geometry: each band's worldspace
+  // bbox center (computed via getBBox() on the 6 cone-band paths in drill.svg). This
+  // locks every cone inscription to a real ridge instead of an arbitrary y-spacing on
+  // x=300. Per-anchor `rotation` field carries the slant so cone bands tilt to ride
+  // their ridges and base anchors stay upright on the rectangular base section.
+  const CONE_RIDGE_ROTATION = -70 // ridge tilt + 90° offset (left-edge-on-ridge)
   const ALL_ANCHORS = [
-    { x: 430, y: 92,  side: 'right' }, // cone band 0 (apex)
-    { x: 425, y: 172, side: 'left'  }, // cone band 1
-    { x: 420, y: 252, side: 'right' },
-    { x: 415, y: 345, side: 'left'  },
-    { x: 410, y: 445, side: 'right' },
-    { x: 408, y: 530, side: 'left'  }, // cone band 5 (widest)
-    { x: 408, y: 620, side: 'right' }, // base row 0 (centered, just below cone-base junction)
-    { x: 290, y: 710, side: 'left'  }, // base row 1 col L
-    { x: 525, y: 710, side: 'right' }, // base row 1 col R
-    { x: 290, y: 800, side: 'left'  },
-    { x: 525, y: 800, side: 'right' },
-    { x: 290, y: 890, side: 'left'  },
-    { x: 525, y: 890, side: 'right' },
+    { x: 417,   y: 91,  side: 'right', rotation: CONE_RIDGE_ROTATION }, // cone band 0 (apex)
+    { x: 419,   y: 182, side: 'left',  rotation: CONE_RIDGE_ROTATION },
+    { x: 423,   y: 272, side: 'right', rotation: CONE_RIDGE_ROTATION },
+    { x: 427.5, y: 380, side: 'left',  rotation: CONE_RIDGE_ROTATION },
+    { x: 425,   y: 474, side: 'right', rotation: CONE_RIDGE_ROTATION },
+    { x: 337,   y: 524, side: 'left',  rotation: CONE_RIDGE_ROTATION }, // small lower-left band
+    { x: 408,   y: 620, side: 'right', rotation: 0 },                    // base row 0 (centered)
+    { x: 290,   y: 700, side: 'left',  rotation: 0 },                    // base row 1
+    { x: 525,   y: 700, side: 'right', rotation: 0 },
+    { x: 290,   y: 790, side: 'left',  rotation: 0 },                    // base row 2
+    { x: 525,   y: 790, side: 'right', rotation: 0 },
+    { x: 290,   y: 860, side: 'left',  rotation: 0 },                    // base row 3
+    { x: 525,   y: 860, side: 'right', rotation: 0 },
   ]
   const anchors = ALL_ANCHORS.slice(0, Math.min(N, ALL_ANCHORS.length))
 
@@ -774,7 +776,7 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
       ? muscles.map((m) => MUSCLE_KANJI[m] || '?').join('')
       : '休'
     const a = anchors[i] || anchors[anchors.length - 1]
-    return { num, hasWork, kanjiStr, iso, cx: a.x, cy: a.y, side: a.side }
+    return { num, hasWork, kanjiStr, iso, cx: a.x, cy: a.y, side: a.side, rotation: a.rotation }
   })
 
   // Day-number + kanji column inscription — mirrors CycleBlade / CycleScroll's
@@ -782,13 +784,9 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
   // sharing a single depth-stack so post-flame hot/cooled phases drive both halves.
   // Font sizes scaled to the drill's tight cone bands (≤ ~80vb tall per band slot).
   const NUM_FONT = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-  // Inscriptions are laid sideways along each cone-band ridge — like traditional
-  // vertical Japanese text rotated 90° onto the diagonal. ridge_angle + 90 rests the
-  // glyph's LEFT edge on the ridge with its (rotated) top pointing outward, away from
-  // the drill body. The cone-band ridges themselves run ~ -12° from horizontal, so
-  // RIDGE_ANGLE = -12 + 90 = 78. Applied to base render, zoom-burst, and mask so
-  // every layer rotates together.
-  const RIDGE_ANGLE = -70
+  // Per-anchor rotation now lives on each anchor (`dl.rotation`). Cone bands carry
+  // CONE_RIDGE_ROTATION; base anchors are upright (0°). Rotation is applied on the
+  // outer wrapper of the inscription, the zoom-burst, and the mask.
   const renderInscription = (dl, { hot = false, maskFill = null } = {}) => {
     const { num, kanjiStr } = dl
     const kanjiChars = (kanjiStr || '').split('')
@@ -885,7 +883,7 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               <mask id="drill-inscription-window" maskUnits="userSpaceOnUse" x="0" y="0" width="816" height="931">
                 <rect x="0" y="0" width="816" height="931" fill="black"/>
                 {dayLabels.map((dl, i) => glowingDays[i] ? (
-                  <g key={`drill-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${RIDGE_ANGLE})`}>
+                  <g key={`drill-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.rotation})`}>
                     {renderInscription(dl, { maskFill: 'white' })}
                   </g>
                 ) : null)}
@@ -981,7 +979,7 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                      opacity: flameOn ? 0 : 1,
                      transition: 'opacity 0ms',
                    }}>
-                  <g transform={`translate(${dl.cx},${dl.cy}) rotate(${RIDGE_ANGLE})`}>
+                  <g transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.rotation})`}>
                     {renderInscription(dl, { hot })}
                   </g>
                 </g>
@@ -992,7 +990,7 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
             {glowIntensity === 'peak' && (
               <g style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
                 {dayLabels.map((dl, i) => (
-                  <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${RIDGE_ANGLE})`}>
+                  <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.rotation})`}>
                     <g className="zoom-glyph" style={{ animationDelay: `${i * 220}ms`,
                           transformBox: 'fill-box', transformOrigin: 'center',
                           animation: `inscription-zoom 340ms ease-out forwards ${i * 220}ms`,
