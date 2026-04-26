@@ -1494,11 +1494,12 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
     const c = Math.floor(i / ROWS_PER_COL)
     const r = i % ROWS_PER_COL
     const isLast = i === N - 1
-    const aloneInCol = isLast && r === 0
     return {
       x: WRITE_X0 + colStep * (c + 0.5),
-      y: aloneInCol
-        ? (WRITE_Y0 + WRITE_Y1) / 2
+      // Final day always pinned to the bottom-right cell, regardless of how many
+      // earlier days occupy its column.
+      y: isLast
+        ? WRITE_Y1 - rowStep * 0.5
         : WRITE_Y0 + rowStep * (r + 0.5),
       side: i < halfN ? 'left' : 'right',
       isLast,
