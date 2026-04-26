@@ -929,7 +929,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
   const wdParams = () => ({
     fontSize: 13,
     advance:  13,
-    aboveY:   -25,
+    aboveY:   -23,
   })
   // Mirror the offsets renderInscription uses internally so the cluster lands on the
   // exact midpoint between kanji center and number center.
