@@ -1666,10 +1666,11 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
               </mask>
             </defs>
 
-            {/* Inscription particle aura — clipped to day-number silhouettes. */}
+            {/* Inscription particle aura — mask intentionally omitted in scroll
+                mode (re-rasterizing a 1061×1300 mask on every state flip dominated
+                paint cost). Particles render free as orange dots rising. */}
             {anyGlowing && (
-              <g mask="url(#scroll-inscription-window)" style={{ pointerEvents: 'none' }}>
-                <rect x="0" y="0" width="1061" height="1300" fill="#0a0a0a"/>
+              <g style={{ pointerEvents: 'none' }}>
                 {(() => {
                   const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
                   return dayLabels.flatMap((dl, dayIdx) => {
@@ -1822,7 +1823,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
 
             {/* Weekday particle aura — clipped to weekday letter silhouettes. */}
             {anyWeekdayIgnited && (
-              <g mask="url(#scroll-weekday-window)" style={{ pointerEvents: 'none' }}>
+              <g style={{ pointerEvents: 'none' }}>
                 {(() => {
                   const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
                   const PARTS_PER_WEEKDAY = 6
@@ -2146,10 +2147,11 @@ export default function SummaryPage() {
           })
         }, at)
       }
-      // Peak / zoom: columns cascade 200ms each, all rows in a column simultaneously.
+      // Peak / zoom: columns cascade 400ms each (slowed from 200ms so the cascade
+      // is visible even at the degraded frame-rates the scroll layout produces).
       setTimeout(() => setGlowIntensity('peak'), 1600)
       for (let col = 0; col < colCount; col++) {
-        const at = 1600 + col * 200
+        const at = 1600 + col * 400
         setTimeout(() => {
           setGlowingDays(prev => {
             const next = [...prev]
@@ -2169,9 +2171,10 @@ export default function SummaryPage() {
           })
         }, at)
       }
-      // Cooled: 1600ms hold after zoom starts, then columns cool 300ms each.
+      // Cooled: 1600ms hold after zoom starts, then columns cool 500ms each
+      // (slowed from 300ms to match the visible cascade pace above).
       for (let col = 0; col < colCount; col++) {
-        const at = 1600 + 1600 + col * 300
+        const at = 1600 + 1600 + col * 500
         setTimeout(() => {
           setCooledDays(prev => {
             const next = [...prev]
@@ -2183,8 +2186,8 @@ export default function SummaryPage() {
           })
         }, at)
       }
-      const glowOffAt    = 1600 + (colCount - 1) * 200 + 340
-      const lastCooledAt = 3200 + (colCount - 1) * 300
+      const glowOffAt    = 1600 + (colCount - 1) * 400 + 340
+      const lastCooledAt = 3200 + (colCount - 1) * 500
       setTimeout(() => setGlowIntensity('off'), Math.max(3040, glowOffAt))
       stampVisibleAt = Math.max(4290, lastCooledAt + 400)
       setTimeout(() => setStampVisible(true), stampVisibleAt)
@@ -2241,52 +2244,54 @@ export default function SummaryPage() {
     }
 
     // Per-letter weekday cascade. Below 15 days, canonical middle-out pair scheduling;
-    // 15+ days uses a column-major group cascade that matches the per-day cascade
-    // (and avoids 90+ letter-level setTimeouts on a 30-day scroll).
+    // 15+ days uses a column-block cascade that flips ALL 21 weekday letters in a
+    // column with a single state update (3 setTimeouts per column instead of 21).
+    // Staggers slowed (400ms zoom / 500ms cooled) so the cascade is perceptible
+    // even when the browser drops to 2-3fps on dense scroll layouts.
     let lastPairCooledAt
     if (isScroll) {
-      // Column-major weekday cascade — 7 rows per column, all letters in a column fire
-      // simultaneously; columns step 100ms (flame) / 200ms (zoom) / 300ms (cooled).
       const ROWS_PER_COL = 7
       const colCount = Math.ceil(N / ROWS_PER_COL)
       for (let col = 0; col < colCount; col++) {
-        const flameAt  = 900  + col * 100
-        const zoomAt   = 3000 + col * 200
-        const cooledAt = 3650 + col * 300
-        const tuples = []
+        // Match the per-day cascade so a column's day-numbers + weekday letters
+        // ignite/zoom/cool together.
+        const flameAt  = 200  + col * 100
+        const zoomAt   = 1600 + col * 400
+        const cooledAt = 3200 + col * 500
+        const indices = []
         for (let row = 0; row < ROWS_PER_COL; row++) {
           const dayIdx = col * ROWS_PER_COL + row
           if (dayIdx >= N) break
-          for (let L = 0; L < 3; L++) tuples.push([dayIdx, L])
+          for (let L = 0; L < 3; L++) indices.push(dayIdx * 3 + L)
         }
         setTimeout(() => {
           setWeekdayLetterIgnited(prev => {
             const next = [...prev]
-            tuples.forEach(([d, L]) => { next[d * 3 + L] = true })
+            indices.forEach(i => { next[i] = true })
             return next
           })
         }, flameAt)
         setTimeout(() => {
           setWeekdayLetterIgnited(prev => {
             const next = [...prev]
-            tuples.forEach(([d, L]) => { next[d * 3 + L] = false })
+            indices.forEach(i => { next[i] = false })
             return next
           })
           setWeekdayLetterZoomed(prev => {
             const next = [...prev]
-            tuples.forEach(([d, L]) => { next[d * 3 + L] = true })
+            indices.forEach(i => { next[i] = true })
             return next
           })
         }, zoomAt)
         setTimeout(() => {
           setWeekdayLetterCooled(prev => {
             const next = [...prev]
-            tuples.forEach(([d, L]) => { next[d * 3 + L] = true })
+            indices.forEach(i => { next[i] = true })
             return next
           })
         }, cooledAt)
       }
-      lastPairCooledAt = 3650 + (colCount - 1) * 300
+      lastPairCooledAt = 3200 + (colCount - 1) * 500
     } else {
       // ── Canonical middle-out cascade ────────────────────────────────────
       //   Flame: 50ms per letter, Zoom: 50ms per letter, Cooled: 75ms per letter.
