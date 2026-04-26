@@ -1538,16 +1538,17 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
         {char}
       </text>
     ))
-    // Day number sits at y = -28 (above center); kanji block sits at y = +14 (below center).
-    const numEls = renderText('num', 0, -28, NUM_FONT_SIZE, num)
+    // Layout (DOW lives in a separate render block above number+kanji at y = -50):
+    //   day number at y = -16 (just above center), kanji block at y = +22 (below center).
+    const numEls = renderText('num', 0, -16, NUM_FONT_SIZE, num)
     let kanjiEls = null
     if (n === 1) {
-      kanjiEls = renderText('kj0', 0, 14, 44, kanjiChars[0])
+      kanjiEls = renderText('kj0', 0, 22, 44, kanjiChars[0])
     } else if (n <= 3) {
       const colSpacing = n === 2 ? 32 : 30
       const fontSize   = n === 2 ? 36 : 28
       kanjiEls = kanjiChars.flatMap((k, ki) =>
-        renderText(`kj${ki}`, (ki - (n - 1) / 2) * colSpacing, 14, fontSize, k))
+        renderText(`kj${ki}`, (ki - (n - 1) / 2) * colSpacing, 22, fontSize, k))
     } else {
       // n >= 4: 2 rows × ceil(n/2) cols, ~22px font.
       const cols = Math.ceil(n / 2)
@@ -1558,17 +1559,17 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
         const row = Math.floor(ki / cols)
         const col = ki % cols
         const x = (col - (cols - 1) / 2) * colSpacing
-        const y = 4 + row * rowYStep
+        const y = 12 + row * rowYStep
         return renderText(`kj${ki}`, x, y, fontSize, k)
       })
     }
     return <>{numEls}{kanjiEls}</>
   }
 
-  // Weekday DOW label sits centered below the kanji block (offset y by ~52 from cell center).
+  // Weekday DOW label sits ABOVE the date number (offset y = -50 from cell center).
   const WEEKDAY_FONT_SIZE = 24
   const WEEKDAY_ADVANCE   = 20
-  const WEEKDAY_DY        = 52
+  const WEEKDAY_DY        = -50
   // Per-letter x: center-anchored around the cell so all 3 letters sit together below the day number.
   const weekdayLetterX = (cx, L) => cx + (L - 1) * WEEKDAY_ADVANCE
 
