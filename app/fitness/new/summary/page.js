@@ -746,41 +746,41 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
   // Inscription layout — cone tip empty, ridges widen top→bottom with growing capacity:
   //   ridge 1 (apex)        : 0 inscriptions (empty)
   //   ridge 2 (band 1)      : 1
-  //   ridge 3 (band 2)      : 2 (paired along the ridge)
-  //   ridge 4 (band 3)      : 4 (evenly distributed along the ridge)
-  //   ridge 5 (band 4 widest): 5 (evenly distributed)
+  //   ridge 3 (band 2)      : 2
+  //   ridge 4 (band 3)      : 4
+  //   ridge 5 (band 4 widest): 5
   //   mount  (rectangular base, day-13 only): 1, axis-upright (no slant).
   // Total cone capacity = 1+2+4+5 = 12; +1 mount = 13.
-  // Slot x positions are derived from each band's getBBox span (sampled via
-  // Playwright on drill.svg), spread inward by ~40 vb on each end so each pair fits
-  // comfortably between the band edges. y values are the band centers.
-  // Cone numbers rotate -70° (sideways, left-edge on ridge); kanji rotate +12°
-  // (ridge tilt only, kanji bottom rests on the ridge). Mount inscription has
-  // numRotation=0 and kanjiRotation=0 — upright.
-  const CONE_NUM_ROTATION   = -70
-  const CONE_KANJI_ROTATION =  12
-  const cone = { numRotation: CONE_NUM_ROTATION, kanjiRotation: CONE_KANJI_ROTATION }
-  const upright = { numRotation: 0, kanjiRotation: 0 }
+  //
+  // Per-ridge rotation is derived from the actual top-edge slope of each band
+  // (sampled via Playwright getPointAtLength on drill.svg, fit a line through the
+  // top edge points). Kanji rotation = ridge angle (kanji bottom rests on the ridge);
+  // number rotation = ridge angle - 90 (sideways, with the same ridge tilt baked in).
+  //
+  // Slot x positions are distributed evenly across each band's full bbox span:
+  // x = xLeft + (k + 0.5) * (xRight - xLeft) / N. y values are band centers.
+  const RIDGE2_BBOX = { xLeft: 368, xRight: 471, yMid: 182, angle:  7.3 } // band 1
+  const RIDGE3_BBOX = { xLeft: 341, xRight: 505, yMid: 272, angle: 11.8 } // band 2
+  const RIDGE4_BBOX = { xLeft: 309, xRight: 546, yMid: 380, angle:  7.1 } // band 3
+  const RIDGE5_BBOX = { xLeft: 276, xRight: 574, yMid: 474, angle: 10.0 } // band 4
+
+  const ridgeSlots = (ridge, n) => Array.from({ length: n }, (_, k) => {
+    const x = ridge.xLeft + (k + 0.5) * (ridge.xRight - ridge.xLeft) / n
+    return {
+      x, y: ridge.yMid,
+      numRotation:   ridge.angle - 90, // sideways, tilted with the ridge
+      kanjiRotation: ridge.angle,      // kanji bottom rests on ridge
+    }
+  })
+
   const sideFor = (x) => x < 408 ? 'left' : 'right'
   const CONE_SLOTS = [
-    // Ridge 2 (band 1) — 1 slot at band center
-    { x: 419, y: 182, ...cone },
-    // Ridge 3 (band 2) — 2 slots
-    { x: 408, y: 272, ...cone },
-    { x: 462, y: 272, ...cone },
-    // Ridge 4 (band 3) — 4 slots
-    { x: 372, y: 380, ...cone },
-    { x: 417, y: 380, ...cone },
-    { x: 462, y: 380, ...cone },
-    { x: 507, y: 380, ...cone },
-    // Ridge 5 (band 4, widest) — 5 slots
-    { x: 340, y: 474, ...cone },
-    { x: 389, y: 474, ...cone },
-    { x: 437, y: 474, ...cone },
-    { x: 485, y: 474, ...cone },
-    { x: 534, y: 474, ...cone },
+    ...ridgeSlots(RIDGE2_BBOX, 1),
+    ...ridgeSlots(RIDGE3_BBOX, 2),
+    ...ridgeSlots(RIDGE4_BBOX, 4),
+    ...ridgeSlots(RIDGE5_BBOX, 5),
   ].map(s => ({ ...s, side: sideFor(s.x) }))
-  const MOUNT_SLOT = { x: 350, y: 770, side: 'left', ...upright }
+  const MOUNT_SLOT = { x: 350, y: 770, side: 'left', numRotation: 0, kanjiRotation: 0 }
   const anchors = days.map((_, i) => i < 12 ? CONE_SLOTS[i] : MOUNT_SLOT)
 
   const dayLabels = days.map((iso, i) => {
