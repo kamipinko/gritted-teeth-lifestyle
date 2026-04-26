@@ -797,7 +797,7 @@ export default function SchedulePage() {
               src="/logo.png"
               alt="Gritted Teeth Lifestyle"
               className="-rotate-6"
-              style={{ width: 188, height: 188, borderRadius: '50%', objectFit: 'cover' }}
+              style={{ width: 226, height: 226, borderRadius: '50%', objectFit: 'cover' }}
             />
           </div>
         )}
