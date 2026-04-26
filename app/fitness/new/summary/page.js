@@ -2490,7 +2490,7 @@ export default function SummaryPage() {
               // banner area, centered horizontally, no tilt — it reads as if the
               // words are inscribed at the foot of the scroll.
               top: 'calc(105px + 138vw)',
-              left: 'calc(50% + 10px)',
+              left: 'calc(50% + 20px)',
               transform: 'translateX(-50%)',
               transformOrigin: 'center top',
               overflow: 'visible',
