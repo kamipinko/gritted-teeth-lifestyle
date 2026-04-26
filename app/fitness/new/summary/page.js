@@ -1756,14 +1756,22 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                 glyph plus-lighter cascade is too expensive at 30+ glyphs and visually
                 disappears in the density anyway. Inscriptions go straight to hot. */}
 
-            {/* Weekday labels — per-letter yakiire mirrors CycleDrill / CycleBlade pattern. */}
+            {/* Weekday labels — column-major layout means row r is the same
+                weekday across every column, so we only render labels for the
+                leftmost column (col 0 = cells 0..6) as a vertical 3-letter
+                stack to the LEFT of the kanji. Per-letter yakiire still drives
+                the same flat indices so the cascade lights these letters as
+                the matching column ignites. */}
             <g>
               {dayLabels.map((dl, i) => {
+                const colIdx = Math.floor(i / 7)
+                if (colIdx !== 0) return null
                 const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
-                const s = dayScale(dl)
-                const fontSize = WEEKDAY_FONT_SIZE * s
-                const advance  = WEEKDAY_ADVANCE * s
-                const dy       = WEEKDAY_DY * s
+                const s         = dayScale(dl)
+                const fontSize  = WEEKDAY_FONT_SIZE * s
+                const lineH     = 18 * s
+                const xOff      = -60 * s   // horizontal offset to the left of cell center
+                const yCenter   = 28 * s    // align with kanji block vertical center
                 return (
                   <g key={`dow-${dl.iso}`}>
                     {dow.split('').map((ch, L) => {
@@ -1776,11 +1784,12 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                       const baseAlpha = (isHot || isCooled) ? 1 : 0.7
                       const textOpacity = isFlaming ? 0 : baseAlpha
                       const textClass = isCooled ? 'scroll-inscription-cooled' : (isHot ? 'scroll-inscription-hot' : '')
-                      const x = weekdayLetterX(dl.cx, L, advance)
+                      const x = dl.cx + xOff
+                      const y = dl.cy + yCenter + (L - 1) * lineH
                       return (
                         <g key={`dow-${dl.iso}-${L}`}>
                           <text
-                            x={x} y={dl.cy + dy}
+                            x={x} y={y}
                             textAnchor="middle"
                             dominantBaseline="central"
                             className={textClass}
@@ -1796,7 +1805,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                           </text>
                           {isZoomed && (
                             <text
-                              x={x} y={dl.cy + dy}
+                              x={x} y={y}
                               textAnchor="middle"
                               dominantBaseline="central"
                               className="weekday-zoom-burst"
@@ -1811,7 +1820,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                           )}
                           {isFlaming && (
                             <text
-                              x={x} y={dl.cy + dy}
+                              x={x} y={y}
                               textAnchor="middle"
                               dominantBaseline="central"
                               className="weekday-flame-engulf"
