@@ -1946,14 +1946,12 @@ export default function SummaryPage() {
     }
 
     // Per-letter weekday cascade with canonical stagger speeds (50ms flame / 50ms zoom /
-    // 75ms cooled). REVERSE linear order — anchor 13's weekday fires first, anchor 1 last.
-    // Within each weekday, letters cascade right-to-left for left-side anchors, left-to-
-    // right for right-side ones (kept from the original blade behavior).
-    const halfN = Math.floor(N / 2)
-    const isLeftSide = (dayIdx) => dayIdx < halfN
-    const letterStaggerOffsetFast = (dayIdx, L) => isLeftSide(dayIdx) ? (2 - L) * 50 : L * 50
-    const letterStaggerOffsetCooled = (dayIdx, L) => isLeftSide(dayIdx) ? (2 - L) * 75 : L * 75
-    const letterStaggerOffsetSlow = (dayIdx, L) => isLeftSide(dayIdx) ? (2 - L) * 50 : L * 50
+    // 75ms cooled). REVERSE order at every level: anchors fire from N down to 1, and
+    // within each weekday cluster letters fire from L=2 down to L=0 — matching the
+    // flame-activation cascade's reverse-everywhere pattern.
+    const letterStaggerOffsetFast   = (_dayIdx, L) => (2 - L) * 50
+    const letterStaggerOffsetCooled = (_dayIdx, L) => (2 - L) * 75
+    const letterStaggerOffsetSlow   = (_dayIdx, L) => (2 - L) * 50
 
     // Reverse-linear pair list: each "pair" is a single anchor, cascading from the
     // last (anchor N) down to the first (anchor 1) at 50ms-per-step.
