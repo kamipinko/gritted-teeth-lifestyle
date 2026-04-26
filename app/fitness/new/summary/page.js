@@ -780,8 +780,10 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
       // inward. 3+ slot ridges use (k+0.5)/n with a 0.85 shrink toward the ridge
       // center so the pitch is wide enough to clear the kanji+number pair
       // (~53vb) but the cluster stays tucked away from the band edges.
-      const t = n <= 2
-        ? 0.5 + (k - 0.5) * 0.358   // 2-slot: pitch ≈ 0.358 × span (~59vb on ridge 3)
+      const t = n === 1
+        ? 0.5                         // 1-slot ridge centered (anchor 1 unaffected)
+        : n === 2
+        ? 0.5 + (k - 0.5) * 0.358    // 2-slot: pitch ≈ 0.358 × span (~59vb on ridge 3)
         : 0.5 + 0.88 * ((k + 0.5) / n - 0.5)
       const x = ridge.xLeft + t * (ridge.xRight - ridge.xLeft)
       const y = ridge.yMid + (x - xMid) * tanAngle
