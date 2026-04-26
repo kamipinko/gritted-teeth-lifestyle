@@ -1572,8 +1572,9 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
   return (
     <section className="relative z-10 py-2 px-2 pointer-events-none min-h-[calc(100vh-7px)]">
       <div>
-        {/* Infinity container — full viewport width, vertically centered in the body area. */}
-        <div style={{ position: 'absolute', top: '180px', left: 0, width: '100vw', maxWidth: 'none' }}>
+        {/* Infinity container — full viewport width, vertically centered in the body area.
+            Rotated 270° (vertical, upside-down) and scaled 1.5× from center. */}
+        <div style={{ position: 'absolute', top: '180px', left: 0, width: '100vw', maxWidth: 'none', transform: 'rotate(270deg) scale(1.5)', transformOrigin: 'center' }}>
           {mounted && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -2147,7 +2148,7 @@ export default function SummaryPage() {
         <CycleOuroboros days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
       )}
 
-      {days.length === 7 && (
+      {(days.length === 7 || days.length === 14) && (
         <div className="fixed bottom-5 left-5 z-40 no-print pointer-events-none max-w-[60vw]">
           <div className="font-display text-2xl text-gtl-paper leading-tight uppercase tracking-tight"
                style={{ textShadow: '2px 2px 0 #070708' }}>
