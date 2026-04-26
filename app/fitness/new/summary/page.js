@@ -1091,8 +1091,8 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
   const CY = 685
   const R_INSC = 510
   const R_WEEKDAY = 320
-  const WEEKDAY_FONT_SIZE = 62
-  const WEEKDAY_ADVANCE = 62
+  const WEEKDAY_FONT_SIZE = 48
+  const WEEKDAY_ADVANCE = 48
   // Seven anchors over a 240° arc, shifted ~40° CW from the original layout so the first
   // anchor (day 1) lands just behind the snake's head/bite junction at compass 350°.
   // Order is reversed: day 1 sits closest to the head, day 7 trails CW down the body.
