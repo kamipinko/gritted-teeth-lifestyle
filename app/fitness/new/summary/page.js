@@ -1512,7 +1512,7 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
   const R_WEEKDAY = 80
   const WEEKDAY_FONT_SIZE = 14
   const WEEKDAY_ADVANCE = 13
-  const WEEKDAY_LOCAL_Y = -8   // weekday cluster sits where the date number used to be
+  const WEEKDAY_LOCAL_Y = -3   // weekday cluster — slightly closer to kanji than the old number slot
   // 7 anchors per loop, even compass distribution. Days 1-7 trace the left loop CW; days
   // 8-14 trace the right loop CCW so the date order flows continuously around the figure-8.
   // Bottom (left) loop shifted 3 steps CCW (screen); top (right) loop shifted 3 steps CW
