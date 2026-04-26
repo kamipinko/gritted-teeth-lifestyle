@@ -1126,8 +1126,8 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                       const isZoomed  = !!weekdayLetterZoomed[flatIdx]
                       const isCooled  = !!weekdayLetterCooled[flatIdx]
                       const isHot     = isZoomed && !isCooled
-                      const fill      = (isHot || isCooled) ? '#d4181f' : '#b0a898'
-                      const baseAlpha = (isHot || isCooled) ? 1 : 0.7
+                      const fill      = (isHot || isCooled) ? '#d4181f' : '#000000'
+                      const baseAlpha = (isHot || isCooled) ? 1 : 0.95
                       const textOpacity = isFlaming ? 0 : baseAlpha
                       const textClass = isCooled ? 'drill-inscription-cooled' : (isHot ? 'drill-inscription-hot' : '')
                       const x = wdLetterX(dl, L)
