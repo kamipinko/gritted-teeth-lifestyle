@@ -894,7 +894,7 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
             horizontally centered while running ~71% larger than viewport. Inscription anchors
             live in the overlay's viewBox-local coords, so they scale with the container
             automatically. */}
-        <div style={{ position: 'absolute', top: '-20px', left: '-35.5vw', width: '171vw', maxWidth: 'none' }}>
+        <div style={{ position: 'absolute', top: '-50px', left: '-35.5vw', width: '171vw', maxWidth: 'none' }}>
           {/* Drill substrate + inscription overlay rendered inside ONE <svg>. The drill
               path data is inlined from public/reference/drill.svg so the inscription
               <g> elements (mixBlendMode: 'difference') blend against the red silhouette
