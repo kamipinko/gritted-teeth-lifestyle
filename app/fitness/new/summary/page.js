@@ -803,7 +803,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
   // the rectangular base body. Same RIDGE_STEEP tilt as cone anchors. isMount keeps
   // the bigger weekday sizing.
   const MOUNT_SLOT = {
-    x: 280, y: 529, side: 'left',
+    x: 277, y: 529, side: 'left',
     numRotation: RIDGE_STEEP - 90,
     kanjiRotation: RIDGE_STEEP,
     isMount: true,
