@@ -841,28 +841,18 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
     const kanjiRowStepN2to4 = isCone ? 16 : 24
     const kanjiRowStepN5plus = isCone ? 14 : 20
 
-    // Layout: cone anchors stack number ABOVE kanji; the mount lays them side-by-side
-    // with number to the RIGHT of the kanji. Either way the wrapper rotates around
-    // the anchor's geometric center.
+    // Vertical stack: number above center, kanji cluster below. Center the stack on
+    // (0, 0) so rotation pivots around the anchor's geometric center.
     const stackGap = isCone ? 3 : 5
     const kanjiClusterRows = (n === 1 ? 1 : Math.ceil(n / 2))
     const kanjiBaseFont = (n === 1 ? kanjiFontN1 : (n <= 4 ? kanjiFontN2to4 : kanjiFontN5plus))
     const kanjiRowStep  = (n === 1 ? 0 : (n <= 4 ? kanjiRowStepN2to4 : kanjiRowStepN5plus))
     const kanjiHeight = kanjiBaseFont + (kanjiClusterRows - 1) * kanjiRowStep
-    let numCenterX, numCenterY, kanjiCenterX, kanjiCenterY
-    if (dl.isMount) {
-      const totalW = kanjiBaseFont + stackGap + numFontSize
-      kanjiCenterX = -totalW / 2 + kanjiBaseFont / 2
-      numCenterX   =  totalW / 2 - numFontSize / 2
-      kanjiCenterY = 0
-      numCenterY   = 0
-    } else {
-      const totalH = numFontSize + stackGap + kanjiHeight
-      numCenterX   = 0
-      kanjiCenterX = 0
-      numCenterY   = -totalH / 2 + numFontSize / 2
-      kanjiCenterY =  totalH / 2 - kanjiHeight / 2
-    }
+    const totalH = numFontSize + stackGap + kanjiHeight
+    const numCenterX   = 0
+    const kanjiCenterX = 0
+    const numCenterY   = -totalH / 2 + numFontSize / 2
+    const kanjiCenterY =  totalH / 2 - kanjiHeight / 2
 
     const DEPTH_STACK_RED = [
       { dy: 2, fill: '#3a0608' },
