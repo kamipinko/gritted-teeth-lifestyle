@@ -1730,7 +1730,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                 <g key={dl.iso}
                    className={cls}
                    style={{
-                     mixBlendMode: 'normal',
+                     mixBlendMode: hot ? 'normal' : 'difference',
                      opacity: 1,
                      transition: 'opacity 0ms',
                    }}>
