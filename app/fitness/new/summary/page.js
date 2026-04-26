@@ -1667,7 +1667,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                   const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
                   return dayLabels.flatMap((dl, dayIdx) => {
                     if (!glowingDays[dayIdx]) return []
-                    const PARTS = 8
+                    const PARTS = 4
                     return Array.from({ length: PARTS }).map((_, i) => {
                       const k = i + dayIdx * 23
                       const rX    = hash01(k * 1)
@@ -1699,10 +1699,19 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
               </g>
             )}
 
-            {/* Day-number base inscriptions — per-day hot/cooled gating. */}
+            {/* Day-number base inscriptions — per-day hot/cooled gating.
+                Scroll cycles use a single-shadow lite filter (vs the canonical 4-shadow
+                inscription-hot-hold) to keep frame budgets sane on 30+ glyphs at once. */}
             <style>{`
-              .scroll-inscription-hot    { animation: inscription-hot-hold 100ms forwards; }
-              .scroll-inscription-cooled { animation: inscription-cool-down 1000ms ease-out forwards; }
+              @keyframes scroll-inscription-hot-hold-lite {
+                from, to { filter: drop-shadow(0 0 6px rgba(255, 100, 0, 0.7)); }
+              }
+              @keyframes scroll-inscription-cool-down-lite {
+                0%   { filter: drop-shadow(0 0 6px rgba(255, 100, 0, 0.7)); }
+                100% { filter: drop-shadow(0 0 0 rgba(255, 100, 0, 0)); }
+              }
+              .scroll-inscription-hot    { animation: scroll-inscription-hot-hold-lite 100ms forwards; }
+              .scroll-inscription-cooled { animation: scroll-inscription-cool-down-lite 1000ms ease-out forwards; }
             `}</style>
             {dayLabels.map((dl, i) => {
               const hot = !!hotDays[i]
@@ -1724,24 +1733,9 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
               )
             })}
 
-            {/* Zoom-burst — fires during 'peak' glow phase. */}
-            {glowIntensity === 'peak' && (
-              <g style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
-                {dayLabels.map((dl, i) => (
-                  <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
-                    <g className="zoom-glyph" style={{ animationDelay: `${i * 220}ms`,
-                          transformBox: 'fill-box', transformOrigin: 'center',
-                          animation: `inscription-zoom 340ms ease-out forwards ${i * 220}ms`,
-                          mixBlendMode: 'plus-lighter',
-                          filter: 'drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 16px #ff4400)',
-                          opacity: 0,
-                       }}>
-                      {renderInscription(dl, { maskFill: '#ff6600' })}
-                    </g>
-                  </g>
-                ))}
-              </g>
-            )}
+            {/* Zoom-burst layer intentionally omitted in scroll mode — the duplicate-
+                glyph plus-lighter cascade is too expensive at 30+ glyphs and visually
+                disappears in the density anyway. Inscriptions go straight to hot. */}
 
             {/* Weekday labels — per-letter yakiire mirrors CycleDrill / CycleBlade pattern. */}
             <g>
@@ -1824,7 +1818,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
               <g mask="url(#scroll-weekday-window)" style={{ pointerEvents: 'none' }}>
                 {(() => {
                   const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
-                  const PARTS_PER_WEEKDAY = 22
+                  const PARTS_PER_WEEKDAY = 6
                   return dayLabels.flatMap((dl, wi) => {
                     const dayLit = weekdayLetterIgnited.slice(wi * 3, wi * 3 + 3).some(Boolean)
                     if (!dayLit) return []
@@ -2239,53 +2233,102 @@ export default function SummaryPage() {
       }, 1035 + i * 50)
     }
 
-    // Per-letter weekday cascade with two stagger speeds (canonical, see project_gtl_yakiire_per_letter):
-    //   Flame: 50ms per letter, Zoom: 50ms per letter, Cooled: 75ms per letter.
-    // Direction depends on day side: left-side R-to-L, right-side L-to-R.
-    // Pairs cascade middle-out: pair 0 = innermost, pair k+1 starts 50ms after pair k.
-    const halfN = Math.floor(N / 2)
-    const isLeftSide = (dayIdx) => dayIdx < halfN
-    const letterStaggerOffsetFast = (dayIdx, L) => isLeftSide(dayIdx) ? (2 - L) * 50 : L * 50
-    const letterStaggerOffsetCooled = (dayIdx, L) => isLeftSide(dayIdx) ? (2 - L) * 75 : L * 75
-    const letterStaggerOffsetSlow = (dayIdx, L) => isLeftSide(dayIdx) ? (2 - L) * 50 : L * 50
-
-    // Build middle-out pair list for any N.
-    const buildMiddleOutPairs = (n) => {
-      const pairs = []
-      if (n % 2 === 0) {
-        const m = n / 2
-        for (let k = 0; k < m; k++) pairs.push([m - 1 - k, m + k])
-      } else {
-        const m = (n - 1) / 2
-        pairs.push([m])
-        for (let k = 1; k <= m; k++) pairs.push([m - k, m + k])
-      }
-      return pairs
-    }
-    const WEEKDAY_PAIRS = buildMiddleOutPairs(N).map((daysInPair, k) => ({
-      days: daysInPair,
-      flame:  900  + k * 50,
-      zoom:   3000 + k * 50,
-      cooled: 3650 + k * 75,
-    }))
-    WEEKDAY_PAIRS.forEach(({ days: pairDays, flame, zoom, cooled }) => {
-      pairDays.forEach(dayIdx => {
-        for (let L = 0; L < 3; L++) {
-          const flatIdx = dayIdx * 3 + L
-          setTimeout(() => {
-            setWeekdayLetterIgnited(prev => { const next = [...prev]; next[flatIdx] = true; return next })
-          }, flame + letterStaggerOffsetSlow(dayIdx, L))
-          setTimeout(() => {
-            setWeekdayLetterIgnited(prev => { const next = [...prev]; next[flatIdx] = false; return next })
-            setWeekdayLetterZoomed(prev  => { const next = [...prev]; next[flatIdx] = true;  return next })
-          }, zoom + letterStaggerOffsetFast(dayIdx, L))
-          setTimeout(() => {
-            setWeekdayLetterCooled(prev => { const next = [...prev]; next[flatIdx] = true; return next })
-          }, cooled + letterStaggerOffsetCooled(dayIdx, L))
+    // Per-letter weekday cascade. Below 15 days, canonical middle-out pair scheduling;
+    // 15+ days uses a column-major group cascade that matches the per-day cascade
+    // (and avoids 90+ letter-level setTimeouts on a 30-day scroll).
+    let lastPairCooledAt
+    if (isScroll) {
+      // Column-major weekday cascade — 7 rows per column, all letters in a column fire
+      // simultaneously; columns step 100ms (flame) / 200ms (zoom) / 300ms (cooled).
+      const ROWS_PER_COL = 7
+      const colCount = Math.ceil(N / ROWS_PER_COL)
+      for (let col = 0; col < colCount; col++) {
+        const flameAt  = 900  + col * 100
+        const zoomAt   = 3000 + col * 200
+        const cooledAt = 3650 + col * 300
+        const tuples = []
+        for (let row = 0; row < ROWS_PER_COL; row++) {
+          const dayIdx = col * ROWS_PER_COL + row
+          if (dayIdx >= N) break
+          for (let L = 0; L < 3; L++) tuples.push([dayIdx, L])
         }
+        setTimeout(() => {
+          setWeekdayLetterIgnited(prev => {
+            const next = [...prev]
+            tuples.forEach(([d, L]) => { next[d * 3 + L] = true })
+            return next
+          })
+        }, flameAt)
+        setTimeout(() => {
+          setWeekdayLetterIgnited(prev => {
+            const next = [...prev]
+            tuples.forEach(([d, L]) => { next[d * 3 + L] = false })
+            return next
+          })
+          setWeekdayLetterZoomed(prev => {
+            const next = [...prev]
+            tuples.forEach(([d, L]) => { next[d * 3 + L] = true })
+            return next
+          })
+        }, zoomAt)
+        setTimeout(() => {
+          setWeekdayLetterCooled(prev => {
+            const next = [...prev]
+            tuples.forEach(([d, L]) => { next[d * 3 + L] = true })
+            return next
+          })
+        }, cooledAt)
+      }
+      lastPairCooledAt = 3650 + (colCount - 1) * 300
+    } else {
+      // ── Canonical middle-out cascade ────────────────────────────────────
+      //   Flame: 50ms per letter, Zoom: 50ms per letter, Cooled: 75ms per letter.
+      //   Direction depends on day side: left-side R-to-L, right-side L-to-R.
+      //   Pairs cascade middle-out: pair 0 = innermost, pair k+1 starts 50ms after pair k.
+      const halfN = Math.floor(N / 2)
+      const isLeftSide = (dayIdx) => dayIdx < halfN
+      const letterStaggerOffsetFast = (dayIdx, L) => isLeftSide(dayIdx) ? (2 - L) * 50 : L * 50
+      const letterStaggerOffsetCooled = (dayIdx, L) => isLeftSide(dayIdx) ? (2 - L) * 75 : L * 75
+      const letterStaggerOffsetSlow = (dayIdx, L) => isLeftSide(dayIdx) ? (2 - L) * 50 : L * 50
+
+      // Build middle-out pair list for any N.
+      const buildMiddleOutPairs = (n) => {
+        const pairs = []
+        if (n % 2 === 0) {
+          const m = n / 2
+          for (let k = 0; k < m; k++) pairs.push([m - 1 - k, m + k])
+        } else {
+          const m = (n - 1) / 2
+          pairs.push([m])
+          for (let k = 1; k <= m; k++) pairs.push([m - k, m + k])
+        }
+        return pairs
+      }
+      const WEEKDAY_PAIRS = buildMiddleOutPairs(N).map((daysInPair, k) => ({
+        days: daysInPair,
+        flame:  900  + k * 50,
+        zoom:   3000 + k * 50,
+        cooled: 3650 + k * 75,
+      }))
+      WEEKDAY_PAIRS.forEach(({ days: pairDays, flame, zoom, cooled }) => {
+        pairDays.forEach(dayIdx => {
+          for (let L = 0; L < 3; L++) {
+            const flatIdx = dayIdx * 3 + L
+            setTimeout(() => {
+              setWeekdayLetterIgnited(prev => { const next = [...prev]; next[flatIdx] = true; return next })
+            }, flame + letterStaggerOffsetSlow(dayIdx, L))
+            setTimeout(() => {
+              setWeekdayLetterIgnited(prev => { const next = [...prev]; next[flatIdx] = false; return next })
+              setWeekdayLetterZoomed(prev  => { const next = [...prev]; next[flatIdx] = true;  return next })
+            }, zoom + letterStaggerOffsetFast(dayIdx, L))
+            setTimeout(() => {
+              setWeekdayLetterCooled(prev => { const next = [...prev]; next[flatIdx] = true; return next })
+            }, cooled + letterStaggerOffsetCooled(dayIdx, L))
+          }
+        })
       })
-    })
-    const lastPairCooledAt = 3650 + (WEEKDAY_PAIRS.length - 1) * 75 + 2 * 75
+      lastPairCooledAt = 3650 + (WEEKDAY_PAIRS.length - 1) * 75 + 2 * 75
+    }
 
     // Weekday + ETCH/CYCLE zoom-burst cascade — fires after the blade's final inscription
     // zoom (t=2600), mirroring the same middle-out 175/150ms stagger. Each step also flips
