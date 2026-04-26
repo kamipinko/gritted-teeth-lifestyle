@@ -1114,10 +1114,10 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
     const r = i === 6 ? 580 : R_INSC
     const cx = CX + r * Math.sin(rad)
     // Per-day vertical nudges:
-    //   day 1 (i=0) shifts up ~20 screen px (~70 viewBox units) so its kanji + side-rendered
-    //   date number sit higher in the head/bite zone.
+    //   day 1 (i=0) shifts up ~30 screen px (~105 viewBox units) so its kanji + side-rendered
+    //   date number sit clear of the snake's head/bite zone.
     //   day 6 (i=5) shifts down ~10 screen px (~35 viewBox units) for visual balance.
-    const cyShift = i === 0 ? -70 : i === 5 ? 35 : 0
+    const cyShift = i === 0 ? -105 : i === 5 ? 35 : 0
     const cy = CY - r * Math.cos(rad) + cyShift
     // Weekday cluster sits on the inner hollow at R_WEEKDAY. World coords precomputed so
     // both the rendered text and the particle spawn (in world space) share the same anchor.
