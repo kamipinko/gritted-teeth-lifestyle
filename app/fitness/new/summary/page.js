@@ -777,14 +777,16 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
     return { num, hasWork, kanjiStr, iso, cx: a.x, cy: a.y, side: a.side }
   })
 
-  // Day-number rendering — single-letter inscription at anchor with depth stack
-  // (mirrors CycleBlade's renderText pattern but smaller). hot=true paints the
-  // post-flame orange stack; cooled cools it via the .inscription-cooled keyframe.
-  // Font sizes are in viewBox units (816×931). ~10% smaller than the initial pass to
-  // breathe within the cone bands and base grid as the silhouette scales up.
-  const NUM_FONT_SIZE = 45
+  // Day-number + kanji column inscription — mirrors CycleBlade / CycleScroll's
+  // renderInscription pattern: number above center, muscle kanji below, both
+  // sharing a single depth-stack so post-flame hot/cooled phases drive both halves.
+  // Font sizes scaled to the drill's tight cone bands (≤ ~80vb tall per band slot).
   const NUM_FONT = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-  const renderNum = (numStr, { hot = false, maskFill = null } = {}) => {
+  const renderInscription = (dl, { hot = false, maskFill = null } = {}) => {
+    const { num, kanjiStr } = dl
+    const kanjiChars = (kanjiStr || '').split('')
+    const n = kanjiChars.length
+
     const DEPTH_STACK_RED = [
       { dy: 2, fill: '#3a0608' },
       { dy: 1, fill: '#9e1118' },
@@ -796,12 +798,43 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
       { dy: 0, fill: '#ff6600' },
     ]
     const stack = maskFill ? [{ dy: 0, fill: maskFill }] : (hot ? DEPTH_STACK_HOT : DEPTH_STACK_RED)
-    return stack.map((layer, li) => (
-      <text key={`num-${li}`} x={0} y={layer.dy} textAnchor="middle" dominantBaseline="central"
-        style={{ fontFamily: NUM_FONT, fontSize: `${NUM_FONT_SIZE}px`, fontWeight: 700, fill: layer.fill }}>
-        {numStr}
+
+    const renderText = (keyBase, x, y, fontSize, char) => stack.map((layer, li) => (
+      <text key={`${keyBase}-${li}`} x={x} y={y + layer.dy} textAnchor="middle" dominantBaseline="central"
+        style={{ fontFamily: NUM_FONT, fontSize: `${fontSize}px`, fontWeight: 700, fill: layer.fill }}>
+        {char}
       </text>
     ))
+
+    // Number sits above the anchor; kanji column drops below. Sizes shrink as the
+    // kanji count grows so multi-muscle days stay inside the band.
+    const numEls = renderText('num', 0, -22, 32, num)
+
+    let kanjiEls = []
+    if (n === 1) {
+      kanjiEls = renderText('kj0', 0, 22, 42, kanjiChars[0])
+    } else if (n <= 4) {
+      const fontSize = 26, colSpacing = 28, baseY = 16, rowYStep = 26
+      kanjiEls = kanjiChars.flatMap((k, ki) => {
+        const row = Math.floor(ki / 2)
+        const isOddLast = n % 2 === 1 && ki === n - 1
+        const x = isOddLast ? 0 : (ki % 2 - 0.5) * colSpacing
+        const y = baseY + row * rowYStep
+        return renderText(`kj${ki}`, x, y, fontSize, k)
+      })
+    } else {
+      // n ≥ 5 — pack tighter, 2 cols, vertical stack
+      const fontSize = 22, colSpacing = 24, baseY = 12, rowYStep = 22
+      kanjiEls = kanjiChars.flatMap((k, ki) => {
+        const row = Math.floor(ki / 2)
+        const isOddLast = n % 2 === 1 && ki === n - 1
+        const x = isOddLast ? 0 : (ki % 2 - 0.5) * colSpacing
+        const y = baseY + row * rowYStep
+        return renderText(`kj${ki}`, x, y, fontSize, k)
+      })
+    }
+
+    return <>{numEls}{kanjiEls}</>
   }
 
   // Weekday-label horizontal advance per letter and label position helper.
@@ -840,15 +873,13 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               ))}
             </g>
             <defs>
-              {/* Inscription mask — particles flow through ignited day-number silhouettes. */}
+              {/* Inscription mask — particles flow through ignited day-number AND kanji
+                  silhouettes (mirrors the on-screen renderInscription so flames fill both halves). */}
               <mask id="drill-inscription-window" maskUnits="userSpaceOnUse" x="0" y="0" width="816" height="931">
                 <rect x="0" y="0" width="816" height="931" fill="black"/>
                 {dayLabels.map((dl, i) => glowingDays[i] ? (
                   <g key={`drill-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
-                    <text x={0} y={0} textAnchor="middle" dominantBaseline="central"
-                      style={{ fontFamily: NUM_FONT, fontSize: `${NUM_FONT_SIZE}px`, fontWeight: 700, fill: 'white' }}>
-                      {dl.num}
-                    </text>
+                    {renderInscription(dl, { maskFill: 'white' })}
                   </g>
                 ) : null)}
               </mask>
@@ -944,7 +975,7 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                      transition: 'opacity 0ms',
                    }}>
                   <g transform={`translate(${dl.cx},${dl.cy})`}>
-                    {renderNum(dl.num, { hot })}
+                    {renderInscription(dl, { hot })}
                   </g>
                 </g>
               )
@@ -962,7 +993,7 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                           filter: 'drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 16px #ff4400)',
                           opacity: 0,
                        }}>
-                      {renderNum(dl.num, { maskFill: '#ff6600' })}
+                      {renderInscription(dl, { maskFill: '#ff6600' })}
                     </g>
                   </g>
                 ))}
