@@ -2624,7 +2624,9 @@ export default function SummaryPage() {
   // Watermark layout — same stacked ETCH-above-CYCLE shape in every mode; in
   // scroll mode the magnitudes shrink (font 14 vs 18) so the watermark fits
   // beside the smaller 92px flame button without crowding the scroll body.
-  const wmScroll  = days.length > 14
+  const wmScroll    = days.length > 14
+  const wmDrill     = days.length >= 8 && days.length <= 13
+  const wmBladeLike = days.length > 0 && days.length <= 7   // blade ≤6 + ouroboros =7
   const WM_FONT   = wmScroll ? 14 : 18
   const WM_W      = wmScroll ? 100 : 130
   const WM_H      = wmScroll ? 62  : 78
@@ -2843,7 +2845,29 @@ export default function SummaryPage() {
               right: 'calc(5px + 92px - 4px)',
               overflow: 'visible',
             }
+          : wmBladeLike
+          ? {
+              // Blade (≤6) + ouroboros (=7): watermark sits beside the 128px flame
+              // button (bottom-aligned, ~10px gap to its left). Slight 8° tilt
+              // pivoted around the right-bottom corner.
+              bottom: '20px',
+              right: 'calc(20px + 128px + 10px)',
+              transform: 'rotate(8deg)',
+              transformOrigin: 'right bottom',
+              overflow: 'visible',
+            }
+          : wmDrill
+          ? {
+              // Drill (8-13): watermark sits ABOVE the 128px flame button — the
+              // pre-blade-fix position. Same 8° tilt, right-edge-aligned.
+              bottom: 'calc(20px + 128px + 10px)',
+              right: '2px',
+              transform: 'rotate(8deg)',
+              transformOrigin: 'right bottom',
+              overflow: 'visible',
+            }
           : {
+              // Fallback (days.length === 0): same as drill's original placement.
               bottom: 'calc(20px + 128px + 10px)',
               right: '2px',
               transform: 'rotate(8deg)',
