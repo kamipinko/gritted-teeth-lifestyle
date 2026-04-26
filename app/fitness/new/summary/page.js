@@ -2489,8 +2489,8 @@ export default function SummaryPage() {
               // CycleScroll mode: park ETCH CYCLE inside the scroll's bottom rolled-
               // banner area, centered horizontally, no tilt — it reads as if the
               // words are inscribed at the foot of the scroll.
-              top: 'calc(110px + 138vw)',
-              left: '50%',
+              top: 'calc(105px + 138vw)',
+              left: 'calc(50% + 10px)',
               transform: 'translateX(-50%)',
               transformOrigin: 'center top',
               overflow: 'visible',
