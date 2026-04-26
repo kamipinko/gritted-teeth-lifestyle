@@ -776,7 +776,11 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
     const xMid = (ridge.xLeft + ridge.xRight) / 2
     const tanAngle = Math.tan(ridge.angle * Math.PI / 180)
     return Array.from({ length: n }, (_, k) => {
-      const t = (k + 1) / (n + 1)
+      // 1-2 slot ridges keep the (k+1)/(n+1) distribution that tucks the pair
+      // inward. 3+ slot ridges switch to (k+0.5)/n so the wider pitch (span/n
+      // vs span/(n+1)) prevents adjacent inscription footprints from colliding
+      // — needed once the inscription gains the kanji + horizontal-num pair.
+      const t = n <= 2 ? (k + 1) / (n + 1) : (k + 0.5) / n
       const x = ridge.xLeft + t * (ridge.xRight - ridge.xLeft)
       const y = ridge.yMid + (x - xMid) * tanAngle
       return {
