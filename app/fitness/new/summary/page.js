@@ -2088,7 +2088,26 @@ export default function SummaryPage() {
 
       {/* ── BLADE (1–6 days) / OUROBOROS (exactly 7 days) / DRILL (8–13 days) / FALLBACK GRID (14+ days) ── */}
       {days.length > 0 && days.length < 7 && (
-        <CycleBlade days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
+        <>
+          <CycleBlade days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
+          {/* Cycle title sits in the top-left corner at fixed (100, 100) — only for the
+              katana/blade silhouette. Other silhouettes render their titles in their own
+              positions (ouroboros bottom-left, drill on the lip, scroll banner top). */}
+          <div
+            className="fixed pointer-events-none select-none z-30"
+            style={{
+              top: '100px',
+              left: '100px',
+              fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
+              fontSize: '1.5rem',
+              fontWeight: 700,
+              color: '#f5f0e8',
+              letterSpacing: '0.02em',
+            }}
+          >
+            {cycleName}
+          </div>
+        </>
       )}
 
       {days.length === 7 && (
