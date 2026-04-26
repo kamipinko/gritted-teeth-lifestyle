@@ -907,7 +907,9 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
     return {
       fontSize: isConeAnchor ? 13 : 22,
       advance:  isConeAnchor ? 13 : 22,
-      offset:   isConeAnchor ? 28 : 36,
+      // Mount anchor (base, axis-upright) needs a bigger left-shift so the 3-letter
+      // cluster clears the number "8"'s footprint instead of overlapping its left edge.
+      offset:   isConeAnchor ? 28 : 60,
       rotation: dl.numRotation || 0,
     }
   }
