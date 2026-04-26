@@ -1126,8 +1126,11 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
     const cy = CY - r * Math.cos(rad) + cyShift
     // Weekday cluster sits on the inner hollow at R_WEEKDAY. World coords precomputed so
     // both the rendered text and the particle spawn (in world space) share the same anchor.
+    // Day 1's weekday (SAT) lifted ~10 screen px (~35 viewBox units) so it doesn't crowd
+    // the snake's bite zone.
+    const wdShiftY = i === 0 ? -35 : 0
     const wdCx = CX + R_WEEKDAY * Math.sin(rad)
-    const wdCy = CY - R_WEEKDAY * Math.cos(rad)
+    const wdCy = CY - R_WEEKDAY * Math.cos(rad) + wdShiftY
     return { num, hasWork, kanjiStr, iso, cx, cy, angle, wdCx, wdCy }
   })
 
