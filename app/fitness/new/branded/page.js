@@ -162,18 +162,12 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
 function CarveContent({ enabled }) {
   const dayColor = enabled ? '#070708' : '#555'
   return (
-    <>
-      <div className="flex items-center gap-1.5" style={{ transform: 'skewX(2deg)' }}>
-        <span className="leading-none"
-          style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '0.95rem', fontWeight: 400, color: dayColor }}>
-          刻
-        </span>
-        <span className="font-display leading-none tracking-wide"
-          style={{ fontSize: '0.75rem', fontWeight: 900, color: dayColor }}>
-          CARVE
-        </span>
-      </div>
-    </>
+    <div className="flex items-center" style={{ transform: 'skewX(2deg)' }}>
+      <span className="font-display leading-none tracking-wide"
+        style={{ fontSize: '0.75rem', fontWeight: 900, color: dayColor }}>
+        CARVE
+      </span>
+    </div>
   )
 }
 
