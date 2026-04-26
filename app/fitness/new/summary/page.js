@@ -841,18 +841,19 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
     const kanjiRowStepN2to4 = isCone ? 16 : 24
     const kanjiRowStepN5plus = isCone ? 14 : 20
 
-    // Vertical stack: number above center, kanji cluster below. Center the stack on
-    // (0, 0) so rotation pivots around the anchor's geometric center.
+    // Horizontal layout: kanji centered at (0, 0), number on the RIGHT of the kanji.
+    // Weekday cluster lives ABOVE the kanji (rendered in a separate <g> sharing this
+    // inscription's rotation — see wdGroupTransform).
     const stackGap = isCone ? 3 : 5
     const kanjiClusterRows = (n === 1 ? 1 : Math.ceil(n / 2))
     const kanjiBaseFont = (n === 1 ? kanjiFontN1 : (n <= 4 ? kanjiFontN2to4 : kanjiFontN5plus))
     const kanjiRowStep  = (n === 1 ? 0 : (n <= 4 ? kanjiRowStepN2to4 : kanjiRowStepN5plus))
     const kanjiHeight = kanjiBaseFont + (kanjiClusterRows - 1) * kanjiRowStep
-    const totalH = numFontSize + stackGap + kanjiHeight
-    const numCenterX   = 0
     const kanjiCenterX = 0
-    const numCenterY   = -totalH / 2 + numFontSize / 2
-    const kanjiCenterY =  totalH / 2 - kanjiHeight / 2
+    const kanjiCenterY = 0
+    const numCenterX   = kanjiBaseFont / 2 + stackGap + numFontSize / 2
+    const numCenterY   = 0
+    void kanjiHeight
 
     const DEPTH_STACK_RED = [
       { dy: 2, fill: '#3a0608' },
@@ -914,22 +915,26 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
   // OLD date-number position (left of the kanji at the anchor's offset), rotated by
   // the same numRotation the number used pre-stacking, so they slot into the cone
   // ridge sideways like the dates did before the stack commit.
-  const wdParams = (dl) => {
-    // All weekdays — cone and mount — share the same small sizing. Sideways rotation
-    // so the bottom of the letters sits snug against the left of the kanji.
-    return {
-      fontSize: 13,
-      advance:  13,
-      offset:   28,
-      rotation: dl.numRotation || 0,
-    }
+  // Weekday cluster sits ABOVE the kanji in the inscription's rotated frame. The
+  // wrapper shares the inscription's rotation so cluster + inscription lean together;
+  // letters are then placed at (L-1)*advance, aboveY in that local frame.
+  const wdParams = () => ({
+    fontSize: 13,
+    advance:  13,
+    aboveY:   -20,  // ~ -(kanjiHalfHeight + stackGap + wdHalfHeight)
+  })
+  const wdGroupTransform = (dl) => `translate(${dl.cx},${dl.cy}) rotate(${dl.kanjiRotation || 0})`
+  const wdLetterX = (_dl, L) => (L - 1) * wdParams().advance
+  const wdLetterY = () => wdParams().aboveY
+  // World-space anchor of the cluster center (used for spawning particles in world
+  // coordinates — particle group sits outside the rotated frame).
+  const wdCenterWorld = (dl) => {
+    const r = (dl.kanjiRotation || 0) * Math.PI / 180
+    const dx = 0
+    const dy = wdParams().aboveY
+    return { x: dl.cx + dx * Math.cos(r) - dy * Math.sin(r),
+             y: dl.cy + dx * Math.sin(r) + dy * Math.cos(r) }
   }
-  const wdGroupTransform = (dl) => {
-    const w = wdParams(dl)
-    return `translate(${dl.cx - w.offset},${dl.cy}) rotate(${w.rotation})`
-  }
-  const wdLetterX = (dl, L) => (L - 1) * wdParams(dl).advance
-  const wdCenterWorld = (dl) => ({ x: dl.cx - wdParams(dl).offset, y: dl.cy })
 
   return (
     <section className="relative z-10 py-2 px-2 pointer-events-none min-h-[calc(100vh-7px)]">
@@ -1003,7 +1008,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                         const x = wdLetterX(dl, L)
                         return (
                           <text key={`drill-wd-mask-${dl.iso}-${L}`}
-                            x={x} y={0}
+                            x={x} y={wdLetterY()}
                             textAnchor="middle"
                             dominantBaseline="central"
                             style={{
@@ -1126,7 +1131,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                       return (
                         <g key={`dow-${dl.iso}-${L}`}>
                           <text
-                            x={x} y={0}
+                            x={x} y={wdLetterY()}
                             textAnchor="middle"
                             dominantBaseline="central"
                             className={textClass}
@@ -1142,7 +1147,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                           </text>
                           {isZoomed && (
                             <text
-                              x={x} y={0}
+                              x={x} y={wdLetterY()}
                               textAnchor="middle"
                               dominantBaseline="central"
                               className="weekday-zoom-burst"
@@ -1157,7 +1162,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                           )}
                           {isFlaming && (
                             <text
-                              x={x} y={0}
+                              x={x} y={wdLetterY()}
                               textAnchor="middle"
                               dominantBaseline="central"
                               className="weekday-flame-engulf"
