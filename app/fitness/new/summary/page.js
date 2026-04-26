@@ -921,7 +921,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
   const wdParams = () => ({
     fontSize: 13,
     advance:  13,
-    aboveY:   -20,  // ~ -(kanjiHalfHeight + stackGap + wdHalfHeight)
+    aboveY:   -30,  // weekday cluster sits ~12vb above the kanji's top edge
   })
   const wdGroupTransform = (dl) => `translate(${dl.cx},${dl.cy}) rotate(${dl.kanjiRotation || 0})`
   const wdLetterX = (_dl, L) => (L - 1) * wdParams().advance
