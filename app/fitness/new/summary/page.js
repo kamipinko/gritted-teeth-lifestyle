@@ -1574,10 +1574,11 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
     const colSpacing = kanjiSize
     const baseY = n === 1 ? 18 : 14
     const rowYStep = kanjiSize
-    // Date number now sits to the RIGHT of the kanji column, centered vertically on it.
+    // Date number now sits to the RIGHT of the kanji column, lifted ~10 screen px above
+    // the kanji's vertical center (≈ 11 viewBox units at the current 1.875× scale).
     const rowCount = n === 1 ? 1 : Math.ceil(n / 2)
     const kanjiCenterY = n === 1 ? 18 : (14 + (rowCount - 1) * rowYStep / 2)
-    const numEls = renderText('num', 30, kanjiCenterY, 24, num)
+    const numEls = renderText('num', 30, kanjiCenterY - 11, 24, num)
     const kanjiEls = kanjiChars.flatMap((k, ki) => {
       if (n === 1) return renderText('kj0', 0, baseY, kanjiSize, k)
       const row = Math.floor(ki / 2)
@@ -2497,7 +2498,7 @@ export default function SummaryPage() {
           matches the title above the upper loop. */}
       {isInfinity && (
         <div className="fixed z-[20] no-print pointer-events-none"
-             style={{ top: '480px', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
+             style={{ top: '500px', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
           {['ETCH', 'CYCLE'].map((word) => (
             <div key={word} style={{
               fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
