@@ -794,11 +794,12 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
     ...ridgeSlots(RIDGE4_BBOX, 4),
     ...ridgeSlots(RIDGE5_BBOX, 5),
   ].map(s => ({ ...s, side: sideFor(s.x) }))
-  // Mount inscription now tilts on the same RIDGE_STEEP angle as the cone anchors
-  // (kanjiRotation 18.9°, numRotation -71.1°). isMount keeps the larger base sizing
-  // for the weekday cluster — wdParams branches on it instead of kanjiRotation === 0.
+  // Mount sits directly below anchor 8 (ridge 5's leftmost slot at x≈326, y≈440) on
+  // the next ridge down — landing in the small band-5 transition strip just above
+  // the rectangular base body. Same RIDGE_STEEP tilt as cone anchors. isMount keeps
+  // the bigger weekday sizing.
   const MOUNT_SLOT = {
-    x: 408, y: 610, side: 'left',
+    x: 326, y: 524, side: 'left',
     numRotation: RIDGE_STEEP - 90,
     kanjiRotation: RIDGE_STEEP,
     isMount: true,
@@ -960,10 +961,10 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                 fill to read against the red drill body, slight uppercase tracking. */}
             {cycleName && (
               <text
-                x={350} y={770}
+                x={408} y={610}
                 textAnchor="middle"
                 dominantBaseline="central"
-                transform="rotate(-3 350 770)"
+                transform="rotate(-3 408 610)"
                 style={{
                   fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
                   fontSize: '24px',
