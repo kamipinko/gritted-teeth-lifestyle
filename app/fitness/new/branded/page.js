@@ -7,7 +7,7 @@
  * toggles. Date numbers as watermarks, kanji overlays in 2-col grid.
  * CARVE shows total days with muscles assigned.
  */
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSound } from '../../../../lib/useSound'
@@ -467,6 +467,16 @@ export default function SchedulePage() {
   }
 
   const sheetOpen = selectedDays.size > 0
+
+  // Sorted selection drives the auto-rest gap fill: any unpicked day between the first
+  // and last user-picked ISO date renders with a ✕ overlay (no red highlight) so it reads
+  // as part of the cycle. P1 persistence: gap days are NOT saved, only user-picks are.
+  const sortedSelected = useMemo(() => {
+    if (selectedDays.size === 0) return []
+    return [...selectedDays].sort()
+  }, [selectedDays])
+  const firstSelectedKey = sortedSelected[0]
+  const lastSelectedKey  = sortedSelected[sortedSelected.length - 1]
   const daysWithMuscles = Object.values(assignments).filter((s) => s.size > 0).length
   const carveEnabled = daysWithMuscles > 0
 
@@ -474,9 +484,10 @@ export default function SchedulePage() {
     if (!carveEnabled) return
     play('card-confirm')
     try {
-      const trainingDays = Object.entries(assignments)
-        .filter(([_, s]) => s.size > 0)
-        .map(([iso]) => iso)
+      // Persist all user-picked days (including intentional-rest days with no muscles).
+      // Auto-rest gap days are NOT saved — they're derived at render time on summary
+      // from min/max of the persisted picks. P1 design.
+      const trainingDays = [...selectedDays].sort()
       localStorage.setItem(pk('training-days'), JSON.stringify(trainingDays))
       const serialized = {}
       Object.entries(assignments).forEach(([iso, set]) => {
@@ -615,6 +626,10 @@ export default function SchedulePage() {
 
             const key        = isoKey(d)
             const selected   = selectedDays.has(key)
+            const autoRest   = !selected
+                              && firstSelectedKey
+                              && key > firstSelectedKey
+                              && key < lastSelectedKey
             const todayCell  = isToday(d)
             const past       = isPast(d)
             const isWrapped  = wrappedDays.has(d)
@@ -698,8 +713,9 @@ export default function SchedulePage() {
                   )
                 })()}
 
-                {/* Selected indicator — no muscles yet */}
-                {selected && !hasMuscles && (
+                {/* Rest indicator — shown for both intentional rest (selected, no muscles)
+                    and auto-rest gaps (unselected day between first/last picked). */}
+                {((selected && !hasMuscles) || autoRest) && (
                   <span className="absolute inset-0 z-10 flex items-center justify-center font-display text-lg text-gtl-paper/60 leading-none -rotate-12 pointer-events-none">✕</span>
                 )}
 

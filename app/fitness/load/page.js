@@ -404,10 +404,21 @@ function CycleCard({ cycle, index, selected, onSelect }) {
               </div>
               {(() => {
                 const n = cycle.days?.length || 0
-                if (n >= 1 && n <= 7) {
+                if (n >= 1 && n <= 6) {
                   return (
                     <img
                       src="/reference/wakizashi_solid_silhouette.svg"
+                      alt=""
+                      className="opacity-90 select-none pointer-events-none"
+                      style={{ height: '140px', width: 'auto', maxWidth: '160px' }}
+                      draggable={false}
+                    />
+                  )
+                }
+                if (n === 7) {
+                  return (
+                    <img
+                      src="/reference/ouroboros.svg"
                       alt=""
                       className="opacity-90 select-none pointer-events-none"
                       style={{ height: '140px', width: 'auto', maxWidth: '160px' }}
@@ -424,6 +435,20 @@ function CycleCard({ cycle, index, selected, onSelect }) {
                       style={{ height: '140px', width: 'auto', maxWidth: '160px' }}
                       draggable={false}
                     />
+                  )
+                }
+                if (n >= 15) {
+                  // Vertical scroll silhouette — rotated -90° to mirror the summary-page render.
+                  return (
+                    <div style={{ width: '110px', height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <img
+                        src="/reference/scroll.svg"
+                        alt=""
+                        className="opacity-90 select-none pointer-events-none"
+                        style={{ width: '140px', height: '110px', transform: 'rotate(-90deg)' }}
+                        draggable={false}
+                      />
+                    </div>
                   )
                 }
                 return null
