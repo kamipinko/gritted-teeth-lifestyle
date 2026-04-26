@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import CallingCard from '../components/CallingCard'
 import HeistTransition from '../components/HeistTransition'
@@ -9,12 +9,42 @@ export default function Home() {
   const [transitioning, setTransitioning] = useState(false)
   const [transitionTarget, setTransitionTarget] = useState('/fitness')
 
+  const bgMusicRef = useRef(null)
+
+  const startBgMusic = () => {
+    if (bgMusicRef.current) return
+    const TARGET_VOL = 0.06
+    const FADE_MS = 1500
+
+    const fadeIn = (audio) => {
+      audio.volume = 0
+      audio.play().catch(() => {})
+      const steps = FADE_MS / 50
+      const increment = TARGET_VOL / steps
+      const interval = setInterval(() => {
+        const next = Math.min(TARGET_VOL, audio.volume + increment)
+        audio.volume = next
+        if (next >= TARGET_VOL) clearInterval(interval)
+      }, 50)
+    }
+
+    const audio = new Audio('/sounds/chrono-cut-1.wav')
+    audio.addEventListener('ended', () => {
+      audio.currentTime = 0
+      fadeIn(audio)
+    })
+    fadeIn(audio)
+    bgMusicRef.current = audio
+  }
+
   const handleFitnessActivate = () => {
+    startBgMusic()
     setTransitionTarget('/fitness')
     setTransitioning(true)
   }
 
   const handleNutritionActivate = () => {
+    startBgMusic()
     setTransitionTarget('/diet')
     setTransitioning(true)
   }
