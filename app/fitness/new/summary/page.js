@@ -799,7 +799,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
   // the rectangular base body. Same RIDGE_STEEP tilt as cone anchors. isMount keeps
   // the bigger weekday sizing.
   const MOUNT_SLOT = {
-    x: 326, y: 524, side: 'left',
+    x: 306, y: 524, side: 'left',
     numRotation: RIDGE_STEEP - 90,
     kanjiRotation: RIDGE_STEEP,
     isMount: true,
@@ -913,13 +913,12 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
   // the same numRotation the number used pre-stacking, so they slot into the cone
   // ridge sideways like the dates did before the stack commit.
   const wdParams = (dl) => {
-    // Mount keeps the bigger base sizing because its inscription itself is bigger.
-    // Cone weekdays use the smaller cone-glyph sizing. Both use a sideways rotation
-    // so the bottom of the weekday letters sits snug against the left of the kanji.
+    // All weekdays — cone and mount — share the same small sizing. Sideways rotation
+    // so the bottom of the letters sits snug against the left of the kanji.
     return {
-      fontSize: dl.isMount ? 22 : 13,
-      advance:  dl.isMount ? 22 : 13,
-      offset:   dl.isMount ? 36 : 28,
+      fontSize: 13,
+      advance:  13,
+      offset:   28,
       rotation: dl.numRotation || 0,
     }
   }
