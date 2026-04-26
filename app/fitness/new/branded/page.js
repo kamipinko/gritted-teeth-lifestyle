@@ -487,8 +487,9 @@ export default function SchedulePage() {
   const lastSelectedKey  = sortedSelected[sortedSelected.length - 1]
 
   // Wrap-continuity: pair the last chronological cell that wasn't wrapped (e.g., May 30 in
-  // a layout where May 31 wrapped into row 1) with the wrapped cell(s). Both endpoints get
-  // matching ↗ glyphs and a left/right edge accent so the eye reads them as the same flow.
+  // a layout where May 31 wrapped into row 1) with the EARLIEST wrapped cell (firstWrapDay)
+  // so the eye reads them as the connected endpoints. Static glyphs/edge accent live only on
+  // the pair; the synchronized pulse spans flowEndDay + ALL wrap cells (group flash).
   const wrapActive = wrappedDays.size > 0
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   let flowEndDay = null
@@ -497,6 +498,7 @@ export default function SchedulePage() {
       if (!wrappedDays.has(d)) { flowEndDay = d; break }
     }
   }
+  const firstWrapDay = wrapActive ? Math.min(...wrappedDays) : null
   const daysWithMuscles = Object.values(assignments).filter((s) => s.size > 0).length
   const carveEnabled = daysWithMuscles > 0
 
@@ -658,9 +660,12 @@ export default function SchedulePage() {
                               && key < lastSelectedKey
             const todayCell  = isToday(d)
             const past       = isPast(d)
-            const isWrapped  = wrappedDays.has(d)
-            const isFlowEnd  = wrapActive && d === flowEndDay
-            const wrapPair   = isWrapped || isFlowEnd
+            const isWrapped   = wrappedDays.has(d)
+            const isFlowEnd   = wrapActive && d === flowEndDay
+            const isFirstWrap = wrapActive && d === firstWrapDay
+            // Pulse fires for the full group (flow-end + every wrap cell). Static glyphs +
+            // edge accents stay restricted to the pair (flow-end + first wrap).
+            const pulseGroup  = isFlowEnd || isWrapped
             const badges     = badgeMuscles(key)
             const hasMuscles = badges.length > 0
 
@@ -679,7 +684,7 @@ export default function SchedulePage() {
                     : todayCell
                     ? 'bg-gtl-ink border-gtl-gold'
                     : 'bg-gtl-ink border-gtl-edge'}
-                  ${wrapPair ? 'wrap-continuity-pulse' : ''}
+                  ${pulseGroup ? 'wrap-continuity-pulse' : ''}
                 `}
                 style={{ clipPath: CELL_CLIP, height: `${ROW_H}px` }}
               >
@@ -698,7 +703,7 @@ export default function SchedulePage() {
                           aria-hidden="true">↗</span>
                   </>
                 )}
-                {isWrapped && (
+                {isFirstWrap && (
                   <>
                     <div className="absolute top-0 left-0 bottom-0 w-[2px] pointer-events-none"
                          style={{ background: '#e4b022', boxShadow: '0 0 6px rgba(228,176,34,0.7)' }}
