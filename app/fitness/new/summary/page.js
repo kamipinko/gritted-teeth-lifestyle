@@ -1483,6 +1483,211 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
   )
 }
 
+/* ── CYCLE INFINITY (exactly 14 days) ──
+ * Renders the figure-8 ouroboros silhouette (public/reference/ouroboros-14.svg, viewBox
+ * 796×416) as substrate, with 14 day inscriptions distributed 7-per-loop on each lobe.
+ * Day 1 sits at the top of the LEFT loop (CW from there); day 8 at the top of the RIGHT
+ * loop (also CW). Yakiire wires through the same shared state arrays the per-day cascade
+ * already drives in handleBegin (glowingDays/hotDays/cooledDays sized to N=14 by the
+ * existing resize effect).
+ */
+function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [] }) {
+  const anyGlowing = glowingDays.some(Boolean)
+
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
+  // ouroboros-14.svg viewBox is 0 0 796 416. Two lobes side-by-side; each lobe ~410px wide
+  // with center near (208, 208) for the left, (588, 208) for the right.
+  const VB_W = 796
+  const VB_H = 416
+  const LEFT_CX = 208
+  const RIGHT_CX = 588
+  const LOOP_CY = 208
+  const R_INSC = 162    // mid-segment radius — lands on the body of the segmented ring
+  // 7 anchors per loop, even compass distribution. Compass 0=top, increases CW. Day 1 sits
+  // at the top of the left loop; day 8 at the top of the right loop.
+  const COMPASS_PER_LOOP = [0, 51, 103, 154, 206, 257, 309]  // 7 angles ≈ 51.4° apart
+
+  const dayLabels = days.slice(0, 14).map((iso, i) => {
+    const d = parseDate(iso)
+    const num = String(d.getDate())
+    const muscles = dailyPlan[iso] || []
+    const hasWork = muscles.length > 0
+    const kanjiStr = hasWork
+      ? muscles.map((m) => MUSCLE_KANJI[m] || '?').join('')
+      : '休'
+    const onLeftLoop = i < 7
+    const loopCx = onLeftLoop ? LEFT_CX : RIGHT_CX
+    const angle = COMPASS_PER_LOOP[i % 7]
+    const rad = (angle * Math.PI) / 180
+    const cx = loopCx + R_INSC * Math.sin(rad)
+    const cy = LOOP_CY - R_INSC * Math.cos(rad)
+    return { num, hasWork, kanjiStr, iso, cx, cy, angle, onLeftLoop }
+  })
+
+  // Compact day-number + small kanji column. Sized down vs CycleOuroboros since the lobes
+  // are narrower than the single ouroboros ring.
+  const renderDayInscription = (dl, { hot = false, maskFill = null } = {}) => {
+    const { num, kanjiStr } = dl
+    const kanjiChars = kanjiStr.split('')
+    const n = kanjiChars.length
+    const font = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+
+    const DEPTH_STACK_RED = [
+      { dy: 2, fill: '#3a0608' },
+      { dy: 1, fill: '#9e1118' },
+      { dy: 0, fill: '#d4181f' },
+    ]
+    const DEPTH_STACK_HOT = [
+      { dy: 2, fill: '#ffe0a0' },
+      { dy: 1, fill: '#d85a10' },
+      { dy: 0, fill: '#ff6600' },
+    ]
+    const stack = maskFill ? [{ dy: 0, fill: maskFill }] : (hot ? DEPTH_STACK_HOT : DEPTH_STACK_RED)
+
+    const renderText = (keyBase, x, y, fontSize, char) => stack.map((layer, li) => (
+      <text key={`${keyBase}-${li}`} x={x} y={y + layer.dy} textAnchor="middle" dominantBaseline="central"
+        style={{ fontFamily: font, fontSize: `${fontSize}px`, fontWeight: 600, fill: layer.fill }}>
+        {char}
+      </text>
+    ))
+
+    const numEls = renderText('num', 0, -10, 22, num)
+    const kanjiSize = n === 1 ? 22 : n <= 4 ? 14 : 11
+    const colSpacing = kanjiSize
+    const baseY = 10
+    const rowYStep = kanjiSize
+    const kanjiEls = kanjiChars.flatMap((k, ki) => {
+      if (n === 1) return renderText('kj0', 0, baseY, kanjiSize, k)
+      const row = Math.floor(ki / 2)
+      const isOddLast = n % 2 === 1 && ki === n - 1
+      const x = isOddLast ? 0 : (ki % 2 - 0.5) * colSpacing
+      const y = baseY + row * rowYStep
+      return renderText(`kj${ki}`, x, y, kanjiSize, k)
+    })
+    return <>{numEls}{kanjiEls}</>
+  }
+
+  return (
+    <section className="relative z-10 py-2 px-2 pointer-events-none min-h-[calc(100vh-7px)]">
+      <div>
+        {/* Infinity container — full viewport width, vertically centered in the body area. */}
+        <div style={{ position: 'absolute', top: '180px', left: 0, width: '100vw', maxWidth: 'none' }}>
+          {mounted && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src="/reference/ouroboros-14.svg"
+              alt="Infinity"
+              className="block w-full h-auto"
+              style={{ filter: 'drop-shadow(0 4px 14px rgba(0,0,0,0.55))' }}
+            />
+          )}
+
+          <svg
+            viewBox={`0 0 ${VB_W} ${VB_H}`}
+            className="absolute inset-0 w-full h-auto pointer-events-none"
+            aria-hidden="true"
+          >
+            <defs>
+              <mask id="infinity-inscription-window" maskUnits="userSpaceOnUse" x="0" y="0" width={VB_W} height={VB_H}>
+                <rect x="0" y="0" width={VB_W} height={VB_H} fill="black"/>
+                {dayLabels.map((dl, i) => glowingDays[i] ? (
+                  <g key={`inf-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
+                    {renderDayInscription(dl, { maskFill: 'white' })}
+                  </g>
+                ) : null)}
+              </mask>
+            </defs>
+
+            {/* Particle aura clipped to inscription silhouettes. */}
+            {anyGlowing && (
+              <g mask="url(#infinity-inscription-window)" style={{ pointerEvents: 'none' }}>
+                <rect x="0" y="0" width={VB_W} height={VB_H} fill="#0a0a0a"/>
+                {(() => {
+                  const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
+                  return dayLabels.flatMap((dl, dayIdx) => {
+                    if (!glowingDays[dayIdx]) return []
+                    const PARTS = 8
+                    return Array.from({ length: PARTS }).map((_, i) => {
+                      const k = i + dayIdx * 23
+                      const rX    = hash01(k * 1)
+                      const rDly  = hash01(k * 3 + 11)
+                      const rDur  = hash01(k * 5 + 17)
+                      const rRise = hash01(k * 7 + 19)
+                      const rSize = hash01(k * 11 + 23)
+                      const rPeak = hash01(k * 13 + 29)
+                      const xOff  = (rX - 0.5) * 40
+                      const delay = (rDly * 540 + dayIdx * 131) % 600
+                      const dur   = 130 + rDur * 150
+                      const rise  = 50 + rRise * 35
+                      const size  = 6 + rSize * 9
+                      const peakA = 0.55 + rPeak * 0.45
+                      return (
+                        <circle key={`${dl.iso}-sp${i}`} cx={dl.cx + xOff} cy={dl.cy + 18} r={size} fill="#ff5000" opacity={0}>
+                          <animateTransform attributeName="transform" type="translate"
+                            values={`0 0; 0 -${rise.toFixed(0)}`}
+                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                          <animate attributeName="opacity"
+                            values={`0; ${peakA.toFixed(2)}; 0`}
+                            keyTimes="0; 0.2; 1"
+                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                        </circle>
+                      )
+                    })
+                  })
+                })()}
+              </g>
+            )}
+
+            <style>{`
+              .infinity-inscription-hot    { animation: inscription-hot-hold 100ms forwards; }
+              .infinity-inscription-cooled { animation: inscription-cool-down 1000ms ease-out forwards; }
+            `}</style>
+            {dayLabels.map((dl, i) => {
+              const hot = !!hotDays[i]
+              const cooled = !!cooledDays[i]
+              const flameOn = !!glowingDays[i]
+              const cls = cooled ? 'infinity-inscription-cooled' : (hot ? 'infinity-inscription-hot' : '')
+              return (
+                <g key={dl.iso}
+                   className={cls}
+                   style={{
+                     mixBlendMode: hot ? 'normal' : 'difference',
+                     opacity: flameOn ? 0 : 1,
+                     transition: 'opacity 0ms',
+                   }}>
+                  <g transform={`translate(${dl.cx},${dl.cy})`}>
+                    {renderDayInscription(dl, { hot })}
+                  </g>
+                </g>
+              )
+            })}
+
+            {glowIntensity === 'peak' && (
+              <g style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
+                {dayLabels.map((dl, i) => (
+                  <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
+                    <g style={{
+                          transformBox: 'fill-box', transformOrigin: 'center',
+                          animation: `inscription-zoom 340ms ease-out forwards ${i * 220}ms`,
+                          mixBlendMode: 'plus-lighter',
+                          filter: 'drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 16px #ff4400)',
+                          opacity: 0,
+                       }}>
+                      {renderDayInscription(dl, { maskFill: '#ff6600' })}
+                    </g>
+                  </g>
+                ))}
+              </g>
+            )}
+          </svg>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 /* ── EXPORT ── */
 function ExportButton() {
   const [hovered, setHovered] = useState(false)
@@ -1955,7 +2160,11 @@ export default function SummaryPage() {
         <CycleDrill days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
       )}
 
-      {days.length >= 14 && (
+      {days.length === 14 && (
+        <CycleInfinity days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
+      )}
+
+      {days.length >= 15 && (
         <section className="relative z-10 px-8 mb-12">
           <div
             className="grid gap-4"
