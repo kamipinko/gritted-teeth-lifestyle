@@ -797,7 +797,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
   // Mount kanjiRotation = 0 keeps the inscription stack axis-upright; numRotation = -90
   // is consumed by wdParams so the weekday cluster lays sideways with its letter bottoms
   // facing the kanji's left edge — same orientation as cone anchors.
-  const MOUNT_SLOT = { x: 350, y: 770, side: 'left', numRotation: -90, kanjiRotation: 0 }
+  const MOUNT_SLOT = { x: 408, y: 610, side: 'left', numRotation: -90, kanjiRotation: 0 }
   const anchors = days.map((_, i) => i < 12 ? CONE_SLOTS[i] : MOUNT_SLOT)
 
   const dayLabels = days.map((iso, i) => {
@@ -956,10 +956,10 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                 fill to read against the red drill body, slight uppercase tracking. */}
             {cycleName && (
               <text
-                x={408} y={610}
+                x={350} y={770}
                 textAnchor="middle"
                 dominantBaseline="central"
-                transform="rotate(-3 408 610)"
+                transform="rotate(-3 350 770)"
                 style={{
                   fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
                   fontSize: '24px',
