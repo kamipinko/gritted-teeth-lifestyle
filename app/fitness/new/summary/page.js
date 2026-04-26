@@ -743,38 +743,45 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
 
-  // Anchors live in the drill SVG's native viewBox (816×931 from the trace).
-  // Cone band centers come from each band path's bbox (Playwright getBBox on drill.svg).
-  // The two widest middle bands (idx 2 + 3 in the trace) carry TWO inscription pairs
-  // each, side-by-side along the ridge, since they're wide enough. Other cone bands
-  // hold one pair. Cone capacity = 8 anchors; base capacity = 7. SummaryPage caps
-  // visible anchors at days.length so 8-13-day cycles fill cone first and spill onto
-  // the base grid as needed.
-  // Numbers and kanji rotate independently:
-  //   - numRotation (cone): left-edge-on-ridge sideways orientation
-  //   - kanjiRotation (cone): ridge tilt only (no 90° offset) — kanji bottom rests on
-  //     the ridge line at the band's natural slant.
-  // Base anchors stay axis-upright (both rotations 0°).
+  // Inscription layout — cone tip empty, ridges widen top→bottom with growing capacity:
+  //   ridge 1 (apex)        : 0 inscriptions (empty)
+  //   ridge 2 (band 1)      : 1
+  //   ridge 3 (band 2)      : 2 (paired along the ridge)
+  //   ridge 4 (band 3)      : 4 (evenly distributed along the ridge)
+  //   ridge 5 (band 4 widest): 5 (evenly distributed)
+  //   mount  (rectangular base, day-13 only): 1, axis-upright (no slant).
+  // Total cone capacity = 1+2+4+5 = 12; +1 mount = 13.
+  // Slot x positions are derived from each band's getBBox span (sampled via
+  // Playwright on drill.svg), spread inward by ~40 vb on each end so each pair fits
+  // comfortably between the band edges. y values are the band centers.
+  // Cone numbers rotate -70° (sideways, left-edge on ridge); kanji rotate +12°
+  // (ridge tilt only, kanji bottom rests on the ridge). Mount inscription has
+  // numRotation=0 and kanjiRotation=0 — upright.
   const CONE_NUM_ROTATION   = -70
   const CONE_KANJI_ROTATION =  12
-  const ALL_ANCHORS = [
-    { x: 417, y: 91,  side: 'right', numRotation: CONE_NUM_ROTATION, kanjiRotation: CONE_KANJI_ROTATION }, // band 0 (apex)
-    { x: 419, y: 182, side: 'left',  numRotation: CONE_NUM_ROTATION, kanjiRotation: CONE_KANJI_ROTATION }, // band 1
-    { x: 388, y: 272, side: 'right', numRotation: CONE_NUM_ROTATION, kanjiRotation: CONE_KANJI_ROTATION }, // band 2 left pair
-    { x: 458, y: 272, side: 'left',  numRotation: CONE_NUM_ROTATION, kanjiRotation: CONE_KANJI_ROTATION }, // band 2 right pair
-    { x: 380, y: 380, side: 'right', numRotation: CONE_NUM_ROTATION, kanjiRotation: CONE_KANJI_ROTATION }, // band 3 left pair
-    { x: 475, y: 380, side: 'left',  numRotation: CONE_NUM_ROTATION, kanjiRotation: CONE_KANJI_ROTATION }, // band 3 right pair
-    { x: 425, y: 474, side: 'right', numRotation: CONE_NUM_ROTATION, kanjiRotation: CONE_KANJI_ROTATION }, // band 4
-    { x: 337, y: 524, side: 'left',  numRotation: CONE_NUM_ROTATION, kanjiRotation: CONE_KANJI_ROTATION }, // band 5 (small lower-left)
-    { x: 408, y: 620, side: 'right', numRotation: 0, kanjiRotation: 0 }, // base row 0
-    { x: 290, y: 700, side: 'left',  numRotation: 0, kanjiRotation: 0 }, // base row 1
-    { x: 525, y: 700, side: 'right', numRotation: 0, kanjiRotation: 0 },
-    { x: 290, y: 790, side: 'left',  numRotation: 0, kanjiRotation: 0 }, // base row 2
-    { x: 525, y: 790, side: 'right', numRotation: 0, kanjiRotation: 0 },
-    { x: 290, y: 860, side: 'left',  numRotation: 0, kanjiRotation: 0 }, // base row 3
-    { x: 525, y: 860, side: 'right', numRotation: 0, kanjiRotation: 0 },
-  ]
-  const anchors = ALL_ANCHORS.slice(0, Math.min(N, ALL_ANCHORS.length))
+  const cone = { numRotation: CONE_NUM_ROTATION, kanjiRotation: CONE_KANJI_ROTATION }
+  const upright = { numRotation: 0, kanjiRotation: 0 }
+  const sideFor = (x) => x < 408 ? 'left' : 'right'
+  const CONE_SLOTS = [
+    // Ridge 2 (band 1) — 1 slot at band center
+    { x: 419, y: 182, ...cone },
+    // Ridge 3 (band 2) — 2 slots
+    { x: 408, y: 272, ...cone },
+    { x: 462, y: 272, ...cone },
+    // Ridge 4 (band 3) — 4 slots
+    { x: 372, y: 380, ...cone },
+    { x: 417, y: 380, ...cone },
+    { x: 462, y: 380, ...cone },
+    { x: 507, y: 380, ...cone },
+    // Ridge 5 (band 4, widest) — 5 slots
+    { x: 340, y: 474, ...cone },
+    { x: 389, y: 474, ...cone },
+    { x: 437, y: 474, ...cone },
+    { x: 485, y: 474, ...cone },
+    { x: 534, y: 474, ...cone },
+  ].map(s => ({ ...s, side: sideFor(s.x) }))
+  const MOUNT_SLOT = { x: 350, y: 770, side: 'left', ...upright }
+  const anchors = days.map((_, i) => i < 12 ? CONE_SLOTS[i] : MOUNT_SLOT)
 
   const dayLabels = days.map((iso, i) => {
     const d = parseDate(iso)
