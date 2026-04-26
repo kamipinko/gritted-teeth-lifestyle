@@ -803,10 +803,11 @@ export default function SchedulePage() {
         )}
 
         {/* Muscle grid — slides in when days selected. One slot ends up empty since the
-            Carve button is hoisted out into the always-visible footer below. */}
+            Carve button is hoisted out into the always-visible footer below. flex-1+min-h-0
+            ensures it claims available space without crowding out the persistent carve. */}
         {sheetOpen && (
-          <div className="px-3 pt-1 pb-1">
-            <div className="grid grid-cols-2 grid-rows-6 gap-1" style={{ overflow: 'visible' }}>
+          <div className="px-3 pt-1 pb-1 flex-1 min-h-0 overflow-hidden">
+            <div className="grid grid-cols-2 grid-rows-6 gap-1 h-full" style={{ overflow: 'visible' }}>
               {SHEET_MUSCLES.map((m) => (
                 <SheetMuscleButton
                   key={m.id}
