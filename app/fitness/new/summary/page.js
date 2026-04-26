@@ -1517,7 +1517,7 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
   // Day 1 + day 8 stay put; the subsequent dates within each loop now traverse in the
   // opposite direction (bottom flipped CW→CCW; top flipped CCW→CW).
   const COMPASS_LEFT  = [51, 0, 309, 257, 206, 154, 103]
-  const COMPASS_RIGHT = [154, 206, 257, 309, 0, 51, 103]
+  const COMPASS_RIGHT = [0, 51, 103, 154, 206, 257, 309]
 
   const dayLabels = days.slice(0, 14).map((iso, i) => {
     const d = parseDate(iso)
