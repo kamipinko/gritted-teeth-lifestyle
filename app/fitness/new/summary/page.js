@@ -2469,13 +2469,24 @@ export default function SummaryPage() {
         className="fixed z-[20] pointer-events-none select-none"
         width={130} height={78}
         viewBox="0 0 130 78"
-        style={{
-          bottom: 'calc(20px + 128px + 10px)',
-          right: '2px',
-          transform: 'rotate(8deg)',
-          transformOrigin: 'right bottom',
-          overflow: 'visible',
-        }}
+        style={days.length > 14
+          ? {
+              // CycleScroll mode: park ETCH CYCLE inside the scroll's bottom rolled-
+              // banner area, centered horizontally, no tilt — it reads as if the
+              // words are inscribed at the foot of the scroll.
+              top: 'calc(5px + 138vw)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              transformOrigin: 'center top',
+              overflow: 'visible',
+            }
+          : {
+              bottom: 'calc(20px + 128px + 10px)',
+              right: '2px',
+              transform: 'rotate(8deg)',
+              transformOrigin: 'right bottom',
+              overflow: 'visible',
+            }}
       >
         <defs>
           <mask id="watermark-window" maskUnits="userSpaceOnUse" x="0" y="0" width="130" height="78">
