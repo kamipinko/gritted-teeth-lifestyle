@@ -698,9 +698,9 @@ export default function SchedulePage() {
                     <div className="absolute top-0 right-0 bottom-0 w-[2px] pointer-events-none"
                          style={{ background: '#e4b022', boxShadow: '0 0 6px rgba(228,176,34,0.7)' }}
                          aria-hidden="true" />
-                    <span className="absolute top-1 left-1 font-mono text-[12px] font-semibold leading-none pointer-events-none select-none"
+                    <span className="absolute top-1 right-1 font-mono text-[12px] font-semibold leading-none pointer-events-none select-none"
                           style={{ color: '#e4b022' }}
-                          aria-hidden="true">↖</span>
+                          aria-hidden="true">↗</span>
                   </>
                 )}
                 {isFirstWrap && (
@@ -708,9 +708,9 @@ export default function SchedulePage() {
                     <div className="absolute top-0 left-0 bottom-0 w-[2px] pointer-events-none"
                          style={{ background: '#e4b022', boxShadow: '0 0 6px rgba(228,176,34,0.7)' }}
                          aria-hidden="true" />
-                    <span className="absolute bottom-1 right-1 font-mono text-[12px] font-semibold leading-none pointer-events-none select-none"
+                    <span className="absolute bottom-1 left-1 font-mono text-[12px] font-semibold leading-none pointer-events-none select-none"
                           style={{ color: '#e4b022' }}
-                          aria-hidden="true">↘</span>
+                          aria-hidden="true">↙</span>
                   </>
                 )}
 
