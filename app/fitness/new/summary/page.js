@@ -767,10 +767,10 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
   // ridge having its own measured slope).
   const RIDGE_GENTLE = 7.3 * 1.6  // → 11.7°  — used by ridges 2 + 4
   const RIDGE_STEEP  = 11.8 * 1.6 // → 18.9°  — used by ridges 3 + 5
-  const RIDGE2_BBOX = { xLeft: 368, xRight: 471, yMid: 187, angle: RIDGE_STEEP  } // band 1, 1 anchor
-  const RIDGE3_BBOX = { xLeft: 341, xRight: 505, yMid: 282, angle: RIDGE_STEEP  } // band 2, 2 anchors
-  const RIDGE4_BBOX = { xLeft: 309, xRight: 546, yMid: 390, angle: RIDGE_STEEP  } // band 3, 4 anchors
-  const RIDGE5_BBOX = { xLeft: 276, xRight: 574, yMid: 484, angle: RIDGE_STEEP  } // band 4, 5 anchors
+  const RIDGE2_BBOX = { xLeft: 358, xRight: 461, yMid: 187, angle: RIDGE_STEEP  } // band 1, 1 anchor
+  const RIDGE3_BBOX = { xLeft: 331, xRight: 495, yMid: 282, angle: RIDGE_STEEP  } // band 2, 2 anchors
+  const RIDGE4_BBOX = { xLeft: 299, xRight: 536, yMid: 390, angle: RIDGE_STEEP  } // band 3, 4 anchors
+  const RIDGE5_BBOX = { xLeft: 266, xRight: 564, yMid: 484, angle: RIDGE_STEEP  } // band 4, 5 anchors
 
   const ridgeSlots = (ridge, n) => {
     const xMid = (ridge.xLeft + ridge.xRight) / 2
@@ -799,7 +799,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
   // the rectangular base body. Same RIDGE_STEEP tilt as cone anchors. isMount keeps
   // the bigger weekday sizing.
   const MOUNT_SLOT = {
-    x: 296, y: 534, side: 'left',
+    x: 286, y: 534, side: 'left',
     numRotation: RIDGE_STEEP - 90,
     kanjiRotation: RIDGE_STEEP,
     isMount: true,
