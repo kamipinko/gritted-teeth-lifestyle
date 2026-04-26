@@ -757,21 +757,28 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
   // top edge points). Kanji rotation = ridge angle (kanji bottom rests on the ridge);
   // number rotation = ridge angle - 90 (sideways, with the same ridge tilt baked in).
   //
-  // Slot x positions are distributed evenly across each band's full bbox span:
-  // x = xLeft + (k + 0.5) * (xRight - xLeft) / N. y values are band centers.
+  // Slots distribute along each ridge: x at t = (k+1)/(n+1) of the ridge span; y
+  // interpolated from the ridge slope so each anchor literally sits ON the ridge
+  // line (rightward slots descend by tan(angle) — they don't share a constant y).
   const RIDGE2_BBOX = { xLeft: 368, xRight: 471, yMid: 182, angle:  7.3 } // band 1
   const RIDGE3_BBOX = { xLeft: 341, xRight: 505, yMid: 272, angle: 11.8 } // band 2
   const RIDGE4_BBOX = { xLeft: 309, xRight: 546, yMid: 380, angle:  7.1 } // band 3
   const RIDGE5_BBOX = { xLeft: 276, xRight: 574, yMid: 474, angle: 10.0 } // band 4
 
-  const ridgeSlots = (ridge, n) => Array.from({ length: n }, (_, k) => {
-    const x = ridge.xLeft + (k + 0.5) * (ridge.xRight - ridge.xLeft) / n
-    return {
-      x, y: ridge.yMid,
-      numRotation:   ridge.angle - 90, // sideways, tilted with the ridge
-      kanjiRotation: ridge.angle,      // kanji bottom rests on ridge
-    }
-  })
+  const ridgeSlots = (ridge, n) => {
+    const xMid = (ridge.xLeft + ridge.xRight) / 2
+    const tanAngle = Math.tan(ridge.angle * Math.PI / 180)
+    return Array.from({ length: n }, (_, k) => {
+      const t = (k + 1) / (n + 1)
+      const x = ridge.xLeft + t * (ridge.xRight - ridge.xLeft)
+      const y = ridge.yMid + (x - xMid) * tanAngle
+      return {
+        x, y,
+        numRotation:   ridge.angle - 90, // sideways, tilted with the ridge
+        kanjiRotation: ridge.angle,      // kanji bottom rests on ridge
+      }
+    })
+  }
 
   const sideFor = (x) => x < 408 ? 'left' : 'right'
   const CONE_SLOTS = [
