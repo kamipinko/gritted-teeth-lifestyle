@@ -776,11 +776,14 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
     const xMid = (ridge.xLeft + ridge.xRight) / 2
     const tanAngle = Math.tan(ridge.angle * Math.PI / 180)
     return Array.from({ length: n }, (_, k) => {
-      // 1-2 slot ridges keep the (k+1)/(n+1) distribution that tucks the pair
-      // inward. 3+ slot ridges use (k+0.5)/n with a 0.85 shrink toward the ridge
-      // center so the pitch is wide enough to clear the kanji+number pair
-      // (~53vb) but the cluster stays tucked away from the band edges.
-      const t = n <= 2 ? (k + 1) / (n + 1) : 0.5 + 0.88 * ((k + 0.5) / n - 0.5)
+      // Multi-anchor ridges get ~4vb extra pitch (= 2vb padding right of each date
+      // number + 2vb padding left of each kanji). Single-anchor ridges (ridge 2 +
+      // mount) have no neighbor so they need no extra padding. 2-slot ridges use a
+      // pair-spread that produces the same +4vb pitch; 3+ slot ridges use shrunk
+      // (k+0.5)/n with the shrink factor bumped from 0.88 → 0.95.
+      const t = n <= 2
+        ? 0.5 + 0.36 * (k - 0.5)
+        : 0.5 + 0.95 * ((k + 0.5) / n - 0.5)
       const x = ridge.xLeft + t * (ridge.xRight - ridge.xLeft)
       const y = ridge.yMid + (x - xMid) * tanAngle
       return {
