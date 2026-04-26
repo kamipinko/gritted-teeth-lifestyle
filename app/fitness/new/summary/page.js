@@ -1454,6 +1454,355 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
   )
 }
 
+/* ── CYCLE SCROLL (15+ days) ──
+ * Sister of CycleBlade / CycleDrill / CycleOuroboros. Renders the ancient-scroll
+ * silhouette (public/reference/scroll.svg, viewBox 1300x1061) as substrate, with
+ * N day inscriptions distributed in a 5-column grid across the central writing
+ * area between the two ornate vertical handles. Each cell stacks the day number
+ * above its weekday DOW label. Per-letter yakiire (canonical 50ms flame / 50ms
+ * zoom / 75ms cooled stagger) cascades on weekday labels via the same state
+ * arrays the other cycle components consume.
+ */
+function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [], weekdayLetterIgnited = [], weekdayLetterZoomed = [], weekdayLetterCooled = [] }) {
+  const N = days.length
+  const anyGlowing = glowingDays.some(Boolean)
+  const anyWeekdayIgnited = Array.isArray(weekdayLetterIgnited) && weekdayLetterIgnited.some(Boolean)
+
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
+  // Grid layout — 5 columns, rows = ceil(N/5). Cells distributed across the scroll's
+  // central writing area (x≈260..1040, y≈260..820 in the 1300×1061 viewBox), avoiding
+  // the two handles and the rolled-edge banners at top and bottom.
+  const COLS = 5
+  const rows = Math.max(1, Math.ceil(N / COLS))
+  const WRITE_X0 = 270
+  const WRITE_X1 = 1030
+  const WRITE_Y0 = 280
+  const WRITE_Y1 = 800
+  const colStep = (WRITE_X1 - WRITE_X0) / COLS
+  const rowStep = (WRITE_Y1 - WRITE_Y0) / Math.max(rows, 1)
+  const halfN   = Math.floor(N / 2)
+
+  const anchors = days.map((_, i) => {
+    const r = Math.floor(i / COLS)
+    const c = i % COLS
+    return {
+      x: WRITE_X0 + colStep * (c + 0.5),
+      y: WRITE_Y0 + rowStep * (r + 0.5),
+      side: i < halfN ? 'left' : 'right',
+    }
+  })
+
+  const dayLabels = days.map((iso, i) => {
+    const d = parseDate(iso)
+    const num = String(d.getDate())
+    const muscles = dailyPlan[iso] || []
+    const hasWork = muscles.length > 0
+    const kanjiStr = hasWork
+      ? muscles.map((m) => MUSCLE_KANJI[m] || '?').join('')
+      : '休'
+    const a = anchors[i]
+    return { num, hasWork, kanjiStr, iso, cx: a.x, cy: a.y, side: a.side }
+  })
+
+  // Day-number depth-stack (mirrors CycleDrill's renderNum, sized to fit the grid cell).
+  const NUM_FONT_SIZE = 44
+  const NUM_FONT = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+  const renderNum = (numStr, { hot = false, maskFill = null } = {}) => {
+    const DEPTH_STACK_RED = [
+      { dy: 2, fill: '#3a0608' },
+      { dy: 1, fill: '#9e1118' },
+      { dy: 0, fill: '#d4181f' },
+    ]
+    const DEPTH_STACK_HOT = [
+      { dy: 2, fill: '#ffe0a0' },
+      { dy: 1, fill: '#d85a10' },
+      { dy: 0, fill: '#ff6600' },
+    ]
+    const stack = maskFill ? [{ dy: 0, fill: maskFill }] : (hot ? DEPTH_STACK_HOT : DEPTH_STACK_RED)
+    return stack.map((layer, li) => (
+      <text key={`num-${li}`} x={0} y={layer.dy} textAnchor="middle" dominantBaseline="central"
+        style={{ fontFamily: NUM_FONT, fontSize: `${NUM_FONT_SIZE}px`, fontWeight: 700, fill: layer.fill }}>
+        {numStr}
+      </text>
+    ))
+  }
+
+  // Weekday DOW label sits centered below each day number (offset y by ~36 viewBox units).
+  const WEEKDAY_FONT_SIZE = 26
+  const WEEKDAY_ADVANCE   = 22
+  const WEEKDAY_DY        = 36
+  // Per-letter x: center-anchored around the cell so all 3 letters sit together below the day number.
+  const weekdayLetterX = (cx, L) => cx + (L - 1) * WEEKDAY_ADVANCE
+
+  return (
+    <section className="relative z-10 py-2 px-2 pointer-events-none min-h-[calc(100vh-7px)]">
+      <div>
+        {/* Scroll container — width-fit so the silhouette spans the viewport. */}
+        <div style={{ position: 'absolute', top: '60px', left: 0, width: '100vw', maxWidth: 'none' }}>
+          {/* Scroll silhouette substrate. */}
+          {mounted && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src="/reference/scroll.svg"
+              alt="Scroll"
+              className="block w-full h-auto"
+              style={{ filter: 'drop-shadow(0 4px 14px rgba(0,0,0,0.55))' }}
+            />
+          )}
+
+          {/* Overlay — same viewBox as the scroll SVG so anchor coords match exactly. */}
+          <svg
+            viewBox="0 0 1300 1061"
+            className="absolute inset-0 w-full h-auto pointer-events-none"
+            aria-hidden="true"
+          >
+            <defs>
+              {/* Inscription mask — particles flow through ignited day-number silhouettes. */}
+              <mask id="scroll-inscription-window" maskUnits="userSpaceOnUse" x="0" y="0" width="1300" height="1061">
+                <rect x="0" y="0" width="1300" height="1061" fill="black"/>
+                {dayLabels.map((dl, i) => glowingDays[i] ? (
+                  <g key={`scroll-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
+                    <text x={0} y={0} textAnchor="middle" dominantBaseline="central"
+                      style={{ fontFamily: NUM_FONT, fontSize: `${NUM_FONT_SIZE}px`, fontWeight: 700, fill: 'white' }}>
+                      {dl.num}
+                    </text>
+                  </g>
+                ) : null)}
+              </mask>
+              {/* Weekday-label mask — particles clipped to weekday letter silhouettes. */}
+              <mask id="scroll-weekday-window" maskUnits="userSpaceOnUse" x="0" y="0" width="1300" height="1061">
+                <rect x="0" y="0" width="1300" height="1061" fill="black"/>
+                {dayLabels.map((dl, i) => {
+                  const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
+                  return (
+                    <g key={`scroll-wd-mask-${dl.iso}`}>
+                      {dow.split('').map((ch, L) => {
+                        const lit = !!weekdayLetterIgnited[i * 3 + L]
+                        const x = weekdayLetterX(dl.cx, L)
+                        return (
+                          <text key={`scroll-wd-mask-${dl.iso}-${L}`}
+                            x={x} y={dl.cy + WEEKDAY_DY}
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            style={{
+                              fontFamily: '"Noto Serif JP", Georgia, serif',
+                              fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                              fontWeight: 700,
+                              fill: 'white',
+                              opacity: lit ? 1 : 0,
+                            }}>
+                            {ch}
+                          </text>
+                        )
+                      })}
+                    </g>
+                  )
+                })}
+              </mask>
+            </defs>
+
+            {/* Inscription particle aura — clipped to day-number silhouettes. */}
+            {anyGlowing && (
+              <g mask="url(#scroll-inscription-window)" style={{ pointerEvents: 'none' }}>
+                <rect x="0" y="0" width="1300" height="1061" fill="#0a0a0a"/>
+                {(() => {
+                  const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
+                  return dayLabels.flatMap((dl, dayIdx) => {
+                    if (!glowingDays[dayIdx]) return []
+                    const PARTS = 8
+                    return Array.from({ length: PARTS }).map((_, i) => {
+                      const k = i + dayIdx * 23
+                      const rX    = hash01(k * 1)
+                      const rDly  = hash01(k * 3 + 11)
+                      const rDur  = hash01(k * 5 + 17)
+                      const rRise = hash01(k * 7 + 19)
+                      const rSize = hash01(k * 11 + 23)
+                      const rPeak = hash01(k * 13 + 29)
+                      const xOff  = (rX - 0.5) * 60
+                      const delay = (rDly * 540) % 600
+                      const dur   = 130 + rDur * 150
+                      const rise  = 60 + rRise * 50
+                      const size  = 7 + rSize * 11
+                      const peakA = 0.5 + rPeak * 0.5
+                      return (
+                        <circle key={`${dl.iso}-sp${i}`} cx={dl.cx + xOff} cy={dl.cy + 28} r={size} fill="#ff5000" opacity={0}>
+                          <animateTransform attributeName="transform" type="translate"
+                            values={`0 0; 0 -${rise.toFixed(0)}`}
+                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                          <animate attributeName="opacity"
+                            values={`0; ${peakA.toFixed(2)}; 0`}
+                            keyTimes="0; 0.2; 1"
+                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                        </circle>
+                      )
+                    })
+                  })
+                })()}
+              </g>
+            )}
+
+            {/* Day-number base inscriptions — per-day hot/cooled gating. */}
+            <style>{`
+              .scroll-inscription-hot    { animation: inscription-hot-hold 100ms forwards; }
+              .scroll-inscription-cooled { animation: inscription-cool-down 1000ms ease-out forwards; }
+            `}</style>
+            {dayLabels.map((dl, i) => {
+              const hot = !!hotDays[i]
+              const cooled = !!cooledDays[i]
+              const flameOn = !!glowingDays[i]
+              const cls = cooled ? 'scroll-inscription-cooled' : (hot ? 'scroll-inscription-hot' : '')
+              return (
+                <g key={dl.iso}
+                   className={cls}
+                   style={{
+                     mixBlendMode: hot ? 'normal' : 'difference',
+                     opacity: flameOn ? 0 : 1,
+                     transition: 'opacity 0ms',
+                   }}>
+                  <g transform={`translate(${dl.cx},${dl.cy})`}>
+                    {renderNum(dl.num, { hot })}
+                  </g>
+                </g>
+              )
+            })}
+
+            {/* Zoom-burst — fires during 'peak' glow phase. */}
+            {glowIntensity === 'peak' && (
+              <g style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
+                {dayLabels.map((dl, i) => (
+                  <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
+                    <g className="zoom-glyph" style={{ animationDelay: `${i * 220}ms`,
+                          transformBox: 'fill-box', transformOrigin: 'center',
+                          animation: `inscription-zoom 340ms ease-out forwards ${i * 220}ms`,
+                          mixBlendMode: 'plus-lighter',
+                          filter: 'drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 16px #ff4400)',
+                          opacity: 0,
+                       }}>
+                      {renderNum(dl.num, { maskFill: '#ff6600' })}
+                    </g>
+                  </g>
+                ))}
+              </g>
+            )}
+
+            {/* Weekday labels — per-letter yakiire mirrors CycleDrill / CycleBlade pattern. */}
+            <g>
+              {dayLabels.map((dl, i) => {
+                const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
+                return (
+                  <g key={`dow-${dl.iso}`}>
+                    {dow.split('').map((ch, L) => {
+                      const flatIdx = i * 3 + L
+                      const isFlaming = !!weekdayLetterIgnited[flatIdx]
+                      const isZoomed  = !!weekdayLetterZoomed[flatIdx]
+                      const isCooled  = !!weekdayLetterCooled[flatIdx]
+                      const isHot     = isZoomed && !isCooled
+                      const fill      = (isHot || isCooled) ? '#d4181f' : '#b0a898'
+                      const baseAlpha = (isHot || isCooled) ? 1 : 0.7
+                      const textOpacity = isFlaming ? 0 : baseAlpha
+                      const textClass = isCooled ? 'scroll-inscription-cooled' : (isHot ? 'scroll-inscription-hot' : '')
+                      const x = weekdayLetterX(dl.cx, L)
+                      return (
+                        <g key={`dow-${dl.iso}-${L}`}>
+                          <text
+                            x={x} y={dl.cy + WEEKDAY_DY}
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            className={textClass}
+                            style={{
+                              fontFamily: '"Noto Serif JP", Georgia, serif',
+                              fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                              fontWeight: 700,
+                              fill,
+                              opacity: textOpacity,
+                              transition: 'opacity 0ms',
+                            }}>
+                            {ch}
+                          </text>
+                          {isZoomed && (
+                            <text
+                              x={x} y={dl.cy + WEEKDAY_DY}
+                              textAnchor="middle"
+                              dominantBaseline="central"
+                              className="weekday-zoom-burst"
+                              style={{
+                                fontFamily: '"Noto Serif JP", Georgia, serif',
+                                fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                                fontWeight: 700,
+                                fill: '#ff6600',
+                              }}>
+                              {ch}
+                            </text>
+                          )}
+                          {isFlaming && (
+                            <text
+                              x={x} y={dl.cy + WEEKDAY_DY}
+                              textAnchor="middle"
+                              dominantBaseline="central"
+                              className="weekday-flame-engulf"
+                              style={{
+                                ...engulfVars(i * 13 + L + 7),
+                                fontFamily: '"Noto Serif JP", Georgia, serif',
+                                fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                                fontWeight: 700,
+                              }}>
+                              {ch}
+                            </text>
+                          )}
+                        </g>
+                      )
+                    })}
+                  </g>
+                )
+              })}
+            </g>
+
+            {/* Weekday particle aura — clipped to weekday letter silhouettes. */}
+            {anyWeekdayIgnited && (
+              <g mask="url(#scroll-weekday-window)" style={{ pointerEvents: 'none' }}>
+                {(() => {
+                  const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
+                  const PARTS_PER_WEEKDAY = 22
+                  return dayLabels.flatMap((dl, wi) => {
+                    const dayLit = weekdayLetterIgnited.slice(wi * 3, wi * 3 + 3).some(Boolean)
+                    if (!dayLit) return []
+                    return Array.from({ length: PARTS_PER_WEEKDAY }).map((_, i) => {
+                      const k = i + wi * 23
+                      const rX    = hash01(k * 1)
+                      const rDly  = hash01(k * 3 + 11)
+                      const rDur  = hash01(k * 5 + 17)
+                      const rSize = hash01(k * 11 + 23)
+                      const rPeak = hash01(k * 13 + 29)
+                      const xOff  = (rX - 0.5) * 80
+                      const delay = rDly * 300
+                      const dur   = 130 + rDur * 150
+                      const size  = 6 + rSize * 9
+                      const peakA = 0.55 + rPeak * 0.45
+                      return (
+                        <circle key={`scroll-wd${wi}-${i}`} cx={dl.cx + xOff} cy={dl.cy + WEEKDAY_DY + 18} r={size} fill="#ff5000" opacity={0}>
+                          <animateTransform attributeName="transform" type="translate"
+                            values={`0 0; 0 -${40 + rSize * 22}`}
+                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                          <animate attributeName="opacity"
+                            values={`0; ${peakA.toFixed(2)}; 0`}
+                            keyTimes="0; 0.2; 1"
+                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                        </circle>
+                      )
+                    })
+                  })
+                })()}
+              </g>
+            )}
+          </svg>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 /* ── EXPORT ── */
 function ExportButton() {
   const [hovered, setHovered] = useState(false)
