@@ -1636,45 +1636,9 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
               </mask>
             </defs>
 
-            {/* Per-day inscription particle aura — small flame around each day
-                that's currently in the flame phase (mask-free for paint speed). */}
-            {anyGlowing && (
-              <g style={{ pointerEvents: 'none' }}>
-                {(() => {
-                  const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
-                  return dayLabels.flatMap((dl, dayIdx) => {
-                    if (!glowingDays[dayIdx]) return []
-                    const PARTS = 4
-                    return Array.from({ length: PARTS }).map((_, i) => {
-                      const k = i + dayIdx * 23
-                      const rX    = hash01(k * 1)
-                      const rDly  = hash01(k * 3 + 11)
-                      const rDur  = hash01(k * 5 + 17)
-                      const rRise = hash01(k * 7 + 19)
-                      const rSize = hash01(k * 11 + 23)
-                      const rPeak = hash01(k * 13 + 29)
-                      const xOff  = (rX - 0.5) * 60
-                      const delay = (rDly * 540) % 600
-                      const dur   = 130 + rDur * 150
-                      const rise  = 60 + rRise * 50
-                      const size  = 7 + rSize * 11
-                      const peakA = 0.5 + rPeak * 0.5
-                      return (
-                        <circle key={`${dl.iso}-sp${i}`} cx={dl.cx + xOff} cy={dl.cy + 28} r={size} fill="#ff5000" opacity={0}>
-                          <animateTransform attributeName="transform" type="translate"
-                            values={`0 0; 0 -${rise.toFixed(0)}`}
-                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
-                          <animate attributeName="opacity"
-                            values={`0; ${peakA.toFixed(2)}; 0`}
-                            keyTimes="0; 0.2; 1"
-                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
-                        </circle>
-                      )
-                    })
-                  })
-                })()}
-              </g>
-            )}
+            {/* Per-day inscription particle aura intentionally removed — the
+                red-frame flame layer below is the only flame visual now.
+                Inscriptions still cascade through hot/cool color states. */}
 
             {/* Void overlay — during cascade, blacken the scroll's red regions
                 so the orange particles below register visibly. Mirrors
@@ -1843,47 +1807,9 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
               })}
             </g>
 
-            {/* Per-weekday-letter particle aura — flame appears around the DOW
-                letters as they ignite, then disappears as the column zooms.
-                Layered alongside the red-frame flame (above), not replaced. */}
-            {anyWeekdayIgnited && (
-              <g style={{ pointerEvents: 'none' }}>
-                {(() => {
-                  const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
-                  const PARTS_PER_WEEKDAY = 6
-                  return dayLabels.flatMap((dl, wi) => {
-                    const dayLit = weekdayLetterIgnited.slice(wi * 3, wi * 3 + 3).some(Boolean)
-                    if (!dayLit) return []
-                    const s  = dayScale(dl)
-                    const dy = WEEKDAY_DY * s
-                    return Array.from({ length: PARTS_PER_WEEKDAY }).map((_, i) => {
-                      const k = i + wi * 23
-                      const rX    = hash01(k * 1)
-                      const rDly  = hash01(k * 3 + 11)
-                      const rDur  = hash01(k * 5 + 17)
-                      const rSize = hash01(k * 11 + 23)
-                      const rPeak = hash01(k * 13 + 29)
-                      const xOff  = (rX - 0.5) * 80 * s
-                      const delay = rDly * 300
-                      const dur   = 130 + rDur * 150
-                      const size  = (6 + rSize * 9) * s
-                      const peakA = 0.55 + rPeak * 0.45
-                      return (
-                        <circle key={`scroll-wd${wi}-${i}`} cx={dl.cx + xOff} cy={dl.cy + dy + 18 * s} r={size} fill="#ff5000" opacity={0}>
-                          <animateTransform attributeName="transform" type="translate"
-                            values={`0 0; 0 -${40 + rSize * 22}`}
-                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
-                          <animate attributeName="opacity"
-                            values={`0; ${peakA.toFixed(2)}; 0`}
-                            keyTimes="0; 0.2; 1"
-                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
-                        </circle>
-                      )
-                    })
-                  })
-                })()}
-              </g>
-            )}
+            {/* Per-weekday-letter particle aura intentionally removed — the
+                red-frame flame layer above is the only flame visual now.
+                Weekday letters still cascade through hot/cool color states. */}
           </svg>
         </div>
       </div>
