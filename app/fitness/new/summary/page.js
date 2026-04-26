@@ -1584,10 +1584,10 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
   return (
     <section className="relative z-10 py-2 px-2 pointer-events-none min-h-[calc(100vh-7px)]">
       <div>
-        {/* Scroll container — sized 130% of viewport width so the inscription
+        {/* Scroll container — sized 136.5% of viewport width so the inscription
             banner reads larger; horizontal overflow lets the handle ornament
             tips sit just past the screen edges. */}
-        <div style={{ position: 'absolute', top: '20px', left: '-15vw', width: '130vw', maxWidth: 'none' }}>
+        <div style={{ position: 'absolute', top: '20px', left: '-18.25vw', width: '136.5vw', maxWidth: 'none' }}>
           {/* Single SVG holds both the rotated substrate (as <image>) and the inscription
               overlay so they share one coordinate system. ViewBox is the rotated frame
               1061×1300; substrate <image> applies translate(0 1300) rotate(-90) to bring
