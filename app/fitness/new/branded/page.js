@@ -495,6 +495,12 @@ export default function SchedulePage() {
   const firstWrapDay = wrapActive ? Math.min(...wrappedDays) : null
   const daysWithMuscles = Object.values(assignments).filter((s) => s.size > 0).length
   const carveEnabled = daysWithMuscles > 0
+  // Total cycle days = contiguous span from first to last user-pick (inclusive of any
+  // auto-rest gap days). What the carve button surfaces — "5 DAYS" of cycle, not "3
+  // muscle-assigned days". 0 when no picks.
+  const cycleDays = (firstSelectedKey && lastSelectedKey)
+    ? Math.round((new Date(lastSelectedKey + 'T00:00:00Z') - new Date(firstSelectedKey + 'T00:00:00Z')) / 86400000) + 1
+    : 0
 
   const handleCarve = () => {
     if (!carveEnabled) return
@@ -810,7 +816,7 @@ export default function SchedulePage() {
                 />
               ))}
               <SheetCarveButton
-                count={daysWithMuscles}
+                count={cycleDays}
                 enabled={carveEnabled}
                 onFire={handleCarve}
                 onHover={() => play('button-hover')}
