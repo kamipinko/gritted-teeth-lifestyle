@@ -1558,16 +1558,17 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
       </text>
     ))
     // Layout (DOW lives in a separate render block above number+kanji):
-    //   day number at y ≈ -16 (just above center), kanji block at y ≈ +22 (below center).
+    //   day number at y ≈ -16 (just above center), kanji block at y ≈ +28 (below
+    //   center, with a small breathing gap between number bottom and kanji top).
     const numEls = renderText('num', 0, -16 * S, 36 * S, num)
     let kanjiEls = null
     if (n === 1) {
-      kanjiEls = renderText('kj0', 0, 22 * S, 44 * S, kanjiChars[0])
+      kanjiEls = renderText('kj0', 0, 28 * S, 44 * S, kanjiChars[0])
     } else if (n <= 3) {
       const colSpacing = (n === 2 ? 32 : 30) * S
       const fontSize   = (n === 2 ? 36 : 28) * S
       kanjiEls = kanjiChars.flatMap((k, ki) =>
-        renderText(`kj${ki}`, (ki - (n - 1) / 2) * colSpacing, 22 * S, fontSize, k))
+        renderText(`kj${ki}`, (ki - (n - 1) / 2) * colSpacing, 28 * S, fontSize, k))
     } else {
       // n >= 4: 2 rows × ceil(n/2) cols.
       const cols = Math.ceil(n / 2)
@@ -1578,7 +1579,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
         const row = Math.floor(ki / cols)
         const col = ki % cols
         const x = (col - (cols - 1) / 2) * colSpacing
-        const y = 12 * S + row * rowYStep
+        const y = 18 * S + row * rowYStep
         return renderText(`kj${ki}`, x, y, fontSize, k)
       })
     }
