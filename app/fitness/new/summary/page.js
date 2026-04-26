@@ -1509,9 +1509,12 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
   const R_WEEKDAY = 80  // inner radius for weekday labels (in each loop's hollow)
   const WEEKDAY_FONT_SIZE = 18
   const WEEKDAY_ADVANCE = 18
-  // 7 anchors per loop, even compass distribution. Compass 0=top, increases CW. Day 1 sits
-  // at the top of the left loop; day 8 at the top of the right loop.
-  const COMPASS_PER_LOOP = [0, 51, 103, 154, 206, 257, 309]  // 7 angles ≈ 51.4° apart
+  // 7 anchors per loop, even compass distribution. Days 1-7 trace the left loop CW from
+  // its top; days 8-14 trace the right loop CCW from its top so the date order flows
+  // continuously around the figure-8 (day 7 → day 8 transitions through the crossover
+  // instead of jumping across the figure).
+  const COMPASS_LEFT  = [0, 51, 103, 154, 206, 257, 309]
+  const COMPASS_RIGHT = [0, 309, 257, 206, 154, 103, 51]
 
   const dayLabels = days.slice(0, 14).map((iso, i) => {
     const d = parseDate(iso)
@@ -1523,7 +1526,7 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
       : '休'
     const onLeftLoop = i < 7
     const loopCx = onLeftLoop ? LEFT_CX : RIGHT_CX
-    const angle = COMPASS_PER_LOOP[i % 7]
+    const angle = (onLeftLoop ? COMPASS_LEFT : COMPASS_RIGHT)[i % 7]
     const rad = (angle * Math.PI) / 180
     const cx = loopCx + R_INSC * Math.sin(rad)
     const cy = LOOP_CY - R_INSC * Math.cos(rad)
