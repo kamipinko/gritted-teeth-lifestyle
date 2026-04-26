@@ -1924,6 +1924,15 @@ export default function SummaryPage() {
         <CycleOuroboros days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
       )}
 
+      {days.length === 7 && (
+        <div className="fixed bottom-5 left-5 z-40 no-print pointer-events-none max-w-[60vw]">
+          <div className="font-display text-2xl text-gtl-paper leading-tight uppercase tracking-tight"
+               style={{ textShadow: '2px 2px 0 #070708' }}>
+            {cycleName}
+          </div>
+        </div>
+      )}
+
       {days.length >= 8 && days.length <= 13 && (
         <CycleDrill days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
       )}
