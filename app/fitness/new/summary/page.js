@@ -2280,6 +2280,19 @@ export default function SummaryPage() {
              : days.length <= 10 ? Math.ceil(days.length / 2)
              : Math.ceil(days.length / 3)
 
+  // Watermark layout — CycleScroll places ETCH and CYCLE on a single horizontal
+  // line; every other cycle stacks them vertically (canonical bottom-right).
+  const wmScroll = days.length > 14
+  const WM_W      = wmScroll ? 170 : 130
+  const WM_H      = wmScroll ? 50  : 78
+  const WM_VB     = `0 0 ${WM_W} ${WM_H}`
+  const ETCH_X    = [8, 26, 44, 62]
+  const ETCH_Y    = wmScroll ? 30 : 40
+  const ETCH_ROTY = wmScroll ? 22 : 34
+  const CYCLE_X   = wmScroll ? [84, 101, 118, 135, 152] : [8, 25, 43, 61, 79]
+  const CYCLE_Y   = wmScroll ? 30 : 72
+  const CYCLE_ROTY = wmScroll ? 22 : 66
+
   return (
     <main ref={mainRef} className="relative h-[100dvh] overflow-hidden bg-gtl-void">
 
@@ -2467,8 +2480,8 @@ export default function SummaryPage() {
       <svg
         aria-hidden="true"
         className="fixed z-[20] pointer-events-none select-none"
-        width={130} height={78}
-        viewBox="0 0 130 78"
+        width={WM_W} height={WM_H}
+        viewBox={WM_VB}
         style={days.length > 14
           ? {
               // CycleScroll mode: park ETCH CYCLE inside the scroll's bottom rolled-
@@ -2489,18 +2502,18 @@ export default function SummaryPage() {
             }}
       >
         <defs>
-          <mask id="watermark-window" maskUnits="userSpaceOnUse" x="0" y="0" width="130" height="78">
-            <rect x="0" y="0" width="130" height="78" fill="black"/>
+          <mask id="watermark-window" maskUnits="userSpaceOnUse" x="0" y="0" width={WM_W} height={WM_H}>
+            <rect x="0" y="0" width={WM_W} height={WM_H} fill="black"/>
             {[
-              { ch: 'E', x: 8,  y: 40, w: 0, i: 0 },
-              { ch: 'T', x: 26, y: 40, w: 0, i: 1 },
-              { ch: 'C', x: 44, y: 40, w: 0, i: 2 },
-              { ch: 'H', x: 62, y: 40, w: 0, i: 3 },
-              { ch: 'C', x: 8,  y: 72, w: 1, i: 0 },
-              { ch: 'Y', x: 25, y: 72, w: 1, i: 1 },
-              { ch: 'C', x: 43, y: 72, w: 1, i: 2 },
-              { ch: 'L', x: 61, y: 72, w: 1, i: 3 },
-              { ch: 'E', x: 79, y: 72, w: 1, i: 4 },
+              { ch: 'E', x: ETCH_X[0],  y: ETCH_Y,  w: 0, i: 0 },
+              { ch: 'T', x: ETCH_X[1],  y: ETCH_Y,  w: 0, i: 1 },
+              { ch: 'C', x: ETCH_X[2],  y: ETCH_Y,  w: 0, i: 2 },
+              { ch: 'H', x: ETCH_X[3],  y: ETCH_Y,  w: 0, i: 3 },
+              { ch: 'C', x: CYCLE_X[0], y: CYCLE_Y, w: 1, i: 0 },
+              { ch: 'Y', x: CYCLE_X[1], y: CYCLE_Y, w: 1, i: 1 },
+              { ch: 'C', x: CYCLE_X[2], y: CYCLE_Y, w: 1, i: 2 },
+              { ch: 'L', x: CYCLE_X[3], y: CYCLE_Y, w: 1, i: 3 },
+              { ch: 'E', x: CYCLE_X[4], y: CYCLE_Y, w: 1, i: 4 },
             ].map((g, k) => {
               const lit = g.w === 0 ? !!etchIgnited[g.i] : !!cycleIgnited[g.i]
               return (
@@ -2519,13 +2532,13 @@ export default function SummaryPage() {
             (inscription cheat) so the particle flames are the only visible content. */}
         {/* Per-letter ETCH base text — each letter independently flips zoomed → cooled. */}
         {['E','T','C','H'].map((ch, i) => {
-          const x = [8, 26, 44, 62][i]
+          const x = ETCH_X[i]
           const isZoomed  = !!etchZoomed[i]
           const isCooled  = !!etchCooled[i]
           const isFlaming = !!etchIgnited[i]
           const isHot     = isZoomed && !isCooled
           return (
-            <text key={`etch-base-${i}`} x={x} y={40} textAnchor="start"
+            <text key={`etch-base-${i}`} x={x} y={ETCH_Y} textAnchor="start"
               fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
               fontSize="18" fontWeight="600"
               className={isCooled ? 'inscription-cooled' : (isHot ? 'inscription-hot' : '')}
@@ -2539,10 +2552,10 @@ export default function SummaryPage() {
         {/* Per-letter ETCH engulf bloom — each letter unmounts as it zooms. */}
         {['E','T','C','H'].map((ch, i) => {
           if (!etchIgnited[i]) return null
-          const x = [8, 26, 44, 62][i]
+          const x = ETCH_X[i]
           return (
-            <g key={`etch-engulf-${i}`} transform={`rotate(-8 ${x + 6} 34)`}>
-              <text x={x} y={40} textAnchor="start"
+            <g key={`etch-engulf-${i}`} transform={`rotate(-8 ${x + 6} ${ETCH_ROTY})`}>
+              <text x={x} y={ETCH_Y} textAnchor="start"
                 fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
                 fontSize="18" fontWeight="600"
                 className="weekday-flame-engulf"
@@ -2555,9 +2568,9 @@ export default function SummaryPage() {
         {/* Per-letter ETCH zoom-burst — fires per letter on its 50ms cascade. */}
         {['E','T','C','H'].map((ch, i) => {
           if (!etchZoomed[i]) return null
-          const x = [8, 26, 44, 62][i]
+          const x = ETCH_X[i]
           return (
-            <text key={`etch-zoom-${i}`} x={x} y={40} textAnchor="start"
+            <text key={`etch-zoom-${i}`} x={x} y={ETCH_Y} textAnchor="start"
               fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
               fontSize="18" fontWeight="600"
               fill="#ff6600"
@@ -2566,13 +2579,13 @@ export default function SummaryPage() {
         })}
         {/* Per-letter CYCLE base text — each letter independently flips zoomed → cooled. */}
         {['C','Y','C','L','E'].map((ch, i) => {
-          const x = [8, 25, 43, 61, 79][i]
+          const x = CYCLE_X[i]
           const isZoomed  = !!cycleZoomed[i]
           const isCooled  = !!cycleCooled[i]
           const isFlaming = !!cycleIgnited[i]
           const isHot     = isZoomed && !isCooled
           return (
-            <text key={`cycle-base-${i}`} x={x} y={72} textAnchor="start"
+            <text key={`cycle-base-${i}`} x={x} y={CYCLE_Y} textAnchor="start"
               fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
               fontSize="18" fontWeight="600"
               className={isCooled ? 'inscription-cooled' : (isHot ? 'inscription-hot' : '')}
@@ -2586,10 +2599,10 @@ export default function SummaryPage() {
         {/* Per-letter CYCLE engulf bloom — each letter unmounts as it zooms. */}
         {['C','Y','C','L','E'].map((ch, i) => {
           if (!cycleIgnited[i]) return null
-          const x = [8, 25, 43, 61, 79][i]
+          const x = CYCLE_X[i]
           return (
-            <g key={`cycle-engulf-${i}`} transform={`rotate(-8 ${x + 6} 66)`}>
-              <text x={x} y={72} textAnchor="start"
+            <g key={`cycle-engulf-${i}`} transform={`rotate(-8 ${x + 6} ${CYCLE_ROTY})`}>
+              <text x={x} y={CYCLE_Y} textAnchor="start"
                 fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
                 fontSize="18" fontWeight="600"
                 className="weekday-flame-engulf"
@@ -2602,9 +2615,9 @@ export default function SummaryPage() {
         {/* Per-letter CYCLE zoom-burst — fires per letter on its 50ms cascade. */}
         {['C','Y','C','L','E'].map((ch, i) => {
           if (!cycleZoomed[i]) return null
-          const x = [8, 25, 43, 61, 79][i]
+          const x = CYCLE_X[i]
           return (
-            <text key={`cycle-zoom-${i}`} x={x} y={72} textAnchor="start"
+            <text key={`cycle-zoom-${i}`} x={x} y={CYCLE_Y} textAnchor="start"
               fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
               fontSize="18" fontWeight="600"
               fill="#ff6600"
@@ -2632,9 +2645,9 @@ export default function SummaryPage() {
                 if (!isEtchBand && (i % 4 === 2)) return null
                 if (isEtchBand && !etchIgnited.some(Boolean)) return null
                 if (!isEtchBand && !cycleIgnited.some(Boolean)) return null
-                const startY = isEtchBand ? 46 : 74
+                const startY = wmScroll ? 42 : (isEtchBand ? 46 : 74)
                 const rise   = isEtchBand ? (18 + rSize * 14) : (12 + rSize * 10)
-                const xBase  = 8
+                const xBase  = wmScroll && !isEtchBand ? 84 : 8
                 const xSpan  = isEtchBand ? 70 : 85
                 const xOff   = xBase + rX * xSpan
                 const delay  = rDly * 300
