@@ -824,17 +824,17 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
     const n = kanjiChars.length
     const isCone = numRotation !== 0
 
-    // Cone glyphs are ~75% scale of the base glyphs so a 2-pair ridge stays inside
-    // the band width.
-    const numFontSize = isCone ? 24 : 32
-    const numOffset   = isCone ? 28 : 36
-    const kanjiFontN1 = isCone ? 32 : 42
-    const kanjiFontN2to4 = isCone ? 20 : 26
-    const kanjiFontN5plus = isCone ? 17 : 22
-    const kanjiSpacingN2to4 = isCone ? 22 : 28
-    const kanjiSpacingN5plus = isCone ? 18 : 24
-    const kanjiRowStepN2to4 = isCone ? 20 : 26
-    const kanjiRowStepN5plus = isCone ? 17 : 22
+    // Cone glyphs shrunk further so adjacent inscriptions on 4- and 5-anchor ridges
+    // (slot pitch ~50vb) leave visible breathing room instead of touching.
+    const numFontSize = isCone ? 19 : 32
+    const numOffset   = isCone ? 18 : 36
+    const kanjiFontN1 = isCone ? 24 : 42
+    const kanjiFontN2to4 = isCone ? 16 : 26
+    const kanjiFontN5plus = isCone ? 14 : 22
+    const kanjiSpacingN2to4 = isCone ? 17 : 28
+    const kanjiSpacingN5plus = isCone ? 15 : 24
+    const kanjiRowStepN2to4 = isCone ? 16 : 26
+    const kanjiRowStepN5plus = isCone ? 14 : 22
 
     const DEPTH_STACK_RED = [
       { dy: 2, fill: '#3a0608' },
