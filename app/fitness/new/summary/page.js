@@ -1490,19 +1490,23 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
   const rowStep = (WRITE_Y1 - WRITE_Y0) / ROWS_PER_COL
   const halfN   = Math.floor(N / 2)
 
+  const BIG_LAST_THRESHOLD = 35  // up to 35 days, the last day renders 1.7×; beyond that, same size as the rest
+
   const anchors = days.map((_, i) => {
     const c = Math.floor(i / ROWS_PER_COL)
     const r = i % ROWS_PER_COL
     const isLast = i === N - 1
+    const isBig  = isLast && N <= BIG_LAST_THRESHOLD
     return {
       x: WRITE_X0 + colStep * (c + 0.5),
       // Final day always pinned to the bottom-right cell, regardless of how many
-      // earlier days occupy its column.
+      // earlier days occupy its column or whether it gets the BIG treatment.
       y: isLast
         ? WRITE_Y1 - rowStep * 0.5
         : WRITE_Y0 + rowStep * (r + 0.5),
       side: i < halfN ? 'left' : 'right',
       isLast,
+      isBig,
     }
   })
 
@@ -1515,7 +1519,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
       ? muscles.map((m) => MUSCLE_KANJI[m] || '?').join('')
       : '休'
     const a = anchors[i]
-    return { num, hasWork, kanjiStr, iso, cx: a.x, cy: a.y, side: a.side, isLast: a.isLast }
+    return { num, hasWork, kanjiStr, iso, cx: a.x, cy: a.y, side: a.side, isLast: a.isLast, isBig: a.isBig }
   })
 
   // Day-number + muscle-kanji depth-stack inscription (mirrors CycleBlade's
@@ -1524,10 +1528,10 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
   // The LAST day uses a 1.7× scale factor so it visually dominates the column.
   const NUM_FONT = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
   const renderInscription = (dl, { hot = false, maskFill = null } = {}) => {
-    const { num, kanjiStr, isLast } = dl
+    const { num, kanjiStr, isBig } = dl
     const kanjiChars = kanjiStr.split('')
     const n = kanjiChars.length
-    const S = isLast ? 1.7 : 1.0   // scale factor: BIG day vs normal day
+    const S = isBig ? 1.7 : 1.0   // scale factor: BIG day (≤35-day cycles) vs normal day
     const DEPTH_STACK_RED = [
       { dy: 2, fill: '#3a0608' },
       { dy: 1, fill: '#9e1118' },
@@ -1573,11 +1577,11 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
     return <>{numEls}{kanjiEls}</>
   }
 
-  // Weekday DOW label sits ABOVE the date number; sizing scales with isLast (BIG day).
+  // Weekday DOW label sits ABOVE the date number; sizing scales with isBig (BIG day).
   const WEEKDAY_FONT_SIZE = 24
   const WEEKDAY_ADVANCE   = 20
   const WEEKDAY_DY        = -50
-  const dayScale = (dl) => dl.isLast ? 1.7 : 1.0
+  const dayScale = (dl) => dl.isBig ? 1.7 : 1.0
   // Per-letter x: center-anchored around the cell so all 3 letters sit together above the date.
   const weekdayLetterX = (cx, L, advance) => cx + (L - 1) * advance
 
