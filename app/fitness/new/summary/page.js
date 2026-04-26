@@ -1482,8 +1482,10 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
   // into the substrate <image> transform, so anchors live in post-rotation coords.
   const ROWS_PER_COL = 7
   const colsNeeded = Math.max(1, Math.ceil(N / ROWS_PER_COL))
-  const WRITE_X0 = 280
-  const WRITE_X1 = 800
+  // Writing area shifted 6 viewBox units left (~3px on a 390-wide viewport at
+  // the 143.325vw scroll container) so columns sit slightly off-center.
+  const WRITE_X0 = 274
+  const WRITE_X1 = 794
   const WRITE_Y0 = 270
   const WRITE_Y1 = 1030
   const colStep = (WRITE_X1 - WRITE_X0) / colsNeeded
