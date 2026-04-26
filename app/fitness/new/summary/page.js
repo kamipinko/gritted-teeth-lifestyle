@@ -770,7 +770,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
   const RIDGE2_BBOX = { xLeft: 348, xRight: 451, yMid: 182, angle: RIDGE_STEEP  } // band 1, 1 anchor
   const RIDGE3_BBOX = { xLeft: 321, xRight: 485, yMid: 277, angle: RIDGE_STEEP  } // band 2, 2 anchors
   const RIDGE4_BBOX = { xLeft: 296, xRight: 533, yMid: 385, angle: RIDGE_STEEP  } // band 3, 4 anchors
-  const RIDGE5_BBOX = { xLeft: 266, xRight: 564, yMid: 479, angle: 20          } // band 4, 5 anchors (slightly steeper than the rest)
+  const RIDGE5_BBOX = { xLeft: 266, xRight: 564, yMid: 479, angle: 20.5        } // band 4, 5 anchors (slightly steeper than the rest)
 
   const ridgeSlots = (ridge, n) => {
     const xMid = (ridge.xLeft + ridge.xRight) / 2
