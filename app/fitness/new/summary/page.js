@@ -767,7 +767,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
   // ridge having its own measured slope).
   const RIDGE_GENTLE = 7.3 * 1.6  // → 11.7°  — used by ridges 2 + 4
   const RIDGE_STEEP  = 11.8 * 1.6 // → 18.9°  — used by ridges 3 + 5
-  const RIDGE2_BBOX = { xLeft: 368, xRight: 471, yMid: 182, angle: RIDGE_GENTLE } // band 1, 1 anchor
+  const RIDGE2_BBOX = { xLeft: 368, xRight: 471, yMid: 177, angle: RIDGE_GENTLE } // band 1, 1 anchor
   const RIDGE3_BBOX = { xLeft: 341, xRight: 505, yMid: 272, angle: RIDGE_STEEP  } // band 2, 2 anchors
   const RIDGE4_BBOX = { xLeft: 309, xRight: 546, yMid: 380, angle: RIDGE_STEEP  } // band 3, 4 anchors
   const RIDGE5_BBOX = { xLeft: 276, xRight: 574, yMid: 474, angle: RIDGE_STEEP  } // band 4, 5 anchors
