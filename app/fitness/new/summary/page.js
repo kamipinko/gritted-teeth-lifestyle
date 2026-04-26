@@ -735,7 +735,7 @@ const DRILL_PATH_DATA = [
  * labels alternate along anchor sides. Per-letter yakiire (canonical 50ms flame /
  * 50ms zoom / 75ms cooled stagger) cascades on weekday labels exactly like blade.
  */
-function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [], weekdayLetterIgnited = [], weekdayLetterZoomed = [], weekdayLetterCooled = [] }) {
+function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [], weekdayLetterIgnited = [], weekdayLetterZoomed = [], weekdayLetterCooled = [] }) {
   const N = days.length
   const anyGlowing = glowingDays.some(Boolean)
   const anyWeekdayIgnited = Array.isArray(weekdayLetterIgnited) && weekdayLetterIgnited.some(Boolean)
@@ -927,6 +927,25 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                 <path key={`drill-body-${i}`} d={p.d} transform={p.transform} fill="#d4181f" />
               ))}
             </g>
+            {/* Cycle title — sits between the last cone-ridge inscription (anchor 12)
+                and the mount inscription (anchor 13) on the rectangular base. Off-white
+                fill to read against the red drill body, slight uppercase tracking. */}
+            {cycleName && (
+              <text
+                x={408} y={655}
+                textAnchor="middle"
+                dominantBaseline="central"
+                style={{
+                  fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
+                  fontSize: '34px',
+                  fontWeight: 700,
+                  fill: '#e8e0c8',
+                  letterSpacing: '0.12em',
+                  opacity: 0.85,
+                }}>
+                {cycleName.toUpperCase()}
+              </text>
+            )}
             <defs>
               {/* Inscription mask — particles flow through ignited day-number AND kanji
                   silhouettes (mirrors the on-screen renderInscription so flames fill both halves). */}
@@ -2023,7 +2042,7 @@ export default function SummaryPage() {
       )}
 
       {days.length >= 8 && days.length <= 13 && (
-        <CycleDrill days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
+        <CycleDrill days={days} dailyPlan={dailyPlan} cycleName={cycleName} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
       )}
 
       {days.length >= 14 && (
