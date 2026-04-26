@@ -810,13 +810,11 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
              numRotation: a.numRotation, kanjiRotation: a.kanjiRotation }
   })
 
-  // Day-number + kanji at each anchor — number sits to the LEFT of the kanji
-  // (offset in world-x) and the two halves rotate independently:
-  //   - number: dl.numRotation (cone → -70°, sideways with left edge on ridge)
-  //   - kanji:  dl.kanjiRotation (cone → 12°, kanji bottom rests on ridge)
-  // Cone bands run smaller fonts + tighter offset so two pairs side-by-side fit on
-  // the wide middle ridges (band 2/3) without crowding. Base anchors keep the larger
-  // sizing they already had.
+  // Day-number + kanji at each anchor — vertically stacked: number CENTERED ABOVE
+  // the kanji, both sharing one rotation transform (the ridge tilt) so the entire
+  // inscription leans together with the ridge underneath. Cone glyphs are sized
+  // smaller than base glyphs so adjacent inscriptions on the 4- and 5-anchor ridges
+  // (~50vb slot pitch) still leave visible breathing room.
   const NUM_FONT = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
   const renderInscription = (dl, { hot = false, maskFill = null } = {}) => {
     const { num, kanjiStr, cx, cy, numRotation = 0, kanjiRotation = 0 } = dl
@@ -824,17 +822,25 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
     const n = kanjiChars.length
     const isCone = numRotation !== 0
 
-    // Cone glyphs shrunk further so adjacent inscriptions on 4- and 5-anchor ridges
-    // (slot pitch ~50vb) leave visible breathing room instead of touching.
-    const numFontSize = isCone ? 19 : 32
-    const numOffset   = isCone ? 28 : 36
-    const kanjiFontN1 = isCone ? 24 : 42
-    const kanjiFontN2to4 = isCone ? 16 : 26
-    const kanjiFontN5plus = isCone ? 14 : 22
-    const kanjiSpacingN2to4 = isCone ? 17 : 28
-    const kanjiSpacingN5plus = isCone ? 15 : 24
-    const kanjiRowStepN2to4 = isCone ? 16 : 26
-    const kanjiRowStepN5plus = isCone ? 14 : 22
+    const numFontSize    = isCone ? 18 : 28
+    const kanjiFontN1    = isCone ? 22 : 36
+    const kanjiFontN2to4 = isCone ? 16 : 24
+    const kanjiFontN5plus = isCone ? 14 : 20
+    const kanjiSpacingN2to4 = isCone ? 17 : 26
+    const kanjiSpacingN5plus = isCone ? 15 : 22
+    const kanjiRowStepN2to4 = isCone ? 16 : 24
+    const kanjiRowStepN5plus = isCone ? 14 : 20
+
+    // Vertical stack: number above center, kanji cluster below. Center the stack on
+    // (0, 0) so rotation pivots around the anchor's geometric center.
+    const stackGap = isCone ? 3 : 5
+    const kanjiClusterRows = (n === 1 ? 1 : Math.ceil(n / 2))
+    const kanjiBaseFont = (n === 1 ? kanjiFontN1 : (n <= 4 ? kanjiFontN2to4 : kanjiFontN5plus))
+    const kanjiRowStep  = (n === 1 ? 0 : (n <= 4 ? kanjiRowStepN2to4 : kanjiRowStepN5plus))
+    const kanjiHeight = kanjiBaseFont + (kanjiClusterRows - 1) * kanjiRowStep
+    const totalH = numFontSize + stackGap + kanjiHeight
+    const numCenterY   = -totalH / 2 + numFontSize / 2
+    const kanjiCenterY =  totalH / 2 - kanjiHeight / 2
 
     const DEPTH_STACK_RED = [
       { dy: 2, fill: '#3a0608' },
@@ -855,18 +861,16 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
       </text>
     ))
 
-    // Number — single glyph centered around its own anchor at (cx - numOffset, cy).
-    const numEls = renderText('num', 0, 0, numFontSize, num)
+    // Number — single line centered above the kanji cluster.
+    const numEls = renderText('num', 0, numCenterY, numFontSize, num)
 
-    // Kanji column — single glyph or grid centered around (cx, cy). Multi-kanji
-    // clusters center vertically around the anchor instead of dropping below.
+    // Kanji — single glyph or 2-col grid centered on kanjiCenterY.
     let kanjiEls = []
     if (n === 1) {
-      kanjiEls = renderText('kj0', 0, 0, kanjiFontN1, kanjiChars[0])
+      kanjiEls = renderText('kj0', 0, kanjiCenterY, kanjiFontN1, kanjiChars[0])
     } else if (n <= 4) {
       const fontSize = kanjiFontN2to4, colSpacing = kanjiSpacingN2to4, rowYStep = kanjiRowStepN2to4
-      const totalRows = Math.ceil(n / 2)
-      const baseY = -((totalRows - 1) * rowYStep) / 2
+      const baseY = kanjiCenterY - ((kanjiClusterRows - 1) * rowYStep) / 2
       kanjiEls = kanjiChars.flatMap((k, ki) => {
         const row = Math.floor(ki / 2)
         const isOddLast = n % 2 === 1 && ki === n - 1
@@ -876,8 +880,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
       })
     } else {
       const fontSize = kanjiFontN5plus, colSpacing = kanjiSpacingN5plus, rowYStep = kanjiRowStepN5plus
-      const totalRows = Math.ceil(n / 2)
-      const baseY = -((totalRows - 1) * rowYStep) / 2
+      const baseY = kanjiCenterY - ((kanjiClusterRows - 1) * rowYStep) / 2
       kanjiEls = kanjiChars.flatMap((k, ki) => {
         const row = Math.floor(ki / 2)
         const isOddLast = n % 2 === 1 && ki === n - 1
@@ -888,14 +891,10 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
     }
 
     return (
-      <>
-        <g transform={`translate(${cx - numOffset},${cy}) rotate(${numRotation})`}>
-          {numEls}
-        </g>
-        <g transform={`translate(${cx},${cy}) rotate(${kanjiRotation})`}>
-          {kanjiEls}
-        </g>
-      </>
+      <g transform={`translate(${cx},${cy}) rotate(${kanjiRotation})`}>
+        {numEls}
+        {kanjiEls}
+      </g>
     )
   }
 
