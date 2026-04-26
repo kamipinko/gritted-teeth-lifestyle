@@ -827,7 +827,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
     // Cone glyphs shrunk further so adjacent inscriptions on 4- and 5-anchor ridges
     // (slot pitch ~50vb) leave visible breathing room instead of touching.
     const numFontSize = isCone ? 19 : 32
-    const numOffset   = isCone ? 18 : 36
+    const numOffset   = isCone ? 28 : 36
     const kanjiFontN1 = isCone ? 24 : 42
     const kanjiFontN2to4 = isCone ? 16 : 26
     const kanjiFontN5plus = isCone ? 14 : 22
