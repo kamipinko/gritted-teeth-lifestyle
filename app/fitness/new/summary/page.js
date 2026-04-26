@@ -796,9 +796,11 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
   return (
     <section className="relative z-10 py-2 px-2 pointer-events-none min-h-[calc(100vh-7px)]">
       <div>
-        {/* Drill container — full-viewport-width, bottom-anchored so the base sits near
-            the lower portion of the screen and the apex extends upward through the safe area. */}
-        <div style={{ position: 'absolute', top: '40px', left: 0, width: '100vw', maxWidth: 'none' }}>
+        {/* Drill container — 125vw width with -12.5vw left shift to keep it horizontally
+            centered while running 25% larger than viewport for visual parity with the wakizashi.
+            Inscription anchors live in the overlay's viewBox-local coords, so they scale with
+            the container automatically. */}
+        <div style={{ position: 'absolute', top: '40px', left: '-12.5vw', width: '125vw', maxWidth: 'none' }}>
           {/* Drill silhouette substrate — same SVG file we render below, but as <img>
               so paint/raster-layout precedes the overlay's text/particles. */}
           {mounted && (
