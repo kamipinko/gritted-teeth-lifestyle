@@ -767,16 +767,24 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
   // ridge having its own measured slope).
   const RIDGE_GENTLE = 7.3 * 1.6  // → 11.7°  — used by ridges 2 + 4
   const RIDGE_STEEP  = 11.8 * 1.6 // → 18.9°  — used by ridges 3 + 5
-  const RIDGE2_BBOX = { xLeft: 368, xRight: 471, yMid: 177, angle: RIDGE_STEEP  } // band 1, 1 anchor
-  const RIDGE3_BBOX = { xLeft: 341, xRight: 505, yMid: 272, angle: RIDGE_STEEP  } // band 2, 2 anchors
-  const RIDGE4_BBOX = { xLeft: 309, xRight: 546, yMid: 380, angle: RIDGE_STEEP  } // band 3, 4 anchors
-  const RIDGE5_BBOX = { xLeft: 276, xRight: 574, yMid: 474, angle: RIDGE_STEEP  } // band 4, 5 anchors
+  const RIDGE2_BBOX = { xLeft: 348, xRight: 451, yMid: 177, angle: RIDGE_STEEP  } // band 1, 1 anchor
+  const RIDGE3_BBOX = { xLeft: 313, xRight: 477, yMid: 268, angle: RIDGE_STEEP  } // band 2, 2 anchors
+  const RIDGE4_BBOX = { xLeft: 296, xRight: 533, yMid: 385, angle: 20.5        } // band 3, 4 anchors
+  const RIDGE5_BBOX = { xLeft: 266, xRight: 564, yMid: 487, angle: 20.5        } // band 4, 5 anchors (slightly steeper than the rest)
 
   const ridgeSlots = (ridge, n) => {
     const xMid = (ridge.xLeft + ridge.xRight) / 2
     const tanAngle = Math.tan(ridge.angle * Math.PI / 180)
     return Array.from({ length: n }, (_, k) => {
-      const t = (k + 1) / (n + 1)
+      // 1-2 slot ridges keep the (k+1)/(n+1) distribution that tucks the pair
+      // inward. 3+ slot ridges use (k+0.5)/n with a 0.85 shrink toward the ridge
+      // center so the pitch is wide enough to clear the kanji+number pair
+      // (~53vb) but the cluster stays tucked away from the band edges.
+      const t = n === 1
+        ? 0.5                         // 1-slot ridge centered (anchor 1 unaffected)
+        : n === 2
+        ? 0.5 + (k - 0.5) * 0.358    // 2-slot: pitch ≈ 0.358 × span (~59vb on ridge 3)
+        : 0.5 + 0.88 * ((k + 0.5) / n - 0.5)
       const x = ridge.xLeft + t * (ridge.xRight - ridge.xLeft)
       const y = ridge.yMid + (x - xMid) * tanAngle
       return {
@@ -794,7 +802,16 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
     ...ridgeSlots(RIDGE4_BBOX, 4),
     ...ridgeSlots(RIDGE5_BBOX, 5),
   ].map(s => ({ ...s, side: sideFor(s.x) }))
-  const MOUNT_SLOT = { x: 350, y: 770, side: 'left', numRotation: 0, kanjiRotation: 0 }
+  // Mount sits directly below anchor 8 (ridge 5's leftmost slot at x≈326, y≈440) on
+  // the next ridge down — landing in the small band-5 transition strip just above
+  // the rectangular base body. Same RIDGE_STEEP tilt as cone anchors. isMount keeps
+  // the bigger weekday sizing.
+  const MOUNT_SLOT = {
+    x: 277, y: 529, side: 'left',
+    numRotation: RIDGE_STEEP - 90,
+    kanjiRotation: RIDGE_STEEP,
+    isMount: true,
+  }
   const anchors = days.map((_, i) => i < 12 ? CONE_SLOTS[i] : MOUNT_SLOT)
 
   const dayLabels = days.map((iso, i) => {
@@ -807,7 +824,8 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
       : '休'
     const a = anchors[i] || anchors[anchors.length - 1]
     return { num, hasWork, kanjiStr, iso, cx: a.x, cy: a.y, side: a.side,
-             numRotation: a.numRotation, kanjiRotation: a.kanjiRotation }
+             numRotation: a.numRotation, kanjiRotation: a.kanjiRotation,
+             isMount: !!a.isMount }
   })
 
   // Day-number + kanji at each anchor — vertically stacked: number CENTERED ABOVE
@@ -831,16 +849,22 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
     const kanjiRowStepN2to4 = isCone ? 16 : 24
     const kanjiRowStepN5plus = isCone ? 14 : 20
 
-    // Vertical stack: number above center, kanji cluster below. Center the stack on
-    // (0, 0) so rotation pivots around the anchor's geometric center.
-    const stackGap = isCone ? 3 : 5
+    // Horizontal layout: kanji centered at (0, 0), number on the RIGHT of the kanji.
+    // Weekday cluster lives ABOVE the kanji (rendered in a separate <g> sharing this
+    // inscription's rotation — see wdGroupTransform).
+    // Double-digit dates are visually wider, so their left edge crowds the kanji at
+    // the single-digit gap; bump the gap a touch when we have 2+ digits.
+    const isMultiDigit = (num || '').length >= 2
+    const stackGap = isCone ? (isMultiDigit ? 11 : 7) : (isMultiDigit ? 13 : 9)
     const kanjiClusterRows = (n === 1 ? 1 : Math.ceil(n / 2))
     const kanjiBaseFont = (n === 1 ? kanjiFontN1 : (n <= 4 ? kanjiFontN2to4 : kanjiFontN5plus))
     const kanjiRowStep  = (n === 1 ? 0 : (n <= 4 ? kanjiRowStepN2to4 : kanjiRowStepN5plus))
     const kanjiHeight = kanjiBaseFont + (kanjiClusterRows - 1) * kanjiRowStep
-    const totalH = numFontSize + stackGap + kanjiHeight
-    const numCenterY   = -totalH / 2 + numFontSize / 2
-    const kanjiCenterY =  totalH / 2 - kanjiHeight / 2
+    const kanjiCenterX = 0
+    const kanjiCenterY = 0
+    const numCenterX   = kanjiBaseFont / 2 + stackGap + numFontSize / 2
+    const numCenterY   = 0
+    void kanjiHeight
 
     const DEPTH_STACK_RED = [
       { dy: 2, fill: '#3a0608' },
@@ -861,20 +885,20 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
       </text>
     ))
 
-    // Number — single line centered above the kanji cluster.
-    const numEls = renderText('num', 0, numCenterY, numFontSize, num)
+    // Number — single glyph centered at (numCenterX, numCenterY).
+    const numEls = renderText('num', numCenterX, numCenterY, numFontSize, num)
 
-    // Kanji — single glyph or 2-col grid centered on kanjiCenterY.
+    // Kanji — single glyph or 2-col grid centered at (kanjiCenterX, kanjiCenterY).
     let kanjiEls = []
     if (n === 1) {
-      kanjiEls = renderText('kj0', 0, kanjiCenterY, kanjiFontN1, kanjiChars[0])
+      kanjiEls = renderText('kj0', kanjiCenterX, kanjiCenterY, kanjiFontN1, kanjiChars[0])
     } else if (n <= 4) {
       const fontSize = kanjiFontN2to4, colSpacing = kanjiSpacingN2to4, rowYStep = kanjiRowStepN2to4
       const baseY = kanjiCenterY - ((kanjiClusterRows - 1) * rowYStep) / 2
       kanjiEls = kanjiChars.flatMap((k, ki) => {
         const row = Math.floor(ki / 2)
         const isOddLast = n % 2 === 1 && ki === n - 1
-        const x = isOddLast ? 0 : (ki % 2 - 0.5) * colSpacing
+        const x = kanjiCenterX + (isOddLast ? 0 : (ki % 2 - 0.5) * colSpacing)
         const y = baseY + row * rowYStep
         return renderText(`kj${ki}`, x, y, fontSize, k)
       })
@@ -884,7 +908,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
       kanjiEls = kanjiChars.flatMap((k, ki) => {
         const row = Math.floor(ki / 2)
         const isOddLast = n % 2 === 1 && ki === n - 1
-        const x = isOddLast ? 0 : (ki % 2 - 0.5) * colSpacing
+        const x = kanjiCenterX + (isOddLast ? 0 : (ki % 2 - 0.5) * colSpacing)
         const y = baseY + row * rowYStep
         return renderText(`kj${ki}`, x, y, fontSize, k)
       })
@@ -902,32 +926,47 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
   // OLD date-number position (left of the kanji at the anchor's offset), rotated by
   // the same numRotation the number used pre-stacking, so they slot into the cone
   // ridge sideways like the dates did before the stack commit.
-  const wdParams = (dl) => {
-    const isConeAnchor = (dl.numRotation || 0) !== 0
-    return {
-      fontSize: isConeAnchor ? 13 : 22,
-      advance:  isConeAnchor ? 13 : 22,
-      // Mount anchor (base, axis-upright) needs a bigger left-shift so the 3-letter
-      // cluster clears the number "8"'s footprint instead of overlapping its left edge.
-      offset:   isConeAnchor ? 28 : 60,
-      rotation: dl.numRotation || 0,
-    }
+  // Weekday cluster sits ABOVE the inscription, centered horizontally on the midpoint
+  // between the kanji (at local x=0) and the date number (at local x=numCenterX). The
+  // midpoint shifts a couple vb depending on whether the date is single- or double-
+  // digit (different stackGap), so the cluster moves with it.
+  const wdParams = () => ({
+    fontSize: 13,
+    advance:  13,
+    aboveY:   -23,
+  })
+  // Mirror the offsets renderInscription uses internally so the cluster lands on the
+  // exact midpoint between kanji center and number center.
+  const wdMidX = (dl) => {
+    const isMulti = (dl.num || '').length >= 2
+    const isCone = (dl.numRotation || 0) !== 0
+    const kanjiBaseFont = isCone ? 22 : 36
+    const numFontSize   = isCone ? 18 : 28
+    const stackGap = isCone ? (isMulti ? 11 : 7) : (isMulti ? 13 : 9)
+    const numCenterX = kanjiBaseFont / 2 + stackGap + numFontSize / 2
+    return numCenterX / 2 - 10  // nudged 10vb left of the kanji↔number midpoint
   }
-  const wdGroupTransform = (dl) => {
-    const w = wdParams(dl)
-    return `translate(${dl.cx - w.offset},${dl.cy}) rotate(${w.rotation})`
+  const wdGroupTransform = (dl) => `translate(${dl.cx},${dl.cy}) rotate(${dl.kanjiRotation || 0})`
+  const wdLetterX = (dl, L) => wdMidX(dl) + (L - 1) * wdParams().advance
+  const wdLetterY = () => wdParams().aboveY
+  // World-space anchor of the cluster center (used for spawning particles in world
+  // coordinates — particle group sits outside the rotated frame).
+  const wdCenterWorld = (dl) => {
+    const r = (dl.kanjiRotation || 0) * Math.PI / 180
+    const dx = wdMidX(dl)
+    const dy = wdParams().aboveY
+    return { x: dl.cx + dx * Math.cos(r) - dy * Math.sin(r),
+             y: dl.cy + dx * Math.sin(r) + dy * Math.cos(r) }
   }
-  const wdLetterX = (dl, L) => (L - 1) * wdParams(dl).advance
-  const wdCenterWorld = (dl) => ({ x: dl.cx - wdParams(dl).offset, y: dl.cy })
 
   return (
     <section className="relative z-10 py-2 px-2 pointer-events-none min-h-[calc(100vh-7px)]">
       <div>
-        {/* Drill container — 171vw width (137 × 1.25) with -35.5vw left shift to keep it
-            horizontally centered while running ~71% larger than viewport. Inscription anchors
+        {/* Drill container — 179vw width (188 × 0.95) with -39.5vw left shift to keep it
+            horizontally centered while running ~79% larger than viewport. Inscription anchors
             live in the overlay's viewBox-local coords, so they scale with the container
             automatically. */}
-        <div style={{ position: 'absolute', top: '-50px', left: '-35.5vw', width: '171vw', maxWidth: 'none' }}>
+        <div style={{ position: 'absolute', top: '-70px', left: '-39.5vw', width: '179vw', maxWidth: 'none' }}>
           {/* Drill substrate + inscription overlay rendered inside ONE <svg>. The drill
               path data is inlined from public/reference/drill.svg so the inscription
               <g> elements (mixBlendMode: 'difference') blend against the red silhouette
@@ -957,11 +996,11 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                 transform="rotate(-3 408 610)"
                 style={{
                   fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
-                  fontSize: '24px',
-                  fontWeight: 700,
-                  fill: '#e8e0c8',
+                  fontSize: '32px',
+                  fontWeight: 900,
+                  fill: '#000000',
                   letterSpacing: '0.04em',
-                  opacity: 0.9,
+                  opacity: 0.95,
                 }}>
                 {cycleName.toUpperCase()}
               </text>
@@ -992,7 +1031,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                         const x = wdLetterX(dl, L)
                         return (
                           <text key={`drill-wd-mask-${dl.iso}-${L}`}
-                            x={x} y={0}
+                            x={x} y={wdLetterY()}
                             textAnchor="middle"
                             dominantBaseline="central"
                             style={{
@@ -1075,20 +1114,25 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
               )
             })}
 
-            {/* Zoom-burst — fires during 'peak' glow phase. */}
+            {/* Zoom-burst — fires during 'peak' glow phase. REVERSE order: anchor N
+                fires first (delay 0), anchor 1 last (delay (N-1)*220ms) — matching
+                the rest of the drill's cascade direction. */}
             {glowIntensity === 'peak' && (
               <g style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
-                {dayLabels.map((dl, i) => (
-                  <g key={`zoom-${dl.iso}`} className="zoom-glyph" style={{ animationDelay: `${i * 220}ms`,
+                {dayLabels.map((dl, i) => {
+                  const step = (dayLabels.length - 1) - i
+                  return (
+                  <g key={`zoom-${dl.iso}`} className="zoom-glyph" style={{ animationDelay: `${step * 220}ms`,
                         transformBox: 'fill-box', transformOrigin: 'center',
-                        animation: `inscription-zoom 340ms ease-out forwards ${i * 220}ms`,
+                        animation: `inscription-zoom 340ms ease-out forwards ${step * 220}ms`,
                         mixBlendMode: 'plus-lighter',
                         filter: 'drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 16px #ff4400)',
                         opacity: 0,
                      }}>
                     {renderInscription(dl, { maskFill: '#ff6600' })}
                   </g>
-                ))}
+                  )
+                })}
               </g>
             )}
 
@@ -1107,15 +1151,15 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                       const isZoomed  = !!weekdayLetterZoomed[flatIdx]
                       const isCooled  = !!weekdayLetterCooled[flatIdx]
                       const isHot     = isZoomed && !isCooled
-                      const fill      = (isHot || isCooled) ? '#d4181f' : '#b0a898'
-                      const baseAlpha = (isHot || isCooled) ? 1 : 0.7
+                      const fill      = (isHot || isCooled) ? '#d4181f' : '#000000'
+                      const baseAlpha = (isHot || isCooled) ? 1 : 0.95
                       const textOpacity = isFlaming ? 0 : baseAlpha
                       const textClass = isCooled ? 'drill-inscription-cooled' : (isHot ? 'drill-inscription-hot' : '')
                       const x = wdLetterX(dl, L)
                       return (
                         <g key={`dow-${dl.iso}-${L}`}>
                           <text
-                            x={x} y={0}
+                            x={x} y={wdLetterY()}
                             textAnchor="middle"
                             dominantBaseline="central"
                             className={textClass}
@@ -1131,7 +1175,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                           </text>
                           {isZoomed && (
                             <text
-                              x={x} y={0}
+                              x={x} y={wdLetterY()}
                               textAnchor="middle"
                               dominantBaseline="central"
                               className="weekday-zoom-burst"
@@ -1146,7 +1190,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                           )}
                           {isFlaming && (
                             <text
-                              x={x} y={0}
+                              x={x} y={wdLetterY()}
                               textAnchor="middle"
                               dominantBaseline="central"
                               className="weekday-flame-engulf"
@@ -2389,19 +2433,21 @@ export default function SummaryPage() {
         }, 200 + step * 60)
       }
       setTimeout(() => setGlowIntensity('peak'),      1600)   // zoom-burst cascade begins (340ms per glyph, 220ms stagger)
-      // Fast cascade: flame off + hot on + zoom fires at t=1600 + i*220.
-      for (let i = 0; i < N; i++) {
-        const at = 1600 + i * 220
+      // Fast cascade (REVERSE order): anchor N fires first at t=1600, anchor 1 last.
+      for (let step = 0; step < N; step++) {
+        const dayIdx = N - 1 - step
+        const at = 1600 + step * 220
         setTimeout(() => {
-          setGlowingDays(prev => { const next = [...prev]; next[i] = false; return next })
-          setHotDays(prev => { const next = [...prev]; next[i] = true; return next })
+          setGlowingDays(prev => { const next = [...prev]; next[dayIdx] = false; return next })
+          setHotDays(prev => { const next = [...prev]; next[dayIdx] = true; return next })
         }, at)
       }
-      // Slow dissipation: each inscription cools 1600+i*350ms after the zoom cascade starts.
-      for (let i = 0; i < N; i++) {
+      // Slow dissipation (REVERSE order): anchor N cools first, anchor 1 last.
+      for (let step = 0; step < N; step++) {
+        const dayIdx = N - 1 - step
         setTimeout(() => {
-          setCooledDays(prev => { const next = [...prev]; next[i] = true; return next })
-        }, 1600 + 1600 + i * 350)
+          setCooledDays(prev => { const next = [...prev]; next[dayIdx] = true; return next })
+        }, 1600 + 1600 + step * 350)
       }
       // Last inscription's zoom cascade ends at 1600 + (N-1)*220 + 340.
       const glowOffAt   = 1600 + (N - 1) * 220 + 340
@@ -2430,7 +2476,7 @@ export default function SummaryPage() {
       }, 1035 + i * 50)
     }
 
-    // Per-letter weekday cascade. Below 15 days, canonical middle-out pair scheduling;
+    // Per-letter weekday cascade. Below 15 days, anchor-N-to-1 reverse-linear scheduling;
     // 15+ days uses a column-major group cascade that matches the per-day cascade
     // (and avoids 90+ letter-level setTimeouts on a 30-day scroll).
     let lastPairCooledAt
@@ -2478,34 +2524,19 @@ export default function SummaryPage() {
       }
       lastPairCooledAt = 3650 + (colCount - 1) * 300
     } else {
-      // ── Canonical middle-out cascade ────────────────────────────────────
+      // ── Reverse-linear cascade (matches per-anchor cascade order N → 1) ──
       //   Flame: 50ms per letter, Zoom: 50ms per letter, Cooled: 75ms per letter.
-      //   Direction depends on day side: left-side R-to-L, right-side L-to-R.
-      //   Pairs cascade middle-out: pair 0 = innermost, pair k+1 starts 50ms after pair k.
-      const halfN = Math.floor(N / 2)
-      const isLeftSide = (dayIdx) => dayIdx < halfN
-      const letterStaggerOffsetFast = (dayIdx, L) => isLeftSide(dayIdx) ? (2 - L) * 50 : L * 50
-      const letterStaggerOffsetCooled = (dayIdx, L) => isLeftSide(dayIdx) ? (2 - L) * 75 : L * 75
-      const letterStaggerOffsetSlow = (dayIdx, L) => isLeftSide(dayIdx) ? (2 - L) * 50 : L * 50
+      //   Within each weekday, letters fire L=2 → L=0 (matching the cluster's
+      //   reverse-everywhere pattern). Anchors fire from N down to 1.
+      const letterStaggerOffsetFast   = (_dayIdx, L) => (2 - L) * 50
+      const letterStaggerOffsetCooled = (_dayIdx, L) => (2 - L) * 75
+      const letterStaggerOffsetSlow   = (_dayIdx, L) => (2 - L) * 50
 
-      // Build middle-out pair list for any N.
-      const buildMiddleOutPairs = (n) => {
-        const pairs = []
-        if (n % 2 === 0) {
-          const m = n / 2
-          for (let k = 0; k < m; k++) pairs.push([m - 1 - k, m + k])
-        } else {
-          const m = (n - 1) / 2
-          pairs.push([m])
-          for (let k = 1; k <= m; k++) pairs.push([m - k, m + k])
-        }
-        return pairs
-      }
-      const WEEKDAY_PAIRS = buildMiddleOutPairs(N).map((daysInPair, k) => ({
-        days: daysInPair,
-        flame:  900  + k * 50,
-        zoom:   3000 + k * 50,
-        cooled: 3650 + k * 75,
+      const WEEKDAY_PAIRS = Array.from({ length: N }, (_, step) => ({
+        days: [N - 1 - step],
+        flame:  900  + step * 50,
+        zoom:   3000 + step * 50,
+        cooled: 3650 + step * 75,
       }))
       WEEKDAY_PAIRS.forEach(({ days: pairDays, flame, zoom, cooled }) => {
         pairDays.forEach(dayIdx => {
@@ -2597,7 +2628,9 @@ export default function SummaryPage() {
   // Watermark layout — same stacked ETCH-above-CYCLE shape in every mode; in
   // scroll mode the magnitudes shrink (font 14 vs 18) so the watermark fits
   // beside the smaller 92px flame button without crowding the scroll body.
-  const wmScroll  = days.length > 14
+  const wmScroll    = days.length > 14
+  const wmDrill     = days.length >= 8 && days.length <= 13
+  const wmBladeLike = days.length > 0 && days.length <= 7   // blade ≤6 + ouroboros =7
   const WM_FONT   = wmScroll ? 14 : 18
   const WM_W      = wmScroll ? 100 : 130
   const WM_H      = wmScroll ? 62  : 78
@@ -2816,7 +2849,28 @@ export default function SummaryPage() {
               right: 'calc(5px + 92px - 4px)',
               overflow: 'visible',
             }
+          : wmBladeLike
+          ? {
+              // Blade (≤6) + ouroboros (=7): watermark sits ABOVE the 128px flame
+              // button. 8° tilt pivoted around the right-bottom corner.
+              bottom: 'calc(20px + 128px + 10px)',
+              right: '2px',
+              transform: 'rotate(8deg)',
+              transformOrigin: 'right bottom',
+              overflow: 'visible',
+            }
+          : wmDrill
+          ? {
+              // Drill (8-13): watermark sits beside the 128px flame button (bottom-
+              // aligned, ~10px gap to its left). Same 8° tilt, right-bottom origin.
+              bottom: '20px',
+              right: 'calc(20px + 128px + 10px)',
+              transform: 'rotate(8deg)',
+              transformOrigin: 'right bottom',
+              overflow: 'visible',
+            }
           : {
+              // Fallback (days.length === 0): same as drill's original placement.
               bottom: 'calc(20px + 128px + 10px)',
               right: '2px',
               transform: 'rotate(8deg)',
