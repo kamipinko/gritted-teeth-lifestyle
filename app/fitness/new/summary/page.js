@@ -1123,7 +1123,7 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
 
   // Day-number + kanji column inscription — replicated from CycleBlade with sizes scaled
   // ~50% to fit on the snake body (which is much narrower than the wakizashi face).
-  const renderDayInscription = (dl, { hot = false, maskFill = null } = {}) => {
+  const renderDayInscription = (dl, { hot = false, maskFill = null, isFirst = false } = {}) => {
     const { num, kanjiStr } = dl
     const kanjiChars = kanjiStr.split('')
     const n = kanjiChars.length
@@ -1148,7 +1148,17 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
       </text>
     ))
 
-    const numEls = renderText('num', 0, -47, 91, num)
+    // Day 1 of the ouroboros sits behind the snake's head where vertical space is tight;
+    // the date number is placed to the RIGHT of the kanji column at the column's vertical
+    // center instead of stacked above it. All other days keep the default stacked layout.
+    const kanjiCenterY =
+      n === 1 ? 42 :
+      n <= 4 ? 36 + (Math.ceil(n / 2) - 1) * 31 :
+      n <= 6 ? 29 + (Math.ceil(n / 2) - 1) * 24.5 :
+               23 + (Math.ceil(n / 2) - 1) * 21
+    const numEls = isFirst
+      ? renderText('num', 100, kanjiCenterY, 91, num)
+      : renderText('num', 0, -47, 91, num)
 
     let kanjiEls
     if (n === 1) {
@@ -1215,7 +1225,7 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
                 <rect x="0" y="0" width="1374" height="1370" fill="black"/>
                 {dayLabels.map((dl, i) => glowingDays[i] ? (
                   <g key={`our-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
-                    {renderDayInscription(dl, { maskFill: 'white' })}
+                    {renderDayInscription(dl, { maskFill: 'white', isFirst: i === 0 })}
                   </g>
                 ) : null)}
               </mask>
@@ -1314,7 +1324,7 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
                      transition: 'opacity 0ms',
                    }}>
                   <g transform={`translate(${dl.cx},${dl.cy})`}>
-                    {renderDayInscription(dl, { hot })}
+                    {renderDayInscription(dl, { hot, isFirst: i === 0 })}
                   </g>
                 </g>
               )
@@ -1333,7 +1343,7 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
                           filter: 'drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 16px #ff4400)',
                           opacity: 0,
                        }}>
-                      {renderDayInscription(dl, { maskFill: '#ff6600' })}
+                      {renderDayInscription(dl, { maskFill: '#ff6600', isFirst: i === 0 })}
                     </g>
                   </g>
                 ))}
