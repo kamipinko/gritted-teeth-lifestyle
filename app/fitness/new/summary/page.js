@@ -1512,7 +1512,7 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
   const R_WEEKDAY = 80
   const WEEKDAY_FONT_SIZE = 14
   const WEEKDAY_ADVANCE = 13
-  const WEEKDAY_LOCAL_Y = -22  // local y in the inscription frame (just above the number at y=-8)
+  const WEEKDAY_LOCAL_Y = -8   // weekday cluster sits where the date number used to be
   // 7 anchors per loop, even compass distribution. Days 1-7 trace the left loop CW; days
   // 8-14 trace the right loop CCW so the date order flows continuously around the figure-8.
   // Bottom (left) loop shifted 3 steps CCW (screen); top (right) loop shifted 3 steps CW
@@ -1570,11 +1570,14 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
       </text>
     ))
 
-    const numEls = renderText('num', 0, -8, 16, num)
     const kanjiSize = n === 1 ? 30 : n <= 4 ? 20 : 15
     const colSpacing = kanjiSize
     const baseY = n === 1 ? 18 : 14
     const rowYStep = kanjiSize
+    // Date number now sits to the RIGHT of the kanji column, centered vertically on it.
+    const rowCount = n === 1 ? 1 : Math.ceil(n / 2)
+    const kanjiCenterY = n === 1 ? 18 : (14 + (rowCount - 1) * rowYStep / 2)
+    const numEls = renderText('num', 30, kanjiCenterY, 24, num)
     const kanjiEls = kanjiChars.flatMap((k, ki) => {
       if (n === 1) return renderText('kj0', 0, baseY, kanjiSize, k)
       const row = Math.floor(ki / 2)
