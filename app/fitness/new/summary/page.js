@@ -2318,8 +2318,13 @@ export default function SummaryPage() {
 
       {days.length === 7 && (
         <div className="fixed bottom-5 left-5 z-40 no-print pointer-events-none max-w-[60vw]">
-          <div className="font-display text-2xl text-gtl-paper leading-tight uppercase tracking-tight"
-               style={{ textShadow: '2px 2px 0 #070708' }}>
+          <div className="leading-tight uppercase"
+               style={{
+                 fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
+                 fontSize: '24px',
+                 fontWeight: 600,
+                 color: '#d4181f',
+               }}>
             {cycleName}
           </div>
         </div>
@@ -2328,8 +2333,13 @@ export default function SummaryPage() {
       {days.length === 14 && (
         <div className="fixed z-40 no-print pointer-events-none"
              style={{ top: '140px', left: '50%', transform: 'translateX(-50%)', maxWidth: '80vw' }}>
-          <div className="font-display text-2xl text-gtl-paper leading-tight uppercase tracking-tight text-center"
-               style={{ textShadow: '2px 2px 0 #070708' }}>
+          <div className="leading-tight uppercase text-center"
+               style={{
+                 fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
+                 fontSize: '24px',
+                 fontWeight: 600,
+                 color: '#d4181f',
+               }}>
             {cycleName}
           </div>
         </div>
