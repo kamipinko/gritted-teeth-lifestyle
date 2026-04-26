@@ -160,7 +160,7 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
 }
 
 function CarveContent({ enabled }) {
-  const dayColor = enabled ? '#070708' : '#d4c8b0'
+  const dayColor = enabled ? '#070708' : '#e4b022'
   return (
     <div className="flex items-center" style={{ transform: 'skewX(2deg)' }}>
       <span className="font-display leading-none tracking-wide"
@@ -202,7 +202,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover, onSlash }) {
     setTimeout(() => { if (mountedRef.current) onFire() }, 530)      // navigate
   }
 
-  const goldBg = enabled ? '#e4b022' : '#2a2a30'
+  const goldBg = enabled ? '#e4b022' : '#3a2f12'
   const active = phase > 0
 
   return (
@@ -247,7 +247,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover, onSlash }) {
         <CarveContent enabled={enabled} />
         {phase < 1 && (
           <span className="font-mono leading-none mt-0.5"
-            style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.1em', color: enabled ? '#070708' : '#d4c8b0', opacity: enabled ? 0.85 : 1, transform: 'skewX(2deg)' }}>
+            style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.1em', color: enabled ? '#070708' : '#e4b022', opacity: enabled ? 0.85 : 1, transform: 'skewX(2deg)' }}>
             {dayLabel}
           </span>
         )}
