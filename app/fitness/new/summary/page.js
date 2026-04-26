@@ -1589,7 +1589,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
   // Weekday DOW label sits ABOVE the date number; sizing scales with isBig (BIG day).
   const WEEKDAY_FONT_SIZE = 24
   const WEEKDAY_ADVANCE   = 20
-  const WEEKDAY_DY        = -50
+  const WEEKDAY_DY        = -36
   const dayScale = (dl) => (dl.isBig ? 1.7 : 1.0) * colScale
   // Per-letter x: center-anchored around the cell so all 3 letters sit together above the date.
   const weekdayLetterX = (cx, L, advance) => cx + (L - 1) * advance
