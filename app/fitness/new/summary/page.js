@@ -2454,6 +2454,13 @@ export default function SummaryPage() {
           pointer-events: none;
         }
       `}</style>
+      {/* WATERMARK PLACEMENT — currently uniform across all cycles, sharing the canonical
+          drill values. When this is split into per-cycle branches (parallel work on GTL 2),
+          the 14-day cycle must share the DRILL branch (`isDrill || days.length === 14`) —
+          NOT the blade/ouroboros branch. The exact drill values to keep for both:
+            { bottom: 'calc(20px + 128px + 10px)', right: '2px',
+              transform: 'rotate(8deg)', transformOrigin: 'right bottom',
+              overflow: 'visible' } */}
       <svg
         aria-hidden="true"
         className="fixed z-[20] pointer-events-none select-none"
