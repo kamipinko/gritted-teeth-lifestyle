@@ -782,11 +782,12 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
   // sharing a single depth-stack so post-flame hot/cooled phases drive both halves.
   // Font sizes scaled to the drill's tight cone bands (≤ ~80vb tall per band slot).
   const NUM_FONT = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-  // Cone-band ridges slant ~12° clockwise from horizontal (upper-left → lower-right).
-  // Rotating inscriptions by the same angle makes them read as carved INTO the bands
-  // rather than floating upright above them. Applied to base render, zoom-burst, and
-  // mask transforms so all layers stay aligned.
-  const RIDGE_ANGLE = 12
+  // Cone-band ridges actually rise from lower-left to upper-right (the trace's stripe
+  // shapes confirm: each band is shorter on the left edge than the right). Rotating
+  // inscriptions by a NEGATIVE angle plants their left edge on the ridge and lets the
+  // kanji column extend along the slope. Applied to base render, zoom-burst, and mask
+  // so every layer rotates together.
+  const RIDGE_ANGLE = -12
   const renderInscription = (dl, { hot = false, maskFill = null } = {}) => {
     const { num, kanjiStr } = dl
     const kanjiChars = (kanjiStr || '').split('')
