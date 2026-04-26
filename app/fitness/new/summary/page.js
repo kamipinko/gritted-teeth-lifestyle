@@ -1510,9 +1510,9 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
   // not in the hollow. R_WEEKDAY kept for the legacy mask/particle blocks below; the visible
   // weekday text rides the inscription anchor.
   const R_WEEKDAY = 80
-  const WEEKDAY_FONT_SIZE = 16
-  const WEEKDAY_ADVANCE = 14
-  const WEEKDAY_LOCAL_Y = -32  // local y in the inscription frame (above the number at y=-10)
+  const WEEKDAY_FONT_SIZE = 14
+  const WEEKDAY_ADVANCE = 13
+  const WEEKDAY_LOCAL_Y = -22  // local y in the inscription frame (just above the number at y=-8)
   // 7 anchors per loop, even compass distribution. Days 1-7 trace the left loop CW; days
   // 8-14 trace the right loop CCW so the date order flows continuously around the figure-8.
   // Bottom (left) loop shifted 3 steps CCW (screen); top (right) loop shifted 3 steps CW
@@ -2488,6 +2488,26 @@ export default function SummaryPage() {
           (1-6) and ouroboros (7) share the canonical bottom-right slot (currently identical
           to the drill values). If GTL 2 lands a parallel split later, merge to keep 14-day
           on the drill branch. */}
+      {/* 14-day watermark — plain centered text matching the cycle-title format. Sits in the
+          bottom loop's hollow. Per-letter cascade is handled by the SVG watermark below for
+          all OTHER cycles; we render a static styled version here so the centered formatting
+          matches the title above the upper loop. */}
+      {isInfinity && (
+        <div className="fixed z-[20] no-print pointer-events-none"
+             style={{ top: '480px', left: 'calc(50% + 20px)', transform: 'translateX(-50%)', textAlign: 'center' }}>
+          {['ETCH', 'CYCLE'].map((word) => (
+            <div key={word} style={{
+              fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
+              fontSize: '18px',
+              fontWeight: 600,
+              letterSpacing: '0.35em',
+              color: 'rgba(212, 24, 31, 0.65)',
+              lineHeight: '1.6',
+              textTransform: 'uppercase',
+            }}>{word}</div>
+          ))}
+        </div>
+      )}
       <svg
         aria-hidden="true"
         className="fixed z-[20] pointer-events-none select-none"
@@ -2497,14 +2517,7 @@ export default function SummaryPage() {
           isScroll
             ? { bottom: '20px', right: 'calc(5px + 92px - 4px)', overflow: 'visible' }
             : isInfinity
-              ? {
-                  // 14-day infinity — centered inside the bottom loop's hollow, nudged 20px right.
-                  top: '480px',
-                  left: 'calc(50% + 20px)',
-                  transform: 'translateX(-50%)',
-                  transformOrigin: 'center',
-                  overflow: 'visible',
-                }
+              ? { display: 'none' }   // 14-day uses the CSS-text watermark above instead.
               : isDrill
                 ? {
                     // drill — beside (left of) the 128px flame button.
