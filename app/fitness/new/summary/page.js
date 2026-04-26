@@ -898,14 +898,25 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
     )
   }
 
-  // Weekday-label horizontal advance per letter and label position helper.
-  // Drill silhouette extends roughly x=180-635 at its widest; the 125vw container
-  // shifts left by -12.5vw so the visible viewport spans roughly vb x=82-734. Pick
-  // label start positions inside that visible band but outside the silhouette.
-  const WEEKDAY_FONT_SIZE = 38
-  const WEEKDAY_ADVANCE = 38
-  const weekdayLabelX = (side) => side === 'left' ? 90 : 640
-  const weekdayLetterX = (side, labelX, L) => labelX + L * WEEKDAY_ADVANCE
+  // Weekday-label sizing + per-anchor positioning. Each weekday cluster sits at the
+  // OLD date-number position (left of the kanji at the anchor's offset), rotated by
+  // the same numRotation the number used pre-stacking, so they slot into the cone
+  // ridge sideways like the dates did before the stack commit.
+  const wdParams = (dl) => {
+    const isConeAnchor = (dl.numRotation || 0) !== 0
+    return {
+      fontSize: isConeAnchor ? 13 : 22,
+      advance:  isConeAnchor ? 13 : 22,
+      offset:   isConeAnchor ? 28 : 36,
+      rotation: dl.numRotation || 0,
+    }
+  }
+  const wdGroupTransform = (dl) => {
+    const w = wdParams(dl)
+    return `translate(${dl.cx - w.offset},${dl.cy}) rotate(${w.rotation})`
+  }
+  const wdLetterX = (dl, L) => (L - 1) * wdParams(dl).advance
+  const wdCenterWorld = (dl) => ({ x: dl.cx - wdParams(dl).offset, y: dl.cy })
 
   return (
     <section className="relative z-10 py-2 px-2 pointer-events-none min-h-[calc(100vh-7px)]">
@@ -964,25 +975,27 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                   </Fragment>
                 ) : null)}
               </mask>
-              {/* Weekday-label mask — particles clipped to weekday letter silhouettes. */}
+              {/* Weekday-label mask — particles clipped to weekday letter silhouettes.
+                  Each cluster wrapped in the anchor's translate+rotate so mask matches
+                  the on-screen weekday placement (sideways, at the old number spot). */}
               <mask id="drill-weekday-window" maskUnits="userSpaceOnUse" x="0" y="0" width="816" height="931">
                 <rect x="0" y="0" width="816" height="931" fill="black"/>
                 {dayLabels.map((dl, i) => {
                   const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
-                  const labelX = weekdayLabelX(dl.side)
+                  const w = wdParams(dl)
                   return (
-                    <g key={`drill-wd-mask-${dl.iso}`}>
+                    <g key={`drill-wd-mask-${dl.iso}`} transform={wdGroupTransform(dl)}>
                       {dow.split('').map((ch, L) => {
                         const lit = !!weekdayLetterIgnited[i * 3 + L]
-                        const x = weekdayLetterX(dl.side, labelX, L)
+                        const x = wdLetterX(dl, L)
                         return (
                           <text key={`drill-wd-mask-${dl.iso}-${L}`}
-                            x={x} y={dl.cy}
-                            textAnchor={dl.side === 'left' ? 'start' : 'start'}
+                            x={x} y={0}
+                            textAnchor="middle"
                             dominantBaseline="central"
                             style={{
                               fontFamily: '"Noto Serif JP", Georgia, serif',
-                              fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                              fontSize: `${w.fontSize}px`,
                               fontWeight: 700,
                               fill: 'white',
                               opacity: lit ? 1 : 0,
@@ -1077,13 +1090,15 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
               </g>
             )}
 
-            {/* Weekday labels — per-letter yakiire mirrors CycleBlade pattern. */}
+            {/* Weekday labels — placed at each anchor's old number spot (left of kanji,
+                rotated by the same numRotation the number had pre-stack). Per-letter
+                yakiire still cascades through ignited/zoomed/cooled. */}
             <g>
               {dayLabels.map((dl, i) => {
                 const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
-                const labelX = weekdayLabelX(dl.side)
+                const w = wdParams(dl)
                 return (
-                  <g key={`dow-${dl.iso}`}>
+                  <g key={`dow-${dl.iso}`} transform={wdGroupTransform(dl)}>
                     {dow.split('').map((ch, L) => {
                       const flatIdx = i * 3 + L
                       const isFlaming = !!weekdayLetterIgnited[flatIdx]
@@ -1094,17 +1109,17 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                       const baseAlpha = (isHot || isCooled) ? 1 : 0.7
                       const textOpacity = isFlaming ? 0 : baseAlpha
                       const textClass = isCooled ? 'drill-inscription-cooled' : (isHot ? 'drill-inscription-hot' : '')
-                      const x = weekdayLetterX(dl.side, labelX, L)
+                      const x = wdLetterX(dl, L)
                       return (
                         <g key={`dow-${dl.iso}-${L}`}>
                           <text
-                            x={x} y={dl.cy}
-                            textAnchor="start"
+                            x={x} y={0}
+                            textAnchor="middle"
                             dominantBaseline="central"
                             className={textClass}
                             style={{
                               fontFamily: '"Noto Serif JP", Georgia, serif',
-                              fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                              fontSize: `${w.fontSize}px`,
                               fontWeight: 700,
                               fill,
                               opacity: textOpacity,
@@ -1114,13 +1129,13 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                           </text>
                           {isZoomed && (
                             <text
-                              x={x} y={dl.cy}
-                              textAnchor="start"
+                              x={x} y={0}
+                              textAnchor="middle"
                               dominantBaseline="central"
                               className="weekday-zoom-burst"
                               style={{
                                 fontFamily: '"Noto Serif JP", Georgia, serif',
-                                fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                                fontSize: `${w.fontSize}px`,
                                 fontWeight: 700,
                                 fill: '#ff6600',
                               }}>
@@ -1129,14 +1144,14 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                           )}
                           {isFlaming && (
                             <text
-                              x={x} y={dl.cy}
-                              textAnchor="start"
+                              x={x} y={0}
+                              textAnchor="middle"
                               dominantBaseline="central"
                               className="weekday-flame-engulf"
                               style={{
                                 ...engulfVars(i * 13 + L + 7),
                                 fontFamily: '"Noto Serif JP", Georgia, serif',
-                                fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                                fontSize: `${w.fontSize}px`,
                                 fontWeight: 700,
                               }}>
                               {ch}
@@ -1159,8 +1174,8 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                   return dayLabels.flatMap((dl, wi) => {
                     const dayLit = weekdayLetterIgnited.slice(wi * 3, wi * 3 + 3).some(Boolean)
                     if (!dayLit) return []
-                    const labelX = weekdayLabelX(dl.side)
-                    const baseX = labelX + (dl.side === 'left' ? -45 : 45)
+                    const center = wdCenterWorld(dl)
+                    const baseX = center.x
                     return Array.from({ length: PARTS_PER_WEEKDAY }).map((_, i) => {
                       const k = i + wi * 23
                       const rX    = hash01(k * 1)
@@ -1174,7 +1189,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                       const size  = 8 + rSize * 12
                       const peakA = 0.55 + rPeak * 0.45
                       return (
-                        <circle key={`drill-wd${wi}-${i}`} cx={baseX + xOff} cy={dl.cy + 25} r={size} fill="#ff5000" opacity={0}>
+                        <circle key={`drill-wd${wi}-${i}`} cx={baseX + xOff} cy={center.y + 25} r={size} fill="#ff5000" opacity={0}>
                           <animateTransform attributeName="transform" type="translate"
                             values={`0 0; 0 -${50 + rSize * 25}`}
                             dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
