@@ -1588,7 +1588,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
             the inscription banner reads larger; horizontal overflow lets the
             handle ornament tips sit just past the screen edges. Shifted 5px
             left of the centered position. */}
-        <div style={{ position: 'absolute', top: '5px', left: 'calc(-21.6625vw - 5px)', width: '143.325vw', maxWidth: 'none' }}>
+        <div style={{ position: 'absolute', top: '0px', left: 'calc(-21.6625vw - 5px)', width: '143.325vw', maxWidth: 'none' }}>
           {/* Single SVG holds both the rotated substrate (as <image>) and the inscription
               overlay so they share one coordinate system. ViewBox is the rotated frame
               1061×1300; substrate <image> applies translate(0 1300) rotate(-90) to bring
@@ -2281,17 +2281,19 @@ export default function SummaryPage() {
              : Math.ceil(days.length / 3)
 
   // Watermark layout — CycleScroll places ETCH and CYCLE on a single horizontal
-  // line; every other cycle stacks them vertically (canonical bottom-right).
-  const wmScroll = days.length > 14
-  const WM_W      = wmScroll ? 170 : 130
-  const WM_H      = wmScroll ? 50  : 78
+  // line at a larger font size with breathing room between the words; every other
+  // cycle stacks them vertically at the canonical 18px (bottom-right of viewport).
+  const wmScroll  = days.length > 14
+  const WM_FONT   = wmScroll ? 24 : 18
+  const WM_W      = wmScroll ? 240 : 130
+  const WM_H      = wmScroll ? 60  : 78
   const WM_VB     = `0 0 ${WM_W} ${WM_H}`
-  const ETCH_X    = [8, 26, 44, 62]
-  const ETCH_Y    = wmScroll ? 30 : 40
-  const ETCH_ROTY = wmScroll ? 22 : 34
-  const CYCLE_X   = wmScroll ? [84, 101, 118, 135, 152] : [8, 25, 43, 61, 79]
-  const CYCLE_Y   = wmScroll ? 30 : 72
-  const CYCLE_ROTY = wmScroll ? 22 : 66
+  const ETCH_X    = wmScroll ? [8, 32, 56, 80] : [8, 26, 44, 62]
+  const ETCH_Y    = wmScroll ? 36 : 40
+  const ETCH_ROTY = wmScroll ? 26 : 34
+  const CYCLE_X   = wmScroll ? [124, 146, 168, 190, 212] : [8, 25, 43, 61, 79]
+  const CYCLE_Y   = wmScroll ? 36 : 72
+  const CYCLE_ROTY = wmScroll ? 26 : 66
 
   return (
     <main ref={mainRef} className="relative h-[100dvh] overflow-hidden bg-gtl-void">
@@ -2487,7 +2489,7 @@ export default function SummaryPage() {
               // CycleScroll mode: park ETCH CYCLE inside the scroll's bottom rolled-
               // banner area, centered horizontally, no tilt — it reads as if the
               // words are inscribed at the foot of the scroll.
-              top: 'calc(105px + 138vw)',
+              top: 'calc(110px + 138vw)',
               left: '50%',
               transform: 'translateX(-50%)',
               transformOrigin: 'center top',
@@ -2519,7 +2521,7 @@ export default function SummaryPage() {
               return (
                 <text key={`mask-${k}`} x={g.x} y={g.y} textAnchor="start"
                   fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-                  fontSize="18" fontWeight="600"
+                  fontSize={WM_FONT} fontWeight="600"
                   fill="white" opacity={lit ? 1 : 0}>
                   {g.ch}
                 </text>
@@ -2540,7 +2542,7 @@ export default function SummaryPage() {
           return (
             <text key={`etch-base-${i}`} x={x} y={ETCH_Y} textAnchor="start"
               fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-              fontSize="18" fontWeight="600"
+              fontSize={WM_FONT} fontWeight="600"
               className={isCooled ? 'inscription-cooled' : (isHot ? 'inscription-hot' : '')}
               fill={(isHot || isCooled) ? '#d4181f' : 'rgba(212, 24, 31, 0.65)'}
               opacity={isFlaming ? 0 : 1}
@@ -2557,7 +2559,7 @@ export default function SummaryPage() {
             <g key={`etch-engulf-${i}`} transform={`rotate(-8 ${x + 6} ${ETCH_ROTY})`}>
               <text x={x} y={ETCH_Y} textAnchor="start"
                 fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-                fontSize="18" fontWeight="600"
+                fontSize={WM_FONT} fontWeight="600"
                 className="weekday-flame-engulf"
                 style={engulfVars(91 + i)}>
                 {ch}
@@ -2572,7 +2574,7 @@ export default function SummaryPage() {
           return (
             <text key={`etch-zoom-${i}`} x={x} y={ETCH_Y} textAnchor="start"
               fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-              fontSize="18" fontWeight="600"
+              fontSize={WM_FONT} fontWeight="600"
               fill="#ff6600"
               className="watermark-zoom-burst">{ch}</text>
           )
@@ -2587,7 +2589,7 @@ export default function SummaryPage() {
           return (
             <text key={`cycle-base-${i}`} x={x} y={CYCLE_Y} textAnchor="start"
               fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-              fontSize="18" fontWeight="600"
+              fontSize={WM_FONT} fontWeight="600"
               className={isCooled ? 'inscription-cooled' : (isHot ? 'inscription-hot' : '')}
               fill={(isHot || isCooled) ? '#d4181f' : 'rgba(212, 24, 31, 0.65)'}
               opacity={isFlaming ? 0 : 1}
@@ -2604,7 +2606,7 @@ export default function SummaryPage() {
             <g key={`cycle-engulf-${i}`} transform={`rotate(-8 ${x + 6} ${CYCLE_ROTY})`}>
               <text x={x} y={CYCLE_Y} textAnchor="start"
                 fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-                fontSize="18" fontWeight="600"
+                fontSize={WM_FONT} fontWeight="600"
                 className="weekday-flame-engulf"
                 style={engulfVars(95 + i)}>
                 {ch}
@@ -2619,7 +2621,7 @@ export default function SummaryPage() {
           return (
             <text key={`cycle-zoom-${i}`} x={x} y={CYCLE_Y} textAnchor="start"
               fontFamily='"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-              fontSize="18" fontWeight="600"
+              fontSize={WM_FONT} fontWeight="600"
               fill="#ff6600"
               className="watermark-zoom-burst">{ch}</text>
           )
