@@ -2748,6 +2748,29 @@ export default function SummaryPage() {
         )}
       </svg>
 
+      {/* Cycle-name banner — sits in the scroll's TOP rolled-banner area, mirroring
+          the ETCH CYCLE label at the bottom. Only renders in scroll mode. */}
+      {wmScroll && (
+        <div
+          aria-hidden="true"
+          className="fixed z-[20] pointer-events-none select-none"
+          style={{
+            top: 'calc(37vw - 105px)',
+            left: 'calc(50% + 17px)',
+            transform: 'translateX(-50%)',
+            fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
+            fontSize: '24px',
+            fontWeight: 600,
+            color: 'rgba(212, 24, 31, 0.65)',
+            letterSpacing: '0.18em',
+            whiteSpace: 'nowrap',
+            textAlign: 'center',
+          }}
+        >
+          {cycleName}
+        </div>
+      )}
+
       {/* ── ETCH CYCLE (fixed bottom-right CTA) ── */}
       <BeginButton
         onFire={handleBegin}
