@@ -1621,87 +1621,58 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
               />
             )}
             <defs>
-              {/* Inscription mask — particles flow through ignited day-number + kanji silhouettes. */}
-              <mask id="scroll-inscription-window" maskUnits="userSpaceOnUse" x="0" y="0" width="1061" height="1300">
-                <rect x="0" y="0" width="1061" height="1300" fill="black"/>
-                {dayLabels.map((dl, i) => glowingDays[i] ? (
-                  <g key={`scroll-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
-                    {renderInscription(dl, { maskFill: 'white' })}
-                  </g>
-                ) : null)}
-              </mask>
-              {/* Weekday-label mask — particles clipped to weekday letter silhouettes. */}
-              <mask id="scroll-weekday-window" maskUnits="userSpaceOnUse" x="0" y="0" width="1061" height="1300">
-                <rect x="0" y="0" width="1061" height="1300" fill="black"/>
-                {dayLabels.map((dl, i) => {
-                  const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
-                  const s = dayScale(dl)
-                  const fontSize = WEEKDAY_FONT_SIZE * s
-                  const advance  = WEEKDAY_ADVANCE * s
-                  const dy       = WEEKDAY_DY * s
-                  return (
-                    <g key={`scroll-wd-mask-${dl.iso}`}>
-                      {dow.split('').map((ch, L) => {
-                        const lit = !!weekdayLetterIgnited[i * 3 + L]
-                        const x = weekdayLetterX(dl.cx, L, advance)
-                        return (
-                          <text key={`scroll-wd-mask-${dl.iso}-${L}`}
-                            x={x} y={dl.cy + dy}
-                            textAnchor="middle"
-                            dominantBaseline="central"
-                            style={{
-                              fontFamily: '"Noto Serif JP", Georgia, serif',
-                              fontSize: `${fontSize}px`,
-                              fontWeight: 700,
-                              fill: 'white',
-                              opacity: lit ? 1 : 0,
-                            }}>
-                            {ch}
-                          </text>
-                        )
-                      })}
-                    </g>
-                  )
-                })}
+              {/* Red-frame mask — sourced directly from the scroll SVG so flame
+                  particles are clipped to the red ink regions only (rolled
+                  handles top/bottom + the parchment border), keeping the writing
+                  area where inscriptions live free of particles. Alpha-mode so
+                  any opaque pixel of the source counts as "inside." */}
+              <mask id="scroll-red-frame" maskUnits="userSpaceOnUse" x="0" y="0" width="1061" height="1300" style={{ maskType: 'alpha' }}>
+                <image
+                  href="/reference/scroll.svg"
+                  width="1300"
+                  height="1061"
+                  transform="translate(0 1300) rotate(-90)"
+                />
               </mask>
             </defs>
 
-            {/* Inscription particle aura — mask intentionally omitted in scroll
-                mode (re-rasterizing a 1061×1300 mask on every state flip dominated
-                paint cost). Particles render free as orange dots rising. */}
+            {/* Flame layer — clipped to the scroll's red ink regions only via
+                the red-frame mask, so inscriptions stay clean of particles and
+                only the rolled handles + frame curl glow with rising sparks.
+                80 particles distributed across the canvas; the mask culls them
+                to red areas. Net: ~80 SMIL circles vs the prior ~168. */}
             {anyGlowing && (
-              <g style={{ pointerEvents: 'none' }}>
+              <g mask="url(#scroll-red-frame)" style={{ pointerEvents: 'none' }}>
                 {(() => {
                   const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
-                  return dayLabels.flatMap((dl, dayIdx) => {
-                    if (!glowingDays[dayIdx]) return []
-                    const PARTS = 4
-                    return Array.from({ length: PARTS }).map((_, i) => {
-                      const k = i + dayIdx * 23
-                      const rX    = hash01(k * 1)
-                      const rDly  = hash01(k * 3 + 11)
-                      const rDur  = hash01(k * 5 + 17)
-                      const rRise = hash01(k * 7 + 19)
-                      const rSize = hash01(k * 11 + 23)
-                      const rPeak = hash01(k * 13 + 29)
-                      const xOff  = (rX - 0.5) * 60
-                      const delay = (rDly * 540) % 600
-                      const dur   = 130 + rDur * 150
-                      const rise  = 60 + rRise * 50
-                      const size  = 7 + rSize * 11
-                      const peakA = 0.5 + rPeak * 0.5
-                      return (
-                        <circle key={`${dl.iso}-sp${i}`} cx={dl.cx + xOff} cy={dl.cy + 28} r={size} fill="#ff5000" opacity={0}>
-                          <animateTransform attributeName="transform" type="translate"
-                            values={`0 0; 0 -${rise.toFixed(0)}`}
-                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
-                          <animate attributeName="opacity"
-                            values={`0; ${peakA.toFixed(2)}; 0`}
-                            keyTimes="0; 0.2; 1"
-                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
-                        </circle>
-                      )
-                    })
+                  const PARTS = 80
+                  return Array.from({ length: PARTS }).map((_, i) => {
+                    const k = i + 7
+                    const rX    = hash01(k * 1)
+                    const rY    = hash01(k * 2 + 5)
+                    const rDly  = hash01(k * 3 + 11)
+                    const rDur  = hash01(k * 5 + 17)
+                    const rRise = hash01(k * 7 + 19)
+                    const rSize = hash01(k * 11 + 23)
+                    const rPeak = hash01(k * 13 + 29)
+                    const cx = rX * 1061
+                    const cy = rY * 1300
+                    const delay = (rDly * 600) % 700
+                    const dur   = 200 + rDur * 250
+                    const rise  = 30 + rRise * 50
+                    const size  = 4 + rSize * 8
+                    const peakA = 0.55 + rPeak * 0.45
+                    return (
+                      <circle key={`scroll-frame-sp${i}`} cx={cx} cy={cy} r={size} fill="#ff5000" opacity={0}>
+                        <animateTransform attributeName="transform" type="translate"
+                          values={`0 0; 0 -${rise.toFixed(0)}`}
+                          dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                        <animate attributeName="opacity"
+                          values={`0; ${peakA.toFixed(2)}; 0`}
+                          keyTimes="0; 0.2; 1"
+                          dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                      </circle>
+                    )
                   })
                 })()}
               </g>
@@ -1821,45 +1792,8 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
               })}
             </g>
 
-            {/* Weekday particle aura — clipped to weekday letter silhouettes. */}
-            {anyWeekdayIgnited && (
-              <g style={{ pointerEvents: 'none' }}>
-                {(() => {
-                  const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
-                  const PARTS_PER_WEEKDAY = 6
-                  return dayLabels.flatMap((dl, wi) => {
-                    const dayLit = weekdayLetterIgnited.slice(wi * 3, wi * 3 + 3).some(Boolean)
-                    if (!dayLit) return []
-                    const s  = dayScale(dl)
-                    const dy = WEEKDAY_DY * s
-                    return Array.from({ length: PARTS_PER_WEEKDAY }).map((_, i) => {
-                      const k = i + wi * 23
-                      const rX    = hash01(k * 1)
-                      const rDly  = hash01(k * 3 + 11)
-                      const rDur  = hash01(k * 5 + 17)
-                      const rSize = hash01(k * 11 + 23)
-                      const rPeak = hash01(k * 13 + 29)
-                      const xOff  = (rX - 0.5) * 80 * s
-                      const delay = rDly * 300
-                      const dur   = 130 + rDur * 150
-                      const size  = (6 + rSize * 9) * s
-                      const peakA = 0.55 + rPeak * 0.45
-                      return (
-                        <circle key={`scroll-wd${wi}-${i}`} cx={dl.cx + xOff} cy={dl.cy + dy + 18 * s} r={size} fill="#ff5000" opacity={0}>
-                          <animateTransform attributeName="transform" type="translate"
-                            values={`0 0; 0 -${40 + rSize * 22}`}
-                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
-                          <animate attributeName="opacity"
-                            values={`0; ${peakA.toFixed(2)}; 0`}
-                            keyTimes="0; 0.2; 1"
-                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
-                        </circle>
-                      )
-                    })
-                  })
-                })()}
-              </g>
-            )}
+            {/* Weekday-letter particle aura intentionally removed — flame is
+                consolidated into the single red-frame layer above. */}
           </svg>
         </div>
       </div>
