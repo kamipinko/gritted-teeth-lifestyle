@@ -1491,8 +1491,9 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
  * already drives in handleBegin (glowingDays/hotDays/cooledDays sized to N=14 by the
  * existing resize effect).
  */
-function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [] }) {
+function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [], weekdayLetterIgnited = [], weekdayLetterZoomed = [], weekdayLetterCooled = [] }) {
   const anyGlowing = glowingDays.some(Boolean)
+  const anyWeekdayIgnited = Array.isArray(weekdayLetterIgnited) && weekdayLetterIgnited.some(Boolean)
 
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
@@ -1505,6 +1506,9 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
   const RIGHT_CX = 588
   const LOOP_CY = 208
   const R_INSC = 162    // mid-segment radius — lands on the body of the segmented ring
+  const R_WEEKDAY = 80  // inner radius for weekday labels (in each loop's hollow)
+  const WEEKDAY_FONT_SIZE = 18
+  const WEEKDAY_ADVANCE = 18
   // 7 anchors per loop, even compass distribution. Compass 0=top, increases CW. Day 1 sits
   // at the top of the left loop; day 8 at the top of the right loop.
   const COMPASS_PER_LOOP = [0, 51, 103, 154, 206, 257, 309]  // 7 angles ≈ 51.4° apart
@@ -1523,7 +1527,10 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
     const rad = (angle * Math.PI) / 180
     const cx = loopCx + R_INSC * Math.sin(rad)
     const cy = LOOP_CY - R_INSC * Math.cos(rad)
-    return { num, hasWork, kanjiStr, iso, cx, cy, angle, onLeftLoop }
+    // Weekday cluster sits on its loop's inner hollow at R_WEEKDAY (same compass angle).
+    const wdCx = loopCx + R_WEEKDAY * Math.sin(rad)
+    const wdCy = LOOP_CY - R_WEEKDAY * Math.cos(rad)
+    return { num, hasWork, kanjiStr, iso, cx, cy, angle, onLeftLoop, wdCx, wdCy }
   })
 
   // Compact day-number + small kanji column. Sized down vs CycleOuroboros since the lobes
@@ -1598,6 +1605,38 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
                     {renderDayInscription(dl, { maskFill: 'white' })}
                   </g>
                 ) : null)}
+              </mask>
+              {/* Weekday-label mask — particles clipped to weekday letter silhouettes inside
+                  each loop's hollow. Counter-rotated 90° so letters read upright through the
+                  container's 270° rotation. */}
+              <mask id="infinity-weekday-window" maskUnits="userSpaceOnUse" x="0" y="0" width={VB_W} height={VB_H}>
+                <rect x="0" y="0" width={VB_W} height={VB_H} fill="black"/>
+                {dayLabels.map((dl, i) => {
+                  const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
+                  return (
+                    <g key={`inf-wd-mask-${dl.iso}`} transform={`translate(${dl.wdCx},${dl.wdCy}) rotate(90)`}>
+                      {dow.split('').map((ch, L) => {
+                        const lit = !!weekdayLetterIgnited[i * 3 + L]
+                        const x = (L - 1) * WEEKDAY_ADVANCE
+                        return (
+                          <text key={`inf-wd-mask-${dl.iso}-${L}`}
+                            x={x} y={0}
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            style={{
+                              fontFamily: '"Noto Serif JP", Georgia, serif',
+                              fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                              fontWeight: 700,
+                              fill: 'white',
+                              opacity: lit ? 1 : 0,
+                            }}>
+                            {ch}
+                          </text>
+                        )
+                      })}
+                    </g>
+                  )
+                })}
               </mask>
             </defs>
 
@@ -1680,6 +1719,119 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
                     </g>
                   </g>
                 ))}
+              </g>
+            )}
+
+            {/* Weekday labels inside each loop's hollow — per-letter yakiire mirrors the
+                7-day ouroboros. Cluster center sits at (wdCx, wdCy) on R_WEEKDAY; 3 letters
+                horizontally arranged with WEEKDAY_ADVANCE pitch. Counter-rotated 90° so they
+                read upright through the container's 270° rotation. */}
+            <g>
+              {dayLabels.map((dl, i) => {
+                const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
+                return (
+                  <g key={`dow-${dl.iso}`} transform={`translate(${dl.wdCx},${dl.wdCy}) rotate(90)`}>
+                    {dow.split('').map((ch, L) => {
+                      const flatIdx = i * 3 + L
+                      const isFlaming = !!weekdayLetterIgnited[flatIdx]
+                      const isZoomed  = !!weekdayLetterZoomed[flatIdx]
+                      const isCooled  = !!weekdayLetterCooled[flatIdx]
+                      const isHot     = isZoomed && !isCooled
+                      const fill      = (isHot || isCooled) ? '#d4181f' : '#b0a898'
+                      const baseAlpha = (isHot || isCooled) ? 1 : 0.7
+                      const textOpacity = isFlaming ? 0 : baseAlpha
+                      const textClass = isCooled ? 'infinity-inscription-cooled' : (isHot ? 'infinity-inscription-hot' : '')
+                      const x = (L - 1) * WEEKDAY_ADVANCE
+                      return (
+                        <g key={`dow-${dl.iso}-${L}`}>
+                          <text
+                            x={x} y={0}
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            className={textClass}
+                            style={{
+                              fontFamily: '"Noto Serif JP", Georgia, serif',
+                              fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                              fontWeight: 700,
+                              fill,
+                              opacity: textOpacity,
+                              transition: 'opacity 0ms',
+                            }}>
+                            {ch}
+                          </text>
+                          {isZoomed && (
+                            <text
+                              x={x} y={0}
+                              textAnchor="middle"
+                              dominantBaseline="central"
+                              className="weekday-zoom-burst"
+                              style={{
+                                fontFamily: '"Noto Serif JP", Georgia, serif',
+                                fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                                fontWeight: 700,
+                                fill: '#ff6600',
+                              }}>
+                              {ch}
+                            </text>
+                          )}
+                          {isFlaming && (
+                            <text
+                              x={x} y={0}
+                              textAnchor="middle"
+                              dominantBaseline="central"
+                              className="weekday-flame-engulf"
+                              style={{
+                                ...engulfVars(i * 13 + L + 7),
+                                fontFamily: '"Noto Serif JP", Georgia, serif',
+                                fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                                fontWeight: 700,
+                              }}>
+                              {ch}
+                            </text>
+                          )}
+                        </g>
+                      )
+                    })}
+                  </g>
+                )
+              })}
+            </g>
+
+            {/* Weekday particle aura — clipped to weekday letter silhouettes. */}
+            {anyWeekdayIgnited && (
+              <g mask="url(#infinity-weekday-window)" style={{ pointerEvents: 'none' }}>
+                {(() => {
+                  const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
+                  const PARTS_PER_WEEKDAY = 18
+                  return dayLabels.flatMap((dl, wi) => {
+                    const dayLit = weekdayLetterIgnited.slice(wi * 3, wi * 3 + 3).some(Boolean)
+                    if (!dayLit) return []
+                    return Array.from({ length: PARTS_PER_WEEKDAY }).map((_, i) => {
+                      const k = i + wi * 23
+                      const rX    = hash01(k * 1)
+                      const rDly  = hash01(k * 3 + 11)
+                      const rDur  = hash01(k * 5 + 17)
+                      const rSize = hash01(k * 11 + 23)
+                      const rPeak = hash01(k * 13 + 29)
+                      const xOff  = (rX - 0.5) * 60
+                      const delay = rDly * 300
+                      const dur   = 130 + rDur * 150
+                      const size  = 5 + rSize * 8
+                      const peakA = 0.55 + rPeak * 0.45
+                      return (
+                        <circle key={`inf-wd${wi}-${i}`} cx={dl.wdCx + xOff} cy={dl.wdCy + 22} r={size} fill="#ff5000" opacity={0}>
+                          <animateTransform attributeName="transform" type="translate"
+                            values={`0 0; 0 -${50 + rSize * 25}`}
+                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                          <animate attributeName="opacity"
+                            values={`0; ${peakA.toFixed(2)}; 0`}
+                            keyTimes="0; 0.2; 1"
+                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                        </circle>
+                      )
+                    })
+                  })
+                })()}
               </g>
             )}
           </svg>
