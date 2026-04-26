@@ -1112,15 +1112,17 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
     // radius than the global R_INSC=510, with thin tail wisps trailing inside it. Pushing
     // day 7's inscription OUT to R=580 lands it on the outer thick body where it belongs.
     const r = i === 6 ? 580 : R_INSC
-    // Day 7 (i=6) nudged left ~5 screen px (~17 viewBox units) for tighter alignment with
-    // the FRI weekday cluster.
-    const cxShift = i === 6 ? -17 : 0
+    // Per-day horizontal nudges:
+    //   day 2 (i=1) shifts left ~8 screen px (~28 viewBox units) for tighter SUN alignment.
+    //   day 7 (i=6) shifts left ~5 screen px (~17 viewBox units) for tighter FRI alignment.
+    const cxShift = i === 1 ? -28 : i === 6 ? -17 : 0
     const cx = CX + r * Math.sin(rad) + cxShift
     // Per-day vertical nudges:
     //   day 1 (i=0) shifts up ~30 screen px (~105 viewBox units) so its kanji + side-rendered
     //   date number sit clear of the snake's head/bite zone.
+    //   day 2 (i=1) shifts up ~5 screen px (~17 viewBox units) to ride a thicker body section.
     //   day 6 (i=5) shifts down ~10 screen px (~35 viewBox units) for visual balance.
-    const cyShift = i === 0 ? -105 : i === 5 ? 35 : 0
+    const cyShift = i === 0 ? -105 : i === 1 ? -17 : i === 5 ? 35 : 0
     const cy = CY - r * Math.cos(rad) + cyShift
     // Weekday cluster sits on the inner hollow at R_WEEKDAY. World coords precomputed so
     // both the rendered text and the particle spawn (in world space) share the same anchor.
