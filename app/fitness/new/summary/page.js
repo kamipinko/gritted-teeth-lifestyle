@@ -1588,7 +1588,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
             the inscription banner reads larger; horizontal overflow lets the
             handle ornament tips sit just past the screen edges. Shifted 5px
             left of the centered position. */}
-        <div style={{ position: 'absolute', top: '10px', left: 'calc(-21.6625vw - 5px)', width: '143.325vw', maxWidth: 'none' }}>
+        <div style={{ position: 'absolute', top: '5px', left: 'calc(-21.6625vw - 5px)', width: '143.325vw', maxWidth: 'none' }}>
           {/* Single SVG holds both the rotated substrate (as <image>) and the inscription
               overlay so they share one coordinate system. ViewBox is the rotated frame
               1061×1300; substrate <image> applies translate(0 1300) rotate(-90) to bring
