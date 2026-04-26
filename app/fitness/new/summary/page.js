@@ -1486,8 +1486,8 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
   // the 143.325vw scroll container) so columns sit slightly off-center.
   const WRITE_X0 = 266
   const WRITE_X1 = 786
-  const WRITE_Y0 = 270
-  const WRITE_Y1 = 1030
+  const WRITE_Y0 = 230
+  const WRITE_Y1 = 1090
   const colStep = (WRITE_X1 - WRITE_X0) / colsNeeded
   const rowStep = (WRITE_Y1 - WRITE_Y0) / ROWS_PER_COL
   const halfN   = Math.floor(N / 2)
