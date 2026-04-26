@@ -2498,9 +2498,9 @@ export default function SummaryPage() {
             ? { bottom: '20px', right: 'calc(5px + 92px - 4px)', overflow: 'visible' }
             : isInfinity
               ? {
-                  // 14-day infinity — centered inside the bottom loop's hollow.
+                  // 14-day infinity — centered inside the bottom loop's hollow, nudged 20px right.
                   top: '480px',
-                  left: '50%',
+                  left: 'calc(50% + 20px)',
                   transform: 'translateX(-50%)',
                   transformOrigin: 'center',
                   overflow: 'visible',
