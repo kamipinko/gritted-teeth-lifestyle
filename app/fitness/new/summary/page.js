@@ -1491,6 +1491,10 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
   const colStep = (WRITE_X1 - WRITE_X0) / colsNeeded
   const rowStep = (WRITE_Y1 - WRITE_Y0) / ROWS_PER_COL
   const halfN   = Math.floor(N / 2)
+  // Inscriptions stay at full size for 1-6 columns (≤42 days). Once a 7th column
+  // is needed, text scales down proportionally so cells stay legible. Floor at
+  // 0.45 so very long cycles don't disappear.
+  const colScale = colsNeeded <= 6 ? 1.0 : Math.max(0.45, 6 / colsNeeded)
 
   const BIG_LAST_THRESHOLD = 35  // up to 35 days, the last day renders 1.7×; beyond that, same size as the rest
 
@@ -1533,7 +1537,9 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
     const { num, kanjiStr, isBig } = dl
     const kanjiChars = kanjiStr.split('')
     const n = kanjiChars.length
-    const S = isBig ? 1.7 : 1.0   // scale factor: BIG day (≤35-day cycles) vs normal day
+    // BIG day (≤35-day cycles) renders 1.7×; for 7+ columns everything also
+    // scales down by colScale so dense layouts stay legible.
+    const S = (isBig ? 1.7 : 1.0) * colScale
     const DEPTH_STACK_RED = [
       { dy: 2, fill: '#3a0608' },
       { dy: 1, fill: '#9e1118' },
@@ -1583,7 +1589,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
   const WEEKDAY_FONT_SIZE = 24
   const WEEKDAY_ADVANCE   = 20
   const WEEKDAY_DY        = -50
-  const dayScale = (dl) => dl.isBig ? 1.7 : 1.0
+  const dayScale = (dl) => (dl.isBig ? 1.7 : 1.0) * colScale
   // Per-letter x: center-anchored around the cell so all 3 letters sit together above the date.
   const weekdayLetterX = (cx, L, advance) => cx + (L - 1) * advance
 
