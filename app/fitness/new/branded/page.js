@@ -160,7 +160,7 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
 }
 
 function CarveContent({ enabled }) {
-  const dayColor = enabled ? '#070708' : '#555'
+  const dayColor = enabled ? '#070708' : '#d4c8b0'
   return (
     <>
       <div className="flex items-center gap-1.5" style={{ transform: 'skewX(2deg)' }}>
@@ -181,7 +181,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover, onSlash }) {
   // 0=idle, 1=slash-sweep, 2=slash-fade, 3=render-halves, 4=separate
   const [phase, setPhase] = useState(0)
   const mountedRef = useRef(true)
-  const dayLabel = count === 1 ? '1 DAY' : count > 1 ? `${count} DAYS` : '—'
+  const dayLabel = count === 1 ? '1 DAY' : `${count} DAYS`
 
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false } }, [])
 
@@ -219,7 +219,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover, onSlash }) {
       onClick={fire}
       onMouseEnter={enabled && !active ? onHover : undefined}
       disabled={!enabled}
-      className={`relative ${enabled ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
+      className={`relative ${enabled ? 'cursor-pointer' : 'cursor-not-allowed'}`}
       style={{
         transform: 'skewX(-2deg)',
         clipPath: active ? 'none' : 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
@@ -253,7 +253,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover, onSlash }) {
         <CarveContent enabled={enabled} />
         {phase < 1 && (
           <span className="font-mono leading-none mt-0.5"
-            style={{ fontSize: '8px', letterSpacing: '0.1em', color: enabled ? '#070708' : '#555', opacity: 0.6, transform: 'skewX(2deg)' }}>
+            style={{ fontSize: '8px', letterSpacing: '0.1em', color: enabled ? '#070708' : '#d4c8b0', opacity: enabled ? 0.6 : 0.95, transform: 'skewX(2deg)' }}>
             {dayLabel}
           </span>
         )}
@@ -802,7 +802,8 @@ export default function SchedulePage() {
           </div>
         )}
 
-        {/* Muscle grid — slides in when days selected */}
+        {/* Muscle grid — slides in when days selected. One slot ends up empty since the
+            Carve button is hoisted out into the always-visible footer below. */}
         {sheetOpen && (
           <div className="px-3 pt-1 pb-1">
             <div className="grid grid-cols-2 grid-rows-6 gap-1" style={{ overflow: 'visible' }}>
@@ -815,16 +816,21 @@ export default function SchedulePage() {
                   onClick={() => toggleMuscle(m.id)}
                 />
               ))}
-              <SheetCarveButton
-                count={daysWithMuscles}
-                enabled={carveEnabled}
-                onFire={handleCarve}
-                onHover={() => play('button-hover')}
-                onSlash={() => play(Math.random() < 0.2 ? 'slash-alt' : 'slash')}
-              />
             </div>
           </div>
         )}
+
+        {/* Carve button — always visible, even before any days selected. Disabled state
+            keeps the day-count text legible (warm off-white on the dim grey face). */}
+        <div className="px-3 pb-2 pt-1 shrink-0">
+          <SheetCarveButton
+            count={daysWithMuscles}
+            enabled={carveEnabled}
+            onFire={handleCarve}
+            onHover={() => play('button-hover')}
+            onSlash={() => play(Math.random() < 0.2 ? 'slash-alt' : 'slash')}
+          />
+        </div>
       </div>
 
       <FireFadeIn duration={900} />
