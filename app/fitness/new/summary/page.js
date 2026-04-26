@@ -761,12 +761,16 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
   // interpolated from the ridge slope so each anchor literally sits ON the ridge
   // line (rightward slots descend by tan(angle) — they don't share a constant y).
   // Measured ridge angles (top-edge least-squares fit) read too horizontal at the
-  // drill's render scale, so amplify each by 1.6 for visible tilt while keeping
-  // the relative differences between ridges intact.
-  const RIDGE2_BBOX = { xLeft: 368, xRight: 471, yMid: 182, angle:  7.3 * 1.6 } // band 1 → 11.7°
-  const RIDGE3_BBOX = { xLeft: 341, xRight: 505, yMid: 272, angle: 11.8 * 1.6 } // band 2 → 18.9°
-  const RIDGE4_BBOX = { xLeft: 309, xRight: 546, yMid: 380, angle:  7.1 * 1.6 } // band 3 → 11.4°
-  const RIDGE5_BBOX = { xLeft: 276, xRight: 574, yMid: 474, angle: 10.0 * 1.6 } // band 4 → 16.0°
+  // drill's render scale, so amplify by 1.6 for visible tilt. Ridges 4 and 5 inherit
+  // the same amplified angles as ridges 2 and 3 respectively so the four populated
+  // ridges alternate between the same two slopes (cleaner visual rhythm than each
+  // ridge having its own measured slope).
+  const RIDGE_GENTLE = 7.3 * 1.6  // → 11.7°  — used by ridges 2 + 4
+  const RIDGE_STEEP  = 11.8 * 1.6 // → 18.9°  — used by ridges 3 + 5
+  const RIDGE2_BBOX = { xLeft: 368, xRight: 471, yMid: 182, angle: RIDGE_GENTLE } // band 1, 1 anchor
+  const RIDGE3_BBOX = { xLeft: 341, xRight: 505, yMid: 272, angle: RIDGE_STEEP  } // band 2, 2 anchors
+  const RIDGE4_BBOX = { xLeft: 309, xRight: 546, yMid: 380, angle: RIDGE_GENTLE } // band 3, 4 anchors
+  const RIDGE5_BBOX = { xLeft: 276, xRight: 574, yMid: 474, angle: RIDGE_STEEP  } // band 4, 5 anchors
 
   const ridgeSlots = (ridge, n) => {
     const xMid = (ridge.xLeft + ridge.xRight) / 2
