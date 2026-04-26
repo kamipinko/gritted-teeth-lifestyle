@@ -937,11 +937,11 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                 dominantBaseline="central"
                 style={{
                   fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
-                  fontSize: '34px',
+                  fontSize: '24px',
                   fontWeight: 700,
                   fill: '#e8e0c8',
-                  letterSpacing: '0.12em',
-                  opacity: 0.85,
+                  letterSpacing: '0.04em',
+                  opacity: 0.9,
                 }}>
                 {cycleName.toUpperCase()}
               </text>
