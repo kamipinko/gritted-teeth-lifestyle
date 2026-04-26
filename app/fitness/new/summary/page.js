@@ -2119,40 +2119,108 @@ export default function SummaryPage() {
     } catch (_) {}
 
     // handleBegin fires immediately on press (no onFire delay).
-    // All timers are press-absolute from t=0. N = days.length scales the cascade so
-    // both CycleBlade (≤7 days) and CycleDrill (8-13 days) drive the same state.
+    // All timers are press-absolute from t=0. Below N=15 we use the canonical
+    // per-day cascade (blade/ouroboros/drill); above that we switch to a
+    // column-major group cascade so 30-day scroll cycles don't drag for 13s.
     const N = Math.max(days.length, 1)
-    // Flame activation: REVERSE order, 60ms stagger. Last inscription ignites first at t=200,
-    // cascading up to day 0 at t=200 + (N-1)*60.
-    for (let step = 0; step < N; step++) {
-      const dayIdx = N - 1 - step
-      setTimeout(() => {
-        setGlowingDays(prev => { const next = [...prev]; next[dayIdx] = true; return next })
-      }, 200 + step * 60)
+    const isScroll = N > 14
+    let stampVisibleAt
+    if (isScroll) {
+      // ── Scroll cascade ──────────────────────────────────────────────────
+      // Days are laid out column-major, 7 rows per column. Days inside a
+      // column ignite/zoom/cool simultaneously; columns stagger.
+      const ROWS_PER_COL = 7
+      const colCount = Math.ceil(N / ROWS_PER_COL)
+      // Flame ignite: column 0 at t=200, columns 100ms apart.
+      for (let col = 0; col < colCount; col++) {
+        const at = 200 + col * 100
+        setTimeout(() => {
+          setGlowingDays(prev => {
+            const next = [...prev]
+            for (let row = 0; row < ROWS_PER_COL; row++) {
+              const i = col * ROWS_PER_COL + row
+              if (i < N) next[i] = true
+            }
+            return next
+          })
+        }, at)
+      }
+      // Peak / zoom: columns cascade 200ms each, all rows in a column simultaneously.
+      setTimeout(() => setGlowIntensity('peak'), 1600)
+      for (let col = 0; col < colCount; col++) {
+        const at = 1600 + col * 200
+        setTimeout(() => {
+          setGlowingDays(prev => {
+            const next = [...prev]
+            for (let row = 0; row < ROWS_PER_COL; row++) {
+              const i = col * ROWS_PER_COL + row
+              if (i < N) next[i] = false
+            }
+            return next
+          })
+          setHotDays(prev => {
+            const next = [...prev]
+            for (let row = 0; row < ROWS_PER_COL; row++) {
+              const i = col * ROWS_PER_COL + row
+              if (i < N) next[i] = true
+            }
+            return next
+          })
+        }, at)
+      }
+      // Cooled: 1600ms hold after zoom starts, then columns cool 300ms each.
+      for (let col = 0; col < colCount; col++) {
+        const at = 1600 + 1600 + col * 300
+        setTimeout(() => {
+          setCooledDays(prev => {
+            const next = [...prev]
+            for (let row = 0; row < ROWS_PER_COL; row++) {
+              const i = col * ROWS_PER_COL + row
+              if (i < N) next[i] = true
+            }
+            return next
+          })
+        }, at)
+      }
+      const glowOffAt    = 1600 + (colCount - 1) * 200 + 340
+      const lastCooledAt = 3200 + (colCount - 1) * 300
+      setTimeout(() => setGlowIntensity('off'), Math.max(3040, glowOffAt))
+      stampVisibleAt = Math.max(4290, lastCooledAt + 400)
+      setTimeout(() => setStampVisible(true), stampVisibleAt)
+    } else {
+      // ── Canonical cascade (blade ≤6 / ouroboros =7 / drill 8-13) ─────────
+      // Flame activation: REVERSE order, 60ms stagger. Last inscription ignites first at t=200,
+      // cascading up to day 0 at t=200 + (N-1)*60.
+      for (let step = 0; step < N; step++) {
+        const dayIdx = N - 1 - step
+        setTimeout(() => {
+          setGlowingDays(prev => { const next = [...prev]; next[dayIdx] = true; return next })
+        }, 200 + step * 60)
+      }
+      setTimeout(() => setGlowIntensity('peak'),      1600)   // zoom-burst cascade begins (340ms per glyph, 220ms stagger)
+      // Fast cascade: flame off + hot on + zoom fires at t=1600 + i*220.
+      for (let i = 0; i < N; i++) {
+        const at = 1600 + i * 220
+        setTimeout(() => {
+          setGlowingDays(prev => { const next = [...prev]; next[i] = false; return next })
+          setHotDays(prev => { const next = [...prev]; next[i] = true; return next })
+        }, at)
+      }
+      // Slow dissipation: each inscription cools 1600+i*350ms after the zoom cascade starts.
+      for (let i = 0; i < N; i++) {
+        setTimeout(() => {
+          setCooledDays(prev => { const next = [...prev]; next[i] = true; return next })
+        }, 1600 + 1600 + i * 350)
+      }
+      // Last inscription's zoom cascade ends at 1600 + (N-1)*220 + 340.
+      const glowOffAt   = 1600 + (N - 1) * 220 + 340
+      const lastCooledAt = 3200 + (N - 1) * 350
+      setTimeout(() => setGlowIntensity('off'),       Math.max(3040, glowOffAt))
+      // Stamp lands after the LAST cooled trigger plus a small breath. For N=6 this resolves
+      // to 4290 (canonical); for N=13 it pushes out so the stamp doesn't collide with cooling.
+      stampVisibleAt = Math.max(4290, lastCooledAt + 90)
+      setTimeout(() => setStampVisible(true),         stampVisibleAt)
     }
-    setTimeout(() => setGlowIntensity('peak'),      1600)   // zoom-burst cascade begins (340ms per glyph, 220ms stagger)
-    // Fast cascade: flame off + hot on + zoom fires at t=1600 + i*220.
-    for (let i = 0; i < N; i++) {
-      const at = 1600 + i * 220
-      setTimeout(() => {
-        setGlowingDays(prev => { const next = [...prev]; next[i] = false; return next })
-        setHotDays(prev => { const next = [...prev]; next[i] = true; return next })
-      }, at)
-    }
-    // Slow dissipation: each inscription cools 1600+i*350ms after the zoom cascade starts.
-    for (let i = 0; i < N; i++) {
-      setTimeout(() => {
-        setCooledDays(prev => { const next = [...prev]; next[i] = true; return next })
-      }, 1600 + 1600 + i * 350)
-    }
-    // Last inscription's zoom cascade ends at 1600 + (N-1)*220 + 340.
-    const glowOffAt   = 1600 + (N - 1) * 220 + 340
-    const lastCooledAt = 3200 + (N - 1) * 350
-    setTimeout(() => setGlowIntensity('off'),       Math.max(3040, glowOffAt))
-    // Stamp lands after the LAST cooled trigger plus a small breath. For N=6 this resolves
-    // to 4290 (canonical); for N=13 it pushes out so the stamp doesn't collide with cooling.
-    const stampVisibleAt = Math.max(4290, lastCooledAt + 90)
-    setTimeout(() => setStampVisible(true),         stampVisibleAt)
     // Middle-out symmetric cascade, 70ms stagger, starts t=700.
     // Step 0 (t=700): innermost pair (days 3+4) + ETCH + CYCLE ignite together.
     // Step 1 (t=770): days 2+5. Step 2 (t=840): outermost pair (days 1+6).
