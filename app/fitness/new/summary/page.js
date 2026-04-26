@@ -2327,7 +2327,7 @@ export default function SummaryPage() {
 
       {days.length === 14 && (
         <div className="fixed z-40 no-print pointer-events-none"
-             style={{ top: '40px', left: '50%', transform: 'translateX(-50%)', maxWidth: '80vw' }}>
+             style={{ top: '140px', left: '50%', transform: 'translateX(-50%)', maxWidth: '80vw' }}>
           <div className="font-display text-2xl text-gtl-paper leading-tight uppercase tracking-tight text-center"
                style={{ textShadow: '2px 2px 0 #070708' }}>
             {cycleName}
@@ -2492,7 +2492,7 @@ export default function SummaryPage() {
             : isInfinity
               ? {
                   // 14-day infinity — centered inside the bottom loop's hollow.
-                  top: '440px',
+                  top: '480px',
                   left: '50%',
                   transform: 'translateX(-50%)',
                   transformOrigin: 'center',
