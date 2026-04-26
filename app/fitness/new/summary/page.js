@@ -760,10 +760,13 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
   // Slots distribute along each ridge: x at t = (k+1)/(n+1) of the ridge span; y
   // interpolated from the ridge slope so each anchor literally sits ON the ridge
   // line (rightward slots descend by tan(angle) — they don't share a constant y).
-  const RIDGE2_BBOX = { xLeft: 368, xRight: 471, yMid: 182, angle:  7.3 } // band 1
-  const RIDGE3_BBOX = { xLeft: 341, xRight: 505, yMid: 272, angle: 11.8 } // band 2
-  const RIDGE4_BBOX = { xLeft: 309, xRight: 546, yMid: 380, angle:  7.1 } // band 3
-  const RIDGE5_BBOX = { xLeft: 276, xRight: 574, yMid: 474, angle: 10.0 } // band 4
+  // Measured ridge angles (top-edge least-squares fit) read too horizontal at the
+  // drill's render scale, so amplify each by 1.6 for visible tilt while keeping
+  // the relative differences between ridges intact.
+  const RIDGE2_BBOX = { xLeft: 368, xRight: 471, yMid: 182, angle:  7.3 * 1.6 } // band 1 → 11.7°
+  const RIDGE3_BBOX = { xLeft: 341, xRight: 505, yMid: 272, angle: 11.8 * 1.6 } // band 2 → 18.9°
+  const RIDGE4_BBOX = { xLeft: 309, xRight: 546, yMid: 380, angle:  7.1 * 1.6 } // band 3 → 11.4°
+  const RIDGE5_BBOX = { xLeft: 276, xRight: 574, yMid: 474, angle: 10.0 * 1.6 } // band 4 → 16.0°
 
   const ridgeSlots = (ridge, n) => {
     const xMid = (ridge.xLeft + ridge.xRight) / 2
