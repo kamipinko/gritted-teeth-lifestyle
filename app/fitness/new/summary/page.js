@@ -1473,29 +1473,35 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
 
-  // Vertical layout — 3 columns, rows = ceil(N/3). Cells distributed across the
-  // scroll's vertical writing area in the rotated viewBox (x≈280..800, y≈270..1030
-  // in the 1061×1300 vertical frame). Avoids the top/bottom handles plus rolled
-  // edges. The original horizontal scroll mapped (x,y) → (y, 1300-x) under
-  // `translate(0 1300) rotate(-90)`; that mapping is baked into the substrate
-  // <image> transform, so anchors here are written in post-rotation coords.
-  const COLS = 3
-  const rows = Math.max(1, Math.ceil(N / COLS))
+  // Vertical layout — column-major, 7 rows per column. Days fill column 1 top-to-bottom,
+  // then start column 2 at day 8, column 3 at day 15, etc. The LAST day renders larger
+  // (font + spacing) and, when alone in its column, vertically centers in the column
+  // area instead of sitting at the top. Writing area in the rotated viewBox: x≈280..800,
+  // y≈270..1030 (1061×1300 vertical frame). The original horizontal scroll mapped
+  // (x,y) → (y, 1300-x) under `translate(0 1300) rotate(-90)`; that mapping is baked
+  // into the substrate <image> transform, so anchors live in post-rotation coords.
+  const ROWS_PER_COL = 7
+  const colsNeeded = Math.max(1, Math.ceil(N / ROWS_PER_COL))
   const WRITE_X0 = 280
   const WRITE_X1 = 800
   const WRITE_Y0 = 270
   const WRITE_Y1 = 1030
-  const colStep = (WRITE_X1 - WRITE_X0) / COLS
-  const rowStep = (WRITE_Y1 - WRITE_Y0) / Math.max(rows, 1)
+  const colStep = (WRITE_X1 - WRITE_X0) / colsNeeded
+  const rowStep = (WRITE_Y1 - WRITE_Y0) / ROWS_PER_COL
   const halfN   = Math.floor(N / 2)
 
   const anchors = days.map((_, i) => {
-    const r = Math.floor(i / COLS)
-    const c = i % COLS
+    const c = Math.floor(i / ROWS_PER_COL)
+    const r = i % ROWS_PER_COL
+    const isLast = i === N - 1
+    const aloneInCol = isLast && r === 0
     return {
       x: WRITE_X0 + colStep * (c + 0.5),
-      y: WRITE_Y0 + rowStep * (r + 0.5),
+      y: aloneInCol
+        ? (WRITE_Y0 + WRITE_Y1) / 2
+        : WRITE_Y0 + rowStep * (r + 0.5),
       side: i < halfN ? 'left' : 'right',
+      isLast,
     }
   })
 
@@ -1508,19 +1514,19 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
       ? muscles.map((m) => MUSCLE_KANJI[m] || '?').join('')
       : '休'
     const a = anchors[i]
-    return { num, hasWork, kanjiStr, iso, cx: a.x, cy: a.y, side: a.side }
+    return { num, hasWork, kanjiStr, iso, cx: a.x, cy: a.y, side: a.side, isLast: a.isLast }
   })
 
   // Day-number + muscle-kanji depth-stack inscription (mirrors CycleBlade's
   // renderDayInscription, scaled down to fit each scroll grid cell). Each cell
   // stacks: day number (top), kanji char(s) for the day's muscles (middle).
-  // The kanji renders compactly: 1-3 chars on a single row, 4+ on two rows.
-  const NUM_FONT_SIZE = 36
+  // The LAST day uses a 1.7× scale factor so it visually dominates the column.
   const NUM_FONT = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
   const renderInscription = (dl, { hot = false, maskFill = null } = {}) => {
-    const { num, kanjiStr } = dl
+    const { num, kanjiStr, isLast } = dl
     const kanjiChars = kanjiStr.split('')
     const n = kanjiChars.length
+    const S = isLast ? 1.7 : 1.0   // scale factor: BIG day vs normal day
     const DEPTH_STACK_RED = [
       { dy: 2, fill: '#3a0608' },
       { dy: 1, fill: '#9e1118' },
@@ -1538,40 +1544,41 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
         {char}
       </text>
     ))
-    // Layout (DOW lives in a separate render block above number+kanji at y = -50):
-    //   day number at y = -16 (just above center), kanji block at y = +22 (below center).
-    const numEls = renderText('num', 0, -16, NUM_FONT_SIZE, num)
+    // Layout (DOW lives in a separate render block above number+kanji):
+    //   day number at y ≈ -16 (just above center), kanji block at y ≈ +22 (below center).
+    const numEls = renderText('num', 0, -16 * S, 36 * S, num)
     let kanjiEls = null
     if (n === 1) {
-      kanjiEls = renderText('kj0', 0, 22, 44, kanjiChars[0])
+      kanjiEls = renderText('kj0', 0, 22 * S, 44 * S, kanjiChars[0])
     } else if (n <= 3) {
-      const colSpacing = n === 2 ? 32 : 30
-      const fontSize   = n === 2 ? 36 : 28
+      const colSpacing = (n === 2 ? 32 : 30) * S
+      const fontSize   = (n === 2 ? 36 : 28) * S
       kanjiEls = kanjiChars.flatMap((k, ki) =>
-        renderText(`kj${ki}`, (ki - (n - 1) / 2) * colSpacing, 22, fontSize, k))
+        renderText(`kj${ki}`, (ki - (n - 1) / 2) * colSpacing, 22 * S, fontSize, k))
     } else {
-      // n >= 4: 2 rows × ceil(n/2) cols, ~22px font.
+      // n >= 4: 2 rows × ceil(n/2) cols.
       const cols = Math.ceil(n / 2)
-      const fontSize = 22
-      const colSpacing = 26
-      const rowYStep   = 22
+      const fontSize = 22 * S
+      const colSpacing = 26 * S
+      const rowYStep   = 22 * S
       kanjiEls = kanjiChars.flatMap((k, ki) => {
         const row = Math.floor(ki / cols)
         const col = ki % cols
         const x = (col - (cols - 1) / 2) * colSpacing
-        const y = 12 + row * rowYStep
+        const y = 12 * S + row * rowYStep
         return renderText(`kj${ki}`, x, y, fontSize, k)
       })
     }
     return <>{numEls}{kanjiEls}</>
   }
 
-  // Weekday DOW label sits ABOVE the date number (offset y = -50 from cell center).
+  // Weekday DOW label sits ABOVE the date number; sizing scales with isLast (BIG day).
   const WEEKDAY_FONT_SIZE = 24
   const WEEKDAY_ADVANCE   = 20
   const WEEKDAY_DY        = -50
-  // Per-letter x: center-anchored around the cell so all 3 letters sit together below the day number.
-  const weekdayLetterX = (cx, L) => cx + (L - 1) * WEEKDAY_ADVANCE
+  const dayScale = (dl) => dl.isLast ? 1.7 : 1.0
+  // Per-letter x: center-anchored around the cell so all 3 letters sit together above the date.
+  const weekdayLetterX = (cx, L, advance) => cx + (L - 1) * advance
 
   return (
     <section className="relative z-10 py-2 px-2 pointer-events-none min-h-[calc(100vh-7px)]">
@@ -1613,19 +1620,23 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                 <rect x="0" y="0" width="1061" height="1300" fill="black"/>
                 {dayLabels.map((dl, i) => {
                   const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
+                  const s = dayScale(dl)
+                  const fontSize = WEEKDAY_FONT_SIZE * s
+                  const advance  = WEEKDAY_ADVANCE * s
+                  const dy       = WEEKDAY_DY * s
                   return (
                     <g key={`scroll-wd-mask-${dl.iso}`}>
                       {dow.split('').map((ch, L) => {
                         const lit = !!weekdayLetterIgnited[i * 3 + L]
-                        const x = weekdayLetterX(dl.cx, L)
+                        const x = weekdayLetterX(dl.cx, L, advance)
                         return (
                           <text key={`scroll-wd-mask-${dl.iso}-${L}`}
-                            x={x} y={dl.cy + WEEKDAY_DY}
+                            x={x} y={dl.cy + dy}
                             textAnchor="middle"
                             dominantBaseline="central"
                             style={{
                               fontFamily: '"Noto Serif JP", Georgia, serif',
-                              fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                              fontSize: `${fontSize}px`,
                               fontWeight: 700,
                               fill: 'white',
                               opacity: lit ? 1 : 0,
@@ -1728,6 +1739,10 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
             <g>
               {dayLabels.map((dl, i) => {
                 const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
+                const s = dayScale(dl)
+                const fontSize = WEEKDAY_FONT_SIZE * s
+                const advance  = WEEKDAY_ADVANCE * s
+                const dy       = WEEKDAY_DY * s
                 return (
                   <g key={`dow-${dl.iso}`}>
                     {dow.split('').map((ch, L) => {
@@ -1740,17 +1755,17 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                       const baseAlpha = (isHot || isCooled) ? 1 : 0.7
                       const textOpacity = isFlaming ? 0 : baseAlpha
                       const textClass = isCooled ? 'scroll-inscription-cooled' : (isHot ? 'scroll-inscription-hot' : '')
-                      const x = weekdayLetterX(dl.cx, L)
+                      const x = weekdayLetterX(dl.cx, L, advance)
                       return (
                         <g key={`dow-${dl.iso}-${L}`}>
                           <text
-                            x={x} y={dl.cy + WEEKDAY_DY}
+                            x={x} y={dl.cy + dy}
                             textAnchor="middle"
                             dominantBaseline="central"
                             className={textClass}
                             style={{
                               fontFamily: '"Noto Serif JP", Georgia, serif',
-                              fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                              fontSize: `${fontSize}px`,
                               fontWeight: 700,
                               fill,
                               opacity: textOpacity,
@@ -1760,13 +1775,13 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                           </text>
                           {isZoomed && (
                             <text
-                              x={x} y={dl.cy + WEEKDAY_DY}
+                              x={x} y={dl.cy + dy}
                               textAnchor="middle"
                               dominantBaseline="central"
                               className="weekday-zoom-burst"
                               style={{
                                 fontFamily: '"Noto Serif JP", Georgia, serif',
-                                fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                                fontSize: `${fontSize}px`,
                                 fontWeight: 700,
                                 fill: '#ff6600',
                               }}>
@@ -1775,14 +1790,14 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                           )}
                           {isFlaming && (
                             <text
-                              x={x} y={dl.cy + WEEKDAY_DY}
+                              x={x} y={dl.cy + dy}
                               textAnchor="middle"
                               dominantBaseline="central"
                               className="weekday-flame-engulf"
                               style={{
                                 ...engulfVars(i * 13 + L + 7),
                                 fontFamily: '"Noto Serif JP", Georgia, serif',
-                                fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                                fontSize: `${fontSize}px`,
                                 fontWeight: 700,
                               }}>
                               {ch}
@@ -1805,6 +1820,8 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                   return dayLabels.flatMap((dl, wi) => {
                     const dayLit = weekdayLetterIgnited.slice(wi * 3, wi * 3 + 3).some(Boolean)
                     if (!dayLit) return []
+                    const s  = dayScale(dl)
+                    const dy = WEEKDAY_DY * s
                     return Array.from({ length: PARTS_PER_WEEKDAY }).map((_, i) => {
                       const k = i + wi * 23
                       const rX    = hash01(k * 1)
@@ -1812,13 +1829,13 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                       const rDur  = hash01(k * 5 + 17)
                       const rSize = hash01(k * 11 + 23)
                       const rPeak = hash01(k * 13 + 29)
-                      const xOff  = (rX - 0.5) * 80
+                      const xOff  = (rX - 0.5) * 80 * s
                       const delay = rDly * 300
                       const dur   = 130 + rDur * 150
-                      const size  = 6 + rSize * 9
+                      const size  = (6 + rSize * 9) * s
                       const peakA = 0.55 + rPeak * 0.45
                       return (
-                        <circle key={`scroll-wd${wi}-${i}`} cx={dl.cx + xOff} cy={dl.cy + WEEKDAY_DY + 18} r={size} fill="#ff5000" opacity={0}>
+                        <circle key={`scroll-wd${wi}-${i}`} cx={dl.cx + xOff} cy={dl.cy + dy + 18 * s} r={size} fill="#ff5000" opacity={0}>
                           <animateTransform attributeName="transform" type="translate"
                             values={`0 0; 0 -${40 + rSize * 22}`}
                             dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
