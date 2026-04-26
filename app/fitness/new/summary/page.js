@@ -996,8 +996,8 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                 transform="rotate(-3 408 610)"
                 style={{
                   fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
-                  fontSize: '24px',
-                  fontWeight: 700,
+                  fontSize: '32px',
+                  fontWeight: 900,
                   fill: '#000000',
                   letterSpacing: '0.04em',
                   opacity: 0.95,
