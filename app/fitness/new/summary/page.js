@@ -765,9 +765,9 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
   // Day-number rendering — single-letter inscription at anchor with depth stack
   // (mirrors CycleBlade's renderText pattern but smaller). hot=true paints the
   // post-flame orange stack; cooled cools it via the .inscription-cooled keyframe.
-  // Font sizes are in viewBox units (816×931). 50px ≈ 35% of cone half-width at the
-  // widest band, leaves comfortable margin in the apex.
-  const NUM_FONT_SIZE = 50
+  // Font sizes are in viewBox units (816×931). ~10% smaller than the initial pass to
+  // breathe within the cone bands and base grid as the silhouette scales up.
+  const NUM_FONT_SIZE = 45
   const NUM_FONT = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
   const renderNum = (numStr, { hot = false, maskFill = null } = {}) => {
     const DEPTH_STACK_RED = [
@@ -793,19 +793,19 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
   // Drill silhouette extends roughly x=180-635 at its widest; the 125vw container
   // shifts left by -12.5vw so the visible viewport spans roughly vb x=82-734. Pick
   // label start positions inside that visible band but outside the silhouette.
-  const WEEKDAY_FONT_SIZE = 42
-  const WEEKDAY_ADVANCE = 42
+  const WEEKDAY_FONT_SIZE = 38
+  const WEEKDAY_ADVANCE = 38
   const weekdayLabelX = (side) => side === 'left' ? 90 : 640
   const weekdayLetterX = (side, labelX, L) => labelX + L * WEEKDAY_ADVANCE
 
   return (
     <section className="relative z-10 py-2 px-2 pointer-events-none min-h-[calc(100vh-7px)]">
       <div>
-        {/* Drill container — 125vw width with -12.5vw left shift to keep it horizontally
-            centered while running 25% larger than viewport for visual parity with the wakizashi.
+        {/* Drill container — 137vw width with -18.5vw left shift to keep it horizontally
+            centered while running ~37% larger than viewport for visual parity with the wakizashi.
             Inscription anchors live in the overlay's viewBox-local coords, so they scale with
             the container automatically. */}
-        <div style={{ position: 'absolute', top: '40px', left: '-12.5vw', width: '125vw', maxWidth: 'none' }}>
+        <div style={{ position: 'absolute', top: '40px', left: '-18.5vw', width: '137vw', maxWidth: 'none' }}>
           {/* Drill silhouette substrate — same SVG file we render below, but as <img>
               so paint/raster-layout precedes the overlay's text/particles. */}
           {mounted && (
