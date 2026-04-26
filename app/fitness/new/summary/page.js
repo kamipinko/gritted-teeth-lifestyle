@@ -1486,7 +1486,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
   const colsNeeded = Math.max(1, Math.ceil(N / ROWS_PER_COL))
   // Writing area shifted 14 viewBox units left (~7px on a 390-wide viewport at
   // the 143.325vw scroll container) so columns sit slightly off-center.
-  const WRITE_X0 = 286
+  const WRITE_X0 = 326
   const WRITE_X1 = 766
   const WRITE_Y0 = 215
   const WRITE_Y1 = 1075
@@ -1770,7 +1770,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                 const s         = dayScale(dl)
                 const fontSize  = WEEKDAY_FONT_SIZE * s
                 const lineH     = 28 * s    // taller line so letters don't collide
-                const xOff      = -37 * s   // closer to the inscriptions on their right
+                const xOff      = -70 * s   // compensates for the shifted-right inscription block so DOW stays put visually
                 const yCenter   = 12 * s    // shifted up ~8px from the kanji vertical center
                 return (
                   <g key={`dow-${dl.iso}`}>
