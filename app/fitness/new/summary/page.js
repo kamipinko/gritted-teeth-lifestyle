@@ -1506,9 +1506,13 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
   const RIGHT_CX = 588
   const LOOP_CY = 208
   const R_INSC = 162    // mid-segment radius — lands on the body of the segmented ring
-  const R_WEEKDAY = 80  // inner radius for weekday labels (in each loop's hollow)
-  const WEEKDAY_FONT_SIZE = 18
-  const WEEKDAY_ADVANCE = 18
+  // Weekday labels sit ABOVE each anchor's date number (in the inscription's local frame),
+  // not in the hollow. R_WEEKDAY kept for the legacy mask/particle blocks below; the visible
+  // weekday text rides the inscription anchor.
+  const R_WEEKDAY = 80
+  const WEEKDAY_FONT_SIZE = 12
+  const WEEKDAY_ADVANCE = 11
+  const WEEKDAY_LOCAL_Y = -32  // local y in the inscription frame (above the number at y=-10)
   // 7 anchors per loop, even compass distribution. Days 1-7 trace the left loop CW; days
   // 8-14 trace the right loop CCW so the date order flows continuously around the figure-8.
   // Bottom (left) loop shifted 3 steps CCW (screen); top (right) loop shifted 3 steps CW
@@ -1620,13 +1624,13 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
                 {dayLabels.map((dl, i) => {
                   const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
                   return (
-                    <g key={`inf-wd-mask-${dl.iso}`} transform={`translate(${dl.wdCx},${dl.wdCy}) rotate(90)`}>
+                    <g key={`inf-wd-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(90)`}>
                       {dow.split('').map((ch, L) => {
                         const lit = !!weekdayLetterIgnited[i * 3 + L]
                         const x = (L - 1) * WEEKDAY_ADVANCE
                         return (
                           <text key={`inf-wd-mask-${dl.iso}-${L}`}
-                            x={x} y={0}
+                            x={x} y={WEEKDAY_LOCAL_Y}
                             textAnchor="middle"
                             dominantBaseline="central"
                             style={{
@@ -1736,22 +1740,22 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
               {dayLabels.map((dl, i) => {
                 const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
                 return (
-                  <g key={`dow-${dl.iso}`} transform={`translate(${dl.wdCx},${dl.wdCy}) rotate(90)`}>
+                  <g key={`dow-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(90)`}>
                     {dow.split('').map((ch, L) => {
                       const flatIdx = i * 3 + L
                       const isFlaming = !!weekdayLetterIgnited[flatIdx]
                       const isZoomed  = !!weekdayLetterZoomed[flatIdx]
                       const isCooled  = !!weekdayLetterCooled[flatIdx]
                       const isHot     = isZoomed && !isCooled
-                      const fill      = (isHot || isCooled) ? '#d4181f' : '#b0a898'
-                      const baseAlpha = (isHot || isCooled) ? 1 : 0.7
+                      const fill      = (isHot || isCooled) ? '#d4181f' : '#000000'
+                      const baseAlpha = 1
                       const textOpacity = isFlaming ? 0 : baseAlpha
                       const textClass = isCooled ? 'infinity-inscription-cooled' : (isHot ? 'infinity-inscription-hot' : '')
                       const x = (L - 1) * WEEKDAY_ADVANCE
                       return (
                         <g key={`dow-${dl.iso}-${L}`}>
                           <text
-                            x={x} y={0}
+                            x={x} y={WEEKDAY_LOCAL_Y}
                             textAnchor="middle"
                             dominantBaseline="central"
                             className={textClass}
@@ -1767,7 +1771,7 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
                           </text>
                           {isZoomed && (
                             <text
-                              x={x} y={0}
+                              x={x} y={WEEKDAY_LOCAL_Y}
                               textAnchor="middle"
                               dominantBaseline="central"
                               className="weekday-zoom-burst"
@@ -1782,7 +1786,7 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
                           )}
                           {isFlaming && (
                             <text
-                              x={x} y={0}
+                              x={x} y={WEEKDAY_LOCAL_Y}
                               textAnchor="middle"
                               dominantBaseline="central"
                               className="weekday-flame-engulf"
@@ -2312,9 +2316,19 @@ export default function SummaryPage() {
         <CycleOuroboros days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
       )}
 
-      {(days.length === 7 || days.length === 14) && (
+      {days.length === 7 && (
         <div className="fixed bottom-5 left-5 z-40 no-print pointer-events-none max-w-[60vw]">
           <div className="font-display text-2xl text-gtl-paper leading-tight uppercase tracking-tight"
+               style={{ textShadow: '2px 2px 0 #070708' }}>
+            {cycleName}
+          </div>
+        </div>
+      )}
+
+      {days.length === 14 && (
+        <div className="fixed z-40 no-print pointer-events-none"
+             style={{ top: '40px', left: '50%', transform: 'translateX(-50%)', maxWidth: '80vw' }}>
+          <div className="font-display text-2xl text-gtl-paper leading-tight uppercase tracking-tight text-center"
                style={{ textShadow: '2px 2px 0 #070708' }}>
             {cycleName}
           </div>
@@ -2475,23 +2489,32 @@ export default function SummaryPage() {
         style={
           isScroll
             ? { bottom: '20px', right: 'calc(5px + 92px - 4px)', overflow: 'visible' }
-            : (isDrill || isInfinity)
+            : isInfinity
               ? {
-                  // drill + infinity — beside (left of) the 128px flame button.
-                  bottom: '20px',
-                  right: 'calc(20px + 128px + 10px)',
-                  transform: 'rotate(8deg)',
-                  transformOrigin: 'right bottom',
+                  // 14-day infinity — centered inside the bottom loop's hollow.
+                  top: '440px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  transformOrigin: 'center',
                   overflow: 'visible',
                 }
-              : {
-                  // blade / ouroboros — above the flame button (canonical pre-split slot).
-                  bottom: 'calc(20px + 128px + 10px)',
-                  right: '2px',
-                  transform: 'rotate(8deg)',
-                  transformOrigin: 'right bottom',
-                  overflow: 'visible',
-                }
+              : isDrill
+                ? {
+                    // drill — beside (left of) the 128px flame button.
+                    bottom: '20px',
+                    right: 'calc(20px + 128px + 10px)',
+                    transform: 'rotate(8deg)',
+                    transformOrigin: 'right bottom',
+                    overflow: 'visible',
+                  }
+                : {
+                    // blade / ouroboros — above the flame button (canonical pre-split slot).
+                    bottom: 'calc(20px + 128px + 10px)',
+                    right: '2px',
+                    transform: 'rotate(8deg)',
+                    transformOrigin: 'right bottom',
+                    overflow: 'visible',
+                  }
         }
       >
         <defs>
