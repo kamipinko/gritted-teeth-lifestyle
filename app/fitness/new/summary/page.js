@@ -922,22 +922,34 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
   // OLD date-number position (left of the kanji at the anchor's offset), rotated by
   // the same numRotation the number used pre-stacking, so they slot into the cone
   // ridge sideways like the dates did before the stack commit.
-  // Weekday cluster sits ABOVE the kanji in the inscription's rotated frame. The
-  // wrapper shares the inscription's rotation so cluster + inscription lean together;
-  // letters are then placed at (L-1)*advance, aboveY in that local frame.
+  // Weekday cluster sits ABOVE the inscription, centered horizontally on the midpoint
+  // between the kanji (at local x=0) and the date number (at local x=numCenterX). The
+  // midpoint shifts a couple vb depending on whether the date is single- or double-
+  // digit (different stackGap), so the cluster moves with it.
   const wdParams = () => ({
     fontSize: 13,
     advance:  13,
-    aboveY:   -25,  // weekday cluster sits ~7vb above the kanji's top edge
+    aboveY:   -25,
   })
+  // Mirror the offsets renderInscription uses internally so the cluster lands on the
+  // exact midpoint between kanji center and number center.
+  const wdMidX = (dl) => {
+    const isMulti = (dl.num || '').length >= 2
+    const isCone = (dl.numRotation || 0) !== 0
+    const kanjiBaseFont = isCone ? 22 : 36
+    const numFontSize   = isCone ? 18 : 28
+    const stackGap = isCone ? (isMulti ? 11 : 7) : (isMulti ? 13 : 9)
+    const numCenterX = kanjiBaseFont / 2 + stackGap + numFontSize / 2
+    return numCenterX / 2
+  }
   const wdGroupTransform = (dl) => `translate(${dl.cx},${dl.cy}) rotate(${dl.kanjiRotation || 0})`
-  const wdLetterX = (_dl, L) => (L - 1) * wdParams().advance
+  const wdLetterX = (dl, L) => wdMidX(dl) + (L - 1) * wdParams().advance
   const wdLetterY = () => wdParams().aboveY
   // World-space anchor of the cluster center (used for spawning particles in world
   // coordinates — particle group sits outside the rotated frame).
   const wdCenterWorld = (dl) => {
     const r = (dl.kanjiRotation || 0) * Math.PI / 180
-    const dx = 0
+    const dx = wdMidX(dl)
     const dy = wdParams().aboveY
     return { x: dl.cx + dx * Math.cos(r) - dy * Math.sin(r),
              y: dl.cy + dx * Math.sin(r) + dy * Math.cos(r) }
