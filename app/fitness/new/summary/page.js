@@ -782,12 +782,13 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
   // sharing a single depth-stack so post-flame hot/cooled phases drive both halves.
   // Font sizes scaled to the drill's tight cone bands (≤ ~80vb tall per band slot).
   const NUM_FONT = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-  // Cone-band ridges actually rise from lower-left to upper-right (the trace's stripe
-  // shapes confirm: each band is shorter on the left edge than the right). Rotating
-  // inscriptions by a NEGATIVE angle plants their left edge on the ridge and lets the
-  // kanji column extend along the slope. Applied to base render, zoom-burst, and mask
-  // so every layer rotates together.
-  const RIDGE_ANGLE = -12
+  // Inscriptions are laid sideways along each cone-band ridge — like traditional
+  // vertical Japanese text rotated 90° onto the diagonal. ridge_angle + 90 rests the
+  // glyph's LEFT edge on the ridge with its (rotated) top pointing outward, away from
+  // the drill body. The cone-band ridges themselves run ~ -12° from horizontal, so
+  // RIDGE_ANGLE = -12 + 90 = 78. Applied to base render, zoom-burst, and mask so
+  // every layer rotates together.
+  const RIDGE_ANGLE = 78
   const renderInscription = (dl, { hot = false, maskFill = null } = {}) => {
     const { num, kanjiStr } = dl
     const kanjiChars = (kanjiStr || '').split('')
