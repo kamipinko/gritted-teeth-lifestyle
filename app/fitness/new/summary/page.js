@@ -1731,7 +1731,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                    className={cls}
                    style={{
                      mixBlendMode: hot ? 'normal' : 'difference',
-                     opacity: flameOn ? 0 : 1,
+                     opacity: 1,
                      transition: 'opacity 0ms',
                    }}>
                   <g transform={`translate(${dl.cx},${dl.cy})`}>
