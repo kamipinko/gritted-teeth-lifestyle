@@ -1574,7 +1574,7 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
       <div>
         {/* Infinity container — full viewport width, vertically centered in the body area.
             Rotated 270° (vertical, upside-down) and scaled 1.875× from center. */}
-        <div style={{ position: 'absolute', top: '230px', left: 0, width: '100vw', maxWidth: 'none', transform: 'rotate(270deg) scale(1.875)', transformOrigin: 'center' }}>
+        <div style={{ position: 'absolute', top: '220px', left: 0, width: '100vw', maxWidth: 'none', transform: 'rotate(270deg) scale(1.875)', transformOrigin: 'center' }}>
           {mounted && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -1594,7 +1594,7 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
               <mask id="infinity-inscription-window" maskUnits="userSpaceOnUse" x="0" y="0" width={VB_W} height={VB_H}>
                 <rect x="0" y="0" width={VB_W} height={VB_H} fill="black"/>
                 {dayLabels.map((dl, i) => glowingDays[i] ? (
-                  <g key={`inf-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
+                  <g key={`inf-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(90)`}>
                     {renderDayInscription(dl, { maskFill: 'white' })}
                   </g>
                 ) : null)}
@@ -1658,7 +1658,7 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
                      opacity: flameOn ? 0 : 1,
                      transition: 'opacity 0ms',
                    }}>
-                  <g transform={`translate(${dl.cx},${dl.cy})`}>
+                  <g transform={`translate(${dl.cx},${dl.cy}) rotate(90)`}>
                     {renderDayInscription(dl, { hot })}
                   </g>
                 </g>
@@ -1668,7 +1668,7 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
             {glowIntensity === 'peak' && (
               <g style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
                 {dayLabels.map((dl, i) => (
-                  <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
+                  <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(90)`}>
                     <g style={{
                           transformBox: 'fill-box', transformOrigin: 'center',
                           animation: `inscription-zoom 340ms ease-out forwards ${i * 220}ms`,
