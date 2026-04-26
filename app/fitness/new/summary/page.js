@@ -2316,34 +2316,31 @@ export default function SummaryPage() {
         <CycleOuroboros days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
       )}
 
-      {days.length === 7 && (
-        <div className="fixed bottom-5 left-5 z-40 no-print pointer-events-none max-w-[60vw]">
-          <div className="leading-tight uppercase"
-               style={{
-                 fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
-                 fontSize: '24px',
-                 fontWeight: 600,
-                 color: '#d4181f',
-               }}>
-            {cycleName}
+      {(days.length === 7 || days.length === 14) && (() => {
+        // Cycle title styled to match the ETCH/CYCLE watermark exactly: same Shippori Mincho
+        // serif, 18px, weight 600, dim red 65% alpha, 0.35em letter spacing, each word on
+        // its own line.
+        const titleStyle = {
+          fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
+          fontSize: '18px',
+          fontWeight: 600,
+          letterSpacing: '0.35em',
+          color: 'rgba(212, 24, 31, 0.65)',
+          lineHeight: '1.6',
+          textTransform: 'uppercase',
+        }
+        const words = cycleName.split(/\s+/).filter(Boolean)
+        const containerStyle = days.length === 7
+          ? { position: 'fixed', bottom: '20px', left: '20px', zIndex: 40, pointerEvents: 'none' }
+          : { position: 'fixed', top: '140px', left: '50%', transform: 'translateX(-50%)', zIndex: 40, pointerEvents: 'none', textAlign: 'center' }
+        return (
+          <div className="no-print" style={containerStyle}>
+            {words.map((w, i) => (
+              <div key={i} style={titleStyle}>{w}</div>
+            ))}
           </div>
-        </div>
-      )}
-
-      {days.length === 14 && (
-        <div className="fixed z-40 no-print pointer-events-none"
-             style={{ top: '140px', left: '50%', transform: 'translateX(-50%)', maxWidth: '80vw' }}>
-          <div className="leading-tight uppercase text-center"
-               style={{
-                 fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
-                 fontSize: '24px',
-                 fontWeight: 600,
-                 color: '#d4181f',
-               }}>
-            {cycleName}
-          </div>
-        </div>
-      )}
+        )
+      })()}
 
       {days.length >= 8 && days.length <= 13 && (
         <CycleDrill days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
