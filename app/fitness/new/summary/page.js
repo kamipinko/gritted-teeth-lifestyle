@@ -1468,6 +1468,8 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
 function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [], weekdayLetterIgnited = [], weekdayLetterZoomed = [], weekdayLetterCooled = [] }) {
   const N = days.length
   const anyGlowing = glowingDays.some(Boolean)
+  const anyHot     = hotDays.some(Boolean)
+  const allCooled  = cooledDays.length > 0 && cooledDays.every(Boolean)
   const anyWeekdayIgnited = Array.isArray(weekdayLetterIgnited) && weekdayLetterIgnited.some(Boolean)
 
   const [mounted, setMounted] = useState(false)
@@ -1640,13 +1642,31 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                 red-frame flame layer below is the only flame visual now.
                 Inscriptions still cascade through hot/cool color states. */}
 
-            {/* Void overlay — during cascade, blacken the scroll's red regions
-                so the orange particles below register visibly. Mirrors
-                BeginButton's flickering void-black trick. After cascade ends the
-                overlay unmounts and the red returns. */}
-            {anyGlowing && (
+            {/* Red-frame cascade overlays — match the inscription cascade phases.
+                During flame: void-black so particles read. During hot: orange
+                glow with a cream highlight (mirrors DEPTH_STACK_HOT colors).
+                When all columns cool: opacity fades to 0 over 1s, revealing red. */}
+            {(anyGlowing || anyHot) && (
               <g mask="url(#scroll-red-frame)" style={{ pointerEvents: 'none' }}>
-                <rect x="0" y="0" width="1061" height="1300" fill="#0a0a0a" opacity="0.92"/>
+                {anyGlowing && (
+                  <rect x="0" y="0" width="1061" height="1300" fill="#0a0a0a" opacity="0.92"/>
+                )}
+                {anyHot && (
+                  <rect
+                    x="0" y="0" width="1061" height="1300"
+                    className={allCooled ? 'scroll-frame-cooled' : 'scroll-frame-hot'}
+                    fill="#ff6600"
+                  />
+                )}
+              </g>
+            )}
+            {anyHot && (
+              <g mask="url(#scroll-red-frame)" style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
+                <rect
+                  x="0" y="0" width="1061" height="1300"
+                  className={allCooled ? 'scroll-frame-cooled' : 'scroll-frame-hot-highlight'}
+                  fill="#ffe0a0"
+                />
               </g>
             )}
 
@@ -1706,6 +1726,11 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
               }
               .scroll-inscription-hot    { animation: scroll-inscription-hot-hold-lite 100ms forwards; }
               .scroll-inscription-cooled { animation: scroll-inscription-cool-down-lite 1000ms ease-out forwards; }
+              /* Red-frame cascade overlays — glow orange/cream during hot phase,
+                 fade to fully transparent over 1s when allCooled flips. */
+              .scroll-frame-hot           { opacity: 0.85; }
+              .scroll-frame-hot-highlight { opacity: 0.40; }
+              .scroll-frame-cooled        { opacity: 0; transition: opacity 1000ms ease-out; }
             `}</style>
             {dayLabels.map((dl, i) => {
               const hot = !!hotDays[i]
