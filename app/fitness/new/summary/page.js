@@ -940,7 +940,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
     const numFontSize   = isCone ? 18 : 28
     const stackGap = isCone ? (isMulti ? 11 : 7) : (isMulti ? 13 : 9)
     const numCenterX = kanjiBaseFont / 2 + stackGap + numFontSize / 2
-    return numCenterX / 2
+    return numCenterX / 2 - 4  // nudged 4vb left of the kanji↔number midpoint
   }
   const wdGroupTransform = (dl) => `translate(${dl.cx},${dl.cy}) rotate(${dl.kanjiRotation || 0})`
   const wdLetterX = (dl, L) => wdMidX(dl) + (L - 1) * wdParams().advance
