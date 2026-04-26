@@ -2497,7 +2497,7 @@ export default function SummaryPage() {
           matches the title above the upper loop. */}
       {isInfinity && (
         <div className="fixed z-[20] no-print pointer-events-none"
-             style={{ top: '480px', left: 'calc(50% + 20px)', transform: 'translateX(-50%)', textAlign: 'center' }}>
+             style={{ top: '480px', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
           {['ETCH', 'CYCLE'].map((word) => (
             <div key={word} style={{
               fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
