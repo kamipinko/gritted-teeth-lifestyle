@@ -1112,7 +1112,10 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
     // radius than the global R_INSC=510, with thin tail wisps trailing inside it. Pushing
     // day 7's inscription OUT to R=580 lands it on the outer thick body where it belongs.
     const r = i === 6 ? 580 : R_INSC
-    const cx = CX + r * Math.sin(rad)
+    // Day 7 (i=6) nudged left ~5 screen px (~17 viewBox units) for tighter alignment with
+    // the FRI weekday cluster.
+    const cxShift = i === 6 ? -17 : 0
+    const cx = CX + r * Math.sin(rad) + cxShift
     // Per-day vertical nudges:
     //   day 1 (i=0) shifts up ~30 screen px (~105 viewBox units) so its kanji + side-rendered
     //   date number sit clear of the snake's head/bite zone.
