@@ -1511,9 +1511,9 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
   const WEEKDAY_ADVANCE = 18
   // 7 anchors per loop, even compass distribution. Days 1-7 trace the left loop CW; days
   // 8-14 trace the right loop CCW so the date order flows continuously around the figure-8.
-  // Bottom (left) loop shifted 1 step CCW; top (right) loop shifted 3 steps CW so each
-  // anchor lands at the originally-occupied position 3 spots CW from its old slot.
-  const COMPASS_LEFT  = [309, 0, 51, 103, 154, 206, 257]
+  // Bottom (left) loop shifted 3 steps CCW total; top (right) loop shifted 3 steps CW so
+  // each anchor lands cleanly on the segmented ring.
+  const COMPASS_LEFT  = [206, 257, 309, 0, 51, 103, 154]
   const COMPASS_RIGHT = [154, 206, 257, 309, 0, 51, 103]
 
   const dayLabels = days.slice(0, 14).map((iso, i) => {
