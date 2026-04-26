@@ -1511,10 +1511,16 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
     return { num, hasWork, kanjiStr, iso, cx: a.x, cy: a.y, side: a.side }
   })
 
-  // Day-number depth-stack (mirrors CycleDrill's renderNum, sized to fit the grid cell).
-  const NUM_FONT_SIZE = 44
+  // Day-number + muscle-kanji depth-stack inscription (mirrors CycleBlade's
+  // renderDayInscription, scaled down to fit each scroll grid cell). Each cell
+  // stacks: day number (top), kanji char(s) for the day's muscles (middle).
+  // The kanji renders compactly: 1-3 chars on a single row, 4+ on two rows.
+  const NUM_FONT_SIZE = 36
   const NUM_FONT = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-  const renderNum = (numStr, { hot = false, maskFill = null } = {}) => {
+  const renderInscription = (dl, { hot = false, maskFill = null } = {}) => {
+    const { num, kanjiStr } = dl
+    const kanjiChars = kanjiStr.split('')
+    const n = kanjiChars.length
     const DEPTH_STACK_RED = [
       { dy: 2, fill: '#3a0608' },
       { dy: 1, fill: '#9e1118' },
@@ -1526,18 +1532,43 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
       { dy: 0, fill: '#ff6600' },
     ]
     const stack = maskFill ? [{ dy: 0, fill: maskFill }] : (hot ? DEPTH_STACK_HOT : DEPTH_STACK_RED)
-    return stack.map((layer, li) => (
-      <text key={`num-${li}`} x={0} y={layer.dy} textAnchor="middle" dominantBaseline="central"
-        style={{ fontFamily: NUM_FONT, fontSize: `${NUM_FONT_SIZE}px`, fontWeight: 700, fill: layer.fill }}>
-        {numStr}
+    const renderText = (keyBase, x, y, fontSize, char) => stack.map((layer, li) => (
+      <text key={`${keyBase}-${li}`} x={x} y={y + layer.dy} textAnchor="middle" dominantBaseline="central"
+        style={{ fontFamily: NUM_FONT, fontSize: `${fontSize}px`, fontWeight: 700, fill: layer.fill }}>
+        {char}
       </text>
     ))
+    // Day number sits at y = -28 (above center); kanji block sits at y = +14 (below center).
+    const numEls = renderText('num', 0, -28, NUM_FONT_SIZE, num)
+    let kanjiEls = null
+    if (n === 1) {
+      kanjiEls = renderText('kj0', 0, 14, 44, kanjiChars[0])
+    } else if (n <= 3) {
+      const colSpacing = n === 2 ? 32 : 30
+      const fontSize   = n === 2 ? 36 : 28
+      kanjiEls = kanjiChars.flatMap((k, ki) =>
+        renderText(`kj${ki}`, (ki - (n - 1) / 2) * colSpacing, 14, fontSize, k))
+    } else {
+      // n >= 4: 2 rows × ceil(n/2) cols, ~22px font.
+      const cols = Math.ceil(n / 2)
+      const fontSize = 22
+      const colSpacing = 26
+      const rowYStep   = 22
+      kanjiEls = kanjiChars.flatMap((k, ki) => {
+        const row = Math.floor(ki / cols)
+        const col = ki % cols
+        const x = (col - (cols - 1) / 2) * colSpacing
+        const y = 4 + row * rowYStep
+        return renderText(`kj${ki}`, x, y, fontSize, k)
+      })
+    }
+    return <>{numEls}{kanjiEls}</>
   }
 
-  // Weekday DOW label sits centered below each day number (offset y by ~36 viewBox units).
-  const WEEKDAY_FONT_SIZE = 26
-  const WEEKDAY_ADVANCE   = 22
-  const WEEKDAY_DY        = 36
+  // Weekday DOW label sits centered below the kanji block (offset y by ~52 from cell center).
+  const WEEKDAY_FONT_SIZE = 24
+  const WEEKDAY_ADVANCE   = 20
+  const WEEKDAY_DY        = 52
   // Per-letter x: center-anchored around the cell so all 3 letters sit together below the day number.
   const weekdayLetterX = (cx, L) => cx + (L - 1) * WEEKDAY_ADVANCE
 
@@ -1567,15 +1598,12 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
               />
             )}
             <defs>
-              {/* Inscription mask — particles flow through ignited day-number silhouettes. */}
+              {/* Inscription mask — particles flow through ignited day-number + kanji silhouettes. */}
               <mask id="scroll-inscription-window" maskUnits="userSpaceOnUse" x="0" y="0" width="1061" height="1300">
                 <rect x="0" y="0" width="1061" height="1300" fill="black"/>
                 {dayLabels.map((dl, i) => glowingDays[i] ? (
                   <g key={`scroll-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
-                    <text x={0} y={0} textAnchor="middle" dominantBaseline="central"
-                      style={{ fontFamily: NUM_FONT, fontSize: `${NUM_FONT_SIZE}px`, fontWeight: 700, fill: 'white' }}>
-                      {dl.num}
-                    </text>
+                    {renderInscription(dl, { maskFill: 'white' })}
                   </g>
                 ) : null)}
               </mask>
@@ -1670,7 +1698,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                      transition: 'opacity 0ms',
                    }}>
                   <g transform={`translate(${dl.cx},${dl.cy})`}>
-                    {renderNum(dl.num, { hot })}
+                    {renderInscription(dl, { hot })}
                   </g>
                 </g>
               )
@@ -1688,7 +1716,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                           filter: 'drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 16px #ff4400)',
                           opacity: 0,
                        }}>
-                      {renderNum(dl.num, { maskFill: '#ff6600' })}
+                      {renderInscription(dl, { maskFill: '#ff6600' })}
                     </g>
                   </g>
                 ))}
