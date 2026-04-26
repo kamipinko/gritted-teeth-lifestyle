@@ -782,6 +782,11 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
   // sharing a single depth-stack so post-flame hot/cooled phases drive both halves.
   // Font sizes scaled to the drill's tight cone bands (≤ ~80vb tall per band slot).
   const NUM_FONT = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+  // Cone-band ridges slant ~12° clockwise from horizontal (upper-left → lower-right).
+  // Rotating inscriptions by the same angle makes them read as carved INTO the bands
+  // rather than floating upright above them. Applied to base render, zoom-burst, and
+  // mask transforms so all layers stay aligned.
+  const RIDGE_ANGLE = 12
   const renderInscription = (dl, { hot = false, maskFill = null } = {}) => {
     const { num, kanjiStr } = dl
     const kanjiChars = (kanjiStr || '').split('')
@@ -878,7 +883,7 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               <mask id="drill-inscription-window" maskUnits="userSpaceOnUse" x="0" y="0" width="816" height="931">
                 <rect x="0" y="0" width="816" height="931" fill="black"/>
                 {dayLabels.map((dl, i) => glowingDays[i] ? (
-                  <g key={`drill-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
+                  <g key={`drill-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${RIDGE_ANGLE})`}>
                     {renderInscription(dl, { maskFill: 'white' })}
                   </g>
                 ) : null)}
@@ -974,7 +979,7 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                      opacity: flameOn ? 0 : 1,
                      transition: 'opacity 0ms',
                    }}>
-                  <g transform={`translate(${dl.cx},${dl.cy})`}>
+                  <g transform={`translate(${dl.cx},${dl.cy}) rotate(${RIDGE_ANGLE})`}>
                     {renderInscription(dl, { hot })}
                   </g>
                 </g>
@@ -985,7 +990,7 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
             {glowIntensity === 'peak' && (
               <g style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
                 {dayLabels.map((dl, i) => (
-                  <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
+                  <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${RIDGE_ANGLE})`}>
                     <g className="zoom-glyph" style={{ animationDelay: `${i * 220}ms`,
                           transformBox: 'fill-box', transformOrigin: 'center',
                           animation: `inscription-zoom 340ms ease-out forwards ${i * 220}ms`,
