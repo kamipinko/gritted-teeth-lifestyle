@@ -2165,8 +2165,8 @@ export default function SummaryPage() {
         width={130} height={78}
         viewBox="0 0 130 78"
         style={{
-          bottom: 'calc(20px + 128px + 10px)',
-          right: '2px',
+          bottom: '20px',
+          right: 'calc(20px + 128px + 10px)',
           transform: 'rotate(8deg)',
           transformOrigin: 'right bottom',
           overflow: 'visible',
