@@ -5,7 +5,7 @@
  * For short cycles (<7 days): THE BLADE — a vertical katana with days
  * etched along it. For longer cycles (>=7 days): classic day card grid.
  */
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useSound } from '../../../../lib/useSound'
@@ -744,26 +744,29 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
   useEffect(() => { setMounted(true) }, [])
 
   // 13 anchor slots in the drill SVG's native viewBox (816×931 from the trace).
-  // Cone band centers come from the actual ridge geometry: each band's worldspace
-  // bbox center (computed via getBBox() on the 6 cone-band paths in drill.svg). This
-  // locks every cone inscription to a real ridge instead of an arbitrary y-spacing on
-  // x=300. Per-anchor `rotation` field carries the slant so cone bands tilt to ride
-  // their ridges and base anchors stay upright on the rectangular base section.
-  const CONE_RIDGE_ROTATION = -70 // ridge tilt + 90° offset (left-edge-on-ridge)
+  // Cone band centers come from each band path's bbox (Playwright getBBox on drill.svg).
+  // Numbers and kanji rotate independently:
+  //   - numRotation (cone): left-edge-on-ridge sideways orientation
+  //   - kanjiRotation (cone): ridge tilt only (no 90° offset) — kanji bottom rests on the
+  //     ridge line at the band's natural slant.
+  // Base anchors stay axis-upright (both rotations 0°). Number sits to the LEFT of the
+  // kanji at each anchor by NUM_OFFSET viewBox units.
+  const CONE_NUM_ROTATION   = -70
+  const CONE_KANJI_ROTATION =  12
   const ALL_ANCHORS = [
-    { x: 417,   y: 91,  side: 'right', rotation: CONE_RIDGE_ROTATION }, // cone band 0 (apex)
-    { x: 419,   y: 182, side: 'left',  rotation: CONE_RIDGE_ROTATION },
-    { x: 423,   y: 272, side: 'right', rotation: CONE_RIDGE_ROTATION },
-    { x: 427.5, y: 380, side: 'left',  rotation: CONE_RIDGE_ROTATION },
-    { x: 425,   y: 474, side: 'right', rotation: CONE_RIDGE_ROTATION },
-    { x: 337,   y: 524, side: 'left',  rotation: CONE_RIDGE_ROTATION }, // small lower-left band
-    { x: 408,   y: 620, side: 'right', rotation: 0 },                    // base row 0 (centered)
-    { x: 290,   y: 700, side: 'left',  rotation: 0 },                    // base row 1
-    { x: 525,   y: 700, side: 'right', rotation: 0 },
-    { x: 290,   y: 790, side: 'left',  rotation: 0 },                    // base row 2
-    { x: 525,   y: 790, side: 'right', rotation: 0 },
-    { x: 290,   y: 860, side: 'left',  rotation: 0 },                    // base row 3
-    { x: 525,   y: 860, side: 'right', rotation: 0 },
+    { x: 417,   y: 91,  side: 'right', numRotation: CONE_NUM_ROTATION, kanjiRotation: CONE_KANJI_ROTATION }, // cone band 0
+    { x: 419,   y: 182, side: 'left',  numRotation: CONE_NUM_ROTATION, kanjiRotation: CONE_KANJI_ROTATION },
+    { x: 423,   y: 272, side: 'right', numRotation: CONE_NUM_ROTATION, kanjiRotation: CONE_KANJI_ROTATION },
+    { x: 427.5, y: 380, side: 'left',  numRotation: CONE_NUM_ROTATION, kanjiRotation: CONE_KANJI_ROTATION },
+    { x: 425,   y: 474, side: 'right', numRotation: CONE_NUM_ROTATION, kanjiRotation: CONE_KANJI_ROTATION },
+    { x: 337,   y: 524, side: 'left',  numRotation: CONE_NUM_ROTATION, kanjiRotation: CONE_KANJI_ROTATION },
+    { x: 408,   y: 620, side: 'right', numRotation: 0, kanjiRotation: 0 }, // base row 0
+    { x: 290,   y: 700, side: 'left',  numRotation: 0, kanjiRotation: 0 }, // base row 1
+    { x: 525,   y: 700, side: 'right', numRotation: 0, kanjiRotation: 0 },
+    { x: 290,   y: 790, side: 'left',  numRotation: 0, kanjiRotation: 0 }, // base row 2
+    { x: 525,   y: 790, side: 'right', numRotation: 0, kanjiRotation: 0 },
+    { x: 290,   y: 860, side: 'left',  numRotation: 0, kanjiRotation: 0 }, // base row 3
+    { x: 525,   y: 860, side: 'right', numRotation: 0, kanjiRotation: 0 },
   ]
   const anchors = ALL_ANCHORS.slice(0, Math.min(N, ALL_ANCHORS.length))
 
@@ -776,19 +779,19 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
       ? muscles.map((m) => MUSCLE_KANJI[m] || '?').join('')
       : '休'
     const a = anchors[i] || anchors[anchors.length - 1]
-    return { num, hasWork, kanjiStr, iso, cx: a.x, cy: a.y, side: a.side, rotation: a.rotation }
+    return { num, hasWork, kanjiStr, iso, cx: a.x, cy: a.y, side: a.side,
+             numRotation: a.numRotation, kanjiRotation: a.kanjiRotation }
   })
 
-  // Day-number + kanji column inscription — mirrors CycleBlade / CycleScroll's
-  // renderInscription pattern: number above center, muscle kanji below, both
-  // sharing a single depth-stack so post-flame hot/cooled phases drive both halves.
-  // Font sizes scaled to the drill's tight cone bands (≤ ~80vb tall per band slot).
+  // Day-number + kanji at each anchor — number sits to the LEFT of the kanji
+  // (offset by NUM_OFFSET viewBox units in world-x) and they rotate independently:
+  //   - number: dl.numRotation (cone bands → -70°, sideways with left edge on ridge)
+  //   - kanji:  dl.kanjiRotation (cone bands → 12°, kanji bottom rests on ridge)
+  // Both halves share a single depth-stack so hot/cooled phases drive them in unison.
   const NUM_FONT = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
-  // Per-anchor rotation now lives on each anchor (`dl.rotation`). Cone bands carry
-  // CONE_RIDGE_ROTATION; base anchors are upright (0°). Rotation is applied on the
-  // outer wrapper of the inscription, the zoom-burst, and the mask.
+  const NUM_OFFSET = 36  // ~one number-glyph width in viewBox units
   const renderInscription = (dl, { hot = false, maskFill = null } = {}) => {
-    const { num, kanjiStr } = dl
+    const { num, kanjiStr, cx, cy, numRotation = 0, kanjiRotation = 0 } = dl
     const kanjiChars = (kanjiStr || '').split('')
     const n = kanjiChars.length
 
@@ -811,15 +814,18 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
       </text>
     ))
 
-    // Number sits above the anchor; kanji column drops below. Sizes shrink as the
-    // kanji count grows so multi-muscle days stay inside the band.
-    const numEls = renderText('num', 0, -22, 32, num)
+    // Number — single glyph centered around its own anchor at (cx - NUM_OFFSET, cy).
+    const numEls = renderText('num', 0, 0, 32, num)
 
+    // Kanji column — single glyph or grid centered around (cx, cy). Multi-kanji
+    // clusters center vertically around the anchor instead of dropping below.
     let kanjiEls = []
     if (n === 1) {
-      kanjiEls = renderText('kj0', 0, 22, 42, kanjiChars[0])
+      kanjiEls = renderText('kj0', 0, 0, 42, kanjiChars[0])
     } else if (n <= 4) {
-      const fontSize = 26, colSpacing = 28, baseY = 16, rowYStep = 26
+      const fontSize = 26, colSpacing = 28, rowYStep = 26
+      const totalRows = Math.ceil(n / 2)
+      const baseY = -((totalRows - 1) * rowYStep) / 2
       kanjiEls = kanjiChars.flatMap((k, ki) => {
         const row = Math.floor(ki / 2)
         const isOddLast = n % 2 === 1 && ki === n - 1
@@ -828,8 +834,9 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
         return renderText(`kj${ki}`, x, y, fontSize, k)
       })
     } else {
-      // n ≥ 5 — pack tighter, 2 cols, vertical stack
-      const fontSize = 22, colSpacing = 24, baseY = 12, rowYStep = 22
+      const fontSize = 22, colSpacing = 24, rowYStep = 22
+      const totalRows = Math.ceil(n / 2)
+      const baseY = -((totalRows - 1) * rowYStep) / 2
       kanjiEls = kanjiChars.flatMap((k, ki) => {
         const row = Math.floor(ki / 2)
         const isOddLast = n % 2 === 1 && ki === n - 1
@@ -839,7 +846,16 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
       })
     }
 
-    return <>{numEls}{kanjiEls}</>
+    return (
+      <>
+        <g transform={`translate(${cx - NUM_OFFSET},${cy}) rotate(${numRotation})`}>
+          {numEls}
+        </g>
+        <g transform={`translate(${cx},${cy}) rotate(${kanjiRotation})`}>
+          {kanjiEls}
+        </g>
+      </>
+    )
   }
 
   // Weekday-label horizontal advance per letter and label position helper.
@@ -883,9 +899,9 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               <mask id="drill-inscription-window" maskUnits="userSpaceOnUse" x="0" y="0" width="816" height="931">
                 <rect x="0" y="0" width="816" height="931" fill="black"/>
                 {dayLabels.map((dl, i) => glowingDays[i] ? (
-                  <g key={`drill-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.rotation})`}>
+                  <Fragment key={`drill-mask-${dl.iso}`}>
                     {renderInscription(dl, { maskFill: 'white' })}
-                  </g>
+                  </Fragment>
                 ) : null)}
               </mask>
               {/* Weekday-label mask — particles clipped to weekday letter silhouettes. */}
@@ -979,9 +995,7 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                      opacity: flameOn ? 0 : 1,
                      transition: 'opacity 0ms',
                    }}>
-                  <g transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.rotation})`}>
-                    {renderInscription(dl, { hot })}
-                  </g>
+                  {renderInscription(dl, { hot })}
                 </g>
               )
             })}
@@ -990,16 +1004,14 @@ function CycleDrill({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
             {glowIntensity === 'peak' && (
               <g style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
                 {dayLabels.map((dl, i) => (
-                  <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.rotation})`}>
-                    <g className="zoom-glyph" style={{ animationDelay: `${i * 220}ms`,
-                          transformBox: 'fill-box', transformOrigin: 'center',
-                          animation: `inscription-zoom 340ms ease-out forwards ${i * 220}ms`,
-                          mixBlendMode: 'plus-lighter',
-                          filter: 'drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 16px #ff4400)',
-                          opacity: 0,
-                       }}>
-                      {renderInscription(dl, { maskFill: '#ff6600' })}
-                    </g>
+                  <g key={`zoom-${dl.iso}`} className="zoom-glyph" style={{ animationDelay: `${i * 220}ms`,
+                        transformBox: 'fill-box', transformOrigin: 'center',
+                        animation: `inscription-zoom 340ms ease-out forwards ${i * 220}ms`,
+                        mixBlendMode: 'plus-lighter',
+                        filter: 'drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 16px #ff4400)',
+                        opacity: 0,
+                     }}>
+                    {renderInscription(dl, { maskFill: '#ff6600' })}
                   </g>
                 ))}
               </g>
