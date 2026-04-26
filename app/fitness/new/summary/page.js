@@ -1890,19 +1890,22 @@ export default function SummaryPage() {
       }, 200 + step * 60)
     }
     setTimeout(() => setGlowIntensity('peak'),      1600)   // zoom-burst cascade begins (340ms per glyph, 220ms stagger)
-    // Fast cascade: flame off + hot on + zoom fires at t=1600 + i*220.
-    for (let i = 0; i < N; i++) {
-      const at = 1600 + i * 220
+    // Fast cascade: flame off + hot on + zoom. REVERSE order — anchor 13 fires
+    // first at t=1600, anchor 1 last at t=1600 + (N-1)*220.
+    for (let step = 0; step < N; step++) {
+      const dayIdx = N - 1 - step
+      const at = 1600 + step * 220
       setTimeout(() => {
-        setGlowingDays(prev => { const next = [...prev]; next[i] = false; return next })
-        setHotDays(prev => { const next = [...prev]; next[i] = true; return next })
+        setGlowingDays(prev => { const next = [...prev]; next[dayIdx] = false; return next })
+        setHotDays(prev => { const next = [...prev]; next[dayIdx] = true; return next })
       }, at)
     }
-    // Slow dissipation: each inscription cools 1600+i*350ms after the zoom cascade starts.
-    for (let i = 0; i < N; i++) {
+    // Slow dissipation, REVERSE order — anchor 13 cools first at t=3200, anchor 1 last.
+    for (let step = 0; step < N; step++) {
+      const dayIdx = N - 1 - step
       setTimeout(() => {
-        setCooledDays(prev => { const next = [...prev]; next[i] = true; return next })
-      }, 1600 + 1600 + i * 350)
+        setCooledDays(prev => { const next = [...prev]; next[dayIdx] = true; return next })
+      }, 1600 + 1600 + step * 350)
     }
     // Last inscription's zoom cascade ends at 1600 + (N-1)*220 + 340.
     const glowOffAt   = 1600 + (N - 1) * 220 + 340
@@ -1930,34 +1933,23 @@ export default function SummaryPage() {
       }, 1035 + i * 50)
     }
 
-    // Per-letter weekday cascade with two stagger speeds (canonical, see project_gtl_yakiire_per_letter):
-    //   Flame: 50ms per letter, Zoom: 50ms per letter, Cooled: 75ms per letter.
-    // Direction depends on day side: left-side R-to-L, right-side L-to-R.
-    // Pairs cascade middle-out: pair 0 = innermost, pair k+1 starts 50ms after pair k.
+    // Per-letter weekday cascade with canonical stagger speeds (50ms flame / 50ms zoom /
+    // 75ms cooled). REVERSE linear order — anchor 13's weekday fires first, anchor 1 last.
+    // Within each weekday, letters cascade right-to-left for left-side anchors, left-to-
+    // right for right-side ones (kept from the original blade behavior).
     const halfN = Math.floor(N / 2)
     const isLeftSide = (dayIdx) => dayIdx < halfN
     const letterStaggerOffsetFast = (dayIdx, L) => isLeftSide(dayIdx) ? (2 - L) * 50 : L * 50
     const letterStaggerOffsetCooled = (dayIdx, L) => isLeftSide(dayIdx) ? (2 - L) * 75 : L * 75
     const letterStaggerOffsetSlow = (dayIdx, L) => isLeftSide(dayIdx) ? (2 - L) * 50 : L * 50
 
-    // Build middle-out pair list for any N.
-    const buildMiddleOutPairs = (n) => {
-      const pairs = []
-      if (n % 2 === 0) {
-        const m = n / 2
-        for (let k = 0; k < m; k++) pairs.push([m - 1 - k, m + k])
-      } else {
-        const m = (n - 1) / 2
-        pairs.push([m])
-        for (let k = 1; k <= m; k++) pairs.push([m - k, m + k])
-      }
-      return pairs
-    }
-    const WEEKDAY_PAIRS = buildMiddleOutPairs(N).map((daysInPair, k) => ({
-      days: daysInPair,
-      flame:  900  + k * 50,
-      zoom:   3000 + k * 50,
-      cooled: 3650 + k * 75,
+    // Reverse-linear pair list: each "pair" is a single anchor, cascading from the
+    // last (anchor N) down to the first (anchor 1) at 50ms-per-step.
+    const WEEKDAY_PAIRS = Array.from({ length: N }, (_, step) => ({
+      days: [N - 1 - step],
+      flame:  900  + step * 50,
+      zoom:   3000 + step * 50,
+      cooled: 3650 + step * 75,
     }))
     WEEKDAY_PAIRS.forEach(({ days: pairDays, flame, zoom, cooled }) => {
       pairDays.forEach(dayIdx => {
