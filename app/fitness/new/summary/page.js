@@ -1574,7 +1574,7 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
       <div>
         {/* Infinity container — full viewport width, vertically centered in the body area.
             Rotated 270° (vertical, upside-down) and scaled 1.875× from center. */}
-        <div style={{ position: 'absolute', top: '220px', left: 0, width: '100vw', maxWidth: 'none', transform: 'rotate(270deg) scale(1.875)', transformOrigin: 'center' }}>
+        <div style={{ position: 'absolute', top: '215px', left: 0, width: '100vw', maxWidth: 'none', transform: 'rotate(270deg) scale(1.875)', transformOrigin: 'center' }}>
           {mounted && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
