@@ -1769,8 +1769,8 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                 const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
                 const s         = dayScale(dl)
                 const fontSize  = WEEKDAY_FONT_SIZE * s
-                const lineH     = 18 * s
-                const xOff      = -60 * s   // horizontal offset to the left of cell center
+                const lineH     = 28 * s    // taller line so letters don't collide
+                const xOff      = -45 * s   // closer to the inscriptions on their right
                 const yCenter   = 28 * s    // align with kanji block vertical center
                 return (
                   <g key={`dow-${dl.iso}`}>
