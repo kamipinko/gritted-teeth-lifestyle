@@ -2847,21 +2847,20 @@ export default function SummaryPage() {
             }
           : wmBladeLike
           ? {
-              // Blade (≤6) + ouroboros (=7): watermark sits beside the 128px flame
-              // button (bottom-aligned, ~10px gap to its left). Slight 8° tilt
-              // pivoted around the right-bottom corner.
-              bottom: '20px',
-              right: 'calc(20px + 128px + 10px)',
+              // Blade (≤6) + ouroboros (=7): watermark sits ABOVE the 128px flame
+              // button. 8° tilt pivoted around the right-bottom corner.
+              bottom: 'calc(20px + 128px + 10px)',
+              right: '2px',
               transform: 'rotate(8deg)',
               transformOrigin: 'right bottom',
               overflow: 'visible',
             }
           : wmDrill
           ? {
-              // Drill (8-13): watermark sits ABOVE the 128px flame button — the
-              // pre-blade-fix position. Same 8° tilt, right-edge-aligned.
-              bottom: 'calc(20px + 128px + 10px)',
-              right: '2px',
+              // Drill (8-13): watermark sits beside the 128px flame button (bottom-
+              // aligned, ~10px gap to its left). Same 8° tilt, right-bottom origin.
+              bottom: '20px',
+              right: 'calc(20px + 128px + 10px)',
               transform: 'rotate(8deg)',
               transformOrigin: 'right bottom',
               overflow: 'visible',
