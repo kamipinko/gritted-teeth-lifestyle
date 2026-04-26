@@ -1113,7 +1113,10 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
     // day 7's inscription OUT to R=580 lands it on the outer thick body where it belongs.
     const r = i === 6 ? 580 : R_INSC
     const cx = CX + r * Math.sin(rad)
-    const cy = CY - r * Math.cos(rad)
+    // Day 1 (first anchor) inscription is shifted up ~10 screen px (~35 viewBox units) so
+    // its kanji + side-rendered date number sit higher in the head/bite zone.
+    const cyShift = i === 0 ? -35 : 0
+    const cy = CY - r * Math.cos(rad) + cyShift
     // Weekday cluster sits on the inner hollow at R_WEEKDAY. World coords precomputed so
     // both the rendered text and the particle spawn (in world space) share the same anchor.
     const wdCx = CX + R_WEEKDAY * Math.sin(rad)
