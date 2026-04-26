@@ -2564,7 +2564,7 @@ export default function SummaryPage() {
               // smaller 92px flame button (button at bottom:5, right:5, size 92).
               // No tilt — sits flush against the button's left edge.
               bottom: '20px',
-              right: 'calc(5px + 92px + 6px)',
+              right: 'calc(5px + 92px - 4px)',
               overflow: 'visible',
             }
           : {
