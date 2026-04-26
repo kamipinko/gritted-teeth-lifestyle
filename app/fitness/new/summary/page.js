@@ -1089,8 +1089,8 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
   const CY = 685
   const R_INSC = 510
   const WEEKDAY_RADIAL = 90       // local outward distance from anchor (in viewBox units)
-  const WEEKDAY_FONT_SIZE = 38
-  const WEEKDAY_ADVANCE = 38
+  const WEEKDAY_FONT_SIZE = 48
+  const WEEKDAY_ADVANCE = 48
   // Seven anchors over a 240° arc (compass 70°→310° at 40° spacing) leave a 120° wedge at
   // the top clear for the head/bite junction.
   const COMPASS_ANGLES = [70, 110, 150, 190, 230, 270, 310]
@@ -1141,13 +1141,13 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
       </text>
     ))
 
-    const numEls = renderText('num', 0, -28, 56, num)
+    const numEls = renderText('num', 0, -36, 70, num)
 
     let kanjiEls
     if (n === 1) {
-      kanjiEls = renderText('kj0', 0, 26, 64, kanjiChars[0])
+      kanjiEls = renderText('kj0', 0, 32, 80, kanjiChars[0])
     } else if (n <= 4) {
-      const fontSize = 38, colSpacing = 38, baseY = 22, rowYStep = 38
+      const fontSize = 48, colSpacing = 48, baseY = 28, rowYStep = 48
       kanjiEls = kanjiChars.flatMap((k, ki) => {
         const row = Math.floor(ki / 2)
         const isOddLast = n % 2 === 1 && ki === n - 1
@@ -1156,7 +1156,7 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
         return renderText(`kj${ki}`, x, y, fontSize, k)
       })
     } else if (n <= 6) {
-      const fontSize = 30, colSpacing = n === 5 ? 36 : 30, baseY = 18, rowYStep = 30
+      const fontSize = 38, colSpacing = n === 5 ? 45 : 38, baseY = 22, rowYStep = 38
       kanjiEls = kanjiChars.flatMap((k, ki) => {
         const row = Math.floor(ki / 2)
         const isOddLast = n % 2 === 1 && ki === n - 1
@@ -1166,7 +1166,7 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
       })
     } else {
       // n >= 7 — 4 rows × 2 cols, last row centered if odd
-      const fontSize = 26, colSpacing = 28, baseY = 14, rowYStep = 26
+      const fontSize = 32, colSpacing = 35, baseY = 18, rowYStep = 32
       kanjiEls = kanjiChars.flatMap((k, ki) => {
         const row = Math.floor(ki / 2)
         const isOddLast = n % 2 === 1 && ki === n - 1
@@ -1184,7 +1184,7 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
       <div>
         {/* Ouroboros container — square, full viewport width, top-anchored. The dispatched
             stamp card / fire button live below this section in the SummaryPage layout. */}
-        <div style={{ position: 'absolute', top: '60px', left: 0, width: '100vw', maxWidth: 'none' }}>
+        <div style={{ position: 'absolute', top: '100px', left: 0, width: '100vw', maxWidth: 'none' }}>
           {mounted && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
