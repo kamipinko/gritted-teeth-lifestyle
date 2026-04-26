@@ -1456,12 +1456,14 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
 
 /* ── CYCLE SCROLL (15+ days) ──
  * Sister of CycleBlade / CycleDrill / CycleOuroboros. Renders the ancient-scroll
- * silhouette (public/reference/scroll.svg, viewBox 1300x1061) as substrate, with
- * N day inscriptions distributed in a 5-column grid across the central writing
- * area between the two ornate vertical handles. Each cell stacks the day number
- * above its weekday DOW label. Per-letter yakiire (canonical 50ms flame / 50ms
- * zoom / 75ms cooled stagger) cascades on weekday labels via the same state
- * arrays the other cycle components consume.
+ * silhouette (public/reference/scroll.svg) rotated 90° so the ornate handles sit
+ * at TOP and BOTTOM, with the writing banner running vertically between them.
+ * The substrate is inlined as <image> inside the overlay SVG with a rotation
+ * transform so the overlay viewBox is the rotated 1061×1300 frame; inscription
+ * anchors live directly in that vertical coordinate space (3 columns × ceil(N/3)
+ * rows). Each cell stacks the day number above its weekday DOW label. Per-letter
+ * yakiire (canonical 50ms flame / 50ms zoom / 75ms cooled) cascades through the
+ * same state arrays the other cycle components consume.
  */
 function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [], weekdayLetterIgnited = [], weekdayLetterZoomed = [], weekdayLetterCooled = [] }) {
   const N = days.length
@@ -1471,15 +1473,18 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
 
-  // Grid layout — 5 columns, rows = ceil(N/5). Cells distributed across the scroll's
-  // central writing area (x≈260..1040, y≈260..820 in the 1300×1061 viewBox), avoiding
-  // the two handles and the rolled-edge banners at top and bottom.
-  const COLS = 5
+  // Vertical layout — 3 columns, rows = ceil(N/3). Cells distributed across the
+  // scroll's vertical writing area in the rotated viewBox (x≈280..800, y≈270..1030
+  // in the 1061×1300 vertical frame). Avoids the top/bottom handles plus rolled
+  // edges. The original horizontal scroll mapped (x,y) → (y, 1300-x) under
+  // `translate(0 1300) rotate(-90)`; that mapping is baked into the substrate
+  // <image> transform, so anchors here are written in post-rotation coords.
+  const COLS = 3
   const rows = Math.max(1, Math.ceil(N / COLS))
-  const WRITE_X0 = 270
-  const WRITE_X1 = 1030
-  const WRITE_Y0 = 280
-  const WRITE_Y1 = 800
+  const WRITE_X0 = 280
+  const WRITE_X1 = 800
+  const WRITE_Y0 = 270
+  const WRITE_Y1 = 1030
   const colStep = (WRITE_X1 - WRITE_X0) / COLS
   const rowStep = (WRITE_Y1 - WRITE_Y0) / Math.max(rows, 1)
   const halfN   = Math.floor(N / 2)
@@ -1540,28 +1545,29 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
     <section className="relative z-10 py-2 px-2 pointer-events-none min-h-[calc(100vh-7px)]">
       <div>
         {/* Scroll container — width-fit so the silhouette spans the viewport. */}
-        <div style={{ position: 'absolute', top: '60px', left: 0, width: '100vw', maxWidth: 'none' }}>
-          {/* Scroll silhouette substrate. */}
-          {mounted && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src="/reference/scroll.svg"
-              alt="Scroll"
-              className="block w-full h-auto"
-              style={{ filter: 'drop-shadow(0 4px 14px rgba(0,0,0,0.55))' }}
-            />
-          )}
-
-          {/* Overlay — same viewBox as the scroll SVG so anchor coords match exactly. */}
+        <div style={{ position: 'absolute', top: '40px', left: 0, width: '100vw', maxWidth: 'none' }}>
+          {/* Single SVG holds both the rotated substrate (as <image>) and the inscription
+              overlay so they share one coordinate system. ViewBox is the rotated frame
+              1061×1300; substrate <image> applies translate(0 1300) rotate(-90) to bring
+              the source 1300×1061 into that frame with original-right-side at top. */}
           <svg
-            viewBox="0 0 1300 1061"
-            className="absolute inset-0 w-full h-auto pointer-events-none"
+            viewBox="0 0 1061 1300"
+            className="block w-full h-auto pointer-events-none"
             aria-hidden="true"
+            style={{ filter: 'drop-shadow(0 4px 14px rgba(0,0,0,0.55))' }}
           >
+            {mounted && (
+              <image
+                href="/reference/scroll.svg"
+                width="1300"
+                height="1061"
+                transform="translate(0 1300) rotate(-90)"
+              />
+            )}
             <defs>
               {/* Inscription mask — particles flow through ignited day-number silhouettes. */}
-              <mask id="scroll-inscription-window" maskUnits="userSpaceOnUse" x="0" y="0" width="1300" height="1061">
-                <rect x="0" y="0" width="1300" height="1061" fill="black"/>
+              <mask id="scroll-inscription-window" maskUnits="userSpaceOnUse" x="0" y="0" width="1061" height="1300">
+                <rect x="0" y="0" width="1061" height="1300" fill="black"/>
                 {dayLabels.map((dl, i) => glowingDays[i] ? (
                   <g key={`scroll-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
                     <text x={0} y={0} textAnchor="middle" dominantBaseline="central"
@@ -1572,8 +1578,8 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                 ) : null)}
               </mask>
               {/* Weekday-label mask — particles clipped to weekday letter silhouettes. */}
-              <mask id="scroll-weekday-window" maskUnits="userSpaceOnUse" x="0" y="0" width="1300" height="1061">
-                <rect x="0" y="0" width="1300" height="1061" fill="black"/>
+              <mask id="scroll-weekday-window" maskUnits="userSpaceOnUse" x="0" y="0" width="1061" height="1300">
+                <rect x="0" y="0" width="1061" height="1300" fill="black"/>
                 {dayLabels.map((dl, i) => {
                   const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
                   return (
@@ -1606,7 +1612,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
             {/* Inscription particle aura — clipped to day-number silhouettes. */}
             {anyGlowing && (
               <g mask="url(#scroll-inscription-window)" style={{ pointerEvents: 'none' }}>
-                <rect x="0" y="0" width="1300" height="1061" fill="#0a0a0a"/>
+                <rect x="0" y="0" width="1061" height="1300" fill="#0a0a0a"/>
                 {(() => {
                   const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
                   return dayLabels.flatMap((dl, dayIdx) => {
