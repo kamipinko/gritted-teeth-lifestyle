@@ -799,7 +799,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
   // the rectangular base body. Same RIDGE_STEEP tilt as cone anchors. isMount keeps
   // the bigger weekday sizing.
   const MOUNT_SLOT = {
-    x: 306, y: 524, side: 'left',
+    x: 296, y: 524, side: 'left',
     numRotation: RIDGE_STEEP - 90,
     kanjiRotation: RIDGE_STEEP,
     isMount: true,
@@ -841,16 +841,28 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
     const kanjiRowStepN2to4 = isCone ? 16 : 24
     const kanjiRowStepN5plus = isCone ? 14 : 20
 
-    // Vertical stack: number above center, kanji cluster below. Center the stack on
-    // (0, 0) so rotation pivots around the anchor's geometric center.
+    // Layout: cone anchors stack number ABOVE kanji; the mount lays them side-by-side
+    // with number to the RIGHT of the kanji. Either way the wrapper rotates around
+    // the anchor's geometric center.
     const stackGap = isCone ? 3 : 5
     const kanjiClusterRows = (n === 1 ? 1 : Math.ceil(n / 2))
     const kanjiBaseFont = (n === 1 ? kanjiFontN1 : (n <= 4 ? kanjiFontN2to4 : kanjiFontN5plus))
     const kanjiRowStep  = (n === 1 ? 0 : (n <= 4 ? kanjiRowStepN2to4 : kanjiRowStepN5plus))
     const kanjiHeight = kanjiBaseFont + (kanjiClusterRows - 1) * kanjiRowStep
-    const totalH = numFontSize + stackGap + kanjiHeight
-    const numCenterY   = -totalH / 2 + numFontSize / 2
-    const kanjiCenterY =  totalH / 2 - kanjiHeight / 2
+    let numCenterX, numCenterY, kanjiCenterX, kanjiCenterY
+    if (dl.isMount) {
+      const totalW = kanjiBaseFont + stackGap + numFontSize
+      kanjiCenterX = -totalW / 2 + kanjiBaseFont / 2
+      numCenterX   =  totalW / 2 - numFontSize / 2
+      kanjiCenterY = 0
+      numCenterY   = 0
+    } else {
+      const totalH = numFontSize + stackGap + kanjiHeight
+      numCenterX   = 0
+      kanjiCenterX = 0
+      numCenterY   = -totalH / 2 + numFontSize / 2
+      kanjiCenterY =  totalH / 2 - kanjiHeight / 2
+    }
 
     const DEPTH_STACK_RED = [
       { dy: 2, fill: '#3a0608' },
@@ -871,20 +883,20 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
       </text>
     ))
 
-    // Number — single line centered above the kanji cluster.
-    const numEls = renderText('num', 0, numCenterY, numFontSize, num)
+    // Number — single glyph centered at (numCenterX, numCenterY).
+    const numEls = renderText('num', numCenterX, numCenterY, numFontSize, num)
 
-    // Kanji — single glyph or 2-col grid centered on kanjiCenterY.
+    // Kanji — single glyph or 2-col grid centered at (kanjiCenterX, kanjiCenterY).
     let kanjiEls = []
     if (n === 1) {
-      kanjiEls = renderText('kj0', 0, kanjiCenterY, kanjiFontN1, kanjiChars[0])
+      kanjiEls = renderText('kj0', kanjiCenterX, kanjiCenterY, kanjiFontN1, kanjiChars[0])
     } else if (n <= 4) {
       const fontSize = kanjiFontN2to4, colSpacing = kanjiSpacingN2to4, rowYStep = kanjiRowStepN2to4
       const baseY = kanjiCenterY - ((kanjiClusterRows - 1) * rowYStep) / 2
       kanjiEls = kanjiChars.flatMap((k, ki) => {
         const row = Math.floor(ki / 2)
         const isOddLast = n % 2 === 1 && ki === n - 1
-        const x = isOddLast ? 0 : (ki % 2 - 0.5) * colSpacing
+        const x = kanjiCenterX + (isOddLast ? 0 : (ki % 2 - 0.5) * colSpacing)
         const y = baseY + row * rowYStep
         return renderText(`kj${ki}`, x, y, fontSize, k)
       })
@@ -894,7 +906,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
       kanjiEls = kanjiChars.flatMap((k, ki) => {
         const row = Math.floor(ki / 2)
         const isOddLast = n % 2 === 1 && ki === n - 1
-        const x = isOddLast ? 0 : (ki % 2 - 0.5) * colSpacing
+        const x = kanjiCenterX + (isOddLast ? 0 : (ki % 2 - 0.5) * colSpacing)
         const y = baseY + row * rowYStep
         return renderText(`kj${ki}`, x, y, fontSize, k)
       })
