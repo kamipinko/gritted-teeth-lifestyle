@@ -2354,20 +2354,20 @@ export default function SummaryPage() {
              : days.length <= 10 ? Math.ceil(days.length / 2)
              : Math.ceil(days.length / 3)
 
-  // Watermark layout — CycleScroll places ETCH and CYCLE on a single horizontal
-  // line at a larger font size with breathing room between the words; every other
-  // cycle stacks them vertically at the canonical 18px (bottom-right of viewport).
+  // Watermark layout — same stacked ETCH-above-CYCLE shape in every mode; in
+  // scroll mode the magnitudes shrink (font 14 vs 18) so the watermark fits
+  // beside the smaller 92px flame button without crowding the scroll body.
   const wmScroll  = days.length > 14
-  const WM_FONT   = wmScroll ? 24 : 18
-  const WM_W      = wmScroll ? 240 : 130
-  const WM_H      = wmScroll ? 60  : 78
+  const WM_FONT   = wmScroll ? 14 : 18
+  const WM_W      = wmScroll ? 100 : 130
+  const WM_H      = wmScroll ? 62  : 78
   const WM_VB     = `0 0 ${WM_W} ${WM_H}`
-  const ETCH_X    = wmScroll ? [8, 32, 56, 80] : [8, 26, 44, 62]
-  const ETCH_Y    = wmScroll ? 36 : 40
-  const ETCH_ROTY = wmScroll ? 26 : 34
-  const CYCLE_X   = wmScroll ? [124, 146, 168, 190, 212] : [8, 25, 43, 61, 79]
-  const CYCLE_Y   = wmScroll ? 36 : 72
-  const CYCLE_ROTY = wmScroll ? 26 : 66
+  const ETCH_X    = wmScroll ? [6, 20, 34, 48]      : [8, 26, 44, 62]
+  const ETCH_Y    = wmScroll ? 32 : 40
+  const ETCH_ROTY = wmScroll ? 27 : 34
+  const CYCLE_X   = wmScroll ? [6, 19, 33, 47, 61]  : [8, 25, 43, 61, 79]
+  const CYCLE_Y   = wmScroll ? 58 : 72
+  const CYCLE_ROTY = wmScroll ? 53 : 66
 
   return (
     <main ref={mainRef} className="relative h-[100dvh] overflow-hidden bg-gtl-void">
@@ -2558,15 +2558,14 @@ export default function SummaryPage() {
         className="fixed z-[20] pointer-events-none select-none"
         width={WM_W} height={WM_H}
         viewBox={WM_VB}
-        style={days.length > 14
+        style={wmScroll
           ? {
-              // CycleScroll mode: park ETCH CYCLE inside the scroll's bottom rolled-
-              // banner area, centered horizontally, no tilt — it reads as if the
-              // words are inscribed at the foot of the scroll.
-              top: 'calc(105px + 138vw)',
-              left: 'calc(50% + 17px)',
-              transform: 'translateX(-50%)',
-              transformOrigin: 'center top',
+              // CycleScroll mode: small stacked watermark sitting above the smaller
+              // 92px flame button (mirrors the canonical placement, scaled down).
+              bottom: 'calc(20px + 92px + 10px)',
+              right: '2px',
+              transform: 'rotate(8deg)',
+              transformOrigin: 'right bottom',
               overflow: 'visible',
             }
           : {
@@ -2721,10 +2720,15 @@ export default function SummaryPage() {
                 if (!isEtchBand && (i % 4 === 2)) return null
                 if (isEtchBand && !etchIgnited.some(Boolean)) return null
                 if (!isEtchBand && !cycleIgnited.some(Boolean)) return null
-                const startY = wmScroll ? 42 : (isEtchBand ? 46 : 74)
+                // Particle band Y positions scale with the watermark vertical magnitude.
+                const startY = wmScroll
+                  ? (isEtchBand ? 38 : 60)
+                  : (isEtchBand ? 46 : 74)
                 const rise   = isEtchBand ? (18 + rSize * 14) : (12 + rSize * 10)
-                const xBase  = wmScroll && !isEtchBand ? 84 : 8
-                const xSpan  = isEtchBand ? 70 : 85
+                const xBase  = 8
+                const xSpan  = wmScroll
+                  ? (isEtchBand ? 56 : 68)
+                  : (isEtchBand ? 70 : 85)
                 const xOff   = xBase + rX * xSpan
                 const delay  = rDly * 300
                 const dur    = 130 + rDur * 150
