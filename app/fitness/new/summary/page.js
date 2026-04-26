@@ -1110,20 +1110,25 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
               )
             })}
 
-            {/* Zoom-burst — fires during 'peak' glow phase. */}
+            {/* Zoom-burst — fires during 'peak' glow phase. REVERSE order: anchor N
+                fires first (delay 0), anchor 1 last (delay (N-1)*220ms) — matching
+                the rest of the drill's cascade direction. */}
             {glowIntensity === 'peak' && (
               <g style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
-                {dayLabels.map((dl, i) => (
-                  <g key={`zoom-${dl.iso}`} className="zoom-glyph" style={{ animationDelay: `${i * 220}ms`,
+                {dayLabels.map((dl, i) => {
+                  const step = (dayLabels.length - 1) - i
+                  return (
+                  <g key={`zoom-${dl.iso}`} className="zoom-glyph" style={{ animationDelay: `${step * 220}ms`,
                         transformBox: 'fill-box', transformOrigin: 'center',
-                        animation: `inscription-zoom 340ms ease-out forwards ${i * 220}ms`,
+                        animation: `inscription-zoom 340ms ease-out forwards ${step * 220}ms`,
                         mixBlendMode: 'plus-lighter',
                         filter: 'drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 16px #ff4400)',
                         opacity: 0,
                      }}>
                     {renderInscription(dl, { maskFill: '#ff6600' })}
                   </g>
-                ))}
+                  )
+                })}
               </g>
             )}
 
