@@ -844,7 +844,10 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
     // Horizontal layout: kanji centered at (0, 0), number on the RIGHT of the kanji.
     // Weekday cluster lives ABOVE the kanji (rendered in a separate <g> sharing this
     // inscription's rotation — see wdGroupTransform).
-    const stackGap = isCone ? 7 : 9
+    // Double-digit dates are visually wider, so their left edge crowds the kanji at
+    // the single-digit gap; bump the gap a touch when we have 2+ digits.
+    const isMultiDigit = (num || '').length >= 2
+    const stackGap = isCone ? (isMultiDigit ? 11 : 7) : (isMultiDigit ? 13 : 9)
     const kanjiClusterRows = (n === 1 ? 1 : Math.ceil(n / 2))
     const kanjiBaseFont = (n === 1 ? kanjiFontN1 : (n <= 4 ? kanjiFontN2to4 : kanjiFontN5plus))
     const kanjiRowStep  = (n === 1 ? 0 : (n <= 4 ? kanjiRowStepN2to4 : kanjiRowStepN5plus))
