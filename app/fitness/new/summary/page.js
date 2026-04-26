@@ -2560,10 +2560,10 @@ export default function SummaryPage() {
         viewBox={WM_VB}
         style={wmScroll
           ? {
-              // CycleScroll mode: small stacked watermark sitting above the smaller
-              // 92px flame button (mirrors the canonical placement, scaled down).
-              bottom: 'calc(20px + 92px + 10px)',
-              right: '2px',
+              // CycleScroll mode: small stacked watermark sitting to the LEFT of the
+              // smaller 92px flame button (button at bottom:5, right:5, size 92).
+              bottom: '20px',
+              right: 'calc(5px + 92px + 6px)',
               transform: 'rotate(8deg)',
               transformOrigin: 'right bottom',
               overflow: 'visible',
