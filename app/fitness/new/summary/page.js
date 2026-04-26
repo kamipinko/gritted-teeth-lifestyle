@@ -1082,13 +1082,15 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
   useEffect(() => { setMounted(true) }, [])
 
   // Ring geometry — viewBox 0 0 1374 1370. Center near (687, 685). Snake body sits roughly
-  // between R=400 (hollow inner edge) and R=620 (outer edge). Inscription radius lands
-  // mid-body at 510 so day-numbers carve into the dark silhouette. Weekday labels offset
-  // OUTWARD onto the outer rim. Compass convention: 0°=top, increases CW.
+  // between R=400 (hollow inner edge) and R=620 (outer edge). Day-number inscription radius
+  // lands mid-body at 510 so digits carve into the silhouette. Weekday labels live at
+  // R_WEEKDAY=320, which sits well inside the snake's hollow interior so the labels read on
+  // empty negative space. All inscriptions render upright (no per-anchor tangent rotation).
+  // Compass convention: 0°=top, increases CW.
   const CX = 687
   const CY = 685
   const R_INSC = 510
-  const WEEKDAY_RADIAL = 90       // local outward distance from anchor (in viewBox units)
+  const R_WEEKDAY = 320
   const WEEKDAY_FONT_SIZE = 48
   const WEEKDAY_ADVANCE = 48
   // Seven anchors over a 240° arc (compass 70°→310° at 40° spacing) leave a 120° wedge at
@@ -1107,10 +1109,10 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
     const rad = (angle * Math.PI) / 180
     const cx = CX + R_INSC * Math.sin(rad)
     const cy = CY - R_INSC * Math.cos(rad)
-    // World coord of the weekday cluster's center (anchor + radial outward by WEEKDAY_RADIAL).
-    // Used for spawning particles in world space.
-    const wdCx = CX + (R_INSC + WEEKDAY_RADIAL) * Math.sin(rad)
-    const wdCy = CY - (R_INSC + WEEKDAY_RADIAL) * Math.cos(rad)
+    // Weekday cluster sits on the inner hollow at R_WEEKDAY. World coords precomputed so
+    // both the rendered text and the particle spawn (in world space) share the same anchor.
+    const wdCx = CX + R_WEEKDAY * Math.sin(rad)
+    const wdCy = CY - R_WEEKDAY * Math.cos(rad)
     return { num, hasWork, kanjiStr, iso, cx, cy, angle, wdCx, wdCy }
   })
 
@@ -1203,31 +1205,30 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
           >
             <defs>
               {/* Inscription mask — particles flow through ignited day-inscription silhouettes.
-                  Each glyph group inherits its anchor's translate+rotate so the silhouette lands
-                  in the correct world position with the correct orientation. */}
+                  Glyphs render upright (no tangent rotation) at each anchor's world position. */}
               <mask id="ouroboros-inscription-window" maskUnits="userSpaceOnUse" x="0" y="0" width="1374" height="1370">
                 <rect x="0" y="0" width="1374" height="1370" fill="black"/>
                 {dayLabels.map((dl, i) => glowingDays[i] ? (
-                  <g key={`our-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle})`}>
+                  <g key={`our-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
                     {renderDayInscription(dl, { maskFill: 'white' })}
                   </g>
                 ) : null)}
               </mask>
-              {/* Weekday-label mask — particles clipped to weekday letter silhouettes at the
-                  outer rim of the ring. Letters at local (Lx*ADVANCE, -RADIAL) inside the
-                  rotated frame, so they sit radially OUTWARD from each day-inscription anchor. */}
+              {/* Weekday-label mask — particles clipped to weekday letter silhouettes inside
+                  the ring's hollow interior. Cluster center sits at (wdCx, wdCy) on R_WEEKDAY;
+                  3 letters arranged horizontally with WEEKDAY_ADVANCE pitch. No rotation. */}
               <mask id="ouroboros-weekday-window" maskUnits="userSpaceOnUse" x="0" y="0" width="1374" height="1370">
                 <rect x="0" y="0" width="1374" height="1370" fill="black"/>
                 {dayLabels.map((dl, i) => {
                   const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
                   return (
-                    <g key={`our-wd-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle})`}>
+                    <g key={`our-wd-mask-${dl.iso}`} transform={`translate(${dl.wdCx},${dl.wdCy})`}>
                       {dow.split('').map((ch, L) => {
                         const lit = !!weekdayLetterIgnited[i * 3 + L]
                         const x = (L - 1) * WEEKDAY_ADVANCE
                         return (
                           <text key={`our-wd-mask-${dl.iso}-${L}`}
-                            x={x} y={-WEEKDAY_RADIAL}
+                            x={x} y={0}
                             textAnchor="middle"
                             dominantBaseline="central"
                             style={{
@@ -1307,7 +1308,7 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
                      opacity: flameOn ? 0 : 1,
                      transition: 'opacity 0ms',
                    }}>
-                  <g transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle})`}>
+                  <g transform={`translate(${dl.cx},${dl.cy})`}>
                     {renderDayInscription(dl, { hot })}
                   </g>
                 </g>
@@ -1319,7 +1320,7 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
             {glowIntensity === 'peak' && (
               <g style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
                 {dayLabels.map((dl, i) => (
-                  <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle})`}>
+                  <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
                     <g style={{
                           transformBox: 'fill-box', transformOrigin: 'center',
                           animation: `inscription-zoom 340ms ease-out forwards ${i * 220}ms`,
@@ -1334,13 +1335,13 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
               </g>
             )}
 
-            {/* Weekday labels — per-letter yakiire mirrors CycleBlade pattern. Each letter sits
-                tangentially in the rotated cluster frame at (Lx*ADVANCE, -RADIAL). */}
+            {/* Weekday labels — per-letter yakiire. Cluster sits inside the ring's hollow at
+                (wdCx, wdCy) on R_WEEKDAY; 3 letters horizontally arranged. No tangent rotation. */}
             <g>
               {dayLabels.map((dl, i) => {
                 const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
                 return (
-                  <g key={`dow-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle})`}>
+                  <g key={`dow-${dl.iso}`} transform={`translate(${dl.wdCx},${dl.wdCy})`}>
                     {dow.split('').map((ch, L) => {
                       const flatIdx = i * 3 + L
                       const isFlaming = !!weekdayLetterIgnited[flatIdx]
@@ -1352,7 +1353,7 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
                       const textOpacity = isFlaming ? 0 : baseAlpha
                       const textClass = isCooled ? 'ouroboros-inscription-cooled' : (isHot ? 'ouroboros-inscription-hot' : '')
                       const x = (L - 1) * WEEKDAY_ADVANCE
-                      const y = -WEEKDAY_RADIAL
+                      const y = 0
                       return (
                         <g key={`dow-${dl.iso}-${L}`}>
                           <text
