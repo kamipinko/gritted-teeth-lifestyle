@@ -1108,10 +1108,10 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
       : '休'
     const angle = COMPASS_ANGLES[i] ?? COMPASS_ANGLES[COMPASS_ANGLES.length - 1]
     const rad = (angle * Math.PI) / 180
-    // Day 7 (last anchor) sits where the snake body thins out into tail wisps; pulling
-    // its inscription radius in from R_INSC=510 to 430 keeps the full number+kanji column
-    // inside the visible silhouette.
-    const r = i === 6 ? 430 : R_INSC
+    // Day 7 (last anchor) — at compass 110° the snake's main body coil sits at a larger
+    // radius than the global R_INSC=510, with thin tail wisps trailing inside it. Pushing
+    // day 7's inscription OUT to R=580 lands it on the outer thick body where it belongs.
+    const r = i === 6 ? 580 : R_INSC
     const cx = CX + r * Math.sin(rad)
     const cy = CY - r * Math.cos(rad)
     // Weekday cluster sits on the inner hollow at R_WEEKDAY. World coords precomputed so
