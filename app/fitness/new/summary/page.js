@@ -1676,6 +1676,16 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
               </g>
             )}
 
+            {/* Void overlay — during cascade, blacken the scroll's red regions
+                so the orange particles below register visibly. Mirrors
+                BeginButton's flickering void-black trick. After cascade ends the
+                overlay unmounts and the red returns. */}
+            {anyGlowing && (
+              <g mask="url(#scroll-red-frame)" style={{ pointerEvents: 'none' }}>
+                <rect x="0" y="0" width="1061" height="1300" fill="#0a0a0a" opacity="0.92"/>
+              </g>
+            )}
+
             {/* Red-frame flame layer — ADDITIVE on top of the per-cell particles
                 above. Clipped to the scroll's red ink regions via the alpha mask
                 sourced from /reference/scroll.svg, so the rolled handles + frame
