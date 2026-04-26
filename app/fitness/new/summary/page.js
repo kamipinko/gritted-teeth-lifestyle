@@ -1909,9 +1909,13 @@ export default function SummaryPage() {
         </div>
       </section>
 
-      {/* ── BLADE (≤7 days) / DRILL (8–13 days) / FALLBACK GRID (14+ days) ── */}
-      {days.length > 0 && days.length <= 7 && (
+      {/* ── BLADE (1–6 days) / OUROBOROS (exactly 7 days) / DRILL (8–13 days) / FALLBACK GRID (14+ days) ── */}
+      {days.length > 0 && days.length < 7 && (
         <CycleBlade days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
+      )}
+
+      {days.length === 7 && (
+        <CycleOuroboros days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
       )}
 
       {days.length >= 8 && days.length <= 13 && (
