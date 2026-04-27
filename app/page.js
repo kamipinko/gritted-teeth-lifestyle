@@ -6,36 +6,50 @@ import HeistTransition from '../components/HeistTransition'
 import GateScreen from '../components/GateScreen'
 import { useSound } from '../lib/useSound'
 
-// Module-level singleton: bg music persists across React re-mounts (e.g. when the
-// user navigates back to the home page from /fitness). Without this, the unmount
-// drops the component-scoped ref but the Audio keeps looping in the browser, and
-// the next mount starts a SECOND audio overlapping the first → cacophony.
-let bgMusicAudio = null
+// Pre-create the Audio element at module load with preload='auto' so it's ready
+// when the user gestures. iOS PWA standalone mode rejects audio.play() if the
+// element was created in the same synchronous tick as play() — even inside a
+// user-gesture handler. Pre-creating sidesteps that. loop=true replaces the
+// manual 'ended' listener.
+const bgMusicAudio = typeof window !== 'undefined'
+  ? new Audio('/sounds/chrono-cut-1.wav')
+  : null
+if (bgMusicAudio) {
+  bgMusicAudio.loop = true
+  bgMusicAudio.preload = 'auto'
+  bgMusicAudio.volume = 0
+}
+
+let bgMusicStarted = false
 
 function startBgMusic() {
-  if (bgMusicAudio) return
-  const TARGET_VOL = 0.04
-  const FADE_MS = 1500
+  if (!bgMusicAudio || bgMusicStarted) return
+  bgMusicStarted = true
 
-  const fadeIn = (audio) => {
-    audio.volume = 0
-    audio.play().catch(() => {})
-    const steps = FADE_MS / 50
-    const increment = TARGET_VOL / steps
-    const interval = setInterval(() => {
-      const next = Math.min(TARGET_VOL, audio.volume + increment)
-      audio.volume = next
-      if (next >= TARGET_VOL) clearInterval(interval)
-    }, 50)
+  // Kick off play() inside the user-gesture call stack (caller is GateScreen.handleClick
+  // or handleTouchEnd's swipe path — both synchronous to the user tap/swipe).
+  const playPromise = bgMusicAudio.play()
+  if (playPromise && typeof playPromise.catch === 'function') {
+    playPromise.catch(() => {
+      // If iOS rejects (e.g. element wasn't loaded enough), give it a second
+      // chance: load() then retry play() on next tick. NOT inside user gesture
+      // anymore, but iOS has marked the element as "user-activated" by the
+      // first attempt, so the retry usually succeeds.
+      bgMusicAudio.load()
+      bgMusicAudio.play().catch(() => {})
+    })
   }
 
-  const audio = new Audio('/sounds/chrono-cut-1.wav')
-  audio.addEventListener('ended', () => {
-    audio.currentTime = 0
-    fadeIn(audio)
-  })
-  fadeIn(audio)
-  bgMusicAudio = audio
+  // Fade in volume to TARGET_VOL over FADE_MS.
+  const TARGET_VOL = 0.04
+  const FADE_MS = 1500
+  const steps = FADE_MS / 50
+  const increment = TARGET_VOL / steps
+  const interval = setInterval(() => {
+    const next = Math.min(TARGET_VOL, bgMusicAudio.volume + increment)
+    bgMusicAudio.volume = next
+    if (next >= TARGET_VOL) clearInterval(interval)
+  }, 50)
 }
 
 const SWIPE_THRESHOLD = 50      // px — minimum vertical drag to register a swipe
@@ -214,8 +228,8 @@ export default function Home() {
     <main
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className="relative bg-gtl-void overflow-hidden"
-      style={{ minHeight: '100dvh' }}
+      className="relative overflow-hidden"
+      style={{ minHeight: '100dvh', background: '#280609' }}
     >
       {phase === 'gate' && (
         <>
