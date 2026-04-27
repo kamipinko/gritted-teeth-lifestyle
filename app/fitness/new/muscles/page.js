@@ -627,39 +627,7 @@ export default function MusclesPage() {
 
   return (
     <main ref={mainRef} className={`relative overflow-hidden bg-gtl-void ${isMobile ? 'h-[100dvh] flex flex-col' : 'min-h-screen'}`}>
-      {/* Background atmospherics — clipped below the iOS safe-area on mobile so the
-          top inset shows solid bg-gtl-void (black). The 3D body canvas reads as a
-          contained viewport rather than continuous atmosphere bleeding into the notch. */}
-      <div
-        className="absolute inset-x-0 bottom-0 overflow-hidden pointer-events-none"
-        style={{ top: isMobile ? 'env(safe-area-inset-top, 0px)' : 0 }}
-      >
-        <div className="absolute inset-0 gtl-noise" />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              'linear-gradient(135deg, rgba(122,14,20,0.30) 0%, transparent 40%, transparent 60%, rgba(74,10,14,0.40) 100%)',
-          }}
-        />
-        {/* Kanji watermark — 肉 ("flesh/muscle") */}
-        <div
-          className="absolute -top-12 -left-16 select-none animate-flicker"
-          aria-hidden="true"
-          style={{
-            fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-            fontSize: '46rem',
-            lineHeight: '0.8',
-            color: '#ffffff',
-            opacity: 0.045,
-            fontWeight: 900,
-          }}
-        >
-          肉
-        </div>
-      </div>
-
-      {/* Top nav — responsive */}
+{/* Top nav — responsive */}
       <nav
         className={`relative z-20 shrink-0 flex items-center justify-between ${isMobile ? 'px-4 pb-2' : 'px-8 py-6'}`}
         style={isMobile ? { paddingTop: 'max(0.75rem, env(safe-area-inset-top))' } : undefined}
