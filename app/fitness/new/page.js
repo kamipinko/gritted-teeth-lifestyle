@@ -139,7 +139,7 @@ function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAd
           IMPORTANT: overflow visible at every level so the giant scaled
           characters can extend beyond the container without being clipped. */}
       <div
-        className="relative flex flex-wrap items-baseline justify-center gap-y-2 min-h-[6rem] px-4"
+        className="relative flex flex-wrap items-baseline justify-center gap-y-2 min-h-[2.5rem] md:min-h-[6rem] px-4"
         style={{ overflow: 'visible' }}
       >
         {value.split('').map((char, i) => (
@@ -166,7 +166,7 @@ function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAd
         {/* Blinking cursor — hidden during branding */}
         {!isBranding && (
           <span
-            className="inline-block w-1.5 md:w-2 h-10 md:h-20 bg-gtl-red-bright animate-cursor-blink ml-1 self-center"
+            className="inline-block w-1.5 md:w-2 h-10 md:h-20 bg-gtl-red-bright animate-cursor-blink ml-1 self-end"
             aria-hidden="true"
           />
         )}
