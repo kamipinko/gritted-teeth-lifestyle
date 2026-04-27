@@ -4,7 +4,7 @@ export default function manifest() {
     short_name: 'GTL',
     description: 'Track your diet and build your fitness',
     start_url: '/',
-    display: 'minimal-ui',
+    display: 'standalone',
     background_color: '#0a0a0a',
     theme_color: '#0a0a0a',
     orientation: 'portrait',

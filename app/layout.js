@@ -1,12 +1,14 @@
 import './globals.css'
+import { IOSPWAKeyboardFix } from './ios-pwa-keyboard-fix'
 
 export const metadata = {
   title: 'Gritted Teeth Lifestyle',
   description: 'Track your diet and build your fitness',
-  // appleWebApp intentionally omitted — apple-mobile-web-app-capable forced iOS
-  // into full standalone mode, which has a known soft-keyboard bug that no
-  // amount of JS focus handling could work around. Manifest now uses
-  // display:'minimal-ui' so iOS shows a thin URL bar but inputs work.
+  appleWebApp: {
+    capable: true,
+    title: 'GTL',
+    statusBarStyle: 'black-translucent',
+  },
 }
 
 export const viewport = {
@@ -18,7 +20,10 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <IOSPWAKeyboardFix />
+      </body>
     </html>
   )
 }
