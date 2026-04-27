@@ -97,7 +97,7 @@ export default function ProfilePage() {
 
   return (
     <>
-    <main className="relative min-h-screen bg-gtl-void flex flex-col">
+    <main className="relative min-h-screen bg-gtl-void flex flex-col overflow-hidden">
       <div className="absolute inset-0 gtl-noise pointer-events-none" />
       <div
         className="absolute inset-0 pointer-events-none"
