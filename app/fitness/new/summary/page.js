@@ -3059,14 +3059,31 @@ export default function SummaryPage() {
         <CycleOuroboros days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
       )}
 
-      {days.length === 7 && (
-        <div className="fixed bottom-5 left-5 z-40 no-print pointer-events-none max-w-[60vw]">
-          <div className="font-display text-2xl text-gtl-paper leading-tight uppercase tracking-tight"
-               style={{ textShadow: '2px 2px 0 #070708' }}>
-            {cycleName}
+      {(days.length === 7 || days.length === 14) && (() => {
+        // Cycle title styled to match the ETCH/CYCLE watermark exactly: same Shippori Mincho
+        // serif, 18px, weight 600, dim red 65% alpha, 0.35em letter spacing, each word on
+        // its own line. 7-day sits bottom-left; 14-day sits top-center above the upper loop.
+        const titleStyle = {
+          fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
+          fontSize: '18px',
+          fontWeight: 600,
+          letterSpacing: '0.35em',
+          color: 'rgba(212, 24, 31, 0.65)',
+          lineHeight: '1.6',
+          textTransform: 'uppercase',
+        }
+        const words = cycleName.split(/\s+/).filter(Boolean)
+        const containerStyle = days.length === 7
+          ? { position: 'fixed', bottom: '20px', left: '20px', zIndex: 40, pointerEvents: 'none' }
+          : { position: 'fixed', top: '140px', left: '50%', transform: 'translateX(-50%)', zIndex: 40, pointerEvents: 'none', textAlign: 'center' }
+        return (
+          <div className="no-print" style={containerStyle}>
+            {words.map((w, i) => (
+              <div key={i} style={titleStyle}>{w}</div>
+            ))}
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {days.length >= 8 && days.length <= 13 && (
         <CycleDrill days={days} dailyPlan={dailyPlan} cycleName={cycleName} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
@@ -3074,15 +3091,6 @@ export default function SummaryPage() {
 
       {days.length === 14 && (
         <CycleInfinity days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
-      )}
-
-      {days.length === 14 && (
-        <div className="fixed bottom-5 left-5 z-40 no-print pointer-events-none max-w-[60vw]">
-          <div className="font-display text-2xl text-gtl-paper leading-tight uppercase tracking-tight"
-               style={{ textShadow: '2px 2px 0 #070708' }}>
-            {cycleName}
-          </div>
-        </div>
       )}
 
       {days.length > 14 && (
@@ -3204,6 +3212,25 @@ export default function SummaryPage() {
           pointer-events: none;
         }
       `}</style>
+      {/* 14-day watermark — plain centered text matching the cycle-title format. Sits in the
+          bottom loop's hollow. The SVG watermark below is hidden for 14-day so this CSS-text
+          variant carries the format. */}
+      {wmInfinity && (
+        <div className="fixed z-[20] no-print pointer-events-none"
+             style={{ top: '500px', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
+          {['ETCH', 'CYCLE'].map((word) => (
+            <div key={word} style={{
+              fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
+              fontSize: '18px',
+              fontWeight: 600,
+              letterSpacing: '0.35em',
+              color: 'rgba(212, 24, 31, 0.65)',
+              lineHeight: '1.6',
+              textTransform: 'uppercase',
+            }}>{word}</div>
+          ))}
+        </div>
+      )}
       <svg
         aria-hidden="true"
         className="fixed z-[20] pointer-events-none select-none"
@@ -3218,6 +3245,8 @@ export default function SummaryPage() {
               right: 'calc(5px + 92px - 4px)',
               overflow: 'visible',
             }
+          : wmInfinity
+          ? { display: 'none' }   // 14-day uses the CSS-text watermark above instead.
           : wmBladeLike
           ? {
               // Blade (≤6) + ouroboros (=7): watermark sits ABOVE the 128px flame
