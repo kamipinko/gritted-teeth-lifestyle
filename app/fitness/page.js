@@ -4,28 +4,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useSound } from '../../lib/useSound'
 import HeistTransition from '../../components/HeistTransition'
-
-function RetreatButton() {
-  const { play } = useSound()
-  return (
-    <Link
-      href="/"
-      onClick={() => play('menu-close')}
-      className="group relative inline-flex items-center"
-    >
-      {/* Hover effects gated on (hover: hover) so iOS doesn't sticky-hover on first tap. */}
-      <div
-        className="absolute inset-0 -inset-x-2 pointer-events-none transition-all duration-300 ease-out bg-gtl-edge opacity-50 [@media(hover:hover)]:group-hover:bg-gtl-red [@media(hover:hover)]:group-hover:opacity-100"
-        style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
-        aria-hidden="true"
-      />
-      <div className="relative flex items-center gap-3 px-4 py-2">
-        <span className="font-display text-base leading-none transition-all duration-300 text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper [@media(hover:hover)]:group-hover:-translate-x-1">◀︎</span>
-        <span className="font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300 text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper">RETREAT</span>
-      </div>
-    </Link>
-  )
-}
+import RetreatButton from '../../components/RetreatButton'
 
 function ProfileChip({ name, onSelect }) {
   const { play } = useSound()
@@ -132,7 +111,7 @@ export default function ProfilePage() {
         className="relative shrink-0 flex items-center justify-between pl-0 pr-8 pb-6"
         style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
       >
-        <RetreatButton />
+        <RetreatButton href="/" />
         <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
           PALACE / IDENTITY
         </div>

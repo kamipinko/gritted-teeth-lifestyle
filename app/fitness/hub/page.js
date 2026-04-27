@@ -21,6 +21,7 @@ import { useSound } from '../../../lib/useSound'
 import { useProfileGuard } from '../../../lib/useProfileGuard'
 import { pk } from '../../../lib/storage'
 import HeistTransition from '../../../components/HeistTransition'
+import RetreatButton from '../../../components/RetreatButton'
 
 function CycleOption({
   number,
@@ -337,57 +338,6 @@ function GhostOption({ number, label, caption, href, onClick }) {
   )
 }
 
-/**
- * RetreatButton — clearly button-like at idle, not just a text link.
- * Has a polygonal slash background, red bracket marker, and a strong
- * hover state.
- */
-function RetreatButton() {
-  const { play } = useSound()
-  const [hovered, setHovered] = useState(false)
-
-  return (
-    <Link
-      href="/fitness"
-      onMouseEnter={() => { setHovered(true); play('button-hover') }}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => play('menu-close')}
-      className="group relative inline-flex items-center"
-    >
-      {/* Background slash that appears on hover */}
-      <div
-        className={`
-          absolute inset-0 -inset-x-2 transition-all duration-300 ease-out
-          ${hovered ? 'bg-gtl-red opacity-100' : 'bg-gtl-edge opacity-50'}
-        `}
-        style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
-        aria-hidden="true"
-      />
-
-      <div className="relative flex items-center gap-3 px-4 py-2">
-        {/* Red bracket marker — always visible */}
-        <span
-          className={`
-            font-display text-base leading-none transition-all duration-300
-            ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red translate-x-0'}
-          `}
-        >
-          ◀︎
-        </span>
-        <span
-          className={`
-            font-mono text-[10px] tracking-[0.3em] uppercase font-bold
-            transition-colors duration-300
-            ${hovered ? 'text-gtl-paper' : 'text-gtl-chalk'}
-          `}
-        >
-          RETREAT
-        </span>
-      </div>
-    </Link>
-  )
-}
-
 export default function FitnessPage() {
   useProfileGuard()
   const router = useRouter()
@@ -455,7 +405,7 @@ export default function FitnessPage() {
         className="relative flex items-center justify-between pl-0 pr-8 pb-6"
         style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
       >
-        <RetreatButton />
+        <RetreatButton href="/fitness" />
         <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
           PALACE / FITNESS
         </div>

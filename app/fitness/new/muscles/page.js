@@ -22,6 +22,7 @@ import { useProfileGuard } from '../../../../lib/useProfileGuard'
 import { pk } from '../../../../lib/storage'
 import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
+import RetreatButton from '../../../../components/RetreatButton'
 
 // R3F is client-only and touches `window`; dynamic import with ssr: false
 // avoids hydration errors.
@@ -65,45 +66,6 @@ const MODEL_OPTIONS = [
   { id: 'gohan',    label: 'GOHAN',     subtitle: 'TEEN'         },
 ]
 
-function RetreatButton({ href = '/fitness/new' }) {
-  const { play } = useSound()
-  const [hovered, setHovered] = useState(false)
-  try { if (localStorage.getItem('gtl-back-to-edit') === '1') href = '/fitness/edit' } catch (_) {}
-  return (
-    <Link
-      href={href}
-      onMouseEnter={() => { setHovered(true); play('button-hover') }}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => play('menu-close')}
-      className="group relative inline-flex items-center"
-    >
-      <div
-        className={`
-          absolute inset-0 -inset-x-2 transition-all duration-300 ease-out
-          ${hovered ? 'bg-gtl-red opacity-100' : 'bg-gtl-edge opacity-50'}
-        `}
-        style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
-        aria-hidden="true"
-      />
-      <div className="relative flex items-center gap-3 px-4 py-2">
-        <span
-          className={`font-display text-base leading-none transition-all duration-300 ${
-            hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red translate-x-0'
-          }`}
-        >
-          ◀︎
-        </span>
-        <span
-          className={`font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300 ${
-            hovered ? 'text-gtl-paper' : 'text-gtl-chalk'
-          }`}
-        >
-          RETREAT
-        </span>
-      </div>
-    </Link>
-  )
-}
 
 /**
  * A single row in the right-side muscle list.
@@ -509,6 +471,8 @@ function MobileForgeStamp({ count, onFire }) {
 
 export default function MusclesPage() {
   useProfileGuard()
+  let backHref = '/fitness/new'
+  try { if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit' } catch (_) {}
   const [selected, setSelected] = useState(() => new Set())
   const [focusedGroup, setFocusedGroup] = useState(null)
   const [modelKey, setModelKey] = useState('goku')
@@ -632,7 +596,7 @@ export default function MusclesPage() {
         className={`relative z-20 shrink-0 flex items-center justify-between ${isMobile ? 'pl-0 pr-4 pb-2' : 'pl-0 pr-8 py-6'}`}
         style={isMobile ? { paddingTop: 'max(0.75rem, env(safe-area-inset-top))' } : undefined}
       >
-        <RetreatButton />
+        <RetreatButton href={backHref} />
         <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
           {isMobile ? 'TARGETS' : 'PALACE / FITNESS / NEW CYCLE / TARGETS'}
         </div>

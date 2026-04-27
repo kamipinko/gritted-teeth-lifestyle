@@ -15,6 +15,7 @@ import { useProfileGuard } from '../../../../lib/useProfileGuard'
 import { pk } from '../../../../lib/storage'
 import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
+import RetreatButton from '../../../../components/RetreatButton'
 
 const MONTH_NAMES = [
   'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
@@ -78,32 +79,6 @@ function buildGrid(year, month) {
   return { grid: [...row1, ...raw.slice(7, 35)], wrapped: wrappedDays }
 }
 
-function RetreatButton() {
-  const { play } = useSound()
-  const [hovered, setHovered] = useState(false)
-  let backHref = '/fitness/new/muscles'
-  try { if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit' } catch (_) {}
-  return (
-    <Link
-      href={backHref}
-      onMouseEnter={() => { setHovered(true); play('button-hover') }}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => play('menu-close')}
-      className="group relative inline-flex items-center shrink-0"
-    >
-      <div
-        className={`absolute inset-0 -inset-x-1 transition-all duration-300 ease-out
-          ${hovered ? 'bg-gtl-red opacity-100' : 'bg-gtl-edge opacity-50'}`}
-        style={{ clipPath: PARA_CLIP }}
-        aria-hidden="true"
-      />
-      <div className="relative flex items-center gap-2 px-3 py-1.5">
-        <span className={`font-display text-sm leading-none transition-all duration-300
-          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red'}`}>◀︎</span>
-      </div>
-    </Link>
-  )
-}
 
 function MonthNavButton({ dir, onClick }) {
   const { play } = useSound()
@@ -298,6 +273,8 @@ export default function SchedulePage() {
   useProfileGuard()
   const router = useRouter()
   const { play } = useSound()
+  let backHref = '/fitness/new/muscles'
+  try { if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit' } catch (_) {}
 
   const [today] = useState(() => new Date())
   const [displayDate, setDisplayDate] = useState(() => {
@@ -590,7 +567,7 @@ export default function SchedulePage() {
         {/* RetreatButton sits at viewport-left, out of the centered flex flow so
             the prev/label/next group can stay symmetrically centered. */}
         <div className="absolute left-0 top-1/2 -translate-y-1/2">
-          <RetreatButton />
+          <RetreatButton href={backHref} />
         </div>
         <MonthNavButton dir="prev" onClick={prevMonth} />
         <div className="flex items-baseline gap-2">

@@ -13,6 +13,7 @@ import { useProfileGuard } from '../../../../lib/useProfileGuard'
 import { pk } from '../../../../lib/storage'
 import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
+import RetreatButton from '../../../../components/RetreatButton'
 
 const MUSCLE_LABELS = {
   chest: 'CHEST', back: 'BACK', shoulders: 'SHOULDERS',
@@ -2599,35 +2600,13 @@ function BeginButton({ onFire, onHover, onTriggerFlicker, flickering = false, la
   )
 }
 
-function RetreatButton() {
-  const { play } = useSound()
-  let backHref = '/fitness/new/branded'
-  try { if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit' } catch (_) {}
-  return (
-    <Link
-      href={backHref}
-      onClick={() => play('menu-close')}
-      className="fixed left-0 z-40 group inline-flex items-center"
-      style={{ top: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
-    >
-      {/* CSS-only hover gated on (hover: hover) so iOS doesn't sticky-hover on first tap. */}
-      <div
-        className="absolute inset-0 -inset-x-2 pointer-events-none transition-all duration-300 ease-out bg-gtl-edge opacity-50 [@media(hover:hover)]:group-hover:bg-gtl-red [@media(hover:hover)]:group-hover:opacity-100"
-        style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
-        aria-hidden="true"
-      />
-      <div className="relative flex items-center gap-3 px-4 py-2">
-        <span className="font-display text-base leading-none transition-all duration-300 text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper [@media(hover:hover)]:group-hover:-translate-x-1">◀︎</span>
-        <span className="font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300 text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper">RETREAT</span>
-      </div>
-    </Link>
-  )
-}
 
 export default function SummaryPage() {
   useProfileGuard()
   const router = useRouter()
   const { play } = useSound()
+  let backHref = '/fitness/new/branded'
+  try { if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit' } catch (_) {}
   useEffect(() => {
     try { if (localStorage.getItem('gtl-back-to-edit') !== '1') return } catch (_) { return }
     const handleKey = (e) => {
@@ -3055,7 +3034,12 @@ export default function SummaryPage() {
         style={{ background: 'linear-gradient(160deg, rgba(122,14,20,0.18) 0%, transparent 45%, rgba(74,10,14,0.28) 100%)' }} />
 
       {/* ── Retreat button (fixed top-left, safe-area aware) ── */}
-      <RetreatButton />
+      <div
+        className="fixed left-0 z-40"
+        style={{ top: 'env(safe-area-inset-top, 0px)' }}
+      >
+        <RetreatButton href={backHref} />
+      </div>
 
       {/* ── BLADE (1–6) / OUROBOROS (7) / DRILL (8–13) / FALLBACK (14) / SCROLL (15+) ── */}
       {days.length > 0 && days.length < 7 && (
