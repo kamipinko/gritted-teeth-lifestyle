@@ -203,8 +203,16 @@ export default function Home() {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       style={{
-        position: 'fixed', inset: 0,
-        background: '#070708',
+        position: 'fixed',
+        top: 0, left: 0, right: 0,
+        // Stretch past the iOS home-indicator safe-area so the dark-red base paints
+        // edge-to-edge in PWA standalone mode. inset:0 alone gets clipped at
+        // safe-area-inset-bottom even with viewport-fit=cover.
+        bottom: 'calc(0px - env(safe-area-inset-bottom, 0px))',
+        // Match GateScreen's atmospheric base. If anything (the safe-area clip,
+        // a phase transition gap) lets the wrapper show through, the user sees
+        // dark red — not the void's #070708.
+        background: '#280609',
         overflow: 'hidden',
       }}
     >

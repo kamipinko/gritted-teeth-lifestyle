@@ -33,9 +33,18 @@ export default function GateScreen({ onEnter }) {
       onClick={handleClick}
       aria-label="Enter Gritted Teeth Lifestyle"
       style={{
-        position: 'fixed', inset: 0, zIndex: 50,
+        position: 'fixed',
+        top: 0, left: 0, right: 0,
+        // Push the bottom edge UNDER the iOS home indicator so the painted
+        // atmosphere extends through the home-indicator zone instead of stopping
+        // at safe-area-inset-bottom (which leaves a black band on Dynamic Island
+        // iPhones in PWA standalone, even with viewport-fit=cover).
+        bottom: 'calc(0px - env(safe-area-inset-bottom, 0px))',
+        zIndex: 50,
         width: '100%', overflow: 'hidden',
-        background: '#070708', border: 'none', cursor: 'pointer',
+        // Dark-red base matches the wrapper bg + the new atmospheric base layer
+        // below, so the corners read red not black if anything clips.
+        background: '#280609', border: 'none', cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
     >
