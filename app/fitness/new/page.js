@@ -61,7 +61,7 @@ function pickRandomName() {
  * Calls `onCharAdded` whenever a NEW character is typed (not on delete),
  * so the parent can fire the screen shake and sound at the right moment.
  */
-function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAdded, onConfirm, isBranding }) {
+function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAdded, onConfirm, isBranding, onInputFocus }) {
   const inputRef = useRef(null)
   const charKeysRef = useRef([])
   const { play } = useSound()
@@ -124,6 +124,7 @@ function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAd
         value={value}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
+        onFocus={onInputFocus}
         maxLength={maxLength}
         className="sr-only"
         aria-label="Cycle name"
@@ -183,6 +184,17 @@ export default function NewCycleNamePage() {
   const [name, setName] = useState('')
   const nameRef = useRef('')
   useEffect(() => { nameRef.current = name }, [name])
+
+  // Ref + focus handler for scrolling FORGE into view when the iOS keyboard opens.
+  // The hidden input is sr-only at (0,0) so iOS doesn't auto-scroll on focus the way
+  // it does for visible inputs (e.g. WHO ARE YOU). 300ms lets the keyboard begin its
+  // slide-up animation; then we scroll FORGE to the vertical center of the viewport.
+  const forgeButtonRef = useRef(null)
+  const handleInputFocus = () => {
+    setTimeout(() => {
+      forgeButtonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 300)
+  }
   useEffect(() => {
     try { if (localStorage.getItem('gtl-back-to-edit') !== '1') return } catch (_) { return }
     const handleKey = (e) => {
@@ -458,6 +470,7 @@ export default function NewCycleNamePage() {
             onCharAdded={triggerImpact}
             onConfirm={triggerBrandConfirm}
             isBranding={isBranding}
+            onInputFocus={handleInputFocus}
           />
 
           {/* The slot/engraving rail beneath the text — thicker and wider.
@@ -501,6 +514,7 @@ export default function NewCycleNamePage() {
         {!isBranding && (
           <div className="mt-6 flex flex-col items-center">
             <button
+              ref={forgeButtonRef}
               type="button"
               onClick={triggerBrandConfirm}
               disabled={name.trim().length === 0}
