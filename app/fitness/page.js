@@ -11,7 +11,7 @@ function RetreatButton() {
     <Link
       href="/"
       onClick={() => play('menu-close')}
-      className="group relative inline-flex items-center mt-[15px]"
+      className="group relative inline-flex items-center"
     >
       {/* Hover effects gated on (hover: hover) so iOS doesn't sticky-hover on first tap. */}
       <div
