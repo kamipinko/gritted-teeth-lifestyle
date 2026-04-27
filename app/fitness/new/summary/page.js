@@ -2349,13 +2349,16 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
                       const isZoomed  = !!weekdayLetterZoomed[flatIdx]
                       const isCooled  = !!weekdayLetterCooled[flatIdx]
                       const isHot     = isZoomed && !isCooled
-                      const fill      = (isHot || isCooled) ? '#d4181f' : '#000000'
+                      // Carved-into-substrate look: paint the canonical red fill on top of the
+                      // red substrate, then difference-blend so it reads near-black (pre-flame).
+                      // Hot/cooled flip to normal blend so the warm post-ignition palette pops.
+                      const fill      = '#d4181f'
                       const baseAlpha = 1
                       const textOpacity = isFlaming ? 0 : baseAlpha
                       const textClass = isCooled ? 'infinity-inscription-cooled' : (isHot ? 'infinity-inscription-hot' : '')
                       const x = (L - 1) * WEEKDAY_ADVANCE
                       return (
-                        <g key={`dow-${dl.iso}-${L}`}>
+                        <g key={`dow-${dl.iso}-${L}`} style={{ mixBlendMode: (isHot || isCooled) ? 'normal' : 'difference' }}>
                           <text
                             x={x} y={WEEKDAY_LOCAL_Y}
                             textAnchor="middle"
