@@ -2606,12 +2606,20 @@ function RetreatButton() {
   return (
     <Link
       href={backHref}
-      onMouseEnter={() => play('button-hover')}
       onClick={() => play('menu-close')}
-      className="group inline-flex items-center gap-1.5 font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-smoke/70 hover:text-gtl-red transition-colors duration-200"
+      className="fixed left-4 z-40 group inline-flex items-center"
+      style={{ top: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
     >
-      <span className="text-[11px] leading-none transition-transform duration-200 group-hover:-translate-x-0.5">◀</span>
-      <span>RETREAT</span>
+      {/* CSS-only hover gated on (hover: hover) so iOS doesn't sticky-hover on first tap. */}
+      <div
+        className="absolute inset-0 -inset-x-2 pointer-events-none transition-all duration-300 ease-out bg-gtl-edge opacity-50 [@media(hover:hover)]:group-hover:bg-gtl-red [@media(hover:hover)]:group-hover:opacity-100"
+        style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
+        aria-hidden="true"
+      />
+      <div className="relative flex items-center gap-3 px-4 py-2">
+        <span className="font-display text-base leading-none transition-all duration-300 text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper [@media(hover:hover)]:group-hover:-translate-x-1">◀</span>
+        <span className="font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300 text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper">RETREAT</span>
+      </div>
     </Link>
   )
 }
@@ -3046,14 +3054,8 @@ export default function SummaryPage() {
       <div className="absolute inset-0 pointer-events-none"
         style={{ background: 'linear-gradient(160deg, rgba(122,14,20,0.18) 0%, transparent 45%, rgba(74,10,14,0.28) 100%)' }} />
 
-      {/* ── Nav bar ── */}
-      <section className="relative z-10">
-        <div className="relative px-8 pt-6 pb-2">
-          <div className="flex items-center gap-4">
-            <RetreatButton />
-          </div>
-        </div>
-      </section>
+      {/* ── Retreat button (fixed top-left, safe-area aware) ── */}
+      <RetreatButton />
 
       {/* ── BLADE (1–6) / OUROBOROS (7) / DRILL (8–13) / FALLBACK (14) / SCROLL (15+) ── */}
       {days.length > 0 && days.length < 7 && (

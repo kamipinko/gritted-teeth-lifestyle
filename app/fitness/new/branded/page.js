@@ -591,7 +591,7 @@ export default function SchedulePage() {
       </div>
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <nav className="relative z-10 flex items-center gap-3 px-4 h-12 border-b border-gtl-edge/40 shrink-0">
+      <nav className="relative z-10 flex items-center gap-3 px-4 pb-2 border-b border-gtl-edge/40 shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top, 40px) + 4px)' }}>
         <RetreatButton />
         <MonthNavButton dir="prev" onClick={prevMonth} />
         <div className="flex-1 min-w-0 flex items-baseline gap-2 justify-center">

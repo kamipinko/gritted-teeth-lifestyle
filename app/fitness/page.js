@@ -123,7 +123,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Nav */}
-      <nav className="relative z-10 shrink-0 flex items-center justify-between px-8 py-6">
+      <nav className="relative z-10 shrink-0 flex items-center justify-between px-8 py-6 pt-[env(safe-area-inset-top,40px)]">
         <RetreatButton />
         <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
           PALACE / IDENTITY

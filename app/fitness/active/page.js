@@ -2415,7 +2415,7 @@ export default function ActiveCyclePage() {
       </div>
 
       {/* Nav */}
-      <nav className="relative z-10 shrink-0 flex items-center gap-4 px-8 pb-3" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
+      <nav className="relative z-10 shrink-0 flex items-center gap-4 px-8 pb-3" style={{ paddingTop: 'env(safe-area-inset-top, 40px)' }}>
         <RetreatButton />
         <div className="w-px self-stretch bg-gtl-edge" style={{ transform: 'skewX(-12deg)' }} />
         {/* XP Bar inline in nav */}

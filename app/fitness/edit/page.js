@@ -169,7 +169,7 @@ export default function EditCyclePage() {
       </div>
 
       {/* Nav */}
-      <nav className="relative z-10 shrink-0 flex items-center gap-4 px-8 py-3">
+      <nav className="relative z-10 shrink-0 flex items-center gap-4 px-8 py-3 pt-[env(safe-area-inset-top,40px)]">
         <RetreatButton />
         <div className="w-px self-stretch bg-gtl-edge" style={{ transform: 'skewX(-12deg)' }} />
         <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
