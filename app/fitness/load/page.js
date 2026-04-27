@@ -394,12 +394,65 @@ function CycleCard({ cycle, index, selected, onSelect }) {
         <div className="flex items-center gap-6 mb-6 flex-wrap">
           {/* Stats */}
           <div className="flex items-center gap-6 shrink-0">
-            <div>
-              <div className="font-display text-3xl leading-none"
-                   style={{ color: '#e4b022', textShadow: '2px 2px 0 #8a6612' }}>
-                {String(cycle.days?.length ?? 0).padStart(2, '0')}
+            <div className="flex flex-col items-start gap-3">
+              <div>
+                <div className="font-display text-3xl leading-none"
+                     style={{ color: '#e4b022', textShadow: '2px 2px 0 #8a6612' }}>
+                  {String(cycle.days?.length ?? 0).padStart(2, '0')}
+                </div>
+                <div className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-smoke mt-0.5">BATTLEDAYS</div>
               </div>
-              <div className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-smoke mt-0.5">BATTLEDAYS</div>
+              {(() => {
+                const n = cycle.days?.length || 0
+                if (n >= 1 && n <= 6) {
+                  return (
+                    <img
+                      src="/reference/wakizashi_solid_silhouette.svg"
+                      alt=""
+                      className="opacity-90 select-none pointer-events-none"
+                      style={{ height: '140px', width: 'auto', maxWidth: '160px' }}
+                      draggable={false}
+                    />
+                  )
+                }
+                if (n === 7) {
+                  return (
+                    <img
+                      src="/reference/ouroboros.svg"
+                      alt=""
+                      className="opacity-90 select-none pointer-events-none"
+                      style={{ height: '140px', width: 'auto', maxWidth: '160px' }}
+                      draggable={false}
+                    />
+                  )
+                }
+                if (n >= 8 && n <= 13) {
+                  return (
+                    <img
+                      src="/reference/drill.svg"
+                      alt=""
+                      className="opacity-90 select-none pointer-events-none"
+                      style={{ height: '140px', width: 'auto', maxWidth: '160px' }}
+                      draggable={false}
+                    />
+                  )
+                }
+                if (n >= 15) {
+                  // Vertical scroll silhouette — rotated -90° to mirror the summary-page render.
+                  return (
+                    <div style={{ width: '110px', height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <img
+                        src="/reference/scroll.svg"
+                        alt=""
+                        className="opacity-90 select-none pointer-events-none"
+                        style={{ width: '140px', height: '110px', transform: 'rotate(-90deg)' }}
+                        draggable={false}
+                      />
+                    </div>
+                  )
+                }
+                return null
+              })()}
             </div>
             <div className="w-px h-10 bg-gtl-red" style={{ transform: 'skewX(-12deg)' }} />
             <div>

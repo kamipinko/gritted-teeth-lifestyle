@@ -537,7 +537,7 @@ export default function NewCycleNamePage() {
               ENTER
             </span>
             <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-ash">
-              TO BRAND
+              TO FORGE
             </span>
             <div className="h-px w-10 bg-gtl-red/60" />
           </div>

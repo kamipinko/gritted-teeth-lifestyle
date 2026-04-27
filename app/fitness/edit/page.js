@@ -229,17 +229,11 @@ export default function EditCyclePage() {
           <EditNavButton
             number={3}
             label="SCHEDULE"
-            caption="Training days and dates"
+            caption="Training days, dates, and muscle assignments"
             href="/fitness/new/branded"
           />
           <EditNavButton
             number={4}
-            label="DAY PLAN"
-            caption="Assign muscles to each day"
-            href="/fitness/new/plan"
-          />
-          <EditNavButton
-            number={5}
             label="RE-ETCH CYCLE"
             caption="Full cycle summary"
             href="/fitness/new/summary"

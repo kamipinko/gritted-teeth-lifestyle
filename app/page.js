@@ -1,28 +1,56 @@
 'use client'
-/*
- * Home page — the hideout. Two cards on a corkboard:
- *   1. Fitness — replaced with a Phantom Thieves calling card
- *   2. Nutrition — Kami's original card, untouched per current scope
- *
- * Tapping the Fitness calling card triggers the heist transition and
- * navigates to /fitness.
- */
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import CallingCard from '../components/CallingCard'
 import HeistTransition from '../components/HeistTransition'
 
 export default function Home() {
   const router = useRouter()
   const [transitioning, setTransitioning] = useState(false)
+  const [transitionTarget, setTransitionTarget] = useState('/fitness')
+
+  const bgMusicRef = useRef(null)
+
+  const startBgMusic = () => {
+    if (bgMusicRef.current) return
+    const TARGET_VOL = 0.06
+    const FADE_MS = 1500
+
+    const fadeIn = (audio) => {
+      audio.volume = 0
+      audio.play().catch(() => {})
+      const steps = FADE_MS / 50
+      const increment = TARGET_VOL / steps
+      const interval = setInterval(() => {
+        const next = Math.min(TARGET_VOL, audio.volume + increment)
+        audio.volume = next
+        if (next >= TARGET_VOL) clearInterval(interval)
+      }, 50)
+    }
+
+    const audio = new Audio('/sounds/chrono-cut-1.wav')
+    audio.addEventListener('ended', () => {
+      audio.currentTime = 0
+      fadeIn(audio)
+    })
+    fadeIn(audio)
+    bgMusicRef.current = audio
+  }
 
   const handleFitnessActivate = () => {
+    startBgMusic()
+    setTransitionTarget('/fitness')
+    setTransitioning(true)
+  }
+
+  const handleNutritionActivate = () => {
+    startBgMusic()
+    setTransitionTarget('/diet')
     setTransitioning(true)
   }
 
   const handleTransitionComplete = () => {
-    router.push('/fitness')
+    router.push(transitionTarget)
   }
 
   return (
@@ -72,20 +100,17 @@ export default function Home() {
               />
             </div>
 
-            {/* Nutrition — Kami's original card, preserved per scope */}
+            {/* Nutrition — matching calling card */}
             <div className="md:translate-y-12">
-              <Link href="/diet">
-                <div className="group bg-brand-card border border-brand-border rounded-2xl p-8 cursor-pointer hover:border-brand-accent transition-all duration-300 hover:scale-[1.02]">
-                  <div className="text-4xl mb-4">🥗</div>
-                  <h2 className="text-2xl font-bold mb-2">Nutrition</h2>
-                  <p className="text-brand-muted text-sm leading-relaxed">
-                    Snap photos of your meals. Track macros and micronutrients. Get weekly diet advice tailored to your goals.
-                  </p>
-                  <div className="mt-6 text-brand-accent text-sm font-semibold group-hover:translate-x-1 transition-transform">
-                    Start tracking →
-                  </div>
-                </div>
-              </Link>
+              <CallingCard
+                title="NUTRITION"
+                subtitle="TARGET / PALACE 02"
+                body="WHAT YOU EAT IS WHO YOU ARE. EVERY MEAL IS A CHOICE. MAKE IT COUNT."
+                signOff="STAY DISCIPLINED"
+                onActivate={handleNutritionActivate}
+                rotate="rotate-2"
+                compact
+              />
             </div>
           </div>
         </section>
