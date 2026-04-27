@@ -536,20 +536,45 @@ export default function NewCycleNamePage() {
           </span>
         </div>
 
-        {/* Enter-to-brand hint — only visible when idle and there's a name */}
-        {!isBranding && name.trim().length > 0 && (
-          <div className="mt-10 flex items-center justify-center gap-3">
-            <div className="h-px w-10 bg-gtl-red/60" />
-            <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-ash">
-              PRESS
-            </span>
-            <span className="inline-flex items-center justify-center min-w-[3rem] px-2 py-1 border border-gtl-red text-gtl-red-bright font-mono text-[10px] tracking-[0.2em] font-bold">
-              ENTER
-            </span>
-            <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-ash">
-              TO FORGE
-            </span>
-            <div className="h-px w-10 bg-gtl-red/60" />
+        {/* Forge button + Enter hint — visible once the user typed something. The
+            button is the primary path (a chunky tap target with the GTL red-bright
+            slab); the keyboard hint stays as a secondary affordance for desktop +
+            iOS users who want to commit straight from the soft keyboard. */}
+        {!isBranding && (
+          <div className="mt-10 flex flex-col items-center gap-4">
+            <button
+              type="button"
+              onClick={triggerBrandConfirm}
+              disabled={name.trim().length === 0}
+              className={`
+                relative font-display tracking-[0.25em] uppercase
+                px-14 py-4 min-h-[56px] min-w-[14rem]
+                text-3xl text-gtl-paper
+                transition-all duration-200 ease-out
+                disabled:opacity-30 disabled:cursor-not-allowed
+                enabled:hover:scale-[1.04] enabled:active:scale-[0.98]
+                enabled:bg-gtl-red-bright bg-gtl-red
+                shadow-[4px_4px_0_#070708]
+                enabled:hover:shadow-[6px_6px_0_#070708]
+                enabled:active:shadow-[2px_2px_0_#070708]
+              `}
+              style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)' }}
+            >
+              FORGE
+            </button>
+
+            {name.trim().length > 0 && (
+              <div className="flex items-center justify-center gap-3">
+                <div className="h-px w-8 bg-gtl-red/40" />
+                <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-ash">
+                  OR PRESS
+                </span>
+                <span className="inline-flex items-center justify-center min-w-[3rem] px-2 py-1 border border-gtl-red text-gtl-red-bright font-mono text-[10px] tracking-[0.2em] font-bold">
+                  ENTER
+                </span>
+                <div className="h-px w-8 bg-gtl-red/40" />
+              </div>
+            )}
           </div>
         )}
       </section>
