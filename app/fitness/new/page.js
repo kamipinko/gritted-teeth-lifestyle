@@ -190,7 +190,7 @@ function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAd
           <span
             key={isBranding ? `brand-${i}` : charKeysRef.current[i]}
             className={`
-              inline-block font-display text-6xl md:text-7xl lg:text-8xl leading-none
+              inline-block font-display text-4xl md:text-7xl lg:text-8xl leading-none
               ${isBranding ? 'animate-brand-letter' : 'text-gtl-chalk animate-char-stamp'}
             `}
             style={{
@@ -210,7 +210,7 @@ function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAd
         {/* Blinking cursor — hidden during branding */}
         {!isBranding && (
           <span
-            className="inline-block w-1.5 md:w-2 h-16 md:h-20 bg-gtl-red-bright animate-cursor-blink ml-1 self-center"
+            className="inline-block w-1.5 md:w-2 h-10 md:h-20 bg-gtl-red-bright animate-cursor-blink ml-1 self-center"
             aria-hidden="true"
           />
         )}
@@ -541,7 +541,14 @@ export default function NewCycleNamePage() {
             slab); the keyboard hint stays as a secondary affordance for desktop +
             iOS users who want to commit straight from the soft keyboard. */}
         {!isBranding && (
-          <div className="mt-10 flex flex-col items-center gap-4">
+          <div
+            className="mt-10 flex flex-col items-center gap-4"
+            style={{
+              position: 'sticky',
+              bottom: 'calc(env(keyboard-inset-bottom, 0px) + env(safe-area-inset-bottom, 0px) + 1rem)',
+              zIndex: 20,
+            }}
+          >
             <button
               type="button"
               onClick={triggerBrandConfirm}
