@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import CallingCard from '../components/CallingCard'
 import HeistTransition from '../components/HeistTransition'
 import GateScreen from '../components/GateScreen'
 import { useSound } from '../lib/useSound'
@@ -38,71 +39,106 @@ function startBgMusic() {
 }
 
 const SWIPE_THRESHOLD = 50      // px — minimum vertical drag to register a swipe
-const FLASH_DURATION  = 1000    // ms — calling-card flash hold time before navigation
+const FLASH_DURATION  = 1000    // ms — calling-card hold time before transition kicks in
 
-// Inline calling-card flash overlay. Centered, fades in on mount, holds, navigates.
-// Each section gets its own colour accent and headline so the user sees confirmation
-// of which target their swipe selected before the route changes.
-function CallingCardFlash({ kind }) {
-  const isFitness = kind === 'fitness'
+// CallingCard reveal — wraps the real CallingCard component (the one the original
+// post-gate home used) inside a centered full-screen backdrop. The card animates
+// in via card-reveal-pop, sits visible for ~FLASH_DURATION, then HeistTransition
+// slashes wipe + push the route.
+const FITNESS_CARD = {
+  title: 'FITNESS',
+  subtitle: 'TARGET / PALACE 01',
+  body: 'YOUR WEAKNESS HAS BEEN NOTED. THE CLIMB BEGINS THE MOMENT YOU PICK UP THIS CARD.',
+  signOff: 'WITH GRITTED TEETH',
+  rotate: '-rotate-2',
+  compact: false,
+}
+const NUTRITION_CARD = {
+  title: 'NUTRITION',
+  subtitle: 'TARGET / PALACE 02',
+  body: 'WHAT YOU EAT IS WHO YOU ARE. EVERY MEAL IS A CHOICE. MAKE IT COUNT.',
+  signOff: 'STAY DISCIPLINED',
+  rotate: 'rotate-2',
+  compact: true,
+}
+
+function CallingCardReveal({ kind }) {
+  const card = kind === 'fitness' ? FITNESS_CARD : NUTRITION_CARD
   return (
     <div
       aria-hidden="true"
       style={{
         position: 'fixed', inset: 0, zIndex: 60,
-        background: 'radial-gradient(ellipse at 50% 55%, rgba(74,10,14,0.55) 0%, rgba(7,7,8,0.92) 70%)',
+        background: 'radial-gradient(ellipse at 50% 55%, rgba(74,10,14,0.55) 0%, rgba(7,7,8,0.94) 70%)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        animation: 'flash-card-pop 1000ms cubic-bezier(0.2, 1, 0.3, 1) forwards',
+        padding: '2rem',
+        animation: 'card-reveal-fade 1000ms ease-out forwards',
       }}
     >
       <style>{`
-        @keyframes flash-card-pop {
-          0%   { opacity: 0; transform: scale(0.96); }
-          14%  { opacity: 1; transform: scale(1); }
-          82%  { opacity: 1; transform: scale(1); }
-          100% { opacity: 0; transform: scale(1.04); }
+        @keyframes card-reveal-fade {
+          0%   { opacity: 0; }
+          16%  { opacity: 1; }
+          100% { opacity: 1; }
         }
-        @keyframes flash-card-pulse {
-          0%, 100% { transform: rotate(${isFitness ? '-2deg' : '2deg'}) scale(1); }
-          50%      { transform: rotate(${isFitness ? '-2deg' : '2deg'}) scale(1.03); }
+        @keyframes card-reveal-pop {
+          0%   { opacity: 0; transform: scale(0.85) translateY(20px); }
+          50%  { opacity: 1; transform: scale(1.04) translateY(0); }
+          100% { opacity: 1; transform: scale(1) translateY(0); }
         }
       `}</style>
-
       <div
         style={{
-          background: '#f1eee5',
-          padding: '2.5rem 2.75rem',
-          minWidth: '18rem', maxWidth: '24rem',
-          boxShadow: '0 12px 40px rgba(0,0,0,0.55), 0 0 0 4px #d4181f',
-          animation: 'flash-card-pulse 1000ms ease-in-out infinite',
-          position: 'relative',
+          width: '100%', maxWidth: '20rem',
+          animation: 'card-reveal-pop 600ms cubic-bezier(0.2, 1.2, 0.4, 1) forwards',
         }}
       >
-        <div style={{
-          fontFamily: '"JetBrains Mono", monospace',
-          fontSize: '0.6rem', letterSpacing: '0.4em',
-          textTransform: 'uppercase', color: '#7a0e14', marginBottom: '0.5rem',
-        }}>
-          ▸ TARGET ACQUIRED
-        </div>
-        <div style={{
-          fontFamily: 'Anton, Impact, sans-serif',
-          fontSize: 'clamp(3rem, 12vw, 5rem)', lineHeight: 1,
-          color: '#070708',
-          textShadow: '3px 3px 0 #d4181f',
-          letterSpacing: '-0.01em',
-        }}>
-          {isFitness ? 'FITNESS' : 'NUTRITION'}
-        </div>
-        <div style={{
-          marginTop: '1rem',
-          fontFamily: '"JetBrains Mono", monospace',
-          fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase',
-          color: '#070708',
-        }}>
-          {isFitness ? 'PALACE 01 — INFILTRATING' : 'PALACE 02 — INFILTRATING'}
-        </div>
+        <CallingCard
+          title={card.title}
+          subtitle={card.subtitle}
+          body={card.body}
+          signOff={card.signOff}
+          rotate={card.rotate}
+          compact={card.compact}
+          onActivate={() => { /* navigation owned by parent timer */ }}
+        />
       </div>
+    </div>
+  )
+}
+
+// Swipe hint — small mono label that floats above the GateScreen at top + bottom
+// telling the user which direction maps to which section. Z-index above the gate
+// but below transitions; pointer-events disabled so it never blocks the gate's
+// touch + click handlers.
+function SwipeHint({ position, label }) {
+  const isTop = position === 'top'
+  return (
+    <div
+      style={{
+        position: 'fixed', left: '50%', zIndex: 51,
+        [isTop ? 'top' : 'bottom']: 'env(safe-area-inset-' + (isTop ? 'top' : 'bottom') + ', 24px)',
+        marginTop: isTop ? '24px' : 0,
+        marginBottom: isTop ? 0 : '24px',
+        transform: 'translateX(-50%)',
+        fontFamily: '"JetBrains Mono", monospace',
+        fontSize: '0.55rem',
+        letterSpacing: '0.4em',
+        textTransform: 'uppercase',
+        color: '#7d7d83',
+        pointerEvents: 'none',
+        userSelect: 'none',
+        whiteSpace: 'nowrap',
+        animation: 'swipe-hint-pulse 2400ms ease-in-out infinite',
+      }}
+    >
+      <style>{`
+        @keyframes swipe-hint-pulse {
+          0%, 100% { opacity: 0.55; }
+          50%      { opacity: 0.95; }
+        }
+      `}</style>
+      {isTop ? '▲ ' : '▼ '}{label}
     </div>
   )
 }
@@ -123,7 +159,7 @@ export default function Home() {
     play('brand-confirm')
     setPhase(kind === 'fitness' ? 'flash-fitness' : 'flash-nutrition')
     setTransitionTarget(kind === 'fitness' ? '/fitness' : '/diet')
-    // After the calling-card flash holds for FLASH_DURATION, kick off the
+    // After the calling-card reveal holds for FLASH_DURATION, kick off the
     // heist transition. Route push fires when the slash wipes complete.
     setTimeout(() => setTransitioning(true), FLASH_DURATION)
   }
@@ -156,14 +192,31 @@ export default function Home() {
   const handleTransitionComplete = () => router.push(transitionTarget)
 
   // Tap fallback: GateScreen's onClick drives this via setPhase('out')+onEnter.
-  // We treat a plain tap (no swipe) as fitness — most-used target.
+  // Plain tap (no swipe) defaults to fitness — most-used target.
   const handleGateTapEnter = () => activate('fitness')
 
   return (
-    <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-      {phase === 'gate' && <GateScreen onEnter={handleGateTapEnter} />}
-      {phase === 'flash-fitness' && <CallingCardFlash kind="fitness" />}
-      {phase === 'flash-nutrition' && <CallingCardFlash kind="nutrition" />}
+    // Outer wrapper fills the viewport edge-to-edge and paints gtl-void so any
+    // gap between phase transitions never shows the browser default. Touch
+    // handlers live here and bubble up from GateScreen's button.
+    <div
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      style={{
+        position: 'fixed', inset: 0,
+        background: '#070708',
+        overflow: 'hidden',
+      }}
+    >
+      {phase === 'gate' && (
+        <>
+          <GateScreen onEnter={handleGateTapEnter} />
+          <SwipeHint position="top"    label="SWIPE UP FOR FITNESS" />
+          <SwipeHint position="bottom" label="SWIPE DOWN FOR NUTRITION" />
+        </>
+      )}
+      {phase === 'flash-fitness'   && <CallingCardReveal kind="fitness" />}
+      {phase === 'flash-nutrition' && <CallingCardReveal kind="nutrition" />}
 
       <HeistTransition
         active={transitioning}
