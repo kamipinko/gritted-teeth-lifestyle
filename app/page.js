@@ -20,6 +20,30 @@ if (bgMusicAudio) {
   bgMusicAudio.volume = 0
 }
 
+// iOS Chrome PWA (Add-to-Home-Screen, WKWebView) unlocks audio per-element.
+// Even when the engine is unlocked by useSound's card-hover primer, this
+// Audio element stays locked until it's played-once inside a user gesture.
+// Prime it silently on first pointerdown so the actual play() in handleClick
+// succeeds. once:true means it runs exactly once, on the first interaction.
+if (typeof window !== 'undefined' && bgMusicAudio) {
+  const primeBgMusic = () => {
+    bgMusicAudio.muted = true
+    const p = bgMusicAudio.play()
+    if (p && typeof p.then === 'function') {
+      p.then(() => {
+        bgMusicAudio.pause()
+        bgMusicAudio.currentTime = 0
+        bgMusicAudio.muted = false
+      }).catch(() => {
+        // If even the muted prime fails, leave muted=true reset and let
+        // startBgMusic's load()-and-retry path try later.
+        bgMusicAudio.muted = false
+      })
+    }
+  }
+  window.addEventListener('pointerdown', primeBgMusic, { once: true })
+}
+
 let bgMusicStarted = false
 
 function startBgMusic() {
