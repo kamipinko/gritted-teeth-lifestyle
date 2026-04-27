@@ -499,14 +499,7 @@ export default function NewCycleNamePage() {
             slab); the keyboard hint stays as a secondary affordance for desktop +
             iOS users who want to commit straight from the soft keyboard. */}
         {!isBranding && (
-          <div
-            className="mt-10 flex flex-col items-center gap-4"
-            style={{
-              position: 'sticky',
-              bottom: 'calc(env(keyboard-inset-bottom, 0px) + env(safe-area-inset-bottom, 0px) + 1rem)',
-              zIndex: 20,
-            }}
-          >
+          <div className="mt-6 flex flex-col items-center">
             <button
               type="button"
               onClick={triggerBrandConfirm}
@@ -527,19 +520,6 @@ export default function NewCycleNamePage() {
             >
               FORGE
             </button>
-
-            {name.trim().length > 0 && (
-              <div className="flex items-center justify-center gap-3">
-                <div className="h-px w-8 bg-gtl-red/40" />
-                <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-ash">
-                  OR PRESS
-                </span>
-                <span className="inline-flex items-center justify-center min-w-[3rem] px-2 py-1 border border-gtl-red text-gtl-red-bright font-mono text-[10px] tracking-[0.2em] font-bold">
-                  ENTER
-                </span>
-                <div className="h-px w-8 bg-gtl-red/40" />
-              </div>
-            )}
           </div>
         )}
       </section>
