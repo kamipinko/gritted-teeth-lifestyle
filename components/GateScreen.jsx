@@ -42,22 +42,38 @@ export default function GateScreen({ onEnter }) {
       {/* Noise grain */}
       <div className="absolute inset-0 gtl-noise pointer-events-none" />
 
-      {/* Red atmosphere bloom — fades in with entry */}
+      {/* Edge-to-edge dark-red base — guarantees the corners (and the iOS PWA
+          home-indicator strip past the safe area) read red, not pure black, even
+          when the radial bloom + skewed bands don't quite reach. Painted before
+          everything else so the bands + bloom layer over it. */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 55%, rgba(122,14,20,0.45) 0%, transparent 65%)',
+          background: 'rgba(40,6,9,1)',
           opacity: active ? 1 : 0,
           transition: 'opacity 900ms ease 200ms',
         }}
       />
 
-      {/* ── Diagonal background bands (slide from left) ── */}
+      {/* Red atmosphere bloom — fades in with entry */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse at 50% 55%, rgba(122,14,20,0.55) 0%, rgba(74,10,14,0.25) 100%)',
+          opacity: active ? 1 : 0,
+          transition: 'opacity 900ms ease 200ms',
+        }}
+      />
+
+      {/* ── Diagonal background bands (slide from left) ──
+          Each band uses top/bottom anchors instead of explicit height so it
+          naturally over-spans the parent in both directions, regardless of
+          iOS safe-area or dvh oddities. */}
       {/* Band 1 — deep red, widest */}
       <div
         className="absolute pointer-events-none"
         style={{
-          top: '-20%', left: '-5%', width: '52%', height: '140%',
+          top: '-25%', bottom: '-25%', left: '-5%', width: '52%',
           background: 'rgba(74,10,14,0.65)',
           transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(-120%)',
           transition: 'transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 100ms',
@@ -67,7 +83,7 @@ export default function GateScreen({ onEnter }) {
       <div
         className="absolute pointer-events-none"
         style={{
-          top: '-20%', left: '10%', width: '38%', height: '140%',
+          top: '-25%', bottom: '-25%', left: '10%', width: '38%',
           background: 'rgba(122,14,20,0.28)',
           transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(-120%)',
           transition: 'transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 200ms',
@@ -77,7 +93,7 @@ export default function GateScreen({ onEnter }) {
       <div
         className="absolute pointer-events-none"
         style={{
-          top: '-20%', right: '-8%', width: '20%', height: '140%',
+          top: '-25%', bottom: '-25%', right: '-8%', width: '20%',
           background: 'rgba(74,10,14,0.4)',
           transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(120%)',
           transition: 'transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 150ms',
