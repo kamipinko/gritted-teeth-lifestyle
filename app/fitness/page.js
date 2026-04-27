@@ -14,7 +14,7 @@ function RetreatButton() {
       onMouseEnter={() => { setHovered(true); play('button-hover') }}
       onMouseLeave={() => setHovered(false)}
       onClick={() => play('menu-close')}
-      className="group relative inline-flex items-center"
+      className="group relative inline-flex items-center mt-[15px]"
     >
       <div
         className={`absolute inset-0 -inset-x-2 pointer-events-none transition-all duration-300 ease-out
@@ -179,7 +179,6 @@ export default function ProfilePage() {
                 onChange={e => setInput(e.target.value)}
                 placeholder="ENTER YOUR NAME"
                 maxLength={24}
-                autoFocus
                 className="relative w-full bg-transparent font-display text-lg md:text-2xl text-gtl-chalk tracking-wide uppercase px-4 md:px-6 py-4 outline-none placeholder:text-gtl-smoke"
                 style={{ caretColor: '#d4181f' }}
               />

@@ -1,8 +1,9 @@
 'use client'
 import { useEffect } from 'react'
 
-/* iOS PWA standalone mode sometimes fails to focus text inputs on tap, so the
- * software keyboard never appears. Manually focus on touchend as a workaround. */
+/* iOS only summons the soft keyboard when focus() is called DURING the user
+ * gesture (touchstart) — touchend is too late, and iOS shows a paste callout
+ * instead. Move the manual focus into touchstart so the keyboard opens. */
 export function IOSPWAKeyboardFix() {
   useEffect(() => {
     const handler = (e) => {
@@ -13,8 +14,8 @@ export function IOSPWAKeyboardFix() {
         }
       }
     }
-    document.addEventListener('touchend', handler, { passive: true })
-    return () => document.removeEventListener('touchend', handler)
+    document.addEventListener('touchstart', handler, { passive: true })
+    return () => document.removeEventListener('touchstart', handler)
   }, [])
   return null
 }
