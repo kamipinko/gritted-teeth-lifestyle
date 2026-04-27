@@ -3,9 +3,11 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import CallingCard from '../components/CallingCard'
 import HeistTransition from '../components/HeistTransition'
+import GateScreen from '../components/GateScreen'
 
 export default function Home() {
   const router = useRouter()
+  const [entered, setEntered] = useState(false)
   const [transitioning, setTransitioning] = useState(false)
   const [transitionTarget, setTransitionTarget] = useState('/fitness')
 
@@ -13,7 +15,7 @@ export default function Home() {
 
   const startBgMusic = () => {
     if (bgMusicRef.current) return
-    const TARGET_VOL = 0.06
+    const TARGET_VOL = 0.04
     const FADE_MS = 1500
 
     const fadeIn = (audio) => {
@@ -55,7 +57,17 @@ export default function Home() {
 
   return (
     <>
-      <main className="relative min-h-screen bg-gtl-void overflow-hidden">
+      {/* Gate screen — sits above everything until user enters */}
+      {!entered && <GateScreen onEnter={() => setEntered(true)} />}
+
+      {/* Main content — hidden behind gate, snaps in on reveal */}
+      <main
+        className="relative min-h-screen bg-gtl-void overflow-hidden"
+        style={{
+          animation: entered ? 'gate-reveal 650ms cubic-bezier(0.3, 0, 0.4, 1) both' : 'none',
+          opacity: entered ? undefined : 0,
+        }}
+      >
         {/* Background atmospherics */}
         <div className="absolute inset-0 gtl-noise" />
         <div
@@ -85,10 +97,9 @@ export default function Home() {
           />
         </section>
 
-        {/* Cards / corkboard */}
+        {/* Cards */}
         <section className="relative z-10 px-8 pb-20 max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-start">
-            {/* Fitness — calling card */}
             <div className="md:translate-y-4">
               <CallingCard
                 title="FITNESS"
@@ -99,8 +110,6 @@ export default function Home() {
                 rotate="-rotate-2"
               />
             </div>
-
-            {/* Nutrition — matching calling card */}
             <div className="md:translate-y-12">
               <CallingCard
                 title="NUTRITION"
@@ -116,7 +125,6 @@ export default function Home() {
         </section>
       </main>
 
-      {/* Heist transition overlay — sits above everything */}
       <HeistTransition
         active={transitioning}
         onComplete={handleTransitionComplete}

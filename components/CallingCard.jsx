@@ -72,27 +72,33 @@ export default function CallingCard({
 }) {
   const { play } = useSound()
   const [hovered, setHovered] = useState(false)
+  const [launching, setLaunching] = useState(false)
 
   const handleClick = (e) => {
     e.preventDefault()
     play('card-confirm')
+    setLaunching(true)
     if (onActivate) {
-      setTimeout(() => onActivate(), 60)
+      setTimeout(() => onActivate(), 540)
     }
   }
 
-  // When hovered, the wrapper rotation snaps to 0 — the card "responds"
-  // to the user's attention by straightening up like it's been called on.
-  const wrapperRotate = hovered ? 'rotate-0' : rotate
+  // Launching: strip all Tailwind transform classes so card-launch keyframe
+  // owns the transform entirely — no class/animation fight.
+  // Hovering: rotation snaps to 0 so the card responds to attention.
+  const wrapperRotate = launching ? '' : (hovered ? 'rotate-0' : rotate)
+  const wrapperScale  = launching ? '' : (hovered ? 'scale-[1.04] -translate-y-2' : 'scale-100')
 
   return (
     <div
-      className={`
-        relative ${wrapperRotate}
-        transition-all duration-300 ease-out
-        ${hovered ? 'scale-[1.04] -translate-y-2' : 'scale-100'}
-      `}
-      style={{ transformOrigin: 'center center' }}
+      className={`relative ${wrapperRotate} transition-all duration-300 ease-out ${wrapperScale}`}
+      style={{
+        transformOrigin: 'center center',
+        animation: launching ? 'card-launch 560ms cubic-bezier(0.4, 0, 0.2, 1) forwards' : undefined,
+        // Let the launch animation above the page — cards zoom toward viewer
+        zIndex: launching ? 20 : undefined,
+        position: launching ? 'relative' : undefined,
+      }}
     >
       {/* Idle red glow ring — pulses gently to telegraph interactivity */}
       <div

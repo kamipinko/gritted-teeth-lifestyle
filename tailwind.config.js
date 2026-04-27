@@ -283,6 +283,29 @@ module.exports = {
         // Checkbox stamp — used when ALL is selected. Crashes a small element
         // in from scale(10) with a hard squash at 72% for clear stamp impact.
         // Smaller starting scale than char-stamp so the shape stays readable.
+        // Gate cover — fades the void over the exit slashes for a clean cut
+        'gate-cover': {
+          '0%':   { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        // Card launch — calling card explosive zoom-out on activation.
+        // Anticipation squash at 38%, then rockets out with brightness flare.
+        // Starts at scale(1.04) to match the hover scale so there's no jump.
+        'card-launch': {
+          '0%':   { transform: 'scale(1.04)',                   opacity: '1', filter: 'brightness(1)' },
+          '20%':  { transform: 'scale(1.13) rotate(-1.5deg)',  opacity: '1', filter: 'brightness(1.15)' },
+          '38%':  { transform: 'scale(0.95) rotate(0.5deg)',   opacity: '1', filter: 'brightness(1.3)' },
+          '57%':  { transform: 'scale(1.24) rotate(-2deg)',    opacity: '1', filter: 'brightness(1.6)' },
+          '76%':  { transform: 'scale(3.4) rotate(-4.5deg)',   opacity: '0.45', filter: 'brightness(2.2)' },
+          '100%': { transform: 'scale(8) rotate(-7deg)',       opacity: '0', filter: 'brightness(3.5)' },
+        },
+        // Gate reveal — main content emerges from the void after gate exits.
+        // Brightness 3+blur collapses to normal rather than translating position.
+        'gate-reveal': {
+          '0%':   { opacity: '0', filter: 'brightness(3.5) blur(6px)', transform: 'scale(1.04)' },
+          '30%':  { opacity: '1', filter: 'brightness(1.6) blur(0px)',  transform: 'scale(1.01)' },
+          '100%': { opacity: '1', filter: 'brightness(1) blur(0px)',    transform: 'scale(1)' },
+        },
         // Forge entry — slashes in from the left like a card thrown onto a board.
         // Arrives fast (ease-out), overshoots, settles at a permanent tilt.
         'forge-entry': {
@@ -390,6 +413,8 @@ module.exports = {
         'row-wobble':     'row-wobble 400ms cubic-bezier(0.4, 0, 0.6, 1) forwards',
         'pill-ignite':    'pill-ignite 420ms cubic-bezier(0.18, 1.4, 0.4, 1) both',
         'body-pulse':     'body-pulse 700ms cubic-bezier(0.3, 0, 0.5, 1) forwards',
+        'card-launch':    'card-launch 560ms cubic-bezier(0.4, 0, 0.2, 1) forwards',
+        'gate-reveal':    'gate-reveal 650ms cubic-bezier(0.3, 0, 0.4, 1) both',
         'forge-entry':    'forge-entry 650ms cubic-bezier(0.15, 0, 0.1, 1) forwards',
         'forge-slam':     'forge-slam 700ms cubic-bezier(0.2, 1.2, 0.4, 1) forwards',
         'neon-flicker':   'neon-flicker 3s linear infinite',
