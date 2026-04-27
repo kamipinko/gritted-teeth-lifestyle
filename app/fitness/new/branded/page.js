@@ -46,7 +46,7 @@ const MONTH_KANJI = [
 
 const CELL_CLIP = 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)'
 const PARA_CLIP = 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)'
-const ROW_H = 80
+const ROW_H = 75
 
 // Build a 5-row × 7-col grid. Overflow days from would-be row 6 wrap into
 // row 1's leading empty slots.
@@ -130,7 +130,7 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex items-center justify-between px-3 py-2.5 border transition-colors duration-150
+      className={`relative flex items-center justify-between px-3 py-2.5 min-h-[64px] border transition-colors duration-150
         ${active
           ? 'bg-gtl-red border-gtl-red-bright shadow-red-glow'
           : 'bg-gtl-ink border-gtl-edge'}`}
@@ -584,13 +584,17 @@ export default function SchedulePage() {
       <div className="relative z-10 flex-1 flex flex-col overflow-hidden">
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <nav
-        className="relative flex items-center gap-3 px-4 pb-2 border-b border-gtl-edge/40 shrink-0"
+        className="relative flex items-center justify-center gap-4 px-4 pb-1 border-b border-gtl-edge/40 shrink-0"
         style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}
       >
-        <RetreatButton />
+        {/* RetreatButton sits at viewport-left, out of the centered flow.
+            (GTL 1 may further detach it; centering doesn't depend on its position.) */}
+        <div className="absolute left-4 top-1/2 -translate-y-1/2">
+          <RetreatButton />
+        </div>
         <MonthNavButton dir="prev" onClick={prevMonth} />
-        <div className="flex-1 min-w-0 flex items-baseline gap-2 justify-center">
-          <span className="font-display text-xl leading-none text-gtl-chalk tracking-tight truncate">
+        <div className="flex items-baseline gap-2">
+          <span className="font-display text-xl leading-none text-gtl-chalk tracking-tight">
             {MONTH_NAMES[month]}
           </span>
           <span className="font-mono text-[10px] tracking-[0.3em] text-gtl-red font-bold">
@@ -601,13 +605,13 @@ export default function SchedulePage() {
       </nav>
 
       {/* ── Calendar ────────────────────────────────────────────────────── */}
-      <section className="relative z-10 px-3 pt-1 pb-0 flex-1 min-h-0">
+      <section className="relative z-10 px-3 pt-0 pb-0 flex-1 min-h-0 overflow-y-auto">
         {/* Day-of-week header */}
         <div className="grid grid-cols-7 gap-1 mb-1">
           {DAY_LABELS.map((label, i) => (
             <div
               key={label}
-              className={`py-0.5 text-center font-mono text-[9px] tracking-[0.2em] uppercase
+              className={`py-0.5 text-center font-mono text-[14px] tracking-wide font-bold uppercase
                 ${i === 0 || i === 6 ? 'text-gtl-red/80' : 'text-gtl-ash'}`}
             >
               {label}
@@ -797,7 +801,7 @@ export default function SchedulePage() {
 
       {/* Muscle grid — slides in when days selected */}
       {sheetOpen && (
-        <div className="px-3 pt-1 pb-1 shrink-0">
+        <div className="px-3 pt-0 pb-1 shrink-0">
           <div className="grid grid-cols-2 grid-rows-6 gap-1" style={{ overflow: 'visible' }}>
             {SHEET_MUSCLES.map((m) => (
               <SheetMuscleButton
