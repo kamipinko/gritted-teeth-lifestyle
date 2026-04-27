@@ -1,11 +1,10 @@
 'use client'
 import { useEffect } from 'react'
 
-/* iOS PWA standalone mode (apple-mobile-web-app-capable + display:standalone)
- * has a long-standing bug where calling .focus() succeeds but the soft
- * keyboard refuses to appear. The most aggressive documented workaround is
- * to immediately follow .focus() with setSelectionRange — that nudges iOS
- * to treat the focus as user-initiated and summon the keyboard. */
+/* iOS PWA standalone-mode soft-keyboard bug. Documented working PWAs (Twitter,
+ * Mastodon clients) summon the keyboard fine, so the bug isn't absolute — we
+ * try el.click() instead of el.focus() because WebKit treats click() as a
+ * stronger user-gesture signal for keyboard summoning. */
 export function IOSPWAKeyboardFix() {
   useEffect(() => {
     const handler = (e) => {
@@ -16,15 +15,7 @@ export function IOSPWAKeyboardFix() {
       while (el && depth < 5) {
         if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
           if (document.activeElement !== el) {
-            el.focus()
-            if (el.setSelectionRange && el.value !== undefined && el.type !== 'number') {
-              try {
-                const pos = el.value.length
-                el.setSelectionRange(pos, pos)
-              } catch (_) {
-                // Some input types (e.g. email) reject setSelectionRange — ignore.
-              }
-            }
+            el.click()
           }
           break
         }

@@ -150,7 +150,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Input */}
-        <form onSubmit={handleSubmit} className="mb-10">
+        <form onSubmit={handleSubmit} action="/" method="post" className="mb-10">
           <div className="flex items-stretch gap-0">
             <div className="relative flex-1">
               <div
@@ -167,6 +167,9 @@ export default function ProfilePage() {
                 type="text"
                 value={input}
                 onChange={e => setInput(e.target.value)}
+                inputMode="text"
+                enterKeyHint="done"
+                autoComplete="name"
                 placeholder="ENTER YOUR NAME"
                 maxLength={24}
                 className="relative w-full bg-transparent font-display text-lg md:text-2xl text-gtl-chalk tracking-wide uppercase px-4 md:px-6 py-4 outline-none placeholder:text-gtl-smoke"
