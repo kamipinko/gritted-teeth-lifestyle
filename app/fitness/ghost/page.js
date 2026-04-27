@@ -15,6 +15,7 @@ import { useProfileGuard } from '../../../lib/useProfileGuard'
 import { pk } from '../../../lib/storage'
 import FireFadeIn from '../../../components/FireFadeIn'
 import FireTransition from '../../../components/FireTransition'
+import RetreatButton from '../../../components/RetreatButton'
 
 const MUSCLE_LABELS = {
   chest: 'CHEST', back: 'BACK', shoulders: 'SHOULDERS',
@@ -33,33 +34,6 @@ function formatDateShort(iso) {
 }
 
 const SLAB_ROTATIONS = ['-1.2deg','0.9deg','-0.7deg','1.4deg','-1deg','0.6deg','-1.5deg','1.1deg']
-
-function RetreatButton() {
-  const { play } = useSound()
-  const [hovered, setHovered] = useState(false)
-  return (
-    <Link
-      href="/fitness/hub"
-      onMouseEnter={() => { setHovered(true); play('button-hover') }}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => play('menu-close')}
-      className="group relative inline-flex items-center"
-    >
-      <div
-        className={`absolute inset-0 -inset-x-2 transition-all duration-300 ease-out
-          ${hovered ? 'bg-gtl-red opacity-100' : 'bg-gtl-edge opacity-50'}`}
-        style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
-        aria-hidden="true"
-      />
-      <div className="relative flex items-center gap-3 px-4 py-2">
-        <span className={`font-display text-base leading-none transition-all duration-300
-          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red'}`}>◀︎</span>
-        <span className={`font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300
-          ${hovered ? 'text-gtl-paper' : 'text-gtl-chalk'}`}>RETREAT</span>
-      </div>
-    </Link>
-  )
-}
 
 function MuscleTag({ id, index }) {
   const rot = SLAB_ROTATIONS[index % SLAB_ROTATIONS.length]
@@ -683,7 +657,7 @@ export default function GhostCyclePage() {
 
       {/* Nav */}
       <nav className="relative z-10 shrink-0 flex items-center justify-between pl-0 pr-8 py-5">
-        <RetreatButton />
+        <RetreatButton href="/fitness/hub" />
         <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
           PALACE / FITNESS / GHOST CYCLE
         </div>
