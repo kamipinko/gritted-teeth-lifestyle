@@ -160,20 +160,14 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
 }
 
 function CarveContent({ enabled }) {
-  const dayColor = enabled ? '#070708' : '#555'
+  const dayColor = enabled ? '#070708' : '#e4b022'
   return (
-    <>
-      <div className="flex items-center gap-1.5" style={{ transform: 'skewX(2deg)' }}>
-        <span className="leading-none"
-          style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '0.95rem', fontWeight: 400, color: dayColor }}>
-          刻
-        </span>
-        <span className="font-display leading-none tracking-wide"
-          style={{ fontSize: '0.75rem', fontWeight: 900, color: dayColor }}>
-          CARVE
-        </span>
-      </div>
-    </>
+    <div className="flex items-center" style={{ transform: 'skewX(2deg)' }}>
+      <span className="font-display leading-none tracking-wide"
+        style={{ fontSize: '1.1rem', fontWeight: 900, color: dayColor }}>
+        CARVE
+      </span>
+    </div>
   )
 }
 
@@ -208,7 +202,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover, onSlash }) {
     setTimeout(() => { if (mountedRef.current) onFire() }, 530)      // navigate
   }
 
-  const goldBg = enabled ? '#e4b022' : '#2a2a30'
+  const goldBg = enabled ? '#e4b022' : '#3a2f12'
   const active = phase > 0
 
   return (
@@ -219,7 +213,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover, onSlash }) {
       onClick={fire}
       onMouseEnter={enabled && !active ? onHover : undefined}
       disabled={!enabled}
-      className={`relative ${enabled ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
+      className={`relative ${enabled ? 'cursor-pointer' : 'cursor-not-allowed'}`}
       style={{
         transform: 'skewX(-2deg)',
         clipPath: active ? 'none' : 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
@@ -253,7 +247,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover, onSlash }) {
         <CarveContent enabled={enabled} />
         {phase < 1 && (
           <span className="font-mono leading-none mt-0.5"
-            style={{ fontSize: '8px', letterSpacing: '0.1em', color: enabled ? '#070708' : '#555', opacity: 0.6, transform: 'skewX(2deg)' }}>
+            style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.1em', color: enabled ? '#070708' : '#e4b022', opacity: enabled ? 0.85 : 1, transform: 'skewX(2deg)' }}>
             {dayLabel}
           </span>
         )}
@@ -294,7 +288,7 @@ function SheetCarveButton({ count, enabled, onFire, onHover, onSlash }) {
       {/* Invisible spacer */}
       <div className="invisible flex flex-col items-center justify-center px-2" style={{ height: '100%' }}>
         <CarveContent enabled={enabled} />
-        <span className="font-mono leading-none mt-0.5" style={{ fontSize: '8px' }}>{dayLabel}</span>
+        <span className="font-mono leading-none mt-0.5" style={{ fontSize: '12px', fontWeight: 700 }}>{dayLabel}</span>
       </div>
     </button>
   )
@@ -468,6 +462,14 @@ export default function SchedulePage() {
 
   const sheetOpen = selectedDays.size > 0
 
+  // Wrap-continuity pulse — bumps on month change so the paired (last-flow + wrapped) cells
+  // re-trigger their CSS animation. Used as part of the cell key so React re-mounts the
+  // wrap-continuity overlay when the month changes.
+  const [pulseKey, setPulseKey] = useState(0)
+  useEffect(() => {
+    setPulseKey((k) => k + 1)
+  }, [year, month])
+
   // Sorted selection drives the auto-rest gap fill: any unpicked day between the first
   // and last user-picked ISO date renders with a ✕ overlay (no red highlight) so it reads
   // as part of the cycle. P1 persistence: gap days are NOT saved, only user-picks are.
@@ -477,8 +479,28 @@ export default function SchedulePage() {
   }, [selectedDays])
   const firstSelectedKey = sortedSelected[0]
   const lastSelectedKey  = sortedSelected[sortedSelected.length - 1]
+
+  // Wrap-continuity: pair the last chronological cell that wasn't wrapped (e.g., May 30 in
+  // a layout where May 31 wrapped into row 1) with the EARLIEST wrapped cell (firstWrapDay)
+  // so the eye reads them as the connected endpoints. Static glyphs/edge accent live only on
+  // the pair; the synchronized pulse spans flowEndDay + ALL wrap cells (group flash).
+  const wrapActive = wrappedDays.size > 0
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  let flowEndDay = null
+  if (wrapActive) {
+    for (let d = daysInMonth; d >= 1; d--) {
+      if (!wrappedDays.has(d)) { flowEndDay = d; break }
+    }
+  }
+  const firstWrapDay = wrapActive ? Math.min(...wrappedDays) : null
   const daysWithMuscles = Object.values(assignments).filter((s) => s.size > 0).length
   const carveEnabled = daysWithMuscles > 0
+  // Total cycle days = contiguous span from first to last user-pick (inclusive of any
+  // auto-rest gap days). What the carve button surfaces — "5 DAYS" of cycle, not "3
+  // muscle-assigned days". 0 when no picks.
+  const cycleDays = (firstSelectedKey && lastSelectedKey)
+    ? Math.round((new Date(lastSelectedKey + 'T00:00:00Z') - new Date(firstSelectedKey + 'T00:00:00Z')) / 86400000) + 1
+    : 0
 
   const handleCarve = () => {
     if (!carveEnabled) return
@@ -546,6 +568,12 @@ export default function SchedulePage() {
           0%, 100% { box-shadow: 0 0 8px rgba(228,176,34,0.4); }
           50%      { box-shadow: 0 0 20px rgba(228,176,34,0.8), 0 0 40px rgba(228,176,34,0.3); }
         }
+        @keyframes wrap-continuity-pulse {
+          0%   { box-shadow: inset 0 0 0 0 rgba(228, 176, 34, 0); }
+          20%  { box-shadow: inset 0 0 0 3px rgba(228, 176, 34, 0.85); }
+          100% { box-shadow: inset 0 0 0 0 rgba(228, 176, 34, 0); }
+        }
+        .wrap-continuity-pulse { animation: wrap-continuity-pulse 1000ms ease-out 200ms both; }
       `}</style>
       {/* Atmospherics */}
       <div className="absolute inset-0 gtl-noise" />
@@ -632,7 +660,12 @@ export default function SchedulePage() {
                               && key < lastSelectedKey
             const todayCell  = isToday(d)
             const past       = isPast(d)
-            const isWrapped  = wrappedDays.has(d)
+            const isWrapped   = wrappedDays.has(d)
+            const isFlowEnd   = wrapActive && d === flowEndDay
+            const isFirstWrap = wrapActive && d === firstWrapDay
+            // Pulse fires for the full group (flow-end + every wrap cell). Static glyphs +
+            // edge accents stay restricted to the pair (flow-end + first wrap).
+            const pulseGroup  = isFlowEnd || isWrapped
             const badges     = badgeMuscles(key)
             const hasMuscles = badges.length > 0
 
@@ -651,11 +684,34 @@ export default function SchedulePage() {
                     : todayCell
                     ? 'bg-gtl-ink border-gtl-gold'
                     : 'bg-gtl-ink border-gtl-edge'}
+                  ${pulseGroup ? 'wrap-continuity-pulse' : ''}
                 `}
                 style={{ clipPath: CELL_CLIP, height: `${ROW_H}px` }}
               >
                 {todayCell && !hasMuscles && !selected && (
                   <div className="absolute top-0 left-0 right-0 h-0.5 bg-gtl-gold" aria-hidden="true" />
+                )}
+
+                {/* Wrap-continuity cues — only on the paired flow-end / wrapped cells. */}
+                {isFlowEnd && (
+                  <>
+                    <div className="absolute top-0 right-0 bottom-0 w-[2px] pointer-events-none"
+                         style={{ background: '#e4b022', boxShadow: '0 0 6px rgba(228,176,34,0.7)' }}
+                         aria-hidden="true" />
+                    <span className="absolute top-1 right-1 font-mono text-[12px] font-semibold leading-none pointer-events-none select-none"
+                          style={{ color: '#e4b022' }}
+                          aria-hidden="true">↗</span>
+                  </>
+                )}
+                {isFirstWrap && (
+                  <>
+                    <div className="absolute top-0 left-0 bottom-0 w-[2px] pointer-events-none"
+                         style={{ background: '#e4b022', boxShadow: '0 0 6px rgba(228,176,34,0.7)' }}
+                         aria-hidden="true" />
+                    <span className="absolute bottom-1 left-1 font-mono text-[12px] font-semibold leading-none pointer-events-none select-none"
+                          style={{ color: '#e4b022' }}
+                          aria-hidden="true">↙</span>
+                  </>
                 )}
 
                 {/* Date watermark */}
@@ -741,7 +797,7 @@ export default function SchedulePage() {
               src="/logo.png"
               alt="Gritted Teeth Lifestyle"
               className="-rotate-6"
-              style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover' }}
+              style={{ width: 226, height: 226, borderRadius: '50%', objectFit: 'cover' }}
             />
           </div>
         )}
@@ -760,7 +816,7 @@ export default function SchedulePage() {
                 />
               ))}
               <SheetCarveButton
-                count={daysWithMuscles}
+                count={cycleDays}
                 enabled={carveEnabled}
                 onFire={handleCarve}
                 onHover={() => play('button-hover')}

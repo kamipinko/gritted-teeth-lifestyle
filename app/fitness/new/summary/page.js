@@ -2081,6 +2081,382 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
   )
 }
 
+/* ── CYCLE INFINITY (exactly 14 days) ──
+ * Renders the figure-8 ouroboros silhouette (public/reference/ouroboros-14.svg, viewBox
+ * 796×416) as substrate, with 14 day inscriptions distributed 7-per-loop on each lobe.
+ * Day 1 sits at the top of the LEFT loop (CW from there); day 8 at the top of the RIGHT
+ * loop (also CW). Yakiire wires through the same shared state arrays the per-day cascade
+ * already drives in handleBegin (glowingDays/hotDays/cooledDays sized to N=14 by the
+ * existing resize effect).
+ */
+function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [], weekdayLetterIgnited = [], weekdayLetterZoomed = [], weekdayLetterCooled = [] }) {
+  const anyGlowing = glowingDays.some(Boolean)
+  const anyWeekdayIgnited = Array.isArray(weekdayLetterIgnited) && weekdayLetterIgnited.some(Boolean)
+
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
+  // ouroboros-14.svg viewBox is 0 0 796 416. Two lobes side-by-side; each lobe ~410px wide
+  // with center near (208, 208) for the left, (588, 208) for the right.
+  const VB_W = 796
+  const VB_H = 416
+  const LEFT_CX = 208
+  const RIGHT_CX = 588
+  const LOOP_CY = 208
+  const R_INSC = 162    // mid-segment radius — lands on the body of the segmented ring
+  // Weekday labels sit ABOVE each anchor's date number (in the inscription's local frame),
+  // not in the hollow. R_WEEKDAY kept for the legacy mask/particle blocks below; the visible
+  // weekday text rides the inscription anchor.
+  const R_WEEKDAY = 80
+  const WEEKDAY_FONT_SIZE = 14
+  const WEEKDAY_ADVANCE = 13
+  const WEEKDAY_LOCAL_Y = -3   // weekday cluster — slightly closer to kanji than the old number slot
+  // 7 anchors per loop, even compass distribution. Days 1-7 trace the left loop CW; days
+  // 8-14 trace the right loop CCW so the date order flows continuously around the figure-8.
+  // Bottom (left) loop shifted 3 steps CCW (screen); top (right) loop shifted 3 steps CW
+  // (screen). Note: container's 270° rotation inverts visual CW/CCW vs viewBox compass —
+  // screen CCW = viewBox CW = compass increase by step.
+  // Day 1 + day 8 stay put; the subsequent dates within each loop now traverse in the
+  // opposite direction (bottom flipped CW→CCW; top flipped CCW→CW).
+  const COMPASS_LEFT  = [51, 0, 309, 257, 206, 154, 103]
+  const COMPASS_RIGHT = [309, 0, 51, 103, 154, 206, 257]
+
+  const dayLabels = days.slice(0, 14).map((iso, i) => {
+    const d = parseDate(iso)
+    const num = String(d.getDate())
+    const muscles = dailyPlan[iso] || []
+    const hasWork = muscles.length > 0
+    const kanjiStr = hasWork
+      ? muscles.map((m) => MUSCLE_KANJI[m] || '?').join('')
+      : '休'
+    const onLeftLoop = i < 7
+    const loopCx = onLeftLoop ? LEFT_CX : RIGHT_CX
+    const angle = (onLeftLoop ? COMPASS_LEFT : COMPASS_RIGHT)[i % 7]
+    const rad = (angle * Math.PI) / 180
+    const cx = loopCx + R_INSC * Math.sin(rad)
+    const cy = LOOP_CY - R_INSC * Math.cos(rad)
+    // Weekday cluster sits on its loop's inner hollow at R_WEEKDAY (same compass angle).
+    const wdCx = loopCx + R_WEEKDAY * Math.sin(rad)
+    const wdCy = LOOP_CY - R_WEEKDAY * Math.cos(rad)
+    return { num, hasWork, kanjiStr, iso, cx, cy, angle, onLeftLoop, wdCx, wdCy }
+  })
+
+  // Compact day-number + small kanji column. Sized down vs CycleOuroboros since the lobes
+  // are narrower than the single ouroboros ring.
+  const renderDayInscription = (dl, { hot = false, maskFill = null } = {}) => {
+    const { num, kanjiStr } = dl
+    const kanjiChars = kanjiStr.split('')
+    const n = kanjiChars.length
+    const font = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
+
+    const DEPTH_STACK_RED = [
+      { dy: 2, fill: '#3a0608' },
+      { dy: 1, fill: '#9e1118' },
+      { dy: 0, fill: '#d4181f' },
+    ]
+    const DEPTH_STACK_HOT = [
+      { dy: 2, fill: '#ffe0a0' },
+      { dy: 1, fill: '#d85a10' },
+      { dy: 0, fill: '#ff6600' },
+    ]
+    const stack = maskFill ? [{ dy: 0, fill: maskFill }] : (hot ? DEPTH_STACK_HOT : DEPTH_STACK_RED)
+
+    const renderText = (keyBase, x, y, fontSize, char) => stack.map((layer, li) => (
+      <text key={`${keyBase}-${li}`} x={x} y={y + layer.dy} textAnchor="middle" dominantBaseline="central"
+        style={{ fontFamily: font, fontSize: `${fontSize}px`, fontWeight: 600, fill: layer.fill }}>
+        {char}
+      </text>
+    ))
+
+    const kanjiSize = n === 1 ? 30 : n <= 4 ? 20 : 15
+    const colSpacing = kanjiSize
+    const baseY = n === 1 ? 18 : 14
+    const rowYStep = kanjiSize
+    // Date number now sits to the RIGHT of the kanji column, lifted ~10 screen px above
+    // the kanji's vertical center (≈ 11 viewBox units at the current 1.875× scale).
+    const rowCount = n === 1 ? 1 : Math.ceil(n / 2)
+    const kanjiCenterY = n === 1 ? 18 : (14 + (rowCount - 1) * rowYStep / 2)
+    const numEls = renderText('num', 30, kanjiCenterY - 11, 24, num)
+    const kanjiEls = kanjiChars.flatMap((k, ki) => {
+      if (n === 1) return renderText('kj0', 0, baseY, kanjiSize, k)
+      const row = Math.floor(ki / 2)
+      const isOddLast = n % 2 === 1 && ki === n - 1
+      const x = isOddLast ? 0 : (ki % 2 - 0.5) * colSpacing
+      const y = baseY + row * rowYStep
+      return renderText(`kj${ki}`, x, y, kanjiSize, k)
+    })
+    return <>{numEls}{kanjiEls}</>
+  }
+
+  return (
+    <section className="relative z-10 py-2 px-2 pointer-events-none min-h-[calc(100vh-7px)]">
+      <div>
+        {/* Infinity container — full viewport width, vertically centered in the body area.
+            Rotated 270° (vertical, upside-down) and scaled 1.875× from center. */}
+        <div style={{ position: 'absolute', top: '215px', left: 0, width: '100vw', maxWidth: 'none', transform: 'rotate(270deg) scale(1.875)', transformOrigin: 'center' }}>
+          {mounted && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src="/reference/ouroboros-14.svg"
+              alt="Infinity"
+              className="block w-full h-auto"
+              style={{ filter: 'drop-shadow(0 4px 14px rgba(0,0,0,0.55))' }}
+            />
+          )}
+
+          <svg
+            viewBox={`0 0 ${VB_W} ${VB_H}`}
+            className="absolute inset-0 w-full h-auto pointer-events-none"
+            aria-hidden="true"
+          >
+            <defs>
+              <mask id="infinity-inscription-window" maskUnits="userSpaceOnUse" x="0" y="0" width={VB_W} height={VB_H}>
+                <rect x="0" y="0" width={VB_W} height={VB_H} fill="black"/>
+                {dayLabels.map((dl, i) => glowingDays[i] ? (
+                  <g key={`inf-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(90)`}>
+                    {renderDayInscription(dl, { maskFill: 'white' })}
+                  </g>
+                ) : null)}
+              </mask>
+              {/* Weekday-label mask — particles clipped to weekday letter silhouettes inside
+                  each loop's hollow. Counter-rotated 90° so letters read upright through the
+                  container's 270° rotation. */}
+              <mask id="infinity-weekday-window" maskUnits="userSpaceOnUse" x="0" y="0" width={VB_W} height={VB_H}>
+                <rect x="0" y="0" width={VB_W} height={VB_H} fill="black"/>
+                {dayLabels.map((dl, i) => {
+                  const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
+                  return (
+                    <g key={`inf-wd-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(90)`}>
+                      {dow.split('').map((ch, L) => {
+                        const lit = !!weekdayLetterIgnited[i * 3 + L]
+                        const x = (L - 1) * WEEKDAY_ADVANCE
+                        return (
+                          <text key={`inf-wd-mask-${dl.iso}-${L}`}
+                            x={x} y={WEEKDAY_LOCAL_Y}
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            style={{
+                              fontFamily: '"Noto Serif JP", Georgia, serif',
+                              fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                              fontWeight: 700,
+                              fill: 'white',
+                              opacity: lit ? 1 : 0,
+                            }}>
+                            {ch}
+                          </text>
+                        )
+                      })}
+                    </g>
+                  )
+                })}
+              </mask>
+            </defs>
+
+            {/* Particle aura clipped to inscription silhouettes. */}
+            {anyGlowing && (
+              <g mask="url(#infinity-inscription-window)" style={{ pointerEvents: 'none' }}>
+                <rect x="0" y="0" width={VB_W} height={VB_H} fill="#0a0a0a"/>
+                {(() => {
+                  const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
+                  return dayLabels.flatMap((dl, dayIdx) => {
+                    if (!glowingDays[dayIdx]) return []
+                    const PARTS = 8
+                    return Array.from({ length: PARTS }).map((_, i) => {
+                      const k = i + dayIdx * 23
+                      const rX    = hash01(k * 1)
+                      const rDly  = hash01(k * 3 + 11)
+                      const rDur  = hash01(k * 5 + 17)
+                      const rRise = hash01(k * 7 + 19)
+                      const rSize = hash01(k * 11 + 23)
+                      const rPeak = hash01(k * 13 + 29)
+                      const xOff  = (rX - 0.5) * 40
+                      const delay = (rDly * 540 + dayIdx * 131) % 600
+                      const dur   = 130 + rDur * 150
+                      const rise  = 50 + rRise * 35
+                      const size  = 6 + rSize * 9
+                      const peakA = 0.55 + rPeak * 0.45
+                      return (
+                        <circle key={`${dl.iso}-sp${i}`} cx={dl.cx + xOff} cy={dl.cy + 18} r={size} fill="#ff5000" opacity={0}>
+                          <animateTransform attributeName="transform" type="translate"
+                            values={`0 0; 0 -${rise.toFixed(0)}`}
+                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                          <animate attributeName="opacity"
+                            values={`0; ${peakA.toFixed(2)}; 0`}
+                            keyTimes="0; 0.2; 1"
+                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                        </circle>
+                      )
+                    })
+                  })
+                })()}
+              </g>
+            )}
+
+            <style>{`
+              .infinity-inscription-hot    { animation: inscription-hot-hold 100ms forwards; }
+              .infinity-inscription-cooled { animation: inscription-cool-down 1000ms ease-out forwards; }
+            `}</style>
+            {dayLabels.map((dl, i) => {
+              const hot = !!hotDays[i]
+              const cooled = !!cooledDays[i]
+              const flameOn = !!glowingDays[i]
+              const cls = cooled ? 'infinity-inscription-cooled' : (hot ? 'infinity-inscription-hot' : '')
+              return (
+                <g key={dl.iso}
+                   className={cls}
+                   style={{
+                     mixBlendMode: hot ? 'normal' : 'difference',
+                     opacity: flameOn ? 0 : 1,
+                     transition: 'opacity 0ms',
+                   }}>
+                  <g transform={`translate(${dl.cx},${dl.cy}) rotate(90)`}>
+                    {renderDayInscription(dl, { hot })}
+                  </g>
+                </g>
+              )
+            })}
+
+            {glowIntensity === 'peak' && (
+              <g style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
+                {dayLabels.map((dl, i) => (
+                  <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(90)`}>
+                    <g style={{
+                          transformBox: 'fill-box', transformOrigin: 'center',
+                          animation: `inscription-zoom 340ms ease-out forwards ${i * 220}ms`,
+                          mixBlendMode: 'plus-lighter',
+                          filter: 'drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 16px #ff4400)',
+                          opacity: 0,
+                       }}>
+                      {renderDayInscription(dl, { maskFill: '#ff6600' })}
+                    </g>
+                  </g>
+                ))}
+              </g>
+            )}
+
+            {/* Weekday labels inside each loop's hollow — per-letter yakiire mirrors the
+                7-day ouroboros. Cluster center sits at (wdCx, wdCy) on R_WEEKDAY; 3 letters
+                horizontally arranged with WEEKDAY_ADVANCE pitch. Counter-rotated 90° so they
+                read upright through the container's 270° rotation. */}
+            <g>
+              {dayLabels.map((dl, i) => {
+                const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
+                return (
+                  <g key={`dow-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(90)`}>
+                    {dow.split('').map((ch, L) => {
+                      const flatIdx = i * 3 + L
+                      const isFlaming = !!weekdayLetterIgnited[flatIdx]
+                      const isZoomed  = !!weekdayLetterZoomed[flatIdx]
+                      const isCooled  = !!weekdayLetterCooled[flatIdx]
+                      const isHot     = isZoomed && !isCooled
+                      // Carved-into-substrate look: paint the canonical red fill on top of the
+                      // red substrate, then difference-blend so it reads near-black (pre-flame).
+                      // Hot/cooled flip to normal blend so the warm post-ignition palette pops.
+                      const fill      = '#d4181f'
+                      const baseAlpha = 1
+                      const textOpacity = isFlaming ? 0 : baseAlpha
+                      const textClass = isCooled ? 'infinity-inscription-cooled' : (isHot ? 'infinity-inscription-hot' : '')
+                      const x = (L - 1) * WEEKDAY_ADVANCE
+                      return (
+                        <g key={`dow-${dl.iso}-${L}`} style={{ mixBlendMode: (isHot || isCooled) ? 'normal' : 'difference' }}>
+                          <text
+                            x={x} y={WEEKDAY_LOCAL_Y}
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            className={textClass}
+                            style={{
+                              fontFamily: '"Noto Serif JP", Georgia, serif',
+                              fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                              fontWeight: 700,
+                              fill,
+                              opacity: textOpacity,
+                              transition: 'opacity 0ms',
+                            }}>
+                            {ch}
+                          </text>
+                          {isZoomed && (
+                            <text
+                              x={x} y={WEEKDAY_LOCAL_Y}
+                              textAnchor="middle"
+                              dominantBaseline="central"
+                              className="weekday-zoom-burst"
+                              style={{
+                                fontFamily: '"Noto Serif JP", Georgia, serif',
+                                fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                                fontWeight: 700,
+                                fill: '#ff6600',
+                              }}>
+                              {ch}
+                            </text>
+                          )}
+                          {isFlaming && (
+                            <text
+                              x={x} y={WEEKDAY_LOCAL_Y}
+                              textAnchor="middle"
+                              dominantBaseline="central"
+                              className="weekday-flame-engulf"
+                              style={{
+                                ...engulfVars(i * 13 + L + 7),
+                                fontFamily: '"Noto Serif JP", Georgia, serif',
+                                fontSize: `${WEEKDAY_FONT_SIZE}px`,
+                                fontWeight: 700,
+                              }}>
+                              {ch}
+                            </text>
+                          )}
+                        </g>
+                      )
+                    })}
+                  </g>
+                )
+              })}
+            </g>
+
+            {/* Weekday particle aura — clipped to weekday letter silhouettes. */}
+            {anyWeekdayIgnited && (
+              <g mask="url(#infinity-weekday-window)" style={{ pointerEvents: 'none' }}>
+                {(() => {
+                  const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
+                  const PARTS_PER_WEEKDAY = 18
+                  return dayLabels.flatMap((dl, wi) => {
+                    const dayLit = weekdayLetterIgnited.slice(wi * 3, wi * 3 + 3).some(Boolean)
+                    if (!dayLit) return []
+                    return Array.from({ length: PARTS_PER_WEEKDAY }).map((_, i) => {
+                      const k = i + wi * 23
+                      const rX    = hash01(k * 1)
+                      const rDly  = hash01(k * 3 + 11)
+                      const rDur  = hash01(k * 5 + 17)
+                      const rSize = hash01(k * 11 + 23)
+                      const rPeak = hash01(k * 13 + 29)
+                      const xOff  = (rX - 0.5) * 60
+                      const delay = rDly * 300
+                      const dur   = 130 + rDur * 150
+                      const size  = 5 + rSize * 8
+                      const peakA = 0.55 + rPeak * 0.45
+                      return (
+                        <circle key={`inf-wd${wi}-${i}`} cx={dl.wdCx + xOff} cy={dl.wdCy + 22} r={size} fill="#ff5000" opacity={0}>
+                          <animateTransform attributeName="transform" type="translate"
+                            values={`0 0; 0 -${50 + rSize * 25}`}
+                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                          <animate attributeName="opacity"
+                            values={`0; ${peakA.toFixed(2)}; 0`}
+                            keyTimes="0; 0.2; 1"
+                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                        </circle>
+                      )
+                    })
+                  })
+                })()}
+              </g>
+            )}
+          </svg>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+
 /* ── EXPORT ── */
 function ExportButton() {
   const [hovered, setHovered] = useState(false)
@@ -2629,7 +3005,8 @@ export default function SummaryPage() {
   // scroll mode the magnitudes shrink (font 14 vs 18) so the watermark fits
   // beside the smaller 92px flame button without crowding the scroll body.
   const wmScroll    = days.length > 14
-  const wmDrill     = days.length >= 8 && days.length <= 13
+  const wmInfinity  = days.length === 14
+  const wmDrill     = (days.length >= 8 && days.length <= 13) || wmInfinity   // 14-day shares drill watermark slot
   const wmBladeLike = days.length > 0 && days.length <= 7   // blade ≤6 + ouroboros =7
   const WM_FONT   = wmScroll ? 14 : 18
   const WM_W      = wmScroll ? 100 : 130
@@ -2685,35 +3062,38 @@ export default function SummaryPage() {
         <CycleOuroboros days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
       )}
 
-      {days.length === 7 && (
-        <div className="fixed bottom-5 left-5 z-40 no-print pointer-events-none max-w-[60vw]">
-          <div className="font-display text-2xl text-gtl-paper leading-tight uppercase tracking-tight"
-               style={{ textShadow: '2px 2px 0 #070708' }}>
-            {cycleName}
+      {(days.length === 7 || days.length === 14) && (() => {
+        // Cycle title styled to match the ETCH/CYCLE watermark exactly: same Shippori Mincho
+        // serif, 18px, weight 600, dim red 65% alpha, 0.35em letter spacing, each word on
+        // its own line. 7-day sits bottom-left; 14-day sits top-center above the upper loop.
+        const titleStyle = {
+          fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
+          fontSize: '18px',
+          fontWeight: 600,
+          letterSpacing: '0.35em',
+          color: 'rgba(212, 24, 31, 0.65)',
+          lineHeight: '1.6',
+          textTransform: 'uppercase',
+        }
+        const words = cycleName.split(/\s+/).filter(Boolean)
+        const containerStyle = days.length === 7
+          ? { position: 'fixed', bottom: '20px', left: '20px', zIndex: 40, pointerEvents: 'none' }
+          : { position: 'fixed', top: '140px', left: '50%', transform: 'translateX(-50%)', zIndex: 40, pointerEvents: 'none', textAlign: 'center' }
+        return (
+          <div className="no-print" style={containerStyle}>
+            {words.map((w, i) => (
+              <div key={i} style={titleStyle}>{w}</div>
+            ))}
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {days.length >= 8 && days.length <= 13 && (
         <CycleDrill days={days} dailyPlan={dailyPlan} cycleName={cycleName} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
       )}
 
       {days.length === 14 && (
-        <section className="relative z-10 px-8 mb-12">
-          <div
-            className="grid gap-4"
-            style={{ gridTemplateColumns: `repeat(${Math.min(cols, days.length)}, 1fr)` }}
-          >
-            {days.map((iso, i) => (
-              <DayCard
-                key={iso}
-                iso={iso}
-                muscles={dailyPlan[iso] || []}
-                index={i}
-              />
-            ))}
-          </div>
-        </section>
+        <CycleInfinity days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
       )}
 
       {days.length > 14 && (
@@ -2835,6 +3215,25 @@ export default function SummaryPage() {
           pointer-events: none;
         }
       `}</style>
+      {/* 14-day watermark — plain centered text matching the cycle-title format. Sits in the
+          bottom loop's hollow. The SVG watermark below is hidden for 14-day so this CSS-text
+          variant carries the format. */}
+      {wmInfinity && (
+        <div className="fixed z-[20] no-print pointer-events-none"
+             style={{ top: '500px', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
+          {['ETCH', 'CYCLE'].map((word) => (
+            <div key={word} style={{
+              fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
+              fontSize: '18px',
+              fontWeight: 600,
+              letterSpacing: '0.35em',
+              color: 'rgba(212, 24, 31, 0.65)',
+              lineHeight: '1.6',
+              textTransform: 'uppercase',
+            }}>{word}</div>
+          ))}
+        </div>
+      )}
       <svg
         aria-hidden="true"
         className="fixed z-[20] pointer-events-none select-none"
@@ -2849,6 +3248,8 @@ export default function SummaryPage() {
               right: 'calc(5px + 92px - 4px)',
               overflow: 'visible',
             }
+          : wmInfinity
+          ? { display: 'none' }   // 14-day uses the CSS-text watermark above instead.
           : wmBladeLike
           ? {
               // Blade (≤6) + ouroboros (=7): watermark sits ABOVE the 128px flame
