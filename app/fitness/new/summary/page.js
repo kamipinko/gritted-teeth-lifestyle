@@ -1683,6 +1683,8 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
 function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', hotDays = [], cooledDays = [], weekdayLetterIgnited = [], weekdayLetterZoomed = [], weekdayLetterCooled = [] }) {
   const N = days.length
   const anyGlowing = glowingDays.some(Boolean)
+  const anyHot     = hotDays.some(Boolean)
+  const allCooled  = cooledDays.length > 0 && cooledDays.every(Boolean)
   const anyWeekdayIgnited = Array.isArray(weekdayLetterIgnited) && weekdayLetterIgnited.some(Boolean)
 
   const [mounted, setMounted] = useState(false)
@@ -1699,10 +1701,10 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
   const colsNeeded = Math.max(1, Math.ceil(N / ROWS_PER_COL))
   // Writing area shifted 14 viewBox units left (~7px on a 390-wide viewport at
   // the 143.325vw scroll container) so columns sit slightly off-center.
-  const WRITE_X0 = 266
-  const WRITE_X1 = 786
-  const WRITE_Y0 = 270
-  const WRITE_Y1 = 1030
+  const WRITE_X0 = 320
+  const WRITE_X1 = 766
+  const WRITE_Y0 = 215
+  const WRITE_Y1 = 1075
   const colStep = (WRITE_X1 - WRITE_X0) / colsNeeded
   const rowStep = (WRITE_Y1 - WRITE_Y0) / ROWS_PER_COL
   const halfN   = Math.floor(N / 2)
@@ -1749,7 +1751,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
   // The LAST day uses a 1.7× scale factor so it visually dominates the column.
   const NUM_FONT = '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif'
   const renderInscription = (dl, { hot = false, maskFill = null } = {}) => {
-    const { num, kanjiStr, isBig } = dl
+    const { num, kanjiStr, isBig, isLast } = dl
     const kanjiChars = kanjiStr.split('')
     const n = kanjiChars.length
     // BIG day (≤35-day cycles) renders 1.7×; for 7+ columns everything also
@@ -1765,7 +1767,20 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
       { dy: 1, fill: '#d85a10' },
       { dy: 0, fill: '#ff6600' },
     ]
-    const stack = maskFill ? [{ dy: 0, fill: maskFill }] : (hot ? DEPTH_STACK_HOT : DEPTH_STACK_RED)
+    // Final-day inscription uses the GTL gold stack (matches BATTLEDAYS yellow
+    // on the load page) so the cycle's last day pops visually.
+    const DEPTH_STACK_GOLD = [
+      { dy: 2, fill: '#5a4015' },
+      { dy: 1, fill: '#a8782a' },
+      { dy: 0, fill: '#e4b022' },
+    ]
+    const stack = maskFill
+      ? [{ dy: 0, fill: maskFill }]
+      : hot
+        ? DEPTH_STACK_HOT
+        : isLast
+          ? DEPTH_STACK_GOLD
+          : DEPTH_STACK_RED
     const renderText = (keyBase, x, y, fontSize, char) => stack.map((layer, li) => (
       <text key={`${keyBase}-${li}`} x={x} y={y + layer.dy} textAnchor="middle" dominantBaseline="central"
         style={{ fontFamily: NUM_FONT, fontSize: `${fontSize}px`, fontWeight: 700, fill: layer.fill }}>
@@ -1804,7 +1819,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
   // Weekday DOW label sits ABOVE the date number; sizing scales with isBig (BIG day).
   const WEEKDAY_FONT_SIZE = 24
   const WEEKDAY_ADVANCE   = 20
-  const WEEKDAY_DY        = -50
+  const WEEKDAY_DY        = -40
   const dayScale = (dl) => (dl.isBig ? 1.7 : 1.0) * colScale
   // Per-letter x: center-anchored around the cell so all 3 letters sit together above the date.
   const weekdayLetterX = (cx, L, advance) => cx + (L - 1) * advance
@@ -1836,86 +1851,91 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
               />
             )}
             <defs>
-              {/* Inscription mask — particles flow through ignited day-number + kanji silhouettes. */}
-              <mask id="scroll-inscription-window" maskUnits="userSpaceOnUse" x="0" y="0" width="1061" height="1300">
-                <rect x="0" y="0" width="1061" height="1300" fill="black"/>
-                {dayLabels.map((dl, i) => glowingDays[i] ? (
-                  <g key={`scroll-mask-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
-                    {renderInscription(dl, { maskFill: 'white' })}
-                  </g>
-                ) : null)}
-              </mask>
-              {/* Weekday-label mask — particles clipped to weekday letter silhouettes. */}
-              <mask id="scroll-weekday-window" maskUnits="userSpaceOnUse" x="0" y="0" width="1061" height="1300">
-                <rect x="0" y="0" width="1061" height="1300" fill="black"/>
-                {dayLabels.map((dl, i) => {
-                  const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
-                  const s = dayScale(dl)
-                  const fontSize = WEEKDAY_FONT_SIZE * s
-                  const advance  = WEEKDAY_ADVANCE * s
-                  const dy       = WEEKDAY_DY * s
-                  return (
-                    <g key={`scroll-wd-mask-${dl.iso}`}>
-                      {dow.split('').map((ch, L) => {
-                        const lit = !!weekdayLetterIgnited[i * 3 + L]
-                        const x = weekdayLetterX(dl.cx, L, advance)
-                        return (
-                          <text key={`scroll-wd-mask-${dl.iso}-${L}`}
-                            x={x} y={dl.cy + dy}
-                            textAnchor="middle"
-                            dominantBaseline="central"
-                            style={{
-                              fontFamily: '"Noto Serif JP", Georgia, serif',
-                              fontSize: `${fontSize}px`,
-                              fontWeight: 700,
-                              fill: 'white',
-                              opacity: lit ? 1 : 0,
-                            }}>
-                            {ch}
-                          </text>
-                        )
-                      })}
-                    </g>
-                  )
-                })}
+              {/* Red-frame mask — sourced directly from the scroll SVG so flame
+                  particles are clipped to the red ink regions only (rolled
+                  handles top/bottom + the parchment border), keeping the writing
+                  area where inscriptions live free of particles. Alpha-mode so
+                  any opaque pixel of the source counts as "inside." */}
+              <mask id="scroll-red-frame" maskUnits="userSpaceOnUse" x="0" y="0" width="1061" height="1300" style={{ maskType: 'alpha' }}>
+                <image
+                  href="/reference/scroll.svg"
+                  width="1300"
+                  height="1061"
+                  transform="translate(0 1300) rotate(-90)"
+                />
               </mask>
             </defs>
 
-            {/* Inscription particle aura — clipped to day-number silhouettes. */}
+            {/* Per-day inscription particle aura intentionally removed — the
+                red-frame flame layer below is the only flame visual now.
+                Inscriptions still cascade through hot/cool color states. */}
+
+            {/* Red-frame cascade overlays — match the inscription cascade phases.
+                During flame: void-black so particles read. During hot: orange
+                glow with a cream highlight (mirrors DEPTH_STACK_HOT colors).
+                When all columns cool: opacity fades to 0 over 1s, revealing red. */}
+            {(anyGlowing || anyHot) && (
+              <g mask="url(#scroll-red-frame)" style={{ pointerEvents: 'none' }}>
+                {anyGlowing && (
+                  <rect x="0" y="0" width="1061" height="1300" fill="#0a0a0a" opacity="0.92"/>
+                )}
+                {anyHot && (
+                  <rect
+                    x="0" y="0" width="1061" height="1300"
+                    className={allCooled ? 'scroll-frame-cooled' : 'scroll-frame-hot'}
+                    fill="#ff6600"
+                  />
+                )}
+              </g>
+            )}
+            {anyHot && (
+              <g mask="url(#scroll-red-frame)" style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
+                <rect
+                  x="0" y="0" width="1061" height="1300"
+                  className={allCooled ? 'scroll-frame-cooled' : 'scroll-frame-hot-highlight'}
+                  fill="#ffe0a0"
+                />
+              </g>
+            )}
+
+            {/* Red-frame flame layer — ADDITIVE on top of the per-cell particles
+                above. Clipped to the scroll's red ink regions via the alpha mask
+                sourced from /reference/scroll.svg, so the rolled handles + frame
+                curl glow with rising sparks even when the parchment area is
+                cooling down. 80 particles distributed across the canvas; the
+                mask culls them to red areas only. */}
             {anyGlowing && (
-              <g mask="url(#scroll-inscription-window)" style={{ pointerEvents: 'none' }}>
-                <rect x="0" y="0" width="1061" height="1300" fill="#0a0a0a"/>
+              <g mask="url(#scroll-red-frame)" style={{ pointerEvents: 'none' }}>
                 {(() => {
                   const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
-                  return dayLabels.flatMap((dl, dayIdx) => {
-                    if (!glowingDays[dayIdx]) return []
-                    const PARTS = 4
-                    return Array.from({ length: PARTS }).map((_, i) => {
-                      const k = i + dayIdx * 23
-                      const rX    = hash01(k * 1)
-                      const rDly  = hash01(k * 3 + 11)
-                      const rDur  = hash01(k * 5 + 17)
-                      const rRise = hash01(k * 7 + 19)
-                      const rSize = hash01(k * 11 + 23)
-                      const rPeak = hash01(k * 13 + 29)
-                      const xOff  = (rX - 0.5) * 60
-                      const delay = (rDly * 540) % 600
-                      const dur   = 130 + rDur * 150
-                      const rise  = 60 + rRise * 50
-                      const size  = 7 + rSize * 11
-                      const peakA = 0.5 + rPeak * 0.5
-                      return (
-                        <circle key={`${dl.iso}-sp${i}`} cx={dl.cx + xOff} cy={dl.cy + 28} r={size} fill="#ff5000" opacity={0}>
-                          <animateTransform attributeName="transform" type="translate"
-                            values={`0 0; 0 -${rise.toFixed(0)}`}
-                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
-                          <animate attributeName="opacity"
-                            values={`0; ${peakA.toFixed(2)}; 0`}
-                            keyTimes="0; 0.2; 1"
-                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
-                        </circle>
-                      )
-                    })
+                  const PARTS = 80
+                  return Array.from({ length: PARTS }).map((_, i) => {
+                    const k = i + 7
+                    const rX    = hash01(k * 1)
+                    const rY    = hash01(k * 2 + 5)
+                    const rDly  = hash01(k * 3 + 11)
+                    const rDur  = hash01(k * 5 + 17)
+                    const rRise = hash01(k * 7 + 19)
+                    const rSize = hash01(k * 11 + 23)
+                    const rPeak = hash01(k * 13 + 29)
+                    const cx = rX * 1061
+                    const cy = rY * 1300
+                    const delay = (rDly * 600) % 700
+                    const dur   = 200 + rDur * 250
+                    const rise  = 30 + rRise * 50
+                    const size  = 4 + rSize * 8
+                    const peakA = 0.55 + rPeak * 0.45
+                    return (
+                      <circle key={`scroll-frame-sp${i}`} cx={cx} cy={cy} r={size} fill="#ff5000" opacity={0}>
+                        <animateTransform attributeName="transform" type="translate"
+                          values={`0 0; 0 -${rise.toFixed(0)}`}
+                          dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                        <animate attributeName="opacity"
+                          values={`0; ${peakA.toFixed(2)}; 0`}
+                          keyTimes="0; 0.2; 1"
+                          dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
+                      </circle>
+                    )
                   })
                 })()}
               </g>
@@ -1934,6 +1954,11 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
               }
               .scroll-inscription-hot    { animation: scroll-inscription-hot-hold-lite 100ms forwards; }
               .scroll-inscription-cooled { animation: scroll-inscription-cool-down-lite 1000ms ease-out forwards; }
+              /* Red-frame cascade overlays — glow orange/cream during hot phase,
+                 fade to fully transparent over 1s when allCooled flips. */
+              .scroll-frame-hot           { opacity: 0.85; }
+              .scroll-frame-hot-highlight { opacity: 0.40; }
+              .scroll-frame-cooled        { opacity: 0; transition: opacity 1000ms ease-out; }
             `}</style>
             {dayLabels.map((dl, i) => {
               const hot = !!hotDays[i]
@@ -1945,7 +1970,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                    className={cls}
                    style={{
                      mixBlendMode: hot ? 'normal' : 'difference',
-                     opacity: flameOn ? 0 : 1,
+                     opacity: 1,
                      transition: 'opacity 0ms',
                    }}>
                   <g transform={`translate(${dl.cx},${dl.cy})`}>
@@ -1959,14 +1984,22 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                 glyph plus-lighter cascade is too expensive at 30+ glyphs and visually
                 disappears in the density anyway. Inscriptions go straight to hot. */}
 
-            {/* Weekday labels — per-letter yakiire mirrors CycleDrill / CycleBlade pattern. */}
+            {/* Weekday labels — column-major layout means row r is the same
+                weekday across every column, so we only render labels for the
+                leftmost column (col 0 = cells 0..6) as a vertical 3-letter
+                stack to the LEFT of the kanji. Per-letter yakiire still drives
+                the same flat indices so the cascade lights these letters as
+                the matching column ignites. */}
             <g>
               {dayLabels.map((dl, i) => {
+                const colIdx = Math.floor(i / 7)
+                if (colIdx !== 0) return null
                 const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][parseDate(dl.iso).getDay()] || ''
-                const s = dayScale(dl)
-                const fontSize = WEEKDAY_FONT_SIZE * s
-                const advance  = WEEKDAY_ADVANCE * s
-                const dy       = WEEKDAY_DY * s
+                const s         = dayScale(dl)
+                const fontSize  = WEEKDAY_FONT_SIZE * s
+                const lineH     = 28 * s    // taller line so letters don't collide
+                const xOff      = -65 * s   // compensates for the shifted-right inscription block so DOW stays put visually
+                const yCenter   = 12 * s    // shifted up ~8px from the kanji vertical center
                 return (
                   <g key={`dow-${dl.iso}`}>
                     {dow.split('').map((ch, L) => {
@@ -1979,11 +2012,12 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                       const baseAlpha = (isHot || isCooled) ? 1 : 0.7
                       const textOpacity = isFlaming ? 0 : baseAlpha
                       const textClass = isCooled ? 'scroll-inscription-cooled' : (isHot ? 'scroll-inscription-hot' : '')
-                      const x = weekdayLetterX(dl.cx, L, advance)
+                      const x = dl.cx + xOff
+                      const y = dl.cy + yCenter + (L - 1) * lineH
                       return (
                         <g key={`dow-${dl.iso}-${L}`}>
                           <text
-                            x={x} y={dl.cy + dy}
+                            x={x} y={y}
                             textAnchor="middle"
                             dominantBaseline="central"
                             className={textClass}
@@ -1999,7 +2033,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                           </text>
                           {isZoomed && (
                             <text
-                              x={x} y={dl.cy + dy}
+                              x={x} y={y}
                               textAnchor="middle"
                               dominantBaseline="central"
                               className="weekday-zoom-burst"
@@ -2014,7 +2048,7 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
                           )}
                           {isFlaming && (
                             <text
-                              x={x} y={dl.cy + dy}
+                              x={x} y={y}
                               textAnchor="middle"
                               dominantBaseline="central"
                               className="weekday-flame-engulf"
@@ -2035,45 +2069,9 @@ function CycleScroll({ days, dailyPlan, glowingDays = [], glowIntensity = 'off',
               })}
             </g>
 
-            {/* Weekday particle aura — clipped to weekday letter silhouettes. */}
-            {anyWeekdayIgnited && (
-              <g mask="url(#scroll-weekday-window)" style={{ pointerEvents: 'none' }}>
-                {(() => {
-                  const hash01 = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
-                  const PARTS_PER_WEEKDAY = 6
-                  return dayLabels.flatMap((dl, wi) => {
-                    const dayLit = weekdayLetterIgnited.slice(wi * 3, wi * 3 + 3).some(Boolean)
-                    if (!dayLit) return []
-                    const s  = dayScale(dl)
-                    const dy = WEEKDAY_DY * s
-                    return Array.from({ length: PARTS_PER_WEEKDAY }).map((_, i) => {
-                      const k = i + wi * 23
-                      const rX    = hash01(k * 1)
-                      const rDly  = hash01(k * 3 + 11)
-                      const rDur  = hash01(k * 5 + 17)
-                      const rSize = hash01(k * 11 + 23)
-                      const rPeak = hash01(k * 13 + 29)
-                      const xOff  = (rX - 0.5) * 80 * s
-                      const delay = rDly * 300
-                      const dur   = 130 + rDur * 150
-                      const size  = (6 + rSize * 9) * s
-                      const peakA = 0.55 + rPeak * 0.45
-                      return (
-                        <circle key={`scroll-wd${wi}-${i}`} cx={dl.cx + xOff} cy={dl.cy + dy + 18 * s} r={size} fill="#ff5000" opacity={0}>
-                          <animateTransform attributeName="transform" type="translate"
-                            values={`0 0; 0 -${40 + rSize * 22}`}
-                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
-                          <animate attributeName="opacity"
-                            values={`0; ${peakA.toFixed(2)}; 0`}
-                            keyTimes="0; 0.2; 1"
-                            dur={`${dur.toFixed(0)}ms`} begin={`${delay.toFixed(0)}ms`} repeatCount="indefinite"/>
-                        </circle>
-                      )
-                    })
-                  })
-                })()}
-              </g>
-            )}
+            {/* Per-weekday-letter particle aura intentionally removed — the
+                red-frame flame layer above is the only flame visual now.
+                Weekday letters still cascade through hot/cool color states. */}
           </svg>
         </div>
       </div>
@@ -2756,10 +2754,11 @@ export default function SummaryPage() {
           })
         }, at)
       }
-      // Peak / zoom: columns cascade 200ms each, all rows in a column simultaneously.
+      // Peak / zoom: columns cascade 400ms each (slowed from 200ms so the cascade
+      // is visible even at the degraded frame-rates the scroll layout produces).
       setTimeout(() => setGlowIntensity('peak'), 1600)
       for (let col = 0; col < colCount; col++) {
-        const at = 1600 + col * 200
+        const at = 1600 + col * 400
         setTimeout(() => {
           setGlowingDays(prev => {
             const next = [...prev]
@@ -2779,9 +2778,10 @@ export default function SummaryPage() {
           })
         }, at)
       }
-      // Cooled: 1600ms hold after zoom starts, then columns cool 300ms each.
+      // Cooled: 1600ms hold after zoom starts, then columns cool 500ms each
+      // (slowed from 300ms to match the visible cascade pace above).
       for (let col = 0; col < colCount; col++) {
-        const at = 1600 + 1600 + col * 300
+        const at = 1600 + 1600 + col * 500
         setTimeout(() => {
           setCooledDays(prev => {
             const next = [...prev]
@@ -2793,8 +2793,8 @@ export default function SummaryPage() {
           })
         }, at)
       }
-      const glowOffAt    = 1600 + (colCount - 1) * 200 + 340
-      const lastCooledAt = 3200 + (colCount - 1) * 300
+      const glowOffAt    = 1600 + (colCount - 1) * 400 + 340
+      const lastCooledAt = 3200 + (colCount - 1) * 500
       setTimeout(() => setGlowIntensity('off'), Math.max(3040, glowOffAt))
       stampVisibleAt = Math.max(4290, lastCooledAt + 400)
       setTimeout(() => setStampVisible(true), stampVisibleAt)
@@ -2852,53 +2852,55 @@ export default function SummaryPage() {
       }, 1035 + i * 50)
     }
 
-    // Per-letter weekday cascade. Below 15 days, anchor-N-to-1 reverse-linear scheduling;
-    // 15+ days uses a column-major group cascade that matches the per-day cascade
-    // (and avoids 90+ letter-level setTimeouts on a 30-day scroll).
+    // Per-letter weekday cascade. Below 15 days, canonical middle-out pair scheduling;
+    // 15+ days uses a column-block cascade that flips ALL 21 weekday letters in a
+    // column with a single state update (3 setTimeouts per column instead of 21).
+    // Staggers slowed (400ms zoom / 500ms cooled) so the cascade is perceptible
+    // even when the browser drops to 2-3fps on dense scroll layouts.
     let lastPairCooledAt
     if (isScroll) {
-      // Column-major weekday cascade — 7 rows per column, all letters in a column fire
-      // simultaneously; columns step 100ms (flame) / 200ms (zoom) / 300ms (cooled).
       const ROWS_PER_COL = 7
       const colCount = Math.ceil(N / ROWS_PER_COL)
       for (let col = 0; col < colCount; col++) {
-        const flameAt  = 900  + col * 100
-        const zoomAt   = 3000 + col * 200
-        const cooledAt = 3650 + col * 300
-        const tuples = []
+        // Match the per-day cascade so a column's day-numbers + weekday letters
+        // ignite/zoom/cool together.
+        const flameAt  = 200  + col * 100
+        const zoomAt   = 1600 + col * 400
+        const cooledAt = 3200 + col * 500
+        const indices = []
         for (let row = 0; row < ROWS_PER_COL; row++) {
           const dayIdx = col * ROWS_PER_COL + row
           if (dayIdx >= N) break
-          for (let L = 0; L < 3; L++) tuples.push([dayIdx, L])
+          for (let L = 0; L < 3; L++) indices.push(dayIdx * 3 + L)
         }
         setTimeout(() => {
           setWeekdayLetterIgnited(prev => {
             const next = [...prev]
-            tuples.forEach(([d, L]) => { next[d * 3 + L] = true })
+            indices.forEach(i => { next[i] = true })
             return next
           })
         }, flameAt)
         setTimeout(() => {
           setWeekdayLetterIgnited(prev => {
             const next = [...prev]
-            tuples.forEach(([d, L]) => { next[d * 3 + L] = false })
+            indices.forEach(i => { next[i] = false })
             return next
           })
           setWeekdayLetterZoomed(prev => {
             const next = [...prev]
-            tuples.forEach(([d, L]) => { next[d * 3 + L] = true })
+            indices.forEach(i => { next[i] = true })
             return next
           })
         }, zoomAt)
         setTimeout(() => {
           setWeekdayLetterCooled(prev => {
             const next = [...prev]
-            tuples.forEach(([d, L]) => { next[d * 3 + L] = true })
+            indices.forEach(i => { next[i] = true })
             return next
           })
         }, cooledAt)
       }
-      lastPairCooledAt = 3650 + (colCount - 1) * 300
+      lastPairCooledAt = 3200 + (colCount - 1) * 500
     } else {
       // ── Reverse-linear cascade (matches per-anchor cascade order N → 1) ──
       //   Flame: 50ms per letter, Zoom: 50ms per letter, Cooled: 75ms per letter.
