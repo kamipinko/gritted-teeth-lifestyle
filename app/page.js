@@ -158,7 +158,9 @@ export default function Home() {
 
   const activate = (kind) => {
     if (phase !== 'gate') return
-    startBgMusic()
+    // bg music is started synchronously by GateScreen.handleClick (tap path) or
+    // by handleTouchEnd's swipe paths below — calling it here would be too late
+    // for iOS PWA's autoplay rules (audio.play must run inside the user gesture).
     play('brand-confirm')
     setPhase(kind === 'fitness' ? 'flash-fitness' : 'flash-nutrition')
     setTransitionTarget(kind === 'fitness' ? '/fitness' : '/diet')
@@ -176,9 +178,15 @@ export default function Home() {
     const endY = e.changedTouches[0]?.clientY ?? touchStartY.current
     const dy = endY - touchStartY.current
     touchStartY.current = null
-    if (dy < -SWIPE_THRESHOLD) activate('fitness')
-    else if (dy > SWIPE_THRESHOLD) activate('nutrition')
-    // Otherwise it's a tap (small dy) — GateScreen's onClick handles fallback.
+    if (dy < -SWIPE_THRESHOLD) {
+      startBgMusic()        // synchronous to the touchend gesture — iOS PWA audio autoplay
+      activate('fitness')
+    } else if (dy > SWIPE_THRESHOLD) {
+      startBgMusic()
+      activate('nutrition')
+    }
+    // Otherwise it's a tap (small dy) — GateScreen's onClick handles fallback +
+    // calls startBgMusic via the onMusicStart prop, also inside the gesture.
   }
 
   // Keyboard shortcut: arrow up = fitness, arrow down = nutrition (desktop).
@@ -199,29 +207,19 @@ export default function Home() {
   const handleGateTapEnter = () => activate('fitness')
 
   return (
-    // Outer wrapper fills the viewport edge-to-edge and paints gtl-void so any
-    // gap between phase transitions never shows the browser default. Touch
-    // handlers live here and bubble up from GateScreen's button.
-    <div
+    // Flow-based wrapper — min-h:100dvh + bg-gtl-void matches the original c18b728
+    // home and avoids the iOS PWA safe-area-inset clip that plagued any
+    // position:fixed parent. html/body underneath paints #280609 (per globals.css)
+    // so even if anything bleeds through, the user sees dark red, not black.
+    <main
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      style={{
-        position: 'fixed',
-        top: 0, left: 0, right: 0,
-        // Stretch past the iOS home-indicator safe-area so the dark-red base paints
-        // edge-to-edge in PWA standalone mode. inset:0 alone gets clipped at
-        // safe-area-inset-bottom even with viewport-fit=cover.
-        bottom: 'calc(0px - env(safe-area-inset-bottom, 0px))',
-        // Match GateScreen's atmospheric base. If anything (the safe-area clip,
-        // a phase transition gap) lets the wrapper show through, the user sees
-        // dark red — not the void's #070708.
-        background: '#280609',
-        overflow: 'hidden',
-      }}
+      className="relative bg-gtl-void overflow-hidden"
+      style={{ minHeight: '100dvh' }}
     >
       {phase === 'gate' && (
         <>
-          <GateScreen onEnter={handleGateTapEnter} />
+          <GateScreen onEnter={handleGateTapEnter} onMusicStart={startBgMusic} />
           <SwipeHint position="top"    label="SWIPE UP FOR FITNESS" />
           <SwipeHint position="bottom" label="SWIPE DOWN FOR NUTRITION" />
         </>
@@ -234,6 +232,6 @@ export default function Home() {
         onComplete={handleTransitionComplete}
         title="GTL"
       />
-    </div>
+    </main>
   )
 }

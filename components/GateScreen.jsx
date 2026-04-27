@@ -6,7 +6,7 @@ import { useSound } from '../lib/useSound'
 // Exit at 600ms — slashes are 95%+ across, seamless handoff to gate-reveal.
 const EXIT_MS = 600
 
-export default function GateScreen({ onEnter }) {
+export default function GateScreen({ onEnter, onMusicStart }) {
   const { play } = useSound()
   const [phase, setPhase] = useState('pre')
   // pre → in → idle → out
@@ -19,6 +19,11 @@ export default function GateScreen({ onEnter }) {
 
   const handleClick = () => {
     if (phase !== 'idle') return
+    // Fire bg music start SYNCHRONOUSLY inside the user-gesture handler. iOS PWA
+    // blocks audio.play() outside the synchronous click context — anything called
+    // after the setTimeout below is outside that window and the play promise
+    // rejects silently.
+    if (onMusicStart) onMusicStart()
     play('brand-confirm')
     setPhase('out')
     setTimeout(onEnter, EXIT_MS)
@@ -33,17 +38,18 @@ export default function GateScreen({ onEnter }) {
       onClick={handleClick}
       aria-label="Enter Gritted Teeth Lifestyle"
       style={{
-        position: 'fixed',
-        top: 0, left: 0, right: 0,
-        // Push the bottom edge UNDER the iOS home indicator so the painted
-        // atmosphere extends through the home-indicator zone instead of stopping
-        // at safe-area-inset-bottom (which leaves a black band on Dynamic Island
-        // iPhones in PWA standalone, even with viewport-fit=cover).
-        bottom: 'calc(0px - env(safe-area-inset-bottom, 0px))',
+        // Anchored to the parent <main> (flow-based, min-h:100dvh) instead of
+        // the viewport. Avoids the iOS PWA safe-area-inset-bottom clip that hits
+        // any position:fixed element — even with viewport-fit=cover and a
+        // negative-bottom calc.
+        position: 'absolute',
+        inset: 0,
         zIndex: 50,
-        width: '100%', overflow: 'hidden',
-        // Dark-red base matches the wrapper bg + the new atmospheric base layer
-        // below, so the corners read red not black if anything clips.
+        width: '100%',
+        minHeight: '100dvh',
+        overflow: 'hidden',
+        // Dark-red base matches the html/body globals.css bg + the atmospheric
+        // base layer below, so the corners read red not black if anything clips.
         background: '#280609', border: 'none', cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
