@@ -117,9 +117,12 @@ function SwipeHint({ position, label }) {
     <div
       style={{
         position: 'fixed', left: '50%', zIndex: 51,
-        [isTop ? 'top' : 'bottom']: 'env(safe-area-inset-' + (isTop ? 'top' : 'bottom') + ', 24px)',
-        marginTop: isTop ? '24px' : 0,
-        marginBottom: isTop ? 0 : '24px',
+        // Top hint clears the Dynamic Island + 24px buffer; bottom hint sits 8px above the
+        // home indicator (just enough breathing room — the prior 24px extra margin made the
+        // bottom band read as "padding").
+        [isTop ? 'top' : 'bottom']: isTop
+          ? 'calc(env(safe-area-inset-top, 0px) + 24px)'
+          : 'calc(env(safe-area-inset-bottom, 0px) + 8px)',
         transform: 'translateX(-50%)',
         fontFamily: '"JetBrains Mono", monospace',
         fontSize: '0.55rem',
