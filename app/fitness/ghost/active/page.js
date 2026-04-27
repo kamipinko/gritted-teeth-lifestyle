@@ -929,7 +929,7 @@ function CustomMoveInput({ value, onChange, onConfirm, onCancel, onCharAdded }) 
   return (
     <div className="flex-1 relative cursor-text select-none" onClick={() => inputRef.current?.focus()}>
       <input ref={inputRef} type="text" value={value} onChange={handleChange} onKeyDown={handleKeyDown}
-        maxLength={24} className="sr-only" autoComplete="off" autoCorrect="off" spellCheck="false" />
+        maxLength={24} className="sr-only" inputMode="text" enterKeyHint="done" autoComplete="off" autoCorrect="off" spellCheck="false" />
       <div className="flex flex-wrap items-baseline gap-y-1 min-h-[3rem]" style={{ overflow: 'visible' }}>
         {value.split('').map((char, i) => (
           <span key={charKeysRef.current[i]} className="inline-block font-display leading-none animate-char-stamp text-gtl-chalk"
@@ -1738,9 +1738,10 @@ export default function GhostActivePage() {
       <div className="absolute inset-0 pointer-events-none"
         style={{ background: 'linear-gradient(160deg, rgba(30,30,80,0.18) 0%, transparent 45%, rgba(20,20,60,0.28) 100%)' }} />
 
-      {/* Kanji watermark — 幽 (ghost/spirit) */}
-      <div className="absolute -top-16 -right-24 pointer-events-none select-none" aria-hidden="true"
-        style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '52rem', lineHeight: '0.8', color: '#6060a0', opacity: 0.045, fontWeight: 900 }}>
+      {/* Kanji watermark — 幽 (ghost/spirit). Top rooted at safe-area floor so it
+          never clips into the iOS Dynamic Island camera area. */}
+      <div className="absolute -right-24 pointer-events-none select-none" aria-hidden="true"
+        style={{ top: 'calc(env(safe-area-inset-top, 0px) - 64px)', fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '52rem', lineHeight: '0.8', color: '#6060a0', opacity: 0.045, fontWeight: 900 }}>
         幽
       </div>
 

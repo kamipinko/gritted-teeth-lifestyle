@@ -160,7 +160,8 @@ function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAd
       role="presentation"
       style={{ overflow: 'visible' }}
     >
-      {/* Hidden real input — captures all keyboard input */}
+      {/* Hidden real input — captures all keyboard input. inputMode + enterKeyHint
+          standardize the iOS keyboard layout (text + Done) across all cycle-name entry. */}
       <input
         ref={inputRef}
         type="text"
@@ -170,6 +171,8 @@ function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAd
         maxLength={maxLength}
         className="sr-only"
         aria-label="Cycle name"
+        inputMode="text"
+        enterKeyHint="done"
         autoComplete="off"
         autoCorrect="off"
         spellCheck="false"
@@ -412,11 +415,13 @@ export default function NewCycleNamePage() {
         }}
       />
 
-      {/* Kanji watermark — 名 ("name") top-right */}
+      {/* Kanji watermark — 名 ("name") top-right. Top rooted at safe-area floor so it
+          never clips into the iOS Dynamic Island camera area. */}
       <div
-        className="absolute -top-12 -right-16 pointer-events-none select-none animate-flicker"
+        className="absolute -right-16 pointer-events-none select-none animate-flicker"
         aria-hidden="true"
         style={{
+          top: 'calc(env(safe-area-inset-top, 0px) - 48px)',
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '46rem',
           lineHeight: '0.8',

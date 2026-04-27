@@ -880,11 +880,13 @@ export default function LoadCyclePage() {
         style={{ background: 'linear-gradient(135deg, rgba(122,14,20,0.18) 0%, transparent 45%, rgba(74,10,14,0.28) 100%)' }}
       />
 
-      {/* Kanji watermark — 歴 (record/history) */}
+      {/* Kanji watermark — 歴 (record/history). Top rooted at safe-area floor so it
+          never clips into the iOS Dynamic Island camera area. */}
       <div
-        className="absolute -top-16 -right-24 pointer-events-none select-none"
+        className="absolute -right-24 pointer-events-none select-none"
         aria-hidden="true"
         style={{
+          top: 'calc(env(safe-area-inset-top, 0px) - 64px)',
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '52rem', lineHeight: '0.8',
           color: '#d4181f', opacity: 0.045, fontWeight: 900,

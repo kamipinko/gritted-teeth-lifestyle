@@ -668,11 +668,13 @@ export default function StatsPage() {
         }}
       />
 
-      {/* Kanji watermark — 記 ("record") */}
+      {/* Kanji watermark — 記 ("record"). Top rooted at safe-area floor so it never
+          clips into the iOS Dynamic Island camera area. */}
       <div
-        className="absolute -top-8 -right-8 pointer-events-none select-none animate-flicker"
+        className="absolute -right-8 pointer-events-none select-none animate-flicker"
         aria-hidden="true"
         style={{
+          top: 'calc(env(safe-area-inset-top, 0px) - 32px)',
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '36rem',
           lineHeight: '0.8',

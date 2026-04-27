@@ -430,11 +430,13 @@ export default function FitnessPage() {
         }}
       />
 
-      {/* Kanji watermark — top-left, oversized, very faint */}
+      {/* Kanji watermark — top-left, oversized, very faint. Rooted at safe-area floor
+          so it never clips into the iOS Dynamic Island camera area. */}
       <div
-        className="absolute -top-12 -left-8 pointer-events-none select-none animate-flicker"
+        className="absolute -left-8 pointer-events-none select-none animate-flicker"
         aria-hidden="true"
         style={{
+          top: 'calc(env(safe-area-inset-top, 0px) - 48px)',
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '40rem',
           lineHeight: '0.8',

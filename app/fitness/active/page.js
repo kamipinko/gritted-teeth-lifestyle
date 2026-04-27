@@ -1144,6 +1144,8 @@ function CustomMoveInput({ value, onChange, onConfirm, onCancel, onCharAdded }) 
         onKeyDown={handleKeyDown}
         maxLength={24}
         className="sr-only"
+        inputMode="text"
+        enterKeyHint="done"
         autoComplete="off"
         autoCorrect="off"
         spellCheck="false"
@@ -2382,11 +2384,13 @@ export default function ActiveCyclePage() {
       <div className="absolute inset-0 pointer-events-none"
         style={{ background: 'linear-gradient(160deg, rgba(122,14,20,0.18) 0%, transparent 45%, rgba(74,10,14,0.28) 100%)' }} />
 
-      {/* Kanji watermark — 動 (motion/active) */}
+      {/* Kanji watermark — 動 (motion/active). Top rooted at safe-area floor so it
+          never clips into the iOS Dynamic Island camera area. */}
       <div
-        className="absolute -top-16 -right-24 pointer-events-none select-none"
+        className="absolute -right-24 pointer-events-none select-none"
         aria-hidden="true"
         style={{
+          top: 'calc(env(safe-area-inset-top, 0px) - 64px)',
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '52rem', lineHeight: '0.8',
           color: '#d4181f', opacity: 0.045, fontWeight: 900,

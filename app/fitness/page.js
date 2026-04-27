@@ -106,11 +106,13 @@ export default function ProfilePage() {
         }}
       />
 
-      {/* Kanji watermark */}
+      {/* Kanji watermark — top offset rooted at the safe-area floor so it never clips
+          into the iOS Dynamic Island camera area. */}
       <div
-        className="absolute -top-12 -left-8 pointer-events-none select-none animate-flicker"
+        className="absolute -left-8 pointer-events-none select-none animate-flicker"
         aria-hidden="true"
         style={{
+          top: 'calc(env(safe-area-inset-top, 0px) - 48px)',
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '40rem',
           lineHeight: '0.8',

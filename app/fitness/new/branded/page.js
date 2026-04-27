@@ -580,13 +580,14 @@ export default function SchedulePage() {
       <div className="absolute inset-0 pointer-events-none"
         style={{ background: 'linear-gradient(135deg, rgba(122,14,20,0.25) 0%, transparent 40%, transparent 60%, rgba(74,10,14,0.35) 100%)' }} />
 
-      {/* Kanji watermark */}
-      <div className="absolute -top-8 -right-20 pointer-events-none select-none animate-flicker" aria-hidden="true"
-        style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '46rem', lineHeight: '0.8', color: '#ffffff', opacity: 0.04, fontWeight: 900 }}>
+      {/* Kanji watermark — top rooted at safe-area floor so it never clips into the iOS
+          Dynamic Island camera area. */}
+      <div className="absolute -right-20 pointer-events-none select-none animate-flicker" aria-hidden="true"
+        style={{ top: 'calc(env(safe-area-inset-top, 0px) - 32px)', fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '46rem', lineHeight: '0.8', color: '#ffffff', opacity: 0.04, fontWeight: 900 }}>
         暦
       </div>
-      <div className="absolute -top-24 -left-8 font-display leading-none text-gtl-red/[0.05] select-none pointer-events-none"
-        style={{ fontSize: '28rem' }} aria-hidden="true">
+      <div className="absolute -left-8 font-display leading-none text-gtl-red/[0.05] select-none pointer-events-none"
+        style={{ top: 'calc(env(safe-area-inset-top, 0px) - 96px)', fontSize: '28rem' }} aria-hidden="true">
         03
       </div>
 

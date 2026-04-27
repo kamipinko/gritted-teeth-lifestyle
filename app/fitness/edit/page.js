@@ -162,9 +162,10 @@ export default function EditCyclePage() {
       <div className="absolute inset-0 pointer-events-none"
         style={{ background: 'linear-gradient(160deg, rgba(80,10,10,0.12) 0%, transparent 50%, rgba(20,20,20,0.3) 100%)' }} />
 
-      {/* Kanji watermark — 改 (reform/edit) */}
-      <div className="absolute -top-8 -right-16 pointer-events-none select-none" aria-hidden="true"
-        style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '48rem', lineHeight: '0.8', color: '#d4181f', opacity: 0.04, fontWeight: 900 }}>
+      {/* Kanji watermark — 改 (reform/edit). Top rooted at safe-area floor so it never
+          clips into the iOS Dynamic Island camera area. */}
+      <div className="absolute -right-16 pointer-events-none select-none" aria-hidden="true"
+        style={{ top: 'calc(env(safe-area-inset-top, 0px) - 32px)', fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '48rem', lineHeight: '0.8', color: '#d4181f', opacity: 0.04, fontWeight: 900 }}>
         改
       </div>
 

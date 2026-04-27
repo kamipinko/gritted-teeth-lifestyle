@@ -666,11 +666,13 @@ export default function GhostCyclePage() {
         style={{ background: 'linear-gradient(135deg, rgba(30,30,80,0.18) 0%, transparent 45%, rgba(20,20,60,0.28) 100%)' }}
       />
 
-      {/* Kanji watermark — 幽 (ghost/spirit) */}
+      {/* Kanji watermark — 幽 (ghost/spirit). Top rooted at safe-area floor so it
+          never clips into the iOS Dynamic Island camera area. */}
       <div
-        className="absolute -top-16 -right-24 pointer-events-none select-none"
+        className="absolute -right-24 pointer-events-none select-none"
         aria-hidden="true"
         style={{
+          top: 'calc(env(safe-area-inset-top, 0px) - 64px)',
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '52rem', lineHeight: '0.8',
           color: '#6060a0', opacity: 0.045, fontWeight: 900,
