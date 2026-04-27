@@ -53,9 +53,9 @@ function CycleOption({
         group relative block w-full text-left
         transition-all duration-300 ease-out
         focus:outline-none focus-visible:outline-2 focus-visible:outline-dashed focus-visible:outline-gtl-red focus-visible:outline-offset-4
+        min-h-[11rem] md:min-h-[20rem]
         ${hovered ? '-translate-y-3 scale-[1.04]' : 'translate-y-0 scale-100'}
       `}
-      style={{ minHeight: '20rem' }}
     >
       {/* Idle red glow ring — telegraphs interactivity even at rest */}
       <div
@@ -462,9 +462,9 @@ export default function FitnessPage() {
       </nav>
 
       {/* Main content */}
-      <section className="relative z-10 px-8 pt-12 pb-20 max-w-6xl mx-auto">
+      <section className="relative z-10 px-8 pt-4 pb-6 md:pt-12 md:pb-20 max-w-6xl mx-auto">
         {/* Headline block */}
-        <div className="mb-16">
+        <div className="mb-6 md:mb-16">
           <div className="flex items-center gap-4 mb-3">
             <div className="h-px w-16 bg-gtl-red" />
             <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-red">
@@ -472,7 +472,7 @@ export default function FitnessPage() {
             </span>
           </div>
 
-          <h1 className="font-display text-[6rem] md:text-[8rem] leading-[0.9] text-gtl-chalk -rotate-1">
+          <h1 className="font-display text-[3rem] md:text-[8rem] leading-[0.9] text-gtl-chalk -rotate-1">
             CHOOSE
             <br />
             <span className="text-gtl-red gtl-headline-shadow-soft inline-block rotate-2">
