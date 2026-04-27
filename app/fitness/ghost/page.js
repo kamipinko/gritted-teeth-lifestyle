@@ -53,7 +53,7 @@ function RetreatButton() {
       />
       <div className="relative flex items-center gap-3 px-4 py-2">
         <span className={`font-display text-base leading-none transition-all duration-300
-          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red'}`}>◀</span>
+          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red'}`}>◀︎</span>
         <span className={`font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300
           ${hovered ? 'text-gtl-paper' : 'text-gtl-chalk'}`}>RETREAT</span>
       </div>

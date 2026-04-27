@@ -183,7 +183,7 @@ function CycleOption({
               ${isPrimary ? 'text-gtl-paper' : 'text-gtl-red'}
             `}
           >
-            ➤
+            ➤︎
           </div>
         </div>
       </div>
@@ -329,7 +329,7 @@ function GhostOption({ number, label, caption, href, onClick }) {
               ${hovered ? 'text-gtl-red-bright' : 'text-gtl-red'}
             `}
           >
-            ➤
+            ➤︎
           </span>
         </div>
       </div>
@@ -372,7 +372,7 @@ function RetreatButton() {
             ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red translate-x-0'}
           `}
         >
-          ◀
+          ◀︎
         </span>
         <span
           className={`

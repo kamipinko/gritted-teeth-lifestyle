@@ -20,7 +20,7 @@ function RetreatButton() {
         aria-hidden="true"
       />
       <div className="relative flex items-center gap-3 px-4 py-2">
-        <span className="font-display text-base leading-none transition-all duration-300 text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper [@media(hover:hover)]:group-hover:-translate-x-1">◀</span>
+        <span className="font-display text-base leading-none transition-all duration-300 text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper [@media(hover:hover)]:group-hover:-translate-x-1">◀︎</span>
         <span className="font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300 text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper">RETREAT</span>
       </div>
     </Link>
@@ -45,7 +45,7 @@ function ProfileChip({ name, onSelect }) {
         <span className="font-display text-2xl leading-none transition-colors duration-200 text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper">
           {name.toUpperCase()}
         </span>
-        <span className="font-display text-base leading-none transition-all duration-200 text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper [@media(hover:hover)]:group-hover:translate-x-1">➤</span>
+        <span className="font-display text-base leading-none transition-all duration-200 text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper [@media(hover:hover)]:group-hover:translate-x-1">➤︎</span>
       </div>
     </button>
   )
@@ -193,7 +193,7 @@ export default function ProfilePage() {
                   {isNew ? 'CREATE' : isExisting ? 'ENTER' : 'ENTER'}
                 </span>
                 <span className={`font-display text-lg leading-none transition-colors duration-200
-                  ${trimmed ? 'text-gtl-paper' : 'text-gtl-ash'}`}>➤</span>
+                  ${trimmed ? 'text-gtl-paper' : 'text-gtl-ash'}`}>➤︎</span>
               </div>
             </button>
           </div>

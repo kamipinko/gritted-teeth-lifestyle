@@ -99,7 +99,7 @@ function RetreatButton() {
       />
       <div className="relative flex items-center gap-2 px-3 py-1.5">
         <span className={`font-display text-sm leading-none transition-all duration-300
-          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red'}`}>◀</span>
+          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red'}`}>◀︎</span>
       </div>
     </Link>
   )
@@ -119,7 +119,7 @@ function MonthNavButton({ dir, onClick }) {
       aria-label={dir === 'prev' ? 'Previous month' : 'Next month'}
     >
       <span className="font-display text-base leading-none text-gtl-red">
-        {dir === 'prev' ? '◀' : '▶'}
+        {dir === 'prev' ? '◀︎' : '▶︎'}
       </span>
     </button>
   )

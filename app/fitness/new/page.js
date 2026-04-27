@@ -78,7 +78,7 @@ function RetreatButton({ href = '/fitness/hub' }) {
             ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red translate-x-0'}
           `}
         >
-          ◀
+          ◀︎
         </span>
         <span
           className={`

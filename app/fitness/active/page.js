@@ -65,7 +65,7 @@ function RetreatButton() {
       />
       <div className="relative flex items-center gap-3 px-4 py-2">
         <span className={`font-display text-base leading-none transition-all duration-300
-          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red'}`}>◀</span>
+          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red'}`}>◀︎</span>
         <span className={`font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300
           ${hovered ? 'text-gtl-paper' : 'text-gtl-chalk'}`}>RETREAT</span>
       </div>
@@ -1367,7 +1367,7 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose, cycleId }) {
             aria-hidden="true"
           />
           <div className="relative flex items-center gap-3 px-4 py-2">
-            <span className="font-display text-base text-gtl-red group-hover:text-gtl-paper group-hover:-translate-x-1 transition-all duration-300 leading-none">◀</span>
+            <span className="font-display text-base text-gtl-red group-hover:text-gtl-paper group-hover:-translate-x-1 transition-all duration-300 leading-none">◀︎</span>
             <span className="font-mono text-[10px] tracking-[0.3em] uppercase font-bold text-gtl-chalk group-hover:text-gtl-paper transition-colors duration-300">BACK</span>
           </div>
         </button>
@@ -1789,7 +1789,7 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
                 aria-hidden="true"
               />
               <div className="relative flex items-center gap-3 px-4 py-2">
-                <span className="font-display text-base text-gtl-red group-hover:text-gtl-paper group-hover:-translate-x-1 transition-all duration-300 leading-none">◀</span>
+                <span className="font-display text-base text-gtl-red group-hover:text-gtl-paper group-hover:-translate-x-1 transition-all duration-300 leading-none">◀︎</span>
                 <span className="font-mono text-[10px] tracking-[0.3em] uppercase font-bold text-gtl-chalk group-hover:text-gtl-paper transition-colors duration-300">BACK</span>
               </div>
             </button>
@@ -2104,7 +2104,7 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
                   {stamped ? 'TOMORROW WILL COME' : isLastDay ? 'ASCEND TO THE NEXT LEVEL' : 'BRING ON TOMORROW'}
                 </span>
                 {!stamped && (
-                  <span className="font-display text-gtl-paper leading-none" style={{ fontSize: '1.2rem' }}>▶</span>
+                  <span className="font-display text-gtl-paper leading-none" style={{ fontSize: '1.2rem' }}>▶︎</span>
                 )}
               </div>
             </button>
