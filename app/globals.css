@@ -13,11 +13,18 @@
 
 /* ----- Base ----- */
 html, body {
-  background-color: #070708;
+  /* Final-defense bg: dark red, NEVER black. If any fixed/clipped element or
+   * stacking-context oddity lets the html/body show through (e.g. iOS PWA
+   * safe-area gaps, transition seams), the user sees dark red atmosphere
+   * instead of stark black. */
+  background-color: #280609;
   color: #f1eee5;
   font-family: 'Space Grotesk', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Extend through iOS PWA safe areas */
+  min-height: 100vh;
+  min-height: 100dvh;
   /* Prevent iOS rubber-band bounce from pulling content out of view */
   overscroll-behavior: none;
 }
