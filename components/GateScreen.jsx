@@ -38,15 +38,17 @@ export default function GateScreen({ onEnter, onMusicStart }) {
       onClick={handleClick}
       aria-label="Enter Gritted Teeth Lifestyle"
       style={{
-        // Anchored to the parent <main> (flow-based, min-h:100dvh) instead of
+        // Anchored to the parent <main> (flow-based, min-h:100svh) instead of
         // the viewport. Avoids the iOS PWA safe-area-inset-bottom clip that hits
         // any position:fixed element — even with viewport-fit=cover and a
-        // negative-bottom calc.
+        // negative-bottom calc. 100svh (small viewport height, locked at parse
+        // time) sidesteps the dvh-stale-on-first-mount band on iOS PWA cold
+        // launch.
         position: 'absolute',
         inset: 0,
         zIndex: 50,
         width: '100%',
-        minHeight: '100dvh',
+        minHeight: '100svh',
         overflow: 'hidden',
         // Dark-red base matches the html/body globals.css bg + the atmospheric
         // base layer below, so the corners read red not black if anything clips.

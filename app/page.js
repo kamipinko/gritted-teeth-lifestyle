@@ -245,15 +245,18 @@ export default function Home() {
   const handleGateTapEnter = () => activate('fitness')
 
   return (
-    // Flow-based wrapper — min-h:100dvh + bg-gtl-void matches the original c18b728
+    // Flow-based wrapper — min-h:100svh + bg-gtl-void matches the original c18b728
     // home and avoids the iOS PWA safe-area-inset clip that plagued any
     // position:fixed parent. html/body underneath paints #280609 (per globals.css)
     // so even if anything bleeds through, the user sees dark red, not black.
+    // 100svh (small viewport height) instead of 100dvh: dvh is dynamic and reads
+    // stale on the first iOS PWA mount, leaving a bottom-padding band until the
+    // page re-renders. svh is locked at parse time — same race-free outcome.
     <main
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       className="relative overflow-hidden"
-      style={{ minHeight: '100dvh', background: '#280609' }}
+      style={{ minHeight: '100svh', background: '#280609' }}
     >
       {phase === 'gate' && (
         <>
