@@ -547,7 +547,7 @@ export default function SchedulePage() {
 
   // ── Render ──────────────────────────────────────────────────────────────
   return (
-    <main className="relative h-screen flex flex-col overflow-hidden bg-gtl-void">
+    <main className="relative h-[100dvh] flex flex-col overflow-hidden bg-gtl-void">
       {/* Kanji stamp animation */}
       <style>{`
         @keyframes kanji-stamp {
@@ -591,7 +591,7 @@ export default function SchedulePage() {
       </div>
 
       {/* Content wrapper — atmospheric layers paint full-bleed (incl. safe area). */}
-      <div className="relative z-10 flex-1 flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <div className="relative z-10 flex-1 flex flex-col overflow-hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <nav className="relative flex items-center gap-3 px-4 py-2 border-b border-gtl-edge/40 shrink-0">
         <RetreatButton />
@@ -608,7 +608,7 @@ export default function SchedulePage() {
       </nav>
 
       {/* ── Calendar ────────────────────────────────────────────────────── */}
-      <section className="relative z-10 px-3 pt-1 pb-0 shrink-0">
+      <section className="relative z-10 px-3 pt-1 pb-0 flex-1 overflow-y-auto min-h-0">
         {/* Day-of-week header */}
         <div className="grid grid-cols-7 gap-1 mb-1">
           {DAY_LABELS.map((label, i) => (
@@ -787,47 +787,44 @@ export default function SchedulePage() {
         </div>
       </section>
 
-      {/* ── Logo (empty state) / Muscle grid ─────────────────────────── */}
-      <div className="relative z-10 flex-1 flex flex-col overflow-hidden">
-        {/* Red accent line */}
-        <div className="h-[2px] bg-gtl-red shrink-0" />
+      {/* Red accent line */}
+      <div className="h-[2px] bg-gtl-red shrink-0" />
 
-        {/* Logo — visible when no days selected */}
-        {!sheetOpen && (
-          <div className="flex-1 flex items-center justify-center opacity-30">
-            <img
-              src="/logo.png"
-              alt="Gritted Teeth Lifestyle"
-              className="-rotate-6"
-              style={{ width: 226, height: 226, borderRadius: '50%', objectFit: 'cover' }}
+      {/* Logo — visible when no days selected */}
+      {!sheetOpen && (
+        <div className="flex-1 flex items-center justify-center opacity-30 overflow-hidden">
+          <img
+            src="/logo.png"
+            alt="Gritted Teeth Lifestyle"
+            className="-rotate-6"
+            style={{ width: 226, height: 226, borderRadius: '50%', objectFit: 'cover' }}
+          />
+        </div>
+      )}
+
+      {/* Muscle grid — slides in when days selected */}
+      {sheetOpen && (
+        <div className="px-3 pt-1 pb-1 shrink-0">
+          <div className="grid grid-cols-2 grid-rows-6 gap-1" style={{ overflow: 'visible' }}>
+            {SHEET_MUSCLES.map((m) => (
+              <SheetMuscleButton
+                key={m.id}
+                kanji={m.kanji}
+                label={m.label}
+                active={batchMuscleState(m.id)}
+                onClick={() => toggleMuscle(m.id)}
+              />
+            ))}
+            <SheetCarveButton
+              count={cycleDays}
+              enabled={carveEnabled}
+              onFire={handleCarve}
+              onHover={() => play('button-hover')}
+              onSlash={() => play(Math.random() < 0.2 ? 'slash-alt' : 'slash')}
             />
           </div>
-        )}
-
-        {/* Muscle grid — slides in when days selected */}
-        {sheetOpen && (
-          <div className="px-3 pt-1 pb-1">
-            <div className="grid grid-cols-2 grid-rows-6 gap-1" style={{ overflow: 'visible' }}>
-              {SHEET_MUSCLES.map((m) => (
-                <SheetMuscleButton
-                  key={m.id}
-                  kanji={m.kanji}
-                  label={m.label}
-                  active={batchMuscleState(m.id)}
-                  onClick={() => toggleMuscle(m.id)}
-                />
-              ))}
-              <SheetCarveButton
-                count={cycleDays}
-                enabled={carveEnabled}
-                onFire={handleCarve}
-                onHover={() => play('button-hover')}
-                onSlash={() => play(Math.random() < 0.2 ? 'slash-alt' : 'slash')}
-              />
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       </div>
       <FireFadeIn duration={900} />
