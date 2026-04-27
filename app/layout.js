@@ -1,4 +1,5 @@
 import './globals.css'
+import { IOSPWAKeyboardFix } from './ios-pwa-keyboard-fix'
 
 export const metadata = {
   title: 'Gritted Teeth Lifestyle',
@@ -19,7 +20,10 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <IOSPWAKeyboardFix />
+      </body>
     </html>
   )
 }
