@@ -246,3 +246,10 @@ html, body {
     outline-offset: 4px;
   }
 }
+
+/* iOS PWA: ensure inputs are tappable + selectable even inside transformed parents */
+input, textarea {
+  -webkit-user-select: text;
+  user-select: text;
+  touch-action: manipulation;
+}
