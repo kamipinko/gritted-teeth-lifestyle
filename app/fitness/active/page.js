@@ -2375,7 +2375,7 @@ export default function ActiveCyclePage() {
   const rows = Math.ceil(days.length / cols)
 
   return (
-    <main className="relative h-[100dvh] overflow-hidden flex flex-col bg-gtl-void">
+    <main className="relative h-[100dvh] flex flex-col bg-gtl-void">
 
       {/* Atmospherics */}
       <div className="absolute inset-0 gtl-noise pointer-events-none" />

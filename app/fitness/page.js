@@ -97,7 +97,7 @@ export default function ProfilePage() {
 
   return (
     <>
-    <main className="relative min-h-screen overflow-hidden bg-gtl-void flex flex-col">
+    <main className="relative min-h-screen bg-gtl-void flex flex-col">
       <div className="absolute inset-0 gtl-noise pointer-events-none" />
       <div
         className="absolute inset-0 pointer-events-none"
@@ -167,8 +167,6 @@ export default function ProfilePage() {
                 type="text"
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                onClick={(e) => e.currentTarget.focus()}
-                onTouchEnd={(e) => e.currentTarget.focus()}
                 placeholder="ENTER YOUR NAME"
                 maxLength={24}
                 className="relative w-full bg-transparent font-display text-lg md:text-2xl text-gtl-chalk tracking-wide uppercase px-4 md:px-6 py-4 outline-none placeholder:text-gtl-smoke"

@@ -247,10 +247,11 @@ html, body {
   }
 }
 
-/* iOS: tap-target friendliness across all interactive elements.
- * touch-action: manipulation removes the 300ms tap delay and prevents
- * double-tap-zoom from interfering with single-tap focus/click. */
-a, button, input, textarea, [role="button"] {
+/* iOS: tap-target friendliness for clickable controls. touch-action:
+ * manipulation removes the 300ms tap delay and prevents double-tap-zoom from
+ * interfering. Intentionally NOT applied to input/textarea — that hint
+ * suppresses the gesture iOS uses to summon the soft keyboard. */
+a, button, [role="button"] {
   touch-action: manipulation;
   -webkit-tap-highlight-color: rgba(212, 24, 31, 0.15);
 }
