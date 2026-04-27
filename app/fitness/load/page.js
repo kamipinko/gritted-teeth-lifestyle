@@ -437,6 +437,20 @@ function CycleCard({ cycle, index, selected, onSelect }) {
                     />
                   )
                 }
+                if (n >= 15) {
+                  // Vertical scroll silhouette — rotated -90° to mirror the summary-page render.
+                  return (
+                    <div style={{ width: '110px', height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <img
+                        src="/reference/scroll.svg"
+                        alt=""
+                        className="opacity-90 select-none pointer-events-none"
+                        style={{ width: '140px', height: '110px', transform: 'rotate(-90deg)' }}
+                        draggable={false}
+                      />
+                    </div>
+                  )
+                }
                 return null
               })()}
             </div>
