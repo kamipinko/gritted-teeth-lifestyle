@@ -445,8 +445,10 @@ export default function NewCycleNamePage() {
         </p>
       </div>
 
+      {/* Content wrapper — atmospheric layers paint full-bleed (incl. safe area). */}
+      <div className="relative z-10 flex-1 flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       {/* Top nav row */}
-      <nav className="relative z-10 flex items-center justify-between px-8 py-6 pt-[env(safe-area-inset-top,40px)]">
+      <nav className="relative flex items-center justify-between px-8 py-6">
         <RetreatButton />
         <div className="hidden md:block font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
           PALACE / FITNESS / NEW CYCLE / NAME
@@ -553,6 +555,7 @@ export default function NewCycleNamePage() {
         <div className="h-px flex-1 bg-gtl-edge" />
       </div>
 
+      </div>
       {/* Fire transition overlay — plays after brand cools, then navigates */}
       <FireTransition active={isFireActive} onComplete={handleFireComplete} />
     </main>

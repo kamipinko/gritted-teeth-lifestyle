@@ -590,8 +590,10 @@ export default function SchedulePage() {
         03
       </div>
 
+      {/* Content wrapper — atmospheric layers paint full-bleed (incl. safe area). */}
+      <div className="relative z-10 flex-1 flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <nav className="relative z-10 flex items-center gap-3 px-4 pb-2 border-b border-gtl-edge/40 shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top, 40px) + 4px)' }}>
+      <nav className="relative flex items-center gap-3 px-4 py-2 border-b border-gtl-edge/40 shrink-0">
         <RetreatButton />
         <MonthNavButton dir="prev" onClick={prevMonth} />
         <div className="flex-1 min-w-0 flex items-baseline gap-2 justify-center">
@@ -827,6 +829,7 @@ export default function SchedulePage() {
         )}
       </div>
 
+      </div>
       <FireFadeIn duration={900} />
       <FireTransition
         active={fireActive}
