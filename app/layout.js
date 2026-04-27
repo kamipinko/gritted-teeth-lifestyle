@@ -14,7 +14,7 @@ export const metadata = {
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
-  // viewportFit removed — was causing iOS keyboard summon issues in standalone mode
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({ children }) {
