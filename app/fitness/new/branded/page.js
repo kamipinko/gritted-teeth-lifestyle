@@ -130,7 +130,7 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex items-center justify-between px-3 py-2.5 min-h-[64px] border transition-colors duration-150
+      className={`relative flex items-center justify-between px-3 py-1.5 min-h-[46px] border transition-colors duration-150
         ${active
           ? 'bg-gtl-red border-gtl-red-bright shadow-red-glow'
           : 'bg-gtl-ink border-gtl-edge'}`}
@@ -605,7 +605,7 @@ export default function SchedulePage() {
       </nav>
 
       {/* ── Calendar ────────────────────────────────────────────────────── */}
-      <section className="relative z-10 px-3 pt-0 pb-0 flex-1 min-h-0 overflow-y-auto">
+      <section className="relative z-10 px-3 pt-0 pb-0 shrink-0">
         {/* Day-of-week header */}
         <div className="grid grid-cols-7 gap-1 mb-1">
           {DAY_LABELS.map((label, i) => (
@@ -799,9 +799,10 @@ export default function SchedulePage() {
         </div>
       )}
 
-      {/* Muscle grid — slides in when days selected */}
+      {/* Muscle grid — fills remaining viewport, scrolls internally if needed.
+          Calendar above is shrink-0 (always full 5 rows visible, never scrolls). */}
       {sheetOpen && (
-        <div className="px-3 pt-0 pb-1 shrink-0">
+        <div className="flex-1 overflow-y-auto px-3 pt-0 pb-1">
           <div className="grid grid-cols-2 grid-rows-6 gap-1" style={{ overflow: 'visible' }}>
             {SHEET_MUSCLES.map((m) => (
               <SheetMuscleButton
