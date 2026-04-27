@@ -46,7 +46,7 @@ const MONTH_KANJI = [
 
 const CELL_CLIP = 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)'
 const PARA_CLIP = 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)'
-const ROW_H = 95
+const ROW_H = 80
 
 // Build a 5-row × 7-col grid. Overflow days from would-be row 6 wrap into
 // row 1's leading empty slots.
@@ -608,7 +608,7 @@ export default function SchedulePage() {
       </nav>
 
       {/* ── Calendar ────────────────────────────────────────────────────── */}
-      <section className="relative z-10 px-3 pt-1 pb-0 flex-1 overflow-y-auto min-h-0">
+      <section className="relative z-10 px-3 pt-1 pb-0 flex-1 min-h-0">
         {/* Day-of-week header */}
         <div className="grid grid-cols-7 gap-1 mb-1">
           {DAY_LABELS.map((label, i) => (
