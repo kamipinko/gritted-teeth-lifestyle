@@ -3062,10 +3062,11 @@ export default function SummaryPage() {
         <CycleOuroboros days={days} dailyPlan={dailyPlan} glowingDays={glowingDays} glowIntensity={glowIntensity} hotDays={hotDays} cooledDays={cooledDays} weekdayLetterIgnited={weekdayLetterIgnited} weekdayLetterZoomed={weekdayLetterZoomed} weekdayLetterCooled={weekdayLetterCooled} />
       )}
 
-      {(days.length === 7 || days.length === 14) && (() => {
+      {(days.length > 0 && days.length <= 7 || days.length === 14) && (() => {
         // Cycle title styled to match the ETCH/CYCLE watermark exactly: same Shippori Mincho
         // serif, 18px, weight 600, dim red 65% alpha, 0.35em letter spacing, each word on
-        // its own line. 7-day sits bottom-left; 14-day sits top-center above the upper loop.
+        // its own line. Blade (1-6) sits top-left; 7-day sits bottom-left; 14-day sits
+        // top-center above the upper loop.
         const titleStyle = {
           fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", Georgia, serif',
           fontSize: '18px',
@@ -3076,9 +3077,12 @@ export default function SummaryPage() {
           textTransform: 'uppercase',
         }
         const words = cycleName.split(/\s+/).filter(Boolean)
-        const containerStyle = days.length === 7
-          ? { position: 'fixed', bottom: '20px', left: '20px', zIndex: 40, pointerEvents: 'none' }
-          : { position: 'fixed', top: '140px', left: '50%', transform: 'translateX(-50%)', zIndex: 40, pointerEvents: 'none', textAlign: 'center' }
+        const containerStyle =
+          days.length === 14
+            ? { position: 'fixed', top: '140px', left: '50%', transform: 'translateX(-50%)', zIndex: 40, pointerEvents: 'none', textAlign: 'center' }
+            : days.length === 7
+              ? { position: 'fixed', bottom: '20px', left: '20px', zIndex: 40, pointerEvents: 'none' }
+              : { position: 'fixed', top: '20px', left: '20px', zIndex: 40, pointerEvents: 'none' }
         return (
           <div className="no-print" style={containerStyle}>
             {words.map((w, i) => (
