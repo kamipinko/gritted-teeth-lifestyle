@@ -78,7 +78,7 @@ function RetreatButton({ href = '/fitness/hub' }) {
             ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red translate-x-0'}
           `}
         >
-          ◀
+          ◀︎
         </span>
         <span
           className={`
@@ -446,7 +446,7 @@ export default function NewCycleNamePage() {
       </div>
 
       {/* Top nav row */}
-      <nav className="relative z-10 flex items-center justify-between px-8 py-6">
+      <nav className="relative z-10 flex items-center justify-between px-8 py-6 pt-[env(safe-area-inset-top,40px)]">
         <RetreatButton />
         <div className="hidden md:block font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
           PALACE / FITNESS / NEW CYCLE / NAME

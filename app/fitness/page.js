@@ -20,7 +20,7 @@ function RetreatButton() {
         aria-hidden="true"
       />
       <div className="relative flex items-center gap-3 px-4 py-2">
-        <span className="font-display text-base leading-none transition-all duration-300 text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper [@media(hover:hover)]:group-hover:-translate-x-1">◀</span>
+        <span className="font-display text-base leading-none transition-all duration-300 text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper [@media(hover:hover)]:group-hover:-translate-x-1">◀︎</span>
         <span className="font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300 text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper">RETREAT</span>
       </div>
     </Link>
@@ -45,7 +45,7 @@ function ProfileChip({ name, onSelect }) {
         <span className="font-display text-2xl leading-none transition-colors duration-200 text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper">
           {name.toUpperCase()}
         </span>
-        <span className="font-display text-base leading-none transition-all duration-200 text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper [@media(hover:hover)]:group-hover:translate-x-1">➤</span>
+        <span className="font-display text-base leading-none transition-all duration-200 text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper [@media(hover:hover)]:group-hover:translate-x-1">➤︎</span>
       </div>
     </button>
   )
@@ -97,7 +97,7 @@ export default function ProfilePage() {
 
   return (
     <>
-    <main className="relative min-h-screen overflow-hidden bg-gtl-void flex flex-col">
+    <main className="relative min-h-screen bg-gtl-void flex flex-col">
       <div className="absolute inset-0 gtl-noise pointer-events-none" />
       <div
         className="absolute inset-0 pointer-events-none"
@@ -123,7 +123,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Nav */}
-      <nav className="relative z-10 shrink-0 flex items-center justify-between px-8 py-6">
+      <nav className="relative z-10 shrink-0 flex items-center justify-between px-8 py-6 pt-[env(safe-area-inset-top,40px)]">
         <RetreatButton />
         <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
           PALACE / IDENTITY
@@ -150,7 +150,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Input */}
-        <form onSubmit={handleSubmit} className="mb-10">
+        <form onSubmit={handleSubmit} action="/" method="post" className="mb-10">
           <div className="flex items-stretch gap-0">
             <div className="relative flex-1">
               <div
@@ -167,8 +167,9 @@ export default function ProfilePage() {
                 type="text"
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                onClick={(e) => e.currentTarget.focus()}
-                onTouchEnd={(e) => e.currentTarget.focus()}
+                inputMode="text"
+                enterKeyHint="done"
+                autoComplete="name"
                 placeholder="ENTER YOUR NAME"
                 maxLength={24}
                 className="relative w-full bg-transparent font-display text-lg md:text-2xl text-gtl-chalk tracking-wide uppercase px-4 md:px-6 py-4 outline-none placeholder:text-gtl-smoke"
@@ -192,7 +193,7 @@ export default function ProfilePage() {
                   {isNew ? 'CREATE' : isExisting ? 'ENTER' : 'ENTER'}
                 </span>
                 <span className={`font-display text-lg leading-none transition-colors duration-200
-                  ${trimmed ? 'text-gtl-paper' : 'text-gtl-ash'}`}>➤</span>
+                  ${trimmed ? 'text-gtl-paper' : 'text-gtl-ash'}`}>➤︎</span>
               </div>
             </button>
           </div>

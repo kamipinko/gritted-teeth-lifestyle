@@ -99,7 +99,7 @@ function RetreatButton() {
       />
       <div className="relative flex items-center gap-2 px-3 py-1.5">
         <span className={`font-display text-sm leading-none transition-all duration-300
-          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red'}`}>◀</span>
+          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red'}`}>◀︎</span>
       </div>
     </Link>
   )
@@ -119,7 +119,7 @@ function MonthNavButton({ dir, onClick }) {
       aria-label={dir === 'prev' ? 'Previous month' : 'Next month'}
     >
       <span className="font-display text-base leading-none text-gtl-red">
-        {dir === 'prev' ? '◀' : '▶'}
+        {dir === 'prev' ? '◀︎' : '▶︎'}
       </span>
     </button>
   )
@@ -591,7 +591,7 @@ export default function SchedulePage() {
       </div>
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <nav className="relative z-10 flex items-center gap-3 px-4 h-12 border-b border-gtl-edge/40 shrink-0">
+      <nav className="relative z-10 flex items-center gap-3 px-4 pb-2 border-b border-gtl-edge/40 shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top, 40px) + 4px)' }}>
         <RetreatButton />
         <MonthNavButton dir="prev" onClick={prevMonth} />
         <div className="flex-1 min-w-0 flex items-baseline gap-2 justify-center">

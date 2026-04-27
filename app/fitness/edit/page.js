@@ -31,7 +31,7 @@ function RetreatButton() {
       />
       <div className="relative flex items-center gap-3 px-4 py-2">
         <span className={`font-display text-base leading-none transition-all duration-300
-          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red'}`}>◀</span>
+          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red'}`}>◀︎</span>
         <span className={`font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300
           ${hovered ? 'text-gtl-paper' : 'text-gtl-chalk'}`}>RETREAT</span>
       </div>
@@ -131,7 +131,7 @@ function EditNavButton({ number, label, caption, href }) {
             transition: 'color 150ms, transform 150ms',
           }}
         >
-          ▶
+          ▶︎
         </div>
       </div>
     </Link>
@@ -169,7 +169,7 @@ export default function EditCyclePage() {
       </div>
 
       {/* Nav */}
-      <nav className="relative z-10 shrink-0 flex items-center gap-4 px-8 py-3">
+      <nav className="relative z-10 shrink-0 flex items-center gap-4 px-8 py-3 pt-[env(safe-area-inset-top,40px)]">
         <RetreatButton />
         <div className="w-px self-stretch bg-gtl-edge" style={{ transform: 'skewX(-12deg)' }} />
         <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">

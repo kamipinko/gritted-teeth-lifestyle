@@ -183,7 +183,7 @@ function CycleOption({
               ${isPrimary ? 'text-gtl-paper' : 'text-gtl-red'}
             `}
           >
-            ➤
+            ➤︎
           </div>
         </div>
       </div>
@@ -329,7 +329,7 @@ function GhostOption({ number, label, caption, href, onClick }) {
               ${hovered ? 'text-gtl-red-bright' : 'text-gtl-red'}
             `}
           >
-            ➤
+            ➤︎
           </span>
         </div>
       </div>
@@ -372,7 +372,7 @@ function RetreatButton() {
             ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red translate-x-0'}
           `}
         >
-          ◀
+          ◀︎
         </span>
         <span
           className={`
@@ -447,7 +447,7 @@ export default function FitnessPage() {
       </div>
 
       {/* Top nav row — back link and palace breadcrumb */}
-      <nav className="relative z-10 flex items-center justify-between px-8 py-6">
+      <nav className="relative z-10 flex items-center justify-between px-8 py-6 pt-[env(safe-area-inset-top,40px)]">
         <RetreatButton />
         <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
           PALACE / FITNESS
