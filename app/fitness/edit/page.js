@@ -170,9 +170,12 @@ export default function EditCyclePage() {
 
       {/* Content wrapper — atmospheric layers paint full-bleed (incl. safe area);
           wrapper holds UI flow with iOS top-inset padding. */}
-      <div className="relative z-10 flex-1 flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <div className="relative z-10 flex-1 flex flex-col">
       {/* Nav */}
-      <nav className="relative shrink-0 flex items-center gap-4 px-8 py-3">
+      <nav
+        className="relative shrink-0 flex items-center gap-4 px-8 pb-3"
+        style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+      >
         <RetreatButton />
         <div className="w-px self-stretch bg-gtl-edge" style={{ transform: 'skewX(-12deg)' }} />
         <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
