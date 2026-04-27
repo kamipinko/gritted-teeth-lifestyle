@@ -3,6 +3,11 @@ import './globals.css'
 export const metadata = {
   title: 'Gritted Teeth Lifestyle',
   description: 'Track your diet and build your fitness',
+  appleWebApp: {
+    capable: true,
+    title: 'GTL',
+    statusBarStyle: 'black-translucent',
+  },
 }
 
 export const viewport = {
