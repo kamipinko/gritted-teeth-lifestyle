@@ -17,7 +17,7 @@ function RetreatButton() {
       className="group relative inline-flex items-center"
     >
       <div
-        className={`absolute inset-0 -inset-x-2 transition-all duration-300 ease-out
+        className={`absolute inset-0 -inset-x-2 pointer-events-none transition-all duration-300 ease-out
           ${hovered ? 'bg-gtl-red opacity-100' : 'bg-gtl-edge opacity-50'}`}
         style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
         aria-hidden="true"
@@ -44,7 +44,7 @@ function ProfileChip({ name, onSelect }) {
       className="relative group outline-none text-left"
     >
       <div
-        className={`absolute inset-0 transition-all duration-200
+        className={`absolute inset-0 pointer-events-none transition-all duration-200
           ${hovered ? 'bg-gtl-red' : 'bg-gtl-surface border border-gtl-edge'}`}
         style={{ clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)' }}
         aria-hidden="true"
@@ -108,7 +108,7 @@ export default function ProfilePage() {
   return (
     <>
     <main className="relative min-h-screen overflow-hidden bg-gtl-void flex flex-col">
-      <div className="absolute inset-0 gtl-noise" />
+      <div className="absolute inset-0 gtl-noise pointer-events-none" />
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -164,7 +164,7 @@ export default function ProfilePage() {
           <div className="flex items-stretch gap-0">
             <div className="relative flex-1">
               <div
-                className="absolute inset-0"
+                className="absolute inset-0 pointer-events-none"
                 style={{
                   clipPath: 'polygon(0% 0%, 97% 0%, 100% 100%, 0% 100%)',
                   background: '#111115',
@@ -190,7 +190,7 @@ export default function ProfilePage() {
               className="relative shrink-0 outline-none group"
             >
               <div
-                className={`absolute inset-0 transition-colors duration-200
+                className={`absolute inset-0 pointer-events-none transition-colors duration-200
                   ${trimmed ? 'bg-gtl-red group-hover:bg-gtl-red-bright' : 'bg-gtl-surface'}`}
                 style={{ clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)' }}
                 aria-hidden="true"
