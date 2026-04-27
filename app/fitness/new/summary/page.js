@@ -3082,7 +3082,7 @@ export default function SummaryPage() {
             ? { position: 'fixed', top: '140px', left: '50%', transform: 'translateX(-50%)', zIndex: 40, pointerEvents: 'none', textAlign: 'center' }
             : days.length === 7
               ? { position: 'fixed', bottom: '20px', left: '20px', zIndex: 40, pointerEvents: 'none' }
-              : { position: 'fixed', top: '20px', left: '20px', zIndex: 40, pointerEvents: 'none' }
+              : { position: 'fixed', top: '70px', left: '20px', zIndex: 40, pointerEvents: 'none', transform: 'rotate(-8deg)', transformOrigin: 'left top' }
         return (
           <div className="no-print" style={containerStyle}>
             {words.map((w, i) => (
