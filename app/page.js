@@ -1,9 +1,9 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import CallingCard from '../components/CallingCard'
 import HeistTransition from '../components/HeistTransition'
 import GateScreen from '../components/GateScreen'
+import { useSound } from '../lib/useSound'
 
 // Module-level singleton: bg music persists across React re-mounts (e.g. when the
 // user navigates back to the home page from /fitness). Without this, the unmount
@@ -37,103 +37,139 @@ function startBgMusic() {
   bgMusicAudio = audio
 }
 
-export default function Home() {
-  const router = useRouter()
-  const [entered, setEntered] = useState(false)
-  const [transitioning, setTransitioning] = useState(false)
-  const [transitionTarget, setTransitionTarget] = useState('/fitness')
+const SWIPE_THRESHOLD = 50      // px — minimum vertical drag to register a swipe
+const FLASH_DURATION  = 1000    // ms — calling-card flash hold time before navigation
 
-  const handleFitnessActivate = () => {
-    startBgMusic()
-    setTransitionTarget('/fitness')
-    setTransitioning(true)
-  }
-
-  const handleNutritionActivate = () => {
-    startBgMusic()
-    setTransitionTarget('/diet')
-    setTransitioning(true)
-  }
-
-  const handleTransitionComplete = () => {
-    router.push(transitionTarget)
-  }
-
+// Inline calling-card flash overlay. Centered, fades in on mount, holds, navigates.
+// Each section gets its own colour accent and headline so the user sees confirmation
+// of which target their swipe selected before the route changes.
+function CallingCardFlash({ kind }) {
+  const isFitness = kind === 'fitness'
   return (
-    <>
-      {/* Gate screen — sits above everything until user enters */}
-      {!entered && <GateScreen onEnter={() => setEntered(true)} />}
+    <div
+      aria-hidden="true"
+      style={{
+        position: 'fixed', inset: 0, zIndex: 60,
+        background: 'radial-gradient(ellipse at 50% 55%, rgba(74,10,14,0.55) 0%, rgba(7,7,8,0.92) 70%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        animation: 'flash-card-pop 1000ms cubic-bezier(0.2, 1, 0.3, 1) forwards',
+      }}
+    >
+      <style>{`
+        @keyframes flash-card-pop {
+          0%   { opacity: 0; transform: scale(0.96); }
+          14%  { opacity: 1; transform: scale(1); }
+          82%  { opacity: 1; transform: scale(1); }
+          100% { opacity: 0; transform: scale(1.04); }
+        }
+        @keyframes flash-card-pulse {
+          0%, 100% { transform: rotate(${isFitness ? '-2deg' : '2deg'}) scale(1); }
+          50%      { transform: rotate(${isFitness ? '-2deg' : '2deg'}) scale(1.03); }
+        }
+      `}</style>
 
-      {/* Main content — hidden behind gate, snaps in on reveal */}
-      <main
-        className="relative min-h-screen bg-gtl-void overflow-hidden"
+      <div
         style={{
-          animation: entered ? 'gate-reveal 650ms cubic-bezier(0.3, 0, 0.4, 1) both' : 'none',
-          opacity: entered ? undefined : 0,
+          background: '#f1eee5',
+          padding: '2.5rem 2.75rem',
+          minWidth: '18rem', maxWidth: '24rem',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.55), 0 0 0 4px #d4181f',
+          animation: 'flash-card-pulse 1000ms ease-in-out infinite',
+          position: 'relative',
         }}
       >
-        {/* Background atmospherics */}
-        <div className="absolute inset-0 gtl-noise" />
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              'radial-gradient(ellipse at 20% 10%, rgba(74,10,14,0.4) 0%, transparent 50%), radial-gradient(ellipse at 80% 90%, rgba(122,14,20,0.3) 0%, transparent 50%)',
-          }}
-        />
+        <div style={{
+          fontFamily: '"JetBrains Mono", monospace',
+          fontSize: '0.6rem', letterSpacing: '0.4em',
+          textTransform: 'uppercase', color: '#7a0e14', marginBottom: '0.5rem',
+        }}>
+          ▸ TARGET ACQUIRED
+        </div>
+        <div style={{
+          fontFamily: 'Anton, Impact, sans-serif',
+          fontSize: 'clamp(3rem, 12vw, 5rem)', lineHeight: 1,
+          color: '#070708',
+          textShadow: '3px 3px 0 #d4181f',
+          letterSpacing: '-0.01em',
+        }}>
+          {isFitness ? 'FITNESS' : 'NUTRITION'}
+        </div>
+        <div style={{
+          marginTop: '1rem',
+          fontFamily: '"JetBrains Mono", monospace',
+          fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase',
+          color: '#070708',
+        }}>
+          {isFitness ? 'PALACE 01 — INFILTRATING' : 'PALACE 02 — INFILTRATING'}
+        </div>
+      </div>
+    </div>
+  )
+}
 
-        {/* Header */}
-        <header className="relative z-10 flex items-center justify-between px-8 py-6">
-          <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-ash">
-            HIDEOUT / 01
-          </div>
-          <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-            GRITTED TEETH LIFESTYLE
-          </div>
-        </header>
+export default function Home() {
+  const router = useRouter()
+  const { play } = useSound()
 
-        {/* Logo */}
-        <section className="relative z-10 flex justify-center pt-6 pb-8">
-          <img
-            src="/logo.png"
-            alt="Gritted Teeth Lifestyle"
-            style={{ width: 'clamp(180px, 45vw, 320px)', height: 'clamp(180px, 45vw, 320px)', borderRadius: '50%', objectFit: 'cover' }}
-          />
-        </section>
+  // phase: 'gate' (default) → 'flash-fitness' | 'flash-nutrition' → 'transitioning'
+  const [phase, setPhase] = useState('gate')
+  const [transitionTarget, setTransitionTarget] = useState('/fitness')
+  const [transitioning, setTransitioning] = useState(false)
+  const touchStartY = useRef(null)
 
-        {/* Cards */}
-        <section className="relative z-10 px-8 pb-20 max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-start">
-            <div className="md:translate-y-4">
-              <CallingCard
-                title="FITNESS"
-                subtitle="TARGET / PALACE 01"
-                body="YOUR WEAKNESS HAS BEEN NOTED. THE CLIMB BEGINS THE MOMENT YOU PICK UP THIS CARD."
-                signOff="WITH GRITTED TEETH"
-                onActivate={handleFitnessActivate}
-                rotate="-rotate-2"
-              />
-            </div>
-            <div className="md:translate-y-12">
-              <CallingCard
-                title="NUTRITION"
-                subtitle="TARGET / PALACE 02"
-                body="WHAT YOU EAT IS WHO YOU ARE. EVERY MEAL IS A CHOICE. MAKE IT COUNT."
-                signOff="STAY DISCIPLINED"
-                onActivate={handleNutritionActivate}
-                rotate="rotate-2"
-                compact
-              />
-            </div>
-          </div>
-        </section>
-      </main>
+  const activate = (kind) => {
+    if (phase !== 'gate') return
+    startBgMusic()
+    play('brand-confirm')
+    setPhase(kind === 'fitness' ? 'flash-fitness' : 'flash-nutrition')
+    setTransitionTarget(kind === 'fitness' ? '/fitness' : '/diet')
+    // After the calling-card flash holds for FLASH_DURATION, kick off the
+    // heist transition. Route push fires when the slash wipes complete.
+    setTimeout(() => setTransitioning(true), FLASH_DURATION)
+  }
+
+  const handleTouchStart = (e) => {
+    if (phase !== 'gate') return
+    touchStartY.current = e.touches[0]?.clientY ?? null
+  }
+  const handleTouchEnd = (e) => {
+    if (phase !== 'gate' || touchStartY.current == null) return
+    const endY = e.changedTouches[0]?.clientY ?? touchStartY.current
+    const dy = endY - touchStartY.current
+    touchStartY.current = null
+    if (dy < -SWIPE_THRESHOLD) activate('fitness')
+    else if (dy > SWIPE_THRESHOLD) activate('nutrition')
+    // Otherwise it's a tap (small dy) — GateScreen's onClick handles fallback.
+  }
+
+  // Keyboard shortcut: arrow up = fitness, arrow down = nutrition (desktop).
+  useEffect(() => {
+    if (phase !== 'gate') return
+    const handler = (e) => {
+      if (e.key === 'ArrowUp')      activate('fitness')
+      else if (e.key === 'ArrowDown') activate('nutrition')
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [phase])
+
+  const handleTransitionComplete = () => router.push(transitionTarget)
+
+  // Tap fallback: GateScreen's onClick drives this via setPhase('out')+onEnter.
+  // We treat a plain tap (no swipe) as fitness — most-used target.
+  const handleGateTapEnter = () => activate('fitness')
+
+  return (
+    <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+      {phase === 'gate' && <GateScreen onEnter={handleGateTapEnter} />}
+      {phase === 'flash-fitness' && <CallingCardFlash kind="fitness" />}
+      {phase === 'flash-nutrition' && <CallingCardFlash kind="nutrition" />}
 
       <HeistTransition
         active={transitioning}
         onComplete={handleTransitionComplete}
         title="GTL"
       />
-    </>
+    </div>
   )
 }
