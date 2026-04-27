@@ -174,7 +174,7 @@ export default function EditCyclePage() {
       <div className="relative z-10 flex-1 flex flex-col">
       {/* Nav */}
       <nav
-        className="relative shrink-0 flex items-center gap-4 px-8 pb-3"
+        className="relative shrink-0 flex items-center gap-4 pl-0 pr-8 pb-3"
         style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
       >
         <RetreatButton />

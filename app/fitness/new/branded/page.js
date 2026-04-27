@@ -587,9 +587,9 @@ export default function SchedulePage() {
         className="relative flex items-center justify-center gap-4 px-4 pb-1 border-b border-gtl-edge/40 shrink-0"
         style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}
       >
-        {/* RetreatButton sits at viewport-left, out of the centered flow.
-            (GTL 1 may further detach it; centering doesn't depend on its position.) */}
-        <div className="absolute left-4 top-1/2 -translate-y-1/2">
+        {/* RetreatButton sits at viewport-left, out of the centered flex flow so
+            the prev/label/next group can stay symmetrically centered. */}
+        <div className="absolute left-0 top-1/2 -translate-y-1/2">
           <RetreatButton />
         </div>
         <MonthNavButton dir="prev" onClick={prevMonth} />

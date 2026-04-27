@@ -629,7 +629,7 @@ export default function MusclesPage() {
     <main ref={mainRef} className={`relative overflow-hidden bg-gtl-void ${isMobile ? 'h-[100dvh] flex flex-col' : 'min-h-screen'}`}>
 {/* Top nav — responsive */}
       <nav
-        className={`relative z-20 shrink-0 flex items-center justify-between ${isMobile ? 'px-4 pb-2' : 'px-8 py-6'}`}
+        className={`relative z-20 shrink-0 flex items-center justify-between ${isMobile ? 'pl-0 pr-4 pb-2' : 'pl-0 pr-8 py-6'}`}
         style={isMobile ? { paddingTop: 'max(0.75rem, env(safe-area-inset-top))' } : undefined}
       >
         <RetreatButton />
