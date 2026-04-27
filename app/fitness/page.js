@@ -7,26 +7,21 @@ import HeistTransition from '../../components/HeistTransition'
 
 function RetreatButton() {
   const { play } = useSound()
-  const [hovered, setHovered] = useState(false)
   return (
     <Link
       href="/"
-      onMouseEnter={() => { setHovered(true); play('button-hover') }}
-      onMouseLeave={() => setHovered(false)}
       onClick={() => play('menu-close')}
       className="group relative inline-flex items-center mt-[15px]"
     >
+      {/* Hover effects gated on (hover: hover) so iOS doesn't sticky-hover on first tap. */}
       <div
-        className={`absolute inset-0 -inset-x-2 pointer-events-none transition-all duration-300 ease-out
-          ${hovered ? 'bg-gtl-red opacity-100' : 'bg-gtl-edge opacity-50'}`}
+        className="absolute inset-0 -inset-x-2 pointer-events-none transition-all duration-300 ease-out bg-gtl-edge opacity-50 [@media(hover:hover)]:group-hover:bg-gtl-red [@media(hover:hover)]:group-hover:opacity-100"
         style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
         aria-hidden="true"
       />
       <div className="relative flex items-center gap-3 px-4 py-2">
-        <span className={`font-display text-base leading-none transition-all duration-300
-          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red'}`}>◀</span>
-        <span className={`font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300
-          ${hovered ? 'text-gtl-paper' : 'text-gtl-chalk'}`}>RETREAT</span>
+        <span className="font-display text-base leading-none transition-all duration-300 text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper [@media(hover:hover)]:group-hover:-translate-x-1">◀</span>
+        <span className="font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300 text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper">RETREAT</span>
       </div>
     </Link>
   )
@@ -34,28 +29,23 @@ function RetreatButton() {
 
 function ProfileChip({ name, onSelect }) {
   const { play } = useSound()
-  const [hovered, setHovered] = useState(false)
   return (
     <button
       type="button"
       onClick={() => { play('option-select'); onSelect(name) }}
-      onMouseEnter={() => { setHovered(true); play('button-hover') }}
-      onMouseLeave={() => setHovered(false)}
       className="relative group outline-none text-left"
     >
+      {/* Hover effects gated on (hover: hover) so iOS doesn't sticky-hover on first tap. */}
       <div
-        className={`absolute inset-0 pointer-events-none transition-all duration-200
-          ${hovered ? 'bg-gtl-red' : 'bg-gtl-surface border border-gtl-edge'}`}
+        className="absolute inset-0 pointer-events-none transition-all duration-200 bg-gtl-surface border border-gtl-edge [@media(hover:hover)]:group-hover:bg-gtl-red [@media(hover:hover)]:group-hover:border-transparent"
         style={{ clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)' }}
         aria-hidden="true"
       />
       <div className="relative px-6 py-3 flex items-center gap-3">
-        <span className={`font-display text-2xl leading-none transition-colors duration-200
-          ${hovered ? 'text-gtl-paper' : 'text-gtl-chalk'}`}>
+        <span className="font-display text-2xl leading-none transition-colors duration-200 text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper">
           {name.toUpperCase()}
         </span>
-        <span className={`font-display text-base leading-none transition-all duration-200
-          ${hovered ? 'text-gtl-paper translate-x-1' : 'text-gtl-red'}`}>➤</span>
+        <span className="font-display text-base leading-none transition-all duration-200 text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper [@media(hover:hover)]:group-hover:translate-x-1">➤</span>
       </div>
     </button>
   )
@@ -177,6 +167,8 @@ export default function ProfilePage() {
                 type="text"
                 value={input}
                 onChange={e => setInput(e.target.value)}
+                onClick={(e) => e.currentTarget.focus()}
+                onTouchEnd={(e) => e.currentTarget.focus()}
                 placeholder="ENTER YOUR NAME"
                 maxLength={24}
                 className="relative w-full bg-transparent font-display text-lg md:text-2xl text-gtl-chalk tracking-wide uppercase px-4 md:px-6 py-4 outline-none placeholder:text-gtl-smoke"
