@@ -899,7 +899,7 @@ export default function LoadCyclePage() {
       <div className="relative z-10 flex-1 flex flex-col">
       {/* Nav */}
       <nav
-        className="relative shrink-0 flex items-center justify-between px-8 pb-5"
+        className="relative shrink-0 flex items-center justify-between pl-0 pr-8 pb-5"
         style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top))' }}
       >
         <RetreatButton />

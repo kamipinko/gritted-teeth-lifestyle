@@ -584,7 +584,7 @@ export default function SchedulePage() {
       <div className="relative z-10 flex-1 flex flex-col overflow-hidden">
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <nav
-        className="relative flex items-center gap-3 px-4 pb-2 border-b border-gtl-edge/40 shrink-0"
+        className="relative flex items-center gap-3 pl-0 pr-4 pb-2 border-b border-gtl-edge/40 shrink-0"
         style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}
       >
         <RetreatButton />

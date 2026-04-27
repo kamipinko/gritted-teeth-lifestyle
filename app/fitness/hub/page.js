@@ -452,7 +452,7 @@ export default function FitnessPage() {
       <div className="relative z-10 flex-1 flex flex-col">
       {/* Top nav row — back link and palace breadcrumb */}
       <nav
-        className="relative flex items-center justify-between px-8 pb-6"
+        className="relative flex items-center justify-between pl-0 pr-8 pb-6"
         style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
       >
         <RetreatButton />

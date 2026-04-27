@@ -2607,7 +2607,7 @@ function RetreatButton() {
     <Link
       href={backHref}
       onClick={() => play('menu-close')}
-      className="fixed left-4 z-40 group inline-flex items-center"
+      className="fixed left-0 z-40 group inline-flex items-center"
       style={{ top: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
     >
       {/* CSS-only hover gated on (hover: hover) so iOS doesn't sticky-hover on first tap. */}
