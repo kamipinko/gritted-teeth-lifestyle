@@ -256,7 +256,7 @@ export default function Home() {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       className="relative overflow-hidden"
-      style={{ minHeight: '100svh', background: '#280609' }}
+      style={{ minHeight: '100%', background: '#280609' }}
     >
       {phase === 'gate' && (
         <>

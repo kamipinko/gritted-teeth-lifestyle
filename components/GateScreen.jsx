@@ -48,7 +48,7 @@ export default function GateScreen({ onEnter, onMusicStart }) {
         inset: 0,
         zIndex: 50,
         width: '100%',
-        minHeight: '100svh',
+        minHeight: '100%',
         overflow: 'hidden',
         // Dark-red base matches the html/body globals.css bg + the atmospheric
         // base layer below, so the corners read red not black if anything clips.

@@ -22,9 +22,12 @@ html, body {
   font-family: 'Space Grotesk', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Extend through iOS PWA safe areas */
+  /* Explicit height chain so children with min-height:100% measure right.
+   * iOS PWA standalone mode computes viewport units (vh/dvh/svh) inconsistently;
+   * html with height:100% gets the real viewport from WebKit directly. */
+  height: 100%;
+  /* Fallback min-height for older browsers that don't honor height:100% on html */
   min-height: 100vh;
-  min-height: 100dvh;
   /* Prevent iOS rubber-band bounce from pulling content out of view */
   overscroll-behavior: none;
 }
