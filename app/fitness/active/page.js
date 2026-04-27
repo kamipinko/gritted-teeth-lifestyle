@@ -2415,9 +2415,12 @@ export default function ActiveCyclePage() {
       </div>
 
       {/* Content wrapper — atmospheric layers paint full-bleed (incl. safe area). */}
-      <div className="relative z-10 flex-1 flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <div className="relative z-10 flex-1 flex flex-col">
       {/* Nav */}
-      <nav className="relative shrink-0 flex items-center gap-4 px-8 pt-3 pb-3">
+      <nav
+        className="relative shrink-0 flex items-center gap-4 px-8 pb-3"
+        style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+      >
         <RetreatButton />
         <div className="w-px self-stretch bg-gtl-edge" style={{ transform: 'skewX(-12deg)' }} />
         {/* XP Bar inline in nav */}

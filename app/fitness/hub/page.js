@@ -447,9 +447,12 @@ export default function FitnessPage() {
       </div>
 
       {/* Content wrapper — atmospheric layers paint full-bleed (incl. safe area). */}
-      <div className="relative z-10 flex-1 flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <div className="relative z-10 flex-1 flex flex-col">
       {/* Top nav row — back link and palace breadcrumb */}
-      <nav className="relative flex items-center justify-between px-8 py-6">
+      <nav
+        className="relative flex items-center justify-between px-8 pb-6"
+        style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
+      >
         <RetreatButton />
         <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
           PALACE / FITNESS

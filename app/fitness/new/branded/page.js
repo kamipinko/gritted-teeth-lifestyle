@@ -591,9 +591,12 @@ export default function SchedulePage() {
       </div>
 
       {/* Content wrapper — atmospheric layers paint full-bleed (incl. safe area). */}
-      <div className="relative z-10 flex-1 flex flex-col overflow-hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <div className="relative z-10 flex-1 flex flex-col overflow-hidden">
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <nav className="relative flex items-center gap-3 px-4 py-2 border-b border-gtl-edge/40 shrink-0">
+      <nav
+        className="relative flex items-center gap-3 px-4 pb-2 border-b border-gtl-edge/40 shrink-0"
+        style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}
+      >
         <RetreatButton />
         <MonthNavButton dir="prev" onClick={prevMonth} />
         <div className="flex-1 min-w-0 flex items-baseline gap-2 justify-center">
