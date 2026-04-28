@@ -106,13 +106,13 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
       {/* Noise grain */}
       <div className="absolute inset-0 gtl-noise pointer-events-none" />
 
-      {/* Red atmosphere bloom — fades in with entry, fades to transparent at
-          edges so the black bg shows through (gives the negative-photo effect
-          a black-to-red color range to chew on). */}
+      {/* Red atmosphere bloom — bright red center fading to transparent so
+          black bg shows through. Brighter than original to give the
+          negative-photo difference blend a wider color range to chew on. */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 55%, rgba(122,14,20,0.45) 0%, transparent 65%)',
+          background: 'radial-gradient(ellipse at 50% 55%, rgba(212,24,31,0.45) 0%, transparent 65%)',
           opacity: active ? 1 : 0,
           transition: 'opacity 900ms ease 200ms',
         }}
@@ -122,32 +122,32 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
           Each band uses top/bottom anchors instead of explicit height so it
           naturally over-spans the parent in both directions, regardless of
           iOS safe-area or dvh oddities. */}
-      {/* Band 1 — deep red, widest */}
+      {/* Band 1 — bright red, widest */}
       <div
         className="absolute pointer-events-none"
         style={{
           top: '-25%', bottom: '-25%', left: '-5%', width: '52%',
-          background: 'rgba(74,10,14,0.65)',
+          background: 'rgba(212,24,31,0.75)',
           transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(-120%)',
           transition: 'transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 100ms',
         }}
       />
-      {/* Band 2 — blood red, medium */}
+      {/* Band 2 — bright red, medium */}
       <div
         className="absolute pointer-events-none"
         style={{
           top: '-25%', bottom: '-25%', left: '10%', width: '38%',
-          background: 'rgba(122,14,20,0.28)',
+          background: 'rgba(212,24,31,0.4)',
           transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(-120%)',
           transition: 'transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 200ms',
         }}
       />
-      {/* Band 3 — right side counter-accent */}
+      {/* Band 3 — bright red, right-side accent */}
       <div
         className="absolute pointer-events-none"
         style={{
           top: '-25%', bottom: '-25%', right: '-8%', width: '20%',
-          background: 'rgba(74,10,14,0.4)',
+          background: 'rgba(212,24,31,0.55)',
           transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(120%)',
           transition: 'transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 150ms',
         }}
@@ -177,7 +177,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
               fontWeight: 800,
               letterSpacing: '0.2em',
               textTransform: 'uppercase',
-              color: '#540b10',
+              color: '#c3181f',
               mixBlendMode: 'difference',
               pointerEvents: 'none',
               userSelect: 'none',
@@ -198,7 +198,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
               fontWeight: 800,
               letterSpacing: '0.2em',
               textTransform: 'uppercase',
-              color: '#540b10',
+              color: '#c3181f',
               mixBlendMode: 'difference',
               pointerEvents: 'none',
               userSelect: 'none',
@@ -240,7 +240,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
             fontFamily: '"JetBrains Mono", monospace',
             fontSize: '0.85rem', letterSpacing: '0.35em',
             fontWeight: 800,
-            textTransform: 'uppercase', color: '#540b10',
+            textTransform: 'uppercase', color: '#c3181f',
             mixBlendMode: 'difference',
             animation: active ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 600ms both' : 'none',
           }}>
@@ -283,7 +283,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
             fontFamily: '"JetBrains Mono", monospace',
             fontSize: '0.75rem', letterSpacing: '0.3em',
             fontWeight: 800,
-            textTransform: 'uppercase', color: '#540b10',
+            textTransform: 'uppercase', color: '#c3181f',
             mixBlendMode: 'difference',
             animation: active ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 950ms both' : 'none',
           }}>
