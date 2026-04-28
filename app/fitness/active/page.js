@@ -713,18 +713,15 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
   const [flashChip, setFlashChip]   = useState(null)
 
   const POPUP_WIDTH  = 380
-  // Estimate matches actual rendered height after the plate-chip row was added
-  // (chips wrap to 2-3 rows in 380px). The bottom-clamp uses this to push the
-  // popup up off the viewport floor when the row-centered position would put
-  // SET WEIGHT below the visible area.
-  const POPUP_HEIGHT = 640
+  // Chips moved to a side rail — main column is back to its original ~560 height.
+  const POPUP_HEIGHT = 560
 
-  // Small upward nudge so the popup sits 10px higher than row-center.
+  // Viewport-centered (with a 10px upward bias) — independent of the tapped
+  // row, so first / second / Nth set popups all open from the same position.
+  // The slam-back-to-row animation still uses rowRect for slamDX/slamDY so
+  // the close transition flies back to the row that was tapped.
   const TOP_BIAS = 10
-
-  const popupTop = rowRect
-    ? Math.max(20, Math.min(rowRect.top - POPUP_HEIGHT / 2 + rowRect.height / 2 - TOP_BIAS, window.innerHeight - POPUP_HEIGHT - 20))
-    : Math.max(20, (window.innerHeight - POPUP_HEIGHT) / 2 - TOP_BIAS)
+  const popupTop = Math.max(20, Math.min((window.innerHeight - POPUP_HEIGHT) / 2 - TOP_BIAS, window.innerHeight - POPUP_HEIGHT - 20))
 
   const slamDX = rowRect ? (rowRect.left + rowRect.width / 2) - (window.innerWidth / 2) : 0
   const slamDY = rowRect ? (rowRect.top + rowRect.height / 2) - (popupTop + POPUP_HEIGHT / 2) : 200
@@ -826,12 +823,46 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ animation: slamming ? 'weight-slam-exit 500ms cubic-bezier(0.4,0,1,1) forwards' : 'weight-in 500ms cubic-bezier(0.18,1.2,0.35,1) forwards' }}>
-        <div className="relative w-full flex flex-col items-center px-12 py-10 bg-gtl-ink"
+        <div className="relative w-full flex flex-col items-center pl-12 pr-20 py-10 bg-gtl-ink"
           style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)' }}>
           <div className="absolute inset-0 gtl-noise pointer-events-none opacity-60" />
           <div className="absolute inset-0 bg-gtl-red-deep -z-10"
             style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)', transform: 'translate(10px, 10px)' }}
             aria-hidden="true" />
+
+          {/* Plate-math vertical rail — ascending bottom→top so heaviest sits
+              at the top of the column. Absolutely positioned in the right
+              padding gutter so it doesn't push the main column around. */}
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col-reverse gap-2 z-10">
+            {PLATE_QUICK_PICKS.map((w) => {
+              const active = weight === w
+              const flashing = flashChip === w
+              return (
+                <button key={w} type="button"
+                  onPointerDown={() => setQuick(w)}
+                  className="relative outline-none focus-visible:outline-2 focus-visible:outline-gtl-red"
+                  style={{ touchAction: 'manipulation' }}
+                  aria-label={`Set weight to ${w} pounds`}>
+                  <div className="absolute inset-0 bg-gtl-red-deep"
+                    style={{ clipPath: 'polygon(12% 0%, 100% 0%, 88% 100%, 0% 100%)', transform: 'translate(2px, 2px)' }}
+                    aria-hidden="true" />
+                  <div
+                    className="relative font-display tracking-tight px-2 py-1 text-base leading-none transition-all duration-100"
+                    style={{
+                      clipPath: 'polygon(12% 0%, 100% 0%, 88% 100%, 0% 100%)',
+                      background: flashing ? '#ff2a36' : active ? '#d4181f' : '#1a1a1e',
+                      color: active || flashing ? '#ffffff' : '#c8c8c8',
+                      border: '1px solid ' + (active ? '#ff2a36' : '#3a3a42'),
+                      minWidth: '3rem',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {w === 45 ? 'BAR' : w}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
 
           <div className="relative font-mono text-[13px] tracking-[0.7em] uppercase text-gtl-red mb-1">WEIGHT</div>
           <div className="relative font-display text-gtl-smoke leading-none mb-6 text-center"
@@ -899,42 +930,8 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
             </div>
           </button>
 
-          {/* Plate-math quick picks — tap to jump straight to bar/95/135/185/...
-              45 reads as "BAR" because most people think in terms of "bar-only"
-              for that weight rather than the number itself. */}
-          <div className="relative w-full flex flex-wrap justify-center gap-3 mt-6 mb-2">
-            {PLATE_QUICK_PICKS.map((w) => {
-              const active = weight === w
-              const flashing = flashChip === w
-              return (
-                <button key={w} type="button"
-                  onPointerDown={() => setQuick(w)}
-                  className="relative outline-none focus-visible:outline-2 focus-visible:outline-gtl-red"
-                  style={{ touchAction: 'manipulation' }}
-                  aria-label={`Set weight to ${w} pounds`}>
-                  <div className="absolute inset-0 bg-gtl-red-deep"
-                    style={{ clipPath: 'polygon(12% 0%, 100% 0%, 88% 100%, 0% 100%)', transform: 'translate(3px, 3px)' }}
-                    aria-hidden="true" />
-                  <div
-                    className="relative font-display tracking-tight px-5 py-2 text-2xl leading-none transition-all duration-100"
-                    style={{
-                      clipPath: 'polygon(12% 0%, 100% 0%, 88% 100%, 0% 100%)',
-                      background: flashing ? '#ff2a36' : active ? '#d4181f' : '#1a1a1e',
-                      color: active || flashing ? '#ffffff' : '#c8c8c8',
-                      border: '1px solid ' + (active ? '#ff2a36' : '#3a3a42'),
-                      minWidth: '3.5rem',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {w === 45 ? 'BAR' : w}
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-
           {/* SET WEIGHT */}
-          <div className="relative w-full mt-4">
+          <div className="relative w-full mt-8">
             {weight > 0 && (
               <div className="absolute -inset-1 pointer-events-none"
                 style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)', animation: 'set-reps-glow 1.8s ease-in-out infinite' }}
