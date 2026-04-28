@@ -310,6 +310,7 @@ export default function SettingsPage() {
               <p className="font-display text-2xl text-gtl-chalk leading-tight mb-2">GRITTED TEETH LIFESTYLE</p>
               <p className="font-mono text-[10px] tracking-[0.25em] uppercase text-gtl-ash leading-relaxed">
                 BUILT BY JORDAN HILLMAN<br />
+                WITH ALEXANDER THUKU<br />
                 INSPIRED BY PERSONA 5 + GURREN LAGANN<br />
                 FORGED WITH GRITTED TEETH
               </p>
