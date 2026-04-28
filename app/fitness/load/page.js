@@ -422,6 +422,43 @@ function CycleCard({ cycle, index, selected, onSelect }) {
           return null
         })()}
 
+        {/* Day progress chips — slanted parallelogram cells per day; red X
+            overlay on completed days. Sit below the silhouette. */}
+        {cycle.days?.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-4">
+            {cycle.days.map((iso) => {
+              const date = new Date(iso + 'T12:00:00')
+              const dayNum = date.getDate()
+              const hasWork = (cycle.dailyPlan?.[iso] || []).length > 0
+              const done = doneDays[iso]
+              return (
+                <div key={iso} className="relative" style={{ width: '34px', height: '34px' }}>
+                  <div style={{
+                    width: '100%', height: '100%',
+                    background: hasWork ? 'rgba(212,24,31,0.12)' : 'rgba(26,26,30,0.6)',
+                    border: `1px solid ${hasWork ? 'rgba(212,24,31,0.35)' : 'rgba(58,58,66,0.4)'}`,
+                    clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <span className="font-display leading-none"
+                      style={{ fontSize: '0.85rem', color: hasWork ? '#c8c8c8' : '#3a3a42' }}>
+                      {dayNum}
+                    </span>
+                  </div>
+                  {done && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+                      <span className="font-display leading-none"
+                        style={{ fontSize: '1.6rem', color: 'rgba(212,24,31,0.55)', transform: 'rotate(-5deg)', textShadow: '1px 1px 0 rgba(0,0,0,0.5)' }}>
+                        X
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+
       </div>
 
       {/* Completed cycle — blood spilt X (only renders once card enters viewport) */}
