@@ -118,16 +118,24 @@ function CallingCardReveal({ kind }) {
           16%  { opacity: 1; }
           100% { opacity: 1; }
         }
-        @keyframes card-reveal-pop {
-          0%   { opacity: 0; transform: scale(0.85) translateY(20px); }
-          50%  { opacity: 1; transform: scale(1.04) translateY(0); }
-          100% { opacity: 1; transform: scale(1) translateY(0); }
+        /* Card slams down from above the viewport, lands hard on the black
+           page with overshoot, then bounces twice at decreasing amplitude
+           before settling. Linear easing because the keyframe percentages
+           own the rhythm. */
+        @keyframes card-slam-down {
+          0%   { opacity: 0; transform: translateY(-110vh) scale(0.78); }
+          45%  { opacity: 1; transform: translateY(0)      scale(1.10); }
+          58%  { transform: translateY(-26px) scale(0.94); }
+          70%  { transform: translateY(0)     scale(1.06); }
+          80%  { transform: translateY(-10px) scale(0.97); }
+          90%  { transform: translateY(0)     scale(1.02); }
+          100% { transform: translateY(0)     scale(1); }
         }
       `}</style>
       <div
         style={{
           width: '100%', maxWidth: '20rem',
-          animation: 'card-reveal-pop 600ms cubic-bezier(0.2, 1.2, 0.4, 1) forwards',
+          animation: 'card-slam-down 800ms linear forwards',
         }}
       >
         <CallingCard
