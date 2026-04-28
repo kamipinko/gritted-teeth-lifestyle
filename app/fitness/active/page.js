@@ -342,6 +342,18 @@ function RepsPopup({ exerciseName, initialReps, rowRect, onClose, onSave }) {
   const [numDir, setNumDir]       = useState('up')
   const [slamming, setSlamming]   = useState(false)
   const [setPressed, setSetPressed] = useState(false)
+  // Entrance skip — first tap snaps the popup zoom-in to settled.
+  const [entranceSkipped, setEntranceSkipped] = useState(false)
+  useEffect(() => {
+    if (entranceSkipped || slamming) return
+    const handler = () => setEntranceSkipped(true)
+    window.addEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
+  }, [entranceSkipped, slamming])
 
   const POPUP_WIDTH  = 380
   const POPUP_HEIGHT = 560 // estimated
@@ -441,6 +453,17 @@ function RepsPopup({ exerciseName, initialReps, rowRect, onClose, onSave }) {
         }
       `}</style>
 
+      {/* Skip the reps-in entrance animation on first tap — collapses
+          animation duration/delay so reps-in snaps to settled. */}
+      {entranceSkipped && !slamming && (
+        <style>{`
+          [data-reps-popup-skip-target], [data-reps-popup-skip-target] * {
+            animation-duration: 1ms !important;
+            animation-delay: 0ms !important;
+          }
+        `}</style>
+      )}
+
       {/* Backdrop */}
       <div
         className="fixed inset-0 z-[9999]"
@@ -450,6 +473,7 @@ function RepsPopup({ exerciseName, initialReps, rowRect, onClose, onSave }) {
 
       {/* Outer — position only, zero animation so centering never shifts */}
       <div
+        data-reps-popup-skip-target
         className="fixed z-[10000]"
         style={{
           width: '380px',
@@ -711,6 +735,18 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
   const [slamming, setSlamming]     = useState(false)
   const [setPressed, setSetPressed] = useState(false)
   const [flashChip, setFlashChip]   = useState(null)
+  // Entrance skip — first tap snaps the popup zoom-in to settled.
+  const [entranceSkipped, setEntranceSkipped] = useState(false)
+  useEffect(() => {
+    if (entranceSkipped || slamming) return
+    const handler = () => setEntranceSkipped(true)
+    window.addEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
+  }, [entranceSkipped, slamming])
 
   const POPUP_WIDTH  = 380
   // Chips moved to a side rail — main column is back to its original ~560 height.
@@ -813,12 +849,22 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
         }
       `}</style>
 
+      {/* Skip the weight-popup zoom entrance on first tap. */}
+      {entranceSkipped && !slamming && (
+        <style>{`
+          [data-weight-popup-skip-target], [data-weight-popup-skip-target] * {
+            animation-duration: 1ms !important;
+            animation-delay: 0ms !important;
+          }
+        `}</style>
+      )}
+
       <div className="fixed inset-0 z-[9999]"
         style={{ background: 'rgba(7,7,8,0.80)', backdropFilter: 'blur(3px)' }}
         onClick={() => { onSave(weight); onClose() }}
       />
 
-      <div className="fixed z-[10000]"
+      <div data-weight-popup-skip-target className="fixed z-[10000]"
         style={{ width: '380px', left: '50%', marginLeft: '-190px', top: `${popupTop}px` }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -1688,6 +1734,24 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
   const [closing, setClosing]           = useState(false)
   const [focusMuscle, setFocusMuscle]   = useState(null)
   const [focusMuscleRect, setFocusMuscleRect] = useState(null)
+  // Entrance skip: first pointerdown/touchstart anywhere during the open
+  // animation snaps the day-focus + all child animations to settled state.
+  // The injected <style> block re-targets every running animation on the
+  // panel to 1ms duration / 0ms delay via a scoped attribute selector.
+  const [entranceSkipped, setEntranceSkipped] = useState(false)
+  useEffect(() => {
+    if (entranceSkipped || closing) return
+    const handler = (e) => {
+      if (e.target?.closest?.('[data-retreat]')) return
+      setEntranceSkipped(true)
+    }
+    window.addEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
+  }, [entranceSkipped, closing])
   const date    = parseDate(iso)
   const dayName = DAY_FULL[date.getDay()]
   const dayNum  = date.getDate()
@@ -1828,7 +1892,20 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
         }
       `}</style>
 
+      {/* When the user taps to skip the entrance, this stylesheet collapses
+          every running animation inside the day-focus panel to ~instant so
+          everything snaps to its settled state. Targeted at the wrapper via
+          data-day-focus-skip-target so it only affects this tree. */}
+      {entranceSkipped && (
+        <style>{`
+          [data-day-focus-skip-target], [data-day-focus-skip-target] * {
+            animation-duration: 1ms !important;
+            animation-delay: 0ms !important;
+          }
+        `}</style>
+      )}
       <div
+        data-day-focus-skip-target
         className="fixed inset-0 z-[9990] bg-gtl-void overflow-hidden"
         style={{
           transformOrigin: `${originX} ${originY}`,
