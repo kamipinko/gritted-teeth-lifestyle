@@ -281,7 +281,7 @@ function CycleCard({ cycle, index, selected, onSelect }) {
           {/* Silhouette: wakizashi (1–6 days, tinted red) / ouroboros (7) /
               drill (8–13) / scroll (15+). Wakizashi uses CSS mask-image so we
               can recolor the silhouette to GTL red without altering the SVG. */}
-          <div className="shrink-0">
+          <div className="shrink-0" style={{ marginLeft: '-16px' }}>
             {(() => {
               const n = cycle.days?.length || 0
               if (n >= 1 && n <= 6) {
@@ -290,7 +290,7 @@ function CycleCard({ cycle, index, selected, onSelect }) {
                     aria-hidden="true"
                     className="select-none pointer-events-none"
                     style={{
-                      width: '120px',
+                      width: '90px',
                       height: '120px',
                       backgroundColor: '#d4181f',
                       WebkitMaskImage: 'url(/reference/wakizashi_solid_silhouette.svg)',
@@ -442,55 +442,12 @@ function CycleCard({ cycle, index, selected, onSelect }) {
                     </span>
                   </div>
                   {done && (
-                    <>
-                      {/* CheckSlam-style mini X: shadow part + face part, both
-                          slamming in with the same animation (chip-x-slam). */}
-                      <style>{`
-                        @keyframes chip-x-slam {
-                          0%   { transform: translateY(-32px) scale(3.2) rotate(-18deg); opacity: 0; filter: blur(4px); }
-                          10%  { opacity: 1; filter: blur(2px); }
-                          55%  { transform: translateY(2px) scale(0.85) rotate(-9deg); opacity: 1; filter: blur(0); }
-                          70%  { transform: translateY(-1px) scale(1.12) rotate(-7deg); }
-                          85%  { transform: translateY(1px) scale(0.97) rotate(-8deg); }
-                          100% { transform: translateY(0) scale(1) rotate(-8deg); opacity: 1; }
-                        }
-                        @keyframes chip-x-ring {
-                          0%   { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-                          5%   { opacity: 0.8; }
-                          100% { transform: translate(-50%, -50%) scale(4); opacity: 0; }
-                        }
-                      `}</style>
-                      {/* Shockwave ring */}
-                      <div
-                        className="absolute pointer-events-none rounded-full"
-                        style={{
-                          left: '50%', top: '50%',
-                          width: '14px', height: '14px',
-                          border: '2px solid #d4181f',
-                          animation: 'chip-x-ring 600ms cubic-bezier(0.2, 0.8, 0.3, 1) 360ms forwards',
-                          opacity: 0,
-                        }}
-                        aria-hidden="true"
-                      />
-                      {/* Hard-shadow X — translate offset for hard P5 shadow */}
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
-                           style={{ animation: 'chip-x-slam 700ms cubic-bezier(0.18, 1.2, 0.35, 1) forwards', zIndex: 1 }}
-                           aria-hidden="true">
-                        <span className="font-display leading-none"
-                              style={{ fontSize: '1.8rem', color: '#5a0a10', transform: 'translate(2px, 2px)', lineHeight: 1 }}>
-                          X
-                        </span>
-                      </div>
-                      {/* Face X */}
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
-                           style={{ animation: 'chip-x-slam 700ms cubic-bezier(0.18, 1.2, 0.35, 1) forwards', zIndex: 2 }}
-                           aria-hidden="true">
-                        <span className="font-display leading-none"
-                              style={{ fontSize: '1.8rem', color: '#d4181f', textShadow: '0 0 6px rgba(212,24,31,0.55)', lineHeight: 1 }}>
-                          X
-                        </span>
-                      </div>
-                    </>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+                      <span className="font-display leading-none"
+                        style={{ fontSize: '1.6rem', color: 'rgba(212,24,31,0.55)', transform: 'rotate(-5deg)', textShadow: '1px 1px 0 rgba(0,0,0,0.5)' }}>
+                        X
+                      </span>
+                    </div>
                   )}
                 </div>
               )
