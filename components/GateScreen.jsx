@@ -181,40 +181,9 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
         }}
       />
 
-      {/* ── Diagonal background bands (slide from left) ──
-          Each band uses top/bottom anchors instead of explicit height so it
-          naturally over-spans the parent in both directions, regardless of
-          iOS safe-area or dvh oddities. */}
-      {/* Band 1 — bright red, widest */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          top: '-25%', bottom: '-25%', left: '-5%', width: '52%',
-          background: 'rgba(212,24,31,0.75)',
-          transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(-120%)',
-          transition: transOf('transform 1100ms cubic-bezier(0.15, 0, 0.1, 1) 150ms'),
-        }}
-      />
-      {/* Band 2 — bright red, medium */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          top: '-25%', bottom: '-25%', left: '10%', width: '38%',
-          background: 'rgba(212,24,31,0.4)',
-          transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(-120%)',
-          transition: transOf('transform 1100ms cubic-bezier(0.15, 0, 0.1, 1) 300ms'),
-        }}
-      />
-      {/* Band 3 — bright red, right-side accent */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          top: '-25%', bottom: '-25%', right: '-8%', width: '20%',
-          background: 'rgba(212,24,31,0.55)',
-          transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(120%)',
-          transition: transOf('transform 1100ms cubic-bezier(0.15, 0, 0.1, 1) 225ms'),
-        }}
-      />
+      {/* Diagonal bands removed — their hard edges created a thin diagonal
+          line where bg ≈ src/2, which collapses to bg color via difference
+          blend (text invisible at that line). */}
 
       {/* ── Corner accent lines ── */}
       <div className="absolute top-0 left-0 bg-gtl-red pointer-events-none"
