@@ -1689,6 +1689,11 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
           0%   { transform: translateY(20px) rotate(var(--slab-rot, 0deg)); }
           100% { transform: translateY(0) rotate(var(--slab-rot, 0deg)); }
         }
+        @keyframes activate-popup-rise {
+          0%   { opacity: 0; transform: translateY(60px) scale(0.96); }
+          60%  { opacity: 1; transform: translateY(-4px) scale(1.02); }
+          100% { opacity: 1; transform: translateY(0)    scale(1); }
+        }
       `}</style>
 
       <div
@@ -2087,6 +2092,48 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
           </div>
         </div>
 
+        {/* Quick-nav FIRST MUSCLE hero — sits at y=466 to continue the muscle-memory
+            chain from the day grid. Tap = open the first muscle's exercise panel.
+            Hidden once a muscle is focused (so it doesn't overlay the next zoom). */}
+        {hasWork && !focusMuscle && (
+          <button
+            type="button"
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect()
+              play('option-select')
+              setFocusMuscle(muscles[0])
+              setFocusMuscleRect(rect)
+            }}
+            className="fixed z-[9991] block outline-none active:scale-[0.98] transition-transform"
+            style={{
+              top: '466px',
+              left: '32px',
+              right: '32px',
+              animation: 'activate-popup-rise 320ms cubic-bezier(0.18, 1, 0.36, 1) 380ms both',
+            }}
+          >
+            <div
+              className="absolute inset-0 bg-gtl-red transition-colors group-active:bg-gtl-red-bright"
+              style={{
+                clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+                boxShadow: '0 4px 28px rgba(212, 24, 31, 0.55)',
+              }}
+              aria-hidden="true"
+            />
+            <div className="relative flex items-center justify-between px-6 py-3 gap-3">
+              <div className="flex flex-col items-start min-w-0">
+                <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-paper/80 leading-none">
+                  BEGIN HERE
+                </span>
+                <span className="font-display text-2xl text-gtl-paper leading-none mt-1 truncate">
+                  {MUSCLE_LABELS[muscles[0]] || muscles[0].toUpperCase()}
+                </span>
+              </div>
+              <span className="font-display text-2xl text-gtl-paper leading-none shrink-0">➤︎</span>
+            </div>
+          </button>
+        )}
+
         {/* Exercise panel — zooms from the tapped muscle slab */}
         {focusMuscle && (
           <ExercisePanel
@@ -2349,6 +2396,30 @@ export default function ActiveCyclePage() {
              : days.length <= 8 ? Math.ceil(days.length / 2)
              : Math.ceil(days.length / 3)
   const rows = Math.ceil(days.length / cols)
+
+  // Quick-nav TODAY hero: closest day to today's date — sits at y=466 to continue
+  // the muscle-memory tap chain (chip → LOAD card → ACTIVATE → TODAY hero).
+  const todayIsoStr = (() => {
+    const d = new Date()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    return `${d.getFullYear()}-${m}-${dd}`
+  })()
+  const heroIso = days.length
+    ? days.reduce((closest, iso) => {
+        const dC = Math.abs(parseDate(closest) - parseDate(todayIsoStr))
+        const dI = Math.abs(parseDate(iso) - parseDate(todayIsoStr))
+        return dI < dC ? iso : closest
+      }, days[0])
+    : null
+  const heroIsToday = heroIso === todayIsoStr
+  const heroIsPast = heroIso && heroIso < todayIsoStr
+  const heroDate = heroIso ? parseDate(heroIso) : null
+  const heroDayName = heroDate ? DAY_FULL[heroDate.getDay()] : ''
+  const heroDayNum = heroDate ? heroDate.getDate() : ''
+  const heroMon = heroDate ? MONTH_SHORT[heroDate.getMonth()] : ''
+  const heroMuscles = heroIso ? (dailyPlan[heroIso] || []) : []
+  const heroLabel = heroIsToday ? 'TODAY' : heroIsPast ? 'LAST TRAINING' : 'NEXT TRAINING'
 
   return (
     <main className="relative h-[100dvh] flex flex-col overflow-hidden bg-gtl-void">
@@ -2777,6 +2848,62 @@ export default function ActiveCyclePage() {
       })()}
 
       </div>
+
+      {/* Quick-nav TODAY hero — sits at y=466 to continue the tap-tap-tap muscle
+          memory chain (profile chip → LOAD CYCLE card → ACTIVATE popup → TODAY).
+          Whichever day is closest to today's date gets surfaced here. The full
+          day grid below remains as the contextual map. Tap = open day-focus zoom. */}
+      {heroIso && !focusDay && (<>
+        <style>{`
+          @keyframes activate-popup-rise {
+            0%   { opacity: 0; transform: translateY(60px) scale(0.96); }
+            60%  { opacity: 1; transform: translateY(-4px) scale(1.02); }
+            100% { opacity: 1; transform: translateY(0)    scale(1); }
+          }
+        `}</style>
+        <button
+          key={`hero-${heroIso}`}
+          type="button"
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect()
+            play('option-select')
+            handleDayClick(heroIso, rect)
+          }}
+          className="fixed z-30 group block outline-none active:scale-[0.98] transition-transform"
+          style={{
+            top: '466px',
+            left: '32px',
+            right: '32px',
+            animation: 'activate-popup-rise 320ms cubic-bezier(0.18, 1, 0.36, 1) both',
+          }}
+        >
+          <div
+            className="absolute inset-0 bg-gtl-red transition-colors group-active:bg-gtl-red-bright"
+            style={{
+              clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+              boxShadow: '0 4px 28px rgba(212, 24, 31, 0.55)',
+            }}
+            aria-hidden="true"
+          />
+          <div className="relative flex items-center justify-between px-6 py-3 gap-3">
+            <div className="flex flex-col items-start min-w-0">
+              <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-paper/80 leading-none">
+                {heroLabel}
+              </span>
+              <span className="font-display text-2xl text-gtl-paper leading-none mt-1 truncate">
+                {heroDayName} · {heroMon} {heroDayNum}
+              </span>
+              {heroMuscles.length > 0 && (
+                <span className="font-mono text-[9px] tracking-[0.2em] uppercase text-gtl-paper/70 leading-none mt-1 truncate">
+                  {heroMuscles.map(m => MUSCLE_LABELS[m] || m).join(' · ')}
+                </span>
+              )}
+            </div>
+            <span className="font-display text-2xl text-gtl-paper leading-none shrink-0">➤︎</span>
+          </div>
+        </button>
+      </>)}
+
       <FireFadeIn duration={900} />
     </main>
   )

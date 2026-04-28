@@ -14,7 +14,7 @@
  * /fitness/new and /fitness/load respectively, neither of which exists
  * yet. We'll wire those up in the next slice.
  */
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useSound } from '../../../lib/useSound'
@@ -344,8 +344,28 @@ export default function FitnessPage() {
   const { play } = useSound()
   const [transitioning, setTransitioning] = useState(false)
   const [transitionConfig, setTransitionConfig] = useState({ href: '', title: 'GRIT THOSE TEETH', intensity: 'normal' })
+  // Latches once a skip tap fires so HeistTransition.onComplete won't double-route.
+  const skippedRef = useRef(false)
+  // Synchronous flag — set on first select so a fast follow-up tap on the same
+  // button skips even if React hasn't committed `transitioning` to state yet.
+  // (The window pointerdown listener installs in the post-commit useEffect, so
+  // there's a brief window where it isn't yet listening.)
+  const transitioningRef = useRef(false)
+  // Stable ref to current href so the pointerdown listener doesn't have to
+  // re-bind on every transitionConfig update.
+  const hrefRef = useRef('')
+  useEffect(() => { hrefRef.current = transitionConfig.href }, [transitionConfig.href])
+
+  const skipNow = () => {
+    if (skippedRef.current) return
+    skippedRef.current = true
+    router.push(hrefRef.current)
+  }
 
   const handleSelect = (href) => {
+    // Already transitioning → this rapid second tap is a skip.
+    if (transitioningRef.current) { skipNow(); return }
+    transitioningRef.current = true
     // NEW CYCLE gets the mega transition; the others get the normal one.
     if (href === '/fitness/new') {
       // Clear any in-progress edit so ETCH CYCLE creates a fresh entry
@@ -359,10 +379,21 @@ export default function FitnessPage() {
     } else {
       setTransitionConfig({ href, title: 'GHOST CYCLE', intensity: 'normal' })
     }
+    hrefRef.current = href  // sync immediately so a fast follow-up tap routes to the right place
     setTransitioning(true)
   }
 
+  // Skip-the-transition: once HeistTransition is active, the next pointerdown
+  // anywhere on the screen routes to the destination immediately.
+  useEffect(() => {
+    if (!transitioning) return
+    const handler = () => skipNow()
+    window.addEventListener('pointerdown', handler, { capture: true })
+    return () => window.removeEventListener('pointerdown', handler, { capture: true })
+  }, [transitioning])
+
   const handleTransitionComplete = () => {
+    if (skippedRef.current) return
     router.push(transitionConfig.href)
   }
 
