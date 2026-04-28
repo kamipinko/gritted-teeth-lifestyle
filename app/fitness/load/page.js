@@ -275,12 +275,13 @@ function CycleCard({ cycle, index, selected, onSelect }) {
           </div>
         </div>
 
-        {/* Silhouette + deadline stamp row — silhouette left, stamp right. */}
-        <div className="flex items-center justify-between gap-4 mb-4">
+        {/* Silhouette + deadline stamp row — silhouette left, stamp right with
+            tight 10px gap between them. */}
+        <div className="flex items-center mb-4" style={{ gap: '10px' }}>
           {/* Silhouette: wakizashi (1–6 days, tinted red) / ouroboros (7) /
               drill (8–13) / scroll (15+). Wakizashi uses CSS mask-image so we
               can recolor the silhouette to GTL red without altering the SVG. */}
-          <div className="shrink-0">
+          <div className="shrink-0" style={{ marginLeft: '-16px' }}>
             {(() => {
               const n = cycle.days?.length || 0
               if (n >= 1 && n <= 6) {
@@ -289,7 +290,7 @@ function CycleCard({ cycle, index, selected, onSelect }) {
                     aria-hidden="true"
                     className="select-none pointer-events-none"
                     style={{
-                      width: '120px',
+                      width: '90px',
                       height: '120px',
                       backgroundColor: '#d4181f',
                       WebkitMaskImage: 'url(/reference/wakizashi_solid_silhouette.svg)',
@@ -775,8 +776,8 @@ function BottomBar({ cycle, onActivate, onReview, onDelete }) {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-50"
-      style={{ background: 'rgba(7,7,8,0.97)', borderTop: '2px solid #d4181f' }}
+      className="fixed left-0 right-0 z-50"
+      style={{ top: '549px', background: 'rgba(7,7,8,0.97)', borderTop: '2px solid #d4181f' }}
     >
       {/* Skewed red accent line */}
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-gtl-red pointer-events-none"
