@@ -693,7 +693,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
         aria-hidden="true"
       />
       <div
-        className="relative flex items-center justify-between px-5 py-4 gap-3"
+        className="relative flex items-center justify-between px-7 py-5 gap-3"
         style={{ transform: `translateX(${dragX * 0.3}px)`, transition: dragX === 0 ? 'transform 200ms' : 'none' }}
       >
         {/* Left side: TAP label */}
@@ -705,7 +705,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
           TAP
         </span>
         {/* Center: action label */}
-        <span className="font-display text-2xl text-gtl-paper leading-none tracking-tight">
+        <span className="font-display text-3xl text-gtl-paper leading-none tracking-tight">
           {swipeProgress >= 1 ? 'LIFT NOW' : 'ACTIVATE'}
         </span>
         {/* Right side: SWIPE chevrons (animated at idle, fade as user drags) */}
