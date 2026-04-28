@@ -100,18 +100,16 @@ const NUTRITION_CARD = {
   compact: true,
 }
 
-function CallingCardReveal({ kind, onSkip }) {
+function CallingCardReveal({ kind }) {
   const card = kind === 'fitness' ? FITNESS_CARD : NUTRITION_CARD
   return (
     <div
       aria-hidden="true"
-      onClick={onSkip}
       style={{
         position: 'fixed', inset: 0, zIndex: 60,
         background: 'radial-gradient(ellipse at 50% 55%, rgba(74,10,14,0.55) 0%, rgba(7,7,8,0.94) 70%)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: '2rem',
-        cursor: 'pointer',
         animation: 'card-reveal-fade 1000ms ease-out forwards',
       }}
     >
@@ -223,6 +221,18 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handler)
   }, [phase])
 
+  // Skip-everything: once the gate has been committed (phase !== 'gate'),
+  // the next pointerdown anywhere on the screen routes immediately. Using
+  // window-level capture sidesteps every per-element gotcha (iOS first-tap
+  // hover absorption on the CallingCard button, HeistTransition's
+  // pointer-events-none layer, z-index races, etc).
+  useEffect(() => {
+    if (phase === 'gate') return
+    const handler = () => skipAll()
+    window.addEventListener('pointerdown', handler, { capture: true })
+    return () => window.removeEventListener('pointerdown', handler, { capture: true })
+  }, [phase])
+
   const handleTransitionComplete = () => {
     if (skippedRef.current) return
     router.push(transitionTarget)
@@ -254,28 +264,14 @@ export default function Home() {
           swipeHintLabels={{ top: 'SWIPE UP FOR FITNESS', bottom: 'SWIPE DOWN FOR NUTRITION' }}
         />
       )}
-      {phase === 'flash-fitness'   && <CallingCardReveal kind="fitness"   onSkip={skipAll} />}
-      {phase === 'flash-nutrition' && <CallingCardReveal kind="nutrition" onSkip={skipAll} />}
+      {phase === 'flash-fitness'   && <CallingCardReveal kind="fitness"   />}
+      {phase === 'flash-nutrition' && <CallingCardReveal kind="nutrition" />}
 
       <HeistTransition
         active={transitioning}
         onComplete={handleTransitionComplete}
         title="GTL"
       />
-
-      {/* Tap catcher — sits above HeistTransition (z 9999) so a tap during the
-          slash wipes routes immediately. Active only while transitioning so it
-          never blocks input on the static gate screen. */}
-      {transitioning && (
-        <div
-          onClick={skipAll}
-          aria-hidden="true"
-          style={{
-            position: 'fixed', inset: 0, zIndex: 10000,
-            background: 'transparent', cursor: 'pointer',
-          }}
-        />
-      )}
     </main>
   )
 }
