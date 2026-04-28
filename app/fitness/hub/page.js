@@ -59,7 +59,7 @@ function CycleOption({
         transition-all duration-300 ease-out
         focus:outline-none focus-visible:outline-2 focus-visible:outline-dashed focus-visible:outline-gtl-red focus-visible:outline-offset-4
         min-h-[11rem] md:min-h-[20rem]
-        ${hovered ? '-translate-y-3 scale-[1.04]' : 'translate-y-0 scale-100'}
+        ${hovered ? '[@media(hover:hover)]:-translate-y-3 [@media(hover:hover)]:scale-[1.04]' : 'translate-y-0 scale-100'}
       `}
     >
       {/* Idle red glow ring — telegraphs interactivity even at rest */}
@@ -227,7 +227,7 @@ function GhostOption({ number, label, caption, href, onClick }) {
         group relative block w-full text-left
         transition-all duration-300 ease-out
         focus:outline-none focus-visible:outline-2 focus-visible:outline-dashed focus-visible:outline-gtl-red focus-visible:outline-offset-4
-        ${hovered ? '-translate-y-1 scale-[1.01]' : 'translate-y-0 scale-100'}
+        ${hovered ? '[@media(hover:hover)]:-translate-y-1 [@media(hover:hover)]:scale-[1.01]' : 'translate-y-0 scale-100'}
       `}
       style={{ minHeight: '7rem', touchAction: 'manipulation' }}
     >
