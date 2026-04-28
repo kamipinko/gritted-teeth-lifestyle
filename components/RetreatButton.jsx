@@ -14,7 +14,8 @@ export default function RetreatButton({ href = '/fitness/hub' }) {
     <Link
       href={href}
       onClick={() => play('menu-close')}
-      className="group relative inline-flex items-center"
+      className="group fixed left-0 z-40 inline-flex items-center"
+      style={{ top: 'env(safe-area-inset-top, 0px)' }}
     >
       {/* Clip-path slash bg — visible at idle, brightens on hover (hover-capable devices only) */}
       <div
