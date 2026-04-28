@@ -195,9 +195,11 @@ function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAd
     if (inputRef.current) inputRef.current.focus()
   }
 
-  useEffect(() => {
-    if (inputRef.current) inputRef.current.focus()
-  }, [])
+  // No auto-focus on mount. iOS PWA queues a pending focus() call when the
+  // page mounts; the user's first tap *anywhere* on the page during the
+  // gesture-activation window then pops up the keyboard, even taps under the
+  // FORGE button. Keyboard now only opens on a deliberate input-area tap
+  // (handleWrapperClick) or via Enter on a hardware keyboard.
 
   return (
     <div
@@ -228,9 +230,15 @@ function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAd
 
       {/* Visible character display.
           IMPORTANT: overflow visible at every level so the giant scaled
-          characters can extend beyond the container without being clipped. */}
+          characters can extend beyond the container without being clipped.
+          pointer-events: none — during char-stamp animation the spans are
+          scaled to ~20x and cover the whole screen; without this any tap
+          (including under FORGE) bubbles up to the wrapper's onClick →
+          focus → iOS keyboard pops on first gesture. The wrapper still
+          receives taps on its own natural bbox so deliberate input-area
+          taps still focus the input. */}
       <div
-        className="relative flex flex-wrap items-baseline justify-center gap-y-2 min-h-[2.5rem] md:min-h-[6rem] px-4"
+        className="relative flex flex-wrap items-baseline justify-center gap-y-2 min-h-[2.5rem] md:min-h-[6rem] px-4 pointer-events-none"
         style={{ overflow: 'visible' }}
       >
         {value.split('').map((char, i) => (

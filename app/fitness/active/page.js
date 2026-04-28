@@ -1427,26 +1427,29 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose, cycleId }) {
         </div>
       </div>
 
+      {/* ExercisePanel back — fixed top-left, same anchor as RetreatButton +
+          DayFocus back so navigating from active → day-focus → exercise-panel
+          keeps the back button in the exact same on-screen position the whole
+          way down (visual continuity across the whole nav stack). */}
+      <button
+        type="button"
+        onClick={handleClose}
+        aria-label="Back"
+        className="group fixed left-0 z-40 inline-flex items-center px-3 py-3 outline-none scale-95 origin-left
+          focus-visible:outline-2 focus-visible:outline-gtl-red"
+        style={{ top: 'env(safe-area-inset-top, 0px)', touchAction: 'manipulation' }}
+      >
+        <span className="flex items-center gap-0.5 leading-none font-display text-2xl select-none">
+          <span aria-hidden="true" className="text-gtl-red opacity-40 transition-colors duration-200 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright">◀︎</span>
+          <span aria-hidden="true" className="text-gtl-red opacity-70 transition-colors duration-200 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright">◀︎</span>
+          <span aria-hidden="true" className="text-gtl-red transition-colors duration-200 [@media(hover:hover)]:group-hover:text-gtl-red-bright">◀︎</span>
+        </span>
+      </button>
+
       <div
         className="relative z-10 h-full flex flex-col px-10 pb-8 overflow-y-auto"
         style={{ animation: 'focus-content-in 280ms 250ms ease-out both', paddingTop: 'max(2rem, env(safe-area-inset-top))' }}
       >
-        {/* Back — three red chevrons (matches RetreatButton style) */}
-        <button
-          type="button"
-          onClick={handleClose}
-          aria-label="Back"
-          className="group self-start inline-flex items-center mb-8 px-3 py-3 outline-none scale-95 origin-left
-            focus-visible:outline-2 focus-visible:outline-gtl-red shrink-0"
-          style={{ touchAction: 'manipulation' }}
-        >
-          <span className="flex items-center gap-0.5 leading-none font-display text-2xl select-none">
-            <span aria-hidden="true" className="text-gtl-red opacity-40 transition-all duration-200 ease-out [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright [@media(hover:hover)]:group-hover:-translate-x-1.5">◀︎</span>
-            <span aria-hidden="true" className="text-gtl-red opacity-70 transition-all duration-200 ease-out delay-[40ms] [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright [@media(hover:hover)]:group-hover:-translate-x-1">◀︎</span>
-            <span aria-hidden="true" className="text-gtl-red transition-all duration-200 ease-out delay-[80ms] [@media(hover:hover)]:group-hover:text-gtl-red-bright [@media(hover:hover)]:group-hover:-translate-x-0.5">◀︎</span>
-          </span>
-        </button>
-
         {/* Muscle name header */}
         <div className="shrink-0 mb-2">
           <div className="font-mono text-[10px] tracking-[0.5em] uppercase text-gtl-red mb-3">
@@ -1875,28 +1878,26 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
             </div>
           )}
 
-          {/* Top nav row — BACK on left, UNLOG on right */}
-          <div className="flex items-start justify-between mb-auto" style={{ zIndex: 10 }}>
-            <button
-              type="button"
-              onClick={handleClose}
-              aria-label="Back"
-              className="group inline-flex items-center gap-3 px-4 py-2 outline-none
-                focus-visible:outline-2 focus-visible:outline-gtl-red"
-              style={{ touchAction: 'manipulation' }}
-            >
-              {/* Day-focus back: same wrapper footprint as the old ◀︎ BACK
-                  button (inline-flex / gap-3 / px-4 / py-2) so the chevrons
-                  appear in the same on-screen position. Chevrons brighten on
-                  hover but DON'T translate — UNLOG sits opposite via
-                  justify-between, so any translate would visually shift it. */}
-              <span className="flex items-center gap-0.5 leading-none font-display text-2xl select-none">
-                <span aria-hidden="true" className="text-gtl-red opacity-40 transition-colors duration-200 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright">◀︎</span>
-                <span aria-hidden="true" className="text-gtl-red opacity-70 transition-colors duration-200 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright">◀︎</span>
-                <span aria-hidden="true" className="text-gtl-red transition-colors duration-200 [@media(hover:hover)]:group-hover:text-gtl-red-bright">◀︎</span>
-              </span>
-            </button>
+          {/* Day-focus back — fixed top-left, same anchor as RetreatButton on
+              every other page (fixed left-0 + safe-area-inset-top + scale-95
+              origin-left + px-3 py-3). */}
+          <button
+            type="button"
+            onClick={handleClose}
+            aria-label="Back"
+            className="group fixed left-0 z-40 inline-flex items-center px-3 py-3 outline-none scale-95 origin-left
+              focus-visible:outline-2 focus-visible:outline-gtl-red"
+            style={{ top: 'env(safe-area-inset-top, 0px)', touchAction: 'manipulation' }}
+          >
+            <span className="flex items-center gap-0.5 leading-none font-display text-2xl select-none">
+              <span aria-hidden="true" className="text-gtl-red opacity-40 transition-colors duration-200 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright">◀︎</span>
+              <span aria-hidden="true" className="text-gtl-red opacity-70 transition-colors duration-200 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright">◀︎</span>
+              <span aria-hidden="true" className="text-gtl-red transition-colors duration-200 [@media(hover:hover)]:group-hover:text-gtl-red-bright">◀︎</span>
+            </span>
+          </button>
 
+          {/* Top nav row — UNLOG on right (BACK is now fixed top-left, above) */}
+          <div className="flex items-start justify-end mb-auto" style={{ zIndex: 10 }}>
             {/* UNLOG SETS — only when sets are logged and day not stamped */}
             {!stamped && Object.keys(allReps).some(m => Object.values(allReps[m] || {}).flat().some(v => v > 0)) && (
               <div className="flex flex-col items-end gap-1.5">
