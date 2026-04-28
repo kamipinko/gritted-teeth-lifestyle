@@ -14,23 +14,31 @@ export default function RetreatButton({ href = '/fitness/hub' }) {
     <Link
       href={href}
       onClick={() => play('menu-close')}
+      aria-label="Retreat"
       // data-retreat lets page-level skip listeners (window pointerdown/
       // touchstart that route forward to the in-flight transition's destination)
       // opt out — taps on retreat should navigate back, not fast-forward.
       data-retreat="true"
-      className="group fixed left-0 z-40 inline-flex items-center"
+      className="group fixed left-0 z-40 inline-flex items-center px-3 py-3"
       style={{ top: 'env(safe-area-inset-top, 0px)', touchAction: 'manipulation' }}
     >
-      {/* Clip-path slash bg — visible at idle, brightens on hover (hover-capable devices only) */}
-      <div
-        className="absolute inset-0 pointer-events-none transition-all duration-300 ease-out bg-gtl-edge opacity-50 [@media(hover:hover)]:group-hover:bg-gtl-red [@media(hover:hover)]:group-hover:opacity-100"
-        style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
-        aria-hidden="true"
-      />
-      <div className="relative flex items-center gap-1.5 pl-2 pr-2 py-2">
-        <span className="font-display text-base leading-none transition-all duration-300 text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper [@media(hover:hover)]:group-hover:-translate-x-1">◀︎</span>
-        <span className="font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300 text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper">RETREAT</span>
-      </div>
+      {/* Three red chevrons. Decreasing opacity at idle gives directional read
+          (left = back); on hover they brighten + shift left in stagger so it
+          feels like the retreat is "pulling" you out. */}
+      <span className="flex items-center gap-0.5 leading-none font-display text-2xl select-none">
+        <span
+          aria-hidden="true"
+          className="text-gtl-red opacity-40 transition-all duration-200 ease-out [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright [@media(hover:hover)]:group-hover:-translate-x-1.5"
+        >◀</span>
+        <span
+          aria-hidden="true"
+          className="text-gtl-red opacity-70 transition-all duration-200 ease-out delay-[40ms] [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright [@media(hover:hover)]:group-hover:-translate-x-1"
+        >◀</span>
+        <span
+          aria-hidden="true"
+          className="text-gtl-red transition-all duration-200 ease-out delay-[80ms] [@media(hover:hover)]:group-hover:text-gtl-red-bright [@media(hover:hover)]:group-hover:-translate-x-0.5"
+        >◀</span>
+      </span>
     </Link>
   )
 }
