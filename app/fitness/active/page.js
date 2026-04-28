@@ -1659,6 +1659,26 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
     setTimeout(onClose, 350)
   }, [onClose, play])
 
+  // Deep-launch: continue the auto-progression chain from /fitness/load ACTIVATE.
+  // After zoom-in lands, auto-open the first muscle's exercise panel — which
+  // in turn auto-opens the first set's weight popup. Flag is cleared INSIDE the
+  // timer callback (after success) so React StrictMode's mount/unmount/remount
+  // doesn't consume the flag before the timer can fire.
+  useEffect(() => {
+    if (!hasWork) return
+    let isDeepLaunch = false
+    try { isDeepLaunch = localStorage.getItem('gtl-deep-launch') === '1' } catch (_) {}
+    if (!isDeepLaunch) return
+    const t = setTimeout(() => {
+      try { localStorage.removeItem('gtl-deep-launch') } catch (_) {}
+      setFocusMuscle(muscles[0])
+      setFocusMuscleRect(null)
+    }, 500)
+    return () => clearTimeout(t)
+  // Mount-only auto-progress.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Lock body scroll while open
   useEffect(() => {
     const prevBody = document.body.style.overflow
@@ -2308,6 +2328,37 @@ export default function ActiveCyclePage() {
     }
     setCompletedDays(count)
   }, [days, cardRefreshKey])
+
+  // Deep-launch: when the user came from ACTIVATE on /fitness/load, skip the
+  // schedule view and jump straight into today's day-focus. DayFocus then
+  // continues the auto-progression into ExercisePanel, which auto-opens the
+  // first set's weight popup. Flag is consumed in DayFocus (so it survives the
+  // mount chain).
+  useEffect(() => {
+    if (!days.length) return
+    let isDeepLaunch = false
+    try { isDeepLaunch = localStorage.getItem('gtl-deep-launch') === '1' } catch (_) {}
+    if (!isDeepLaunch) return
+    // Compute hero day inline (heroIso identifier is defined later in render).
+    const todayD = new Date()
+    const todayStr = `${todayD.getFullYear()}-${String(todayD.getMonth()+1).padStart(2,'0')}-${String(todayD.getDate()).padStart(2,'0')}`
+    const target = days.reduce((closest, iso) => {
+      const dC = Math.abs(parseDate(closest) - parseDate(todayStr))
+      const dI = Math.abs(parseDate(iso) - parseDate(todayStr))
+      return dI < dC ? iso : closest
+    }, days[0])
+    // Center-of-viewport synthetic rect for the zoom-in origin.
+    const syntheticRect = {
+      left: window.innerWidth / 2 - 100, top: 466,
+      width: 200, height: 60,
+      right: window.innerWidth / 2 + 100, bottom: 526,
+    }
+    const t = setTimeout(() => {
+      setFocusRect(syntheticRect)
+      setFocusDay(target)
+    }, 100)
+    return () => clearTimeout(t)
+  }, [days])
 
 
   const handleDayClick = (iso, rect) => {
