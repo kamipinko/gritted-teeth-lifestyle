@@ -118,9 +118,9 @@ export default function ProfilePage() {
       </nav>
 
       {/* Main */}
-      <section className="relative z-10 flex-1 flex flex-col justify-center px-8 pb-20 max-w-3xl mx-auto w-full">
+      <section className="relative z-10 flex-1 flex flex-col px-8 pt-2 pb-8 max-w-3xl mx-auto w-full">
         {/* Headline */}
-        <div className="mb-14">
+        <div className="mb-6">
           <div className="flex items-center gap-4 mb-3">
             <div className="h-px w-16 bg-gtl-red" />
             <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-red">
@@ -131,7 +131,7 @@ export default function ProfilePage() {
             WHO<br />
             <span className="text-gtl-red inline-block rotate-1">ARE YOU</span>
           </h1>
-          <p className="font-mono text-xs tracking-[0.25em] uppercase text-gtl-ash mt-6 max-w-sm">
+          <p className="font-mono text-xs tracking-[0.25em] uppercase text-gtl-ash mt-3 max-w-sm">
             Your cycles, lifts, and EXP belong to you alone.
           </p>
         </div>
