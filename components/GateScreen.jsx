@@ -137,9 +137,9 @@ export default function GateScreen({ onEnter, onMusicStart, swipeHintLabels }) {
               left: '50%',
               transform: 'translateX(-50%)',
               fontFamily: '"JetBrains Mono", monospace',
-              fontSize: '0.95rem',
-              fontWeight: 700,
-              letterSpacing: '0.35em',
+              fontSize: '1.05rem',
+              fontWeight: 800,
+              letterSpacing: '0.2em',
               textTransform: 'uppercase',
               color: '#000000',
               pointerEvents: 'none',
@@ -157,9 +157,9 @@ export default function GateScreen({ onEnter, onMusicStart, swipeHintLabels }) {
               left: '50%',
               transform: 'translateX(-50%)',
               fontFamily: '"JetBrains Mono", monospace',
-              fontSize: '0.95rem',
-              fontWeight: 700,
-              letterSpacing: '0.35em',
+              fontSize: '1.05rem',
+              fontWeight: 800,
+              letterSpacing: '0.2em',
               textTransform: 'uppercase',
               color: '#000000',
               pointerEvents: 'none',
@@ -200,7 +200,8 @@ export default function GateScreen({ onEnter, onMusicStart, swipeHintLabels }) {
           {/* Label */}
           <div style={{
             fontFamily: '"JetBrains Mono", monospace',
-            fontSize: '0.55rem', letterSpacing: '0.4em',
+            fontSize: '0.85rem', letterSpacing: '0.35em',
+            fontWeight: 800,
             textTransform: 'uppercase', color: '#000000',
             animation: active ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 600ms both' : 'none',
           }}>
@@ -241,7 +242,8 @@ export default function GateScreen({ onEnter, onMusicStart, swipeHintLabels }) {
           {/* Sub-hint */}
           <div style={{
             fontFamily: '"JetBrains Mono", monospace',
-            fontSize: '0.5rem', letterSpacing: '0.3em',
+            fontSize: '0.75rem', letterSpacing: '0.3em',
+            fontWeight: 800,
             textTransform: 'uppercase', color: '#000000',
             animation: active ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 950ms both' : 'none',
           }}>
