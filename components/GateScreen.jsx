@@ -27,14 +27,22 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
   // (direction → fitness/nutrition). Drives gate-exit slashes uniformly so
   // the user always gets the chance to second-tap to skip.
   const commit = (kind) => {
-    if (phase !== 'idle') return
     // Fire bg music start SYNCHRONOUSLY inside the user-gesture handler. iOS PWA
     // blocks audio.play() outside the synchronous click context — anything called
     // after the setTimeout below is outside that window and the play promise
     // rejects silently.
     if (onMusicStart) onMusicStart()
     play('brand-confirm')
-    if (onCommit) onCommit(kind)  // sync, so parent can stash target before exit slashes start
+    if (onCommit) onCommit(kind)  // sync, so parent can stash target
+
+    // Pre-commit (entrance animation still running): fast-track straight to
+    // the route — skip entrance, gate exit, calling card, heist transition.
+    // Music continues. onSkip routes via parent's skipAll using targetRef.
+    if (phase === 'pre' || phase === 'in') {
+      if (onSkip) onSkip()
+      return
+    }
+    if (phase !== 'idle') return
     setPhase('out')
     exitTimerRef.current = setTimeout(() => onEnter && onEnter(kind), EXIT_MS)
   }
