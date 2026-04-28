@@ -138,11 +138,6 @@ export default function EditCyclePage() {
 
       {/* Kanji watermark — 改 (reform/edit). Top rooted at safe-area floor so it never
           clips into the iOS Dynamic Island camera area. */}
-      <div className="absolute -right-16 pointer-events-none select-none" aria-hidden="true"
-        style={{ top: 'calc(env(safe-area-inset-top, 0px) - 32px)', fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '48rem', lineHeight: '0.8', color: '#d4181f', opacity: 0.04, fontWeight: 900 }}>
-        改
-      </div>
-
       {/* Content wrapper — atmospheric layers paint full-bleed (incl. safe area);
           wrapper holds UI flow with iOS top-inset padding. */}
       <div className="relative z-10 flex-1 flex flex-col">
