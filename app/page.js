@@ -11,13 +11,27 @@ import { useSound } from '../lib/useSound'
 // element was created in the same synchronous tick as play() — even inside a
 // user-gesture handler. Pre-creating sidesteps that. loop=true replaces the
 // manual 'ended' listener.
-const bgMusicAudio = typeof window !== 'undefined'
-  ? new Audio('/sounds/chrono-cut-1.wav')
-  : null
-if (bgMusicAudio) {
-  bgMusicAudio.loop = true
-  bgMusicAudio.preload = 'auto'
-  bgMusicAudio.volume = 0
+//
+// Window-level singleton so a stale module reload (HMR, dev refresh, or navigation
+// glitch) doesn't create a second Audio instance that plays on top of the first.
+const bgMusicAudio = (() => {
+  if (typeof window === 'undefined') return null
+  if (window.__gtlBgMusic) return window.__gtlBgMusic
+  const a = new Audio('/sounds/chrono-cut-1.wav')
+  a.loop = true
+  a.preload = 'auto'
+  a.volume = 0
+  window.__gtlBgMusic = a
+  return a
+})()
+
+// Pause + reset on page hide/unload so a backgrounded PWA tab doesn't leave a
+// zombie audio playing while a refresh creates a second instance.
+if (typeof window !== 'undefined' && bgMusicAudio && !window.__gtlBgMusicHideHook) {
+  window.__gtlBgMusicHideHook = true
+  window.addEventListener('pagehide', () => {
+    try { bgMusicAudio.pause(); bgMusicAudio.currentTime = 0 } catch {}
+  })
 }
 
 // iOS Chrome PWA (Add-to-Home-Screen, WKWebView) unlocks audio per-element.
@@ -44,11 +58,12 @@ if (typeof window !== 'undefined' && bgMusicAudio) {
   window.addEventListener('pointerdown', primeBgMusic, { once: true })
 }
 
-let bgMusicStarted = false
-
 function startBgMusic() {
-  if (!bgMusicAudio || bgMusicStarted) return
-  bgMusicStarted = true
+  if (!bgMusicAudio) return
+  // Trust the audio element's own state: if it's already playing (because a
+  // previous mount started it and the module-level singleton is still alive),
+  // don't kick another play() and don't re-run the fade interval.
+  if (!bgMusicAudio.paused) return
 
   // Kick off play() inside the user-gesture call stack (caller is GateScreen.handleClick
   // or handleTouchEnd's swipe path — both synchronous to the user tap/swipe).
