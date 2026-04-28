@@ -278,8 +278,8 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
           src="/logo.png"
           alt="GTL"
           style={{
-            width: 'clamp(96px, 16vw, 148px)',
-            height: 'clamp(96px, 16vw, 148px)',
+            width: 'clamp(128px, 24vw, 200px)',
+            height: 'clamp(128px, 24vw, 200px)',
             borderRadius: '50%',
             objectFit: 'cover',
             animation: animOf('forge-slam 1100ms cubic-bezier(0.2, 1.2, 0.4, 1) 400ms both'),
@@ -327,11 +327,8 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             fontFamily: 'Anton, Impact, sans-serif',
             fontSize: 'clamp(1.1rem, 3.2vw, 1.9rem)',
             letterSpacing: '0.25em', color: '#d4181f',
-            animation: instant
-              ? 'cursor-blink 1.2s steps(2, end) infinite'
-              : (active
-                  ? 'snap-in 650ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 1300ms both, cursor-blink 1.2s steps(2, end) 2150ms infinite'
-                  : 'none'),
+            mixBlendMode: 'difference',
+            animation: 'cursor-blink 1.2s steps(2, end) infinite',
           }}>
             PRESS START
           </div>
