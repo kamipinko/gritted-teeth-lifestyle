@@ -965,7 +965,7 @@ export default function LoadCyclePage() {
           onClick={() => { play('card-confirm'); handleActivate(selectedCycle) }}
           className="fixed z-50 group block outline-none active:scale-[0.98] transition-transform"
           style={{
-            top: '438px',
+            top: '466px',
             left: '32px',
             right: '32px',
             animation: 'activate-popup-rise 320ms cubic-bezier(0.18, 1, 0.36, 1) both',
