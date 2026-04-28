@@ -28,7 +28,9 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase('in'), 60)
-    const t2 = setTimeout(() => setPhase('idle'), 1400)
+    // Entrance cascade ends at ~2150ms (sub-hint snap-in: 1500ms delay + 650ms
+    // duration). Trigger idle just after that for a clean handoff.
+    const t2 = setTimeout(() => setPhase('idle'), 2200)
     return () => {
       clearTimeout(t1); clearTimeout(t2)
       if (exitTimerRef.current) clearTimeout(exitTimerRef.current)
@@ -165,7 +167,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
         style={{
           background: 'radial-gradient(ellipse at 50% 55%, rgba(212,24,31,0.45) 0%, transparent 65%)',
           opacity: active ? 1 : 0,
-          transition: transOf('opacity 900ms ease 200ms'),
+          transition: transOf('opacity 1400ms ease 300ms'),
         }}
       />
 
@@ -180,7 +182,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
           top: '-25%', bottom: '-25%', left: '-5%', width: '52%',
           background: 'rgba(212,24,31,0.75)',
           transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(-120%)',
-          transition: transOf('transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 100ms'),
+          transition: transOf('transform 1100ms cubic-bezier(0.15, 0, 0.1, 1) 150ms'),
         }}
       />
       {/* Band 2 — bright red, medium */}
@@ -190,7 +192,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
           top: '-25%', bottom: '-25%', left: '10%', width: '38%',
           background: 'rgba(212,24,31,0.4)',
           transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(-120%)',
-          transition: transOf('transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 200ms'),
+          transition: transOf('transform 1100ms cubic-bezier(0.15, 0, 0.1, 1) 300ms'),
         }}
       />
       {/* Band 3 — bright red, right-side accent */}
@@ -200,19 +202,19 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
           top: '-25%', bottom: '-25%', right: '-8%', width: '20%',
           background: 'rgba(212,24,31,0.55)',
           transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(120%)',
-          transition: transOf('transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 150ms'),
+          transition: transOf('transform 1100ms cubic-bezier(0.15, 0, 0.1, 1) 225ms'),
         }}
       />
 
       {/* ── Corner accent lines ── */}
       <div className="absolute top-0 left-0 bg-gtl-red pointer-events-none"
-        style={{ height: 5, width: active ? 168 : 0, transition: transOf('width 600ms cubic-bezier(0.2,1,0.3,1) 450ms') }} />
+        style={{ height: 5, width: active ? 168 : 0, transition: transOf('width 1000ms cubic-bezier(0.2,1,0.3,1) 700ms') }} />
       <div className="absolute top-0 left-0 bg-gtl-red pointer-events-none"
-        style={{ width: 5, height: active ? 168 : 0, transition: transOf('height 600ms cubic-bezier(0.2,1,0.3,1) 500ms') }} />
+        style={{ width: 5, height: active ? 168 : 0, transition: transOf('height 1000ms cubic-bezier(0.2,1,0.3,1) 800ms') }} />
       <div className="absolute bottom-0 right-0 bg-gtl-red pointer-events-none"
-        style={{ height: 5, width: active ? 168 : 0, transition: transOf('width 600ms cubic-bezier(0.2,1,0.3,1) 450ms') }} />
+        style={{ height: 5, width: active ? 168 : 0, transition: transOf('width 1000ms cubic-bezier(0.2,1,0.3,1) 700ms') }} />
       <div className="absolute bottom-0 right-0 bg-gtl-red pointer-events-none"
-        style={{ width: 5, height: active ? 168 : 0, transition: transOf('height 600ms cubic-bezier(0.2,1,0.3,1) 500ms') }} />
+        style={{ width: 5, height: active ? 168 : 0, transition: transOf('height 1000ms cubic-bezier(0.2,1,0.3,1) 800ms') }} />
 
       {/* ── Swipe hints — plain red, no blend mode, no underlay. */}
       {swipeHintLabels && (
@@ -280,7 +282,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             height: 'clamp(96px, 16vw, 148px)',
             borderRadius: '50%',
             objectFit: 'cover',
-            animation: animOf('forge-slam 700ms cubic-bezier(0.2, 1.2, 0.4, 1) 250ms both'),
+            animation: animOf('forge-slam 1100ms cubic-bezier(0.2, 1.2, 0.4, 1) 400ms both'),
           }}
         />
 
@@ -305,7 +307,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             lineHeight: 1, letterSpacing: '-0.02em',
             color: '#f1eee5',
             textShadow: '3px 3px 0 #d4181f, 6px 6px 0 #070708',
-            animation: animOf('snap-in 500ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 400ms both'),
+            animation: animOf('snap-in 800ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 650ms both'),
           }}>
             GTL
           </div>
@@ -315,7 +317,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             height: 5, background: '#d4181f', transform: 'skewX(-12deg)',
             mixBlendMode: 'difference',
             width: active ? 'clamp(8rem, 20vw, 14rem)' : 0,
-            transition: transOf('width 600ms cubic-bezier(0.2, 1, 0.3, 1) 750ms'),
+            transition: transOf('width 1000ms cubic-bezier(0.2, 1, 0.3, 1) 1200ms'),
           }} />
 
           {/* PRESS START — snaps in, then blinks. When `instant` is set
@@ -328,7 +330,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             animation: instant
               ? 'cursor-blink 1.2s steps(2, end) infinite'
               : (active
-                  ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 800ms both, cursor-blink 1.2s steps(2, end) 1350ms infinite'
+                  ? 'snap-in 650ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 1300ms both, cursor-blink 1.2s steps(2, end) 2150ms infinite'
                   : 'none'),
           }}>
             PRESS START
