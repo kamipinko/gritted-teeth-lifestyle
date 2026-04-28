@@ -7,6 +7,19 @@
 /* ----- Fonts ----- */
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Big+Shoulders+Display:wght@700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Shippori+Mincho:wght@400;500;600;700;800&display=swap');
 
+/* FOT-Matisse Pro EB — locally hosted Japanese display font (Fontworks Inc.).
+ * License caveat: this is a commercial typeface acquired via fontsgeek.com
+ * without verified licensing. OK for dev / personal use; SWAP TO A LICENSED
+ * ALTERNATIVE before any public/commercial release. Use class .font-matisse
+ * to apply. */
+@font-face {
+  font-family: 'FOT-Matisse Pro EB';
+  src: url('/fonts/FOT-Matisse-Pro-EB.otf') format('opentype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

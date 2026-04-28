@@ -229,10 +229,10 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
               top: 'calc(env(safe-area-inset-top, 0px) + 24px)',
               left: '50%',
               transform: 'translateX(-50%)',
-              fontFamily: '"JetBrains Mono", monospace',
-              fontSize: '1.05rem',
-              fontWeight: 800,
-              letterSpacing: '0.2em',
+              fontFamily: '"FOT-Matisse Pro EB", "JetBrains Mono", monospace',
+              fontSize: '1.2rem',
+              fontWeight: 900,
+              letterSpacing: '0.18em',
               textTransform: 'uppercase',
               color: '#d4181f',
               mixBlendMode: 'difference',
@@ -250,10 +250,10 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
               bottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)',
               left: '50%',
               transform: 'translateX(-50%)',
-              fontFamily: '"JetBrains Mono", monospace',
-              fontSize: '1.05rem',
-              fontWeight: 800,
-              letterSpacing: '0.2em',
+              fontFamily: '"FOT-Matisse Pro EB", "JetBrains Mono", monospace',
+              fontSize: '1.2rem',
+              fontWeight: 900,
+              letterSpacing: '0.18em',
               textTransform: 'uppercase',
               color: '#d4181f',
               mixBlendMode: 'difference',
@@ -304,9 +304,9 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
               sub-hint naturally does), giving the blend the same backdrop
               chain that produces visible live flip. */}
           <div style={{
-            fontFamily: '"JetBrains Mono", monospace',
-            fontSize: '0.85rem', letterSpacing: '0.35em',
-            fontWeight: 800,
+            fontFamily: '"FOT-Matisse Pro EB", "JetBrains Mono", monospace',
+            fontSize: '1rem', letterSpacing: '0.32em',
+            fontWeight: 900,
             textTransform: 'uppercase', color: '#d4181f',
             mixBlendMode: 'difference',
             position: 'relative',
@@ -350,9 +350,9 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
           {/* Sub-hint — no entrance animation; visible from t=0 in red so the
               difference-blend live-flips as bands sweep behind it. */}
           <div style={{
-            fontFamily: '"JetBrains Mono", monospace',
-            fontSize: '0.75rem', letterSpacing: '0.3em',
-            fontWeight: 800,
+            fontFamily: '"FOT-Matisse Pro EB", "JetBrains Mono", monospace',
+            fontSize: '0.9rem', letterSpacing: '0.28em',
+            fontWeight: 900,
             textTransform: 'uppercase', color: '#d4181f',
             mixBlendMode: 'difference',
           }}>
