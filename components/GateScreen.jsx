@@ -235,8 +235,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
               pointerEvents: 'none',
               userSelect: 'none',
               whiteSpace: 'nowrap',
-              opacity: 0,
-              animation: animOf('swipe-hint-fadein 400ms ease 1000ms forwards, swipe-hint-pulse 2400ms ease-in-out 1400ms infinite'),
+              animation: 'swipe-hint-pulse 2400ms ease-in-out infinite',
             }}
           >
             ▲ {swipeHintLabels.top}
@@ -257,17 +256,12 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
               pointerEvents: 'none',
               userSelect: 'none',
               whiteSpace: 'nowrap',
-              opacity: 0,
-              animation: animOf('swipe-hint-fadein 400ms ease 1000ms forwards, swipe-hint-pulse 2400ms ease-in-out 1400ms infinite'),
+              animation: 'swipe-hint-pulse 2400ms ease-in-out infinite',
             }}
           >
             ▼ {swipeHintLabels.bottom}
           </div>
           <style>{`
-            @keyframes swipe-hint-fadein {
-              0%   { opacity: 0; }
-              100% { opacity: 0.85; }
-            }
             @keyframes swipe-hint-pulse {
               0%, 100% { opacity: 0.85; }
               50%      { opacity: 1.0; }
