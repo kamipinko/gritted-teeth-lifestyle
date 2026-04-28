@@ -143,8 +143,35 @@ export default function SettingsPage() {
     writeRaw(KEY_BG_MUSIC_ON, next ? '1' : '0')
     if (typeof window !== 'undefined' && window.__gtlBgMusic) {
       const a = window.__gtlBgMusic
-      if (!next) {
-        try { a.pause(); a.currentTime = 0 } catch {}
+      // Always cut any prior fade-in interval so toggling rapidly doesn't
+      // leave a stale interval cranking volume back up after we paused.
+      if (window.__gtlBgMusicFadeInterval) {
+        clearInterval(window.__gtlBgMusicFadeInterval)
+        window.__gtlBgMusicFadeInterval = null
+      }
+      try { a.pause(); a.currentTime = 0 } catch {}
+      if (next) {
+        // Restart from the top with the same fade-in shape used on the home
+        // page's GateScreen tap (TARGET_VOL = 0.04, FADE_MS = 1500).
+        a.volume = 0
+        const playPromise = a.play()
+        if (playPromise && typeof playPromise.catch === 'function') {
+          playPromise.catch(() => {
+            try { a.load(); a.play().catch(() => {}) } catch {}
+          })
+        }
+        const TARGET_VOL = 0.04
+        const FADE_MS = 1500
+        const steps = FADE_MS / 50
+        const increment = TARGET_VOL / steps
+        window.__gtlBgMusicFadeInterval = setInterval(() => {
+          const v = Math.min(TARGET_VOL, a.volume + increment)
+          a.volume = v
+          if (v >= TARGET_VOL) {
+            clearInterval(window.__gtlBgMusicFadeInterval)
+            window.__gtlBgMusicFadeInterval = null
+          }
+        }, 50)
       }
     }
     play(next ? 'option-select' : 'menu-close')
@@ -201,12 +228,28 @@ export default function SettingsPage() {
         }}
       />
 
+      <div
+        className="absolute -right-8 pointer-events-none select-none animate-flicker"
+        aria-hidden="true"
+        style={{
+          top: 'calc(env(safe-area-inset-top, 0px) - 48px)',
+          fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
+          fontSize: '40rem',
+          lineHeight: '0.8',
+          color: '#ffffff',
+          opacity: 0.04,
+          fontWeight: 900,
+        }}
+      >
+        設
+      </div>
+
       <div className="relative z-10 flex-1 flex flex-col">
         <nav
           className="relative shrink-0 flex items-center justify-between pl-0 pr-8 pb-6"
           style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
         >
-          <RetreatButton href="/fitness" />
+          <RetreatButton href="/fitness/hub" />
           <div className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
             CONFIG / 00
           </div>

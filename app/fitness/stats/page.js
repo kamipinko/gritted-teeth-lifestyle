@@ -640,6 +640,22 @@ export default function StatsPage() {
 
       {/* Kanji watermark — 記 ("record"). Top rooted at safe-area floor so it never
           clips into the iOS Dynamic Island camera area. */}
+      <div
+        className="absolute -right-8 pointer-events-none select-none animate-flicker"
+        aria-hidden="true"
+        style={{
+          top: 'calc(env(safe-area-inset-top, 0px) - 32px)',
+          fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
+          fontSize: '36rem',
+          lineHeight: '0.8',
+          color: '#ffffff',
+          opacity: 0.04,
+          fontWeight: 900,
+        }}
+      >
+        記
+      </div>
+
       {/* Content wrapper — atmospheric layers paint full-bleed (incl. safe area). */}
       <div className="relative z-10 flex-1 flex flex-col">
       {/* Nav */}

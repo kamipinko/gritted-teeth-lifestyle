@@ -428,6 +428,22 @@ export default function FitnessPage() {
 
       {/* Kanji watermark — top-left, oversized, very faint. Rooted at safe-area floor
           so it never clips into the iOS Dynamic Island camera area. */}
+      <div
+        className="absolute -left-8 pointer-events-none select-none animate-flicker"
+        aria-hidden="true"
+        style={{
+          top: 'calc(env(safe-area-inset-top, 0px) - 48px)',
+          fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
+          fontSize: '40rem',
+          lineHeight: '0.8',
+          color: '#ffffff',
+          opacity: 0.04,
+          fontWeight: 900,
+        }}
+      >
+        闘
+      </div>
+
       {/* Content wrapper — atmospheric layers paint full-bleed (incl. safe area). */}
       <div className="relative z-10 flex-1 flex flex-col">
       {/* Top nav row — back link and palace breadcrumb */}
@@ -525,6 +541,38 @@ export default function FitnessPage() {
             GRITTED TEETH LIFESTYLE / FITNESS PALACE
           </div>
           <div className="h-px flex-1 bg-gtl-edge" />
+        </div>
+
+        {/* Settings link — bottom of CHOOSE YOUR CYCLE. */}
+        <div className="mt-8 flex justify-center">
+          <Link
+            href="/settings"
+            onClick={() => play('menu-open')}
+            className="group relative outline-none"
+          >
+            <div
+              className="absolute inset-0 pointer-events-none transition-all duration-200 bg-gtl-surface border border-gtl-edge [@media(hover:hover)]:group-hover:border-gtl-red"
+              style={{ clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)' }}
+              aria-hidden="true"
+            />
+            <div className="relative px-6 py-3 flex items-center gap-2">
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="w-4 h-4 shrink-0"
+                fill="none"
+              >
+                <path
+                  d="M12 1.5l1.6 2.4 2.8-.8 1 2.8 2.8.4-.2 2.9 2.5 1.5-1.4 2.5 1.4 2.5-2.5 1.5.2 2.9-2.8.4-1 2.8-2.8-.8L12 22.5l-1.6-2.4-2.8.8-1-2.8-2.8-.4.2-2.9-2.5-1.5 1.4-2.5L1.5 8.3 4 6.8l-.2-2.9 2.8-.4 1-2.8 2.8.8L12 1.5z"
+                  fill="#d4181f"
+                />
+                <circle cx="12" cy="12" r="4" fill="#070708" />
+              </svg>
+              <span className="font-matisse text-[10px] tracking-[0.4em] uppercase font-bold text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper transition-colors duration-200">
+                SETTINGS
+              </span>
+            </div>
+          </Link>
         </div>
       </section>
 
