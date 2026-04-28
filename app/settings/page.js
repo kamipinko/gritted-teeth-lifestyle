@@ -143,8 +143,35 @@ export default function SettingsPage() {
     writeRaw(KEY_BG_MUSIC_ON, next ? '1' : '0')
     if (typeof window !== 'undefined' && window.__gtlBgMusic) {
       const a = window.__gtlBgMusic
-      if (!next) {
-        try { a.pause(); a.currentTime = 0 } catch {}
+      // Always cut any prior fade-in interval so toggling rapidly doesn't
+      // leave a stale interval cranking volume back up after we paused.
+      if (window.__gtlBgMusicFadeInterval) {
+        clearInterval(window.__gtlBgMusicFadeInterval)
+        window.__gtlBgMusicFadeInterval = null
+      }
+      try { a.pause(); a.currentTime = 0 } catch {}
+      if (next) {
+        // Restart from the top with the same fade-in shape used on the home
+        // page's GateScreen tap (TARGET_VOL = 0.04, FADE_MS = 1500).
+        a.volume = 0
+        const playPromise = a.play()
+        if (playPromise && typeof playPromise.catch === 'function') {
+          playPromise.catch(() => {
+            try { a.load(); a.play().catch(() => {}) } catch {}
+          })
+        }
+        const TARGET_VOL = 0.04
+        const FADE_MS = 1500
+        const steps = FADE_MS / 50
+        const increment = TARGET_VOL / steps
+        window.__gtlBgMusicFadeInterval = setInterval(() => {
+          const v = Math.min(TARGET_VOL, a.volume + increment)
+          a.volume = v
+          if (v >= TARGET_VOL) {
+            clearInterval(window.__gtlBgMusicFadeInterval)
+            window.__gtlBgMusicFadeInterval = null
+          }
+        }, 50)
       }
     }
     play(next ? 'option-select' : 'menu-close')
