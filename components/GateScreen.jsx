@@ -11,6 +11,10 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
   const { play } = useSound()
   const [phase, setPhase] = useState('pre')
   // pre → in → idle → out
+  // `instant` flag: when set by snapToIdle, all entrance keyframes + transitions
+  // null out so elements jump to their settled state instead of continuing to
+  // play out their delayed animation schedule.
+  const [instant, setInstant] = useState(false)
   const exitTimerRef = useRef(null)
   const touchStartY = useRef(null)
 
@@ -45,9 +49,12 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
   }
 
   // Tap during entrance: snap to PRESS START (idle), start music, no commit.
-  // User then needs another gesture to commit.
+  // User then needs another gesture to commit. `instant` kills the in-flight
+  // entrance keyframes/transitions so elements jump to their final state
+  // instead of continuing the delayed schedule.
   const snapToIdle = () => {
     if (onMusicStart) onMusicStart()
+    setInstant(true)
     setPhase('idle')
   }
 
@@ -87,6 +94,10 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
 
   const active = phase !== 'pre'
   const exiting = phase === 'out'
+  // Helpers: when `instant` is set, drop all entrance animation/transition so
+  // the styled `active`-true target values apply immediately (no in-flight tween).
+  const animOf  = (s) => instant ? 'none' : (active ? s : 'none')
+  const transOf = (s) => instant ? 'none' : s
 
   return (
     <button
@@ -126,7 +137,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
         style={{
           background: 'radial-gradient(ellipse at 50% 55%, rgba(122,14,20,0.45) 0%, transparent 65%)',
           opacity: active ? 1 : 0,
-          transition: 'opacity 900ms ease 200ms',
+          transition: transOf('opacity 900ms ease 200ms'),
         }}
       />
 
@@ -141,7 +152,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
           top: '-25%', bottom: '-25%', left: '-5%', width: '52%',
           background: 'rgba(74,10,14,0.65)',
           transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(-120%)',
-          transition: 'transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 100ms',
+          transition: transOf('transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 100ms'),
         }}
       />
       {/* Band 2 — blood red, medium */}
@@ -151,7 +162,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
           top: '-25%', bottom: '-25%', left: '10%', width: '38%',
           background: 'rgba(122,14,20,0.28)',
           transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(-120%)',
-          transition: 'transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 200ms',
+          transition: transOf('transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 200ms'),
         }}
       />
       {/* Band 3 — right side counter-accent */}
@@ -161,19 +172,19 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
           top: '-25%', bottom: '-25%', right: '-8%', width: '20%',
           background: 'rgba(74,10,14,0.4)',
           transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(120%)',
-          transition: 'transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 150ms',
+          transition: transOf('transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 150ms'),
         }}
       />
 
       {/* ── Corner accent lines ── */}
       <div className="absolute top-0 left-0 bg-gtl-red pointer-events-none"
-        style={{ height: 5, width: active ? 168 : 0, transition: 'width 600ms cubic-bezier(0.2,1,0.3,1) 450ms' }} />
+        style={{ height: 5, width: active ? 168 : 0, transition: transOf('width 600ms cubic-bezier(0.2,1,0.3,1) 450ms') }} />
       <div className="absolute top-0 left-0 bg-gtl-red pointer-events-none"
-        style={{ width: 5, height: active ? 168 : 0, transition: 'height 600ms cubic-bezier(0.2,1,0.3,1) 500ms' }} />
+        style={{ width: 5, height: active ? 168 : 0, transition: transOf('height 600ms cubic-bezier(0.2,1,0.3,1) 500ms') }} />
       <div className="absolute bottom-0 right-0 bg-gtl-red pointer-events-none"
-        style={{ height: 5, width: active ? 168 : 0, transition: 'width 600ms cubic-bezier(0.2,1,0.3,1) 450ms' }} />
+        style={{ height: 5, width: active ? 168 : 0, transition: transOf('width 600ms cubic-bezier(0.2,1,0.3,1) 450ms') }} />
       <div className="absolute bottom-0 right-0 bg-gtl-red pointer-events-none"
-        style={{ width: 5, height: active ? 168 : 0, transition: 'height 600ms cubic-bezier(0.2,1,0.3,1) 500ms' }} />
+        style={{ width: 5, height: active ? 168 : 0, transition: transOf('height 600ms cubic-bezier(0.2,1,0.3,1) 500ms') }} />
 
       {/* ── Swipe hints — plain red, no blend mode, no underlay. */}
       {swipeHintLabels && (
@@ -241,7 +252,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             height: 'clamp(96px, 16vw, 148px)',
             borderRadius: '50%',
             objectFit: 'cover',
-            animation: active ? 'forge-slam 700ms cubic-bezier(0.2, 1.2, 0.4, 1) 250ms both' : 'none',
+            animation: animOf('forge-slam 700ms cubic-bezier(0.2, 1.2, 0.4, 1) 250ms both'),
           }}
         />
 
@@ -254,7 +265,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             fontWeight: 800,
             textTransform: 'uppercase', color: '#540b10',
             mixBlendMode: 'difference',
-            animation: active ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 600ms both' : 'none',
+            animation: animOf('snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 600ms both'),
           }}>
             GRITTED TEETH LIFESTYLE
           </div>
@@ -266,7 +277,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             lineHeight: 1, letterSpacing: '-0.02em',
             color: '#f1eee5',
             textShadow: '3px 3px 0 #d4181f, 6px 6px 0 #070708',
-            animation: active ? 'snap-in 500ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 400ms both' : 'none',
+            animation: animOf('snap-in 500ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 400ms both'),
           }}>
             GTL
           </div>
@@ -275,17 +286,21 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
           <div style={{
             height: 5, background: '#d4181f', transform: 'skewX(-12deg)',
             width: active ? 'clamp(8rem, 20vw, 14rem)' : 0,
-            transition: 'width 600ms cubic-bezier(0.2, 1, 0.3, 1) 750ms',
+            transition: transOf('width 600ms cubic-bezier(0.2, 1, 0.3, 1) 750ms'),
           }} />
 
-          {/* PRESS START — snaps in, then blinks */}
+          {/* PRESS START — snaps in, then blinks. When `instant` is set
+              (entrance tap-skip), drop the snap-in but keep the blink running
+              from t=0 so PRESS START is visible-and-pulsing immediately. */}
           <div style={{
             fontFamily: 'Anton, Impact, sans-serif',
             fontSize: 'clamp(1.1rem, 3.2vw, 1.9rem)',
             letterSpacing: '0.25em', color: '#d4181f',
-            animation: active
-              ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 800ms both, cursor-blink 1.2s steps(2, end) 1350ms infinite'
-              : 'none',
+            animation: instant
+              ? 'cursor-blink 1.2s steps(2, end) infinite'
+              : (active
+                  ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 800ms both, cursor-blink 1.2s steps(2, end) 1350ms infinite'
+                  : 'none'),
           }}>
             PRESS START
           </div>
@@ -297,7 +312,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             fontWeight: 800,
             textTransform: 'uppercase', color: '#540b10',
             mixBlendMode: 'difference',
-            animation: active ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 950ms both' : 'none',
+            animation: animOf('snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 950ms both'),
           }}>
             // CLICK OR TOUCH TO ENTER //
           </div>
