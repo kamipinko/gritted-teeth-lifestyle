@@ -589,15 +589,26 @@ export default function MusclesPage() {
 
   const count = selected.size
 
+  // Keep a live ref to selectAll so the quick-forge timer invokes the LATEST
+  // closure (one with isMobile=true after the mobile-detection effect resolves).
+  const selectAllRef = useRef(selectAll)
+  useEffect(() => { selectAllRef.current = selectAll })
+
   // Quick-forge auto-progression: when arriving with the gtl-quick-forge flag,
-  // press ALL → wait for animation → press HONE. Flag survives for the next
-  // pages in the chain (branded, summary).
+  // press ALL → wait for the full mobile ignition cascade → press HONE. Triggers
+  // only once isMobile is true so the mobile-path animation fires (shockwave +
+  // staggered pill ignition), not the silent desktop path. Flag survives for
+  // the next pages in the chain (branded, summary).
+  const quickForgeFiredRef = useRef(false)
   useEffect(() => {
+    if (!isMobile) return
+    if (quickForgeFiredRef.current) return
     let isQuickForge = false
     try { isQuickForge = localStorage.getItem('gtl-quick-forge') === '1' } catch (_) {}
     if (!isQuickForge) return
+    quickForgeFiredRef.current = true
     let cancelled = false
-    const t1 = setTimeout(() => { if (!cancelled) selectAll() }, 600)
+    const t1 = setTimeout(() => { if (!cancelled) selectAllRef.current?.() }, 600)
     // 11 muscles × 500ms stagger + 740ms initial delay + 1s buffer ≈ 7240ms.
     const t2 = setTimeout(() => {
       if (cancelled) return
@@ -606,8 +617,7 @@ export default function MusclesPage() {
       setFireActive(true)
     }, 7240)
     return () => { cancelled = true; clearTimeout(t1); clearTimeout(t2) }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [isMobile])
 
   return (
     <main ref={mainRef} className={`relative overflow-hidden bg-gtl-void ${isMobile ? 'h-[100dvh] flex flex-col' : 'min-h-screen'}`}>
