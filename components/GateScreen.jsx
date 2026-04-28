@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSound } from '../lib/useSound'
 
 // Slashes take 500ms + 140ms stagger = 640ms total.
@@ -10,43 +10,23 @@ export default function GateScreen({ onEnter, onMusicStart, swipeHintLabels }) {
   const { play } = useSound()
   const [phase, setPhase] = useState('pre')
   // pre → in → idle → out
-  const t1Ref = useRef(null)
-  const t2Ref = useRef(null)
-  const exitRef = useRef(null)
 
   useEffect(() => {
-    t1Ref.current = setTimeout(() => setPhase('in'), 60)
-    t2Ref.current = setTimeout(() => setPhase('idle'), 1400)
-    return () => {
-      clearTimeout(t1Ref.current)
-      clearTimeout(t2Ref.current)
-      clearTimeout(exitRef.current)
-    }
+    const t1 = setTimeout(() => setPhase('in'), 60)
+    const t2 = setTimeout(() => setPhase('idle'), 1400)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [])
 
   const handleClick = () => {
-    // Tap during entrance animation (pre/in): skip to idle. Music does NOT fire yet —
-    // user is just dismissing the show, not committing to enter.
-    if (phase === 'pre' || phase === 'in') {
-      clearTimeout(t1Ref.current)
-      clearTimeout(t2Ref.current)
-      setPhase('idle')
-      return
-    }
-    // Idle tap: real commit. Fire bg music start SYNCHRONOUSLY inside the user-gesture
-    // handler. iOS PWA blocks audio.play() outside the synchronous click context.
-    if (phase === 'idle') {
-      if (onMusicStart) onMusicStart()
-      play('brand-confirm')
-      setPhase('out')
-      exitRef.current = setTimeout(onEnter, EXIT_MS)
-      return
-    }
-    // Tap during exit slash: skip to navigation immediately.
-    if (phase === 'out') {
-      clearTimeout(exitRef.current)
-      onEnter()
-    }
+    if (phase !== 'idle') return
+    // Fire bg music start SYNCHRONOUSLY inside the user-gesture handler. iOS PWA
+    // blocks audio.play() outside the synchronous click context — anything called
+    // after the setTimeout below is outside that window and the play promise
+    // rejects silently.
+    if (onMusicStart) onMusicStart()
+    play('brand-confirm')
+    setPhase('out')
+    setTimeout(onEnter, EXIT_MS)
   }
 
   const active = phase !== 'pre'
