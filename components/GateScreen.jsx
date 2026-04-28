@@ -288,13 +288,18 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.7rem' }}>
 
           {/* Label — no entrance animation; visible from t=0 in red so the
-              difference-blend live-flips as bands sweep behind it. */}
+              difference-blend live-flips as bands sweep behind it. zIndex
+              forces this to paint LAST among inner-stack siblings (like
+              sub-hint naturally does), giving the blend the same backdrop
+              chain that produces visible live flip. */}
           <div style={{
             fontFamily: '"JetBrains Mono", monospace',
             fontSize: '0.85rem', letterSpacing: '0.35em',
             fontWeight: 800,
             textTransform: 'uppercase', color: '#d4181f',
             mixBlendMode: 'difference',
+            position: 'relative',
+            zIndex: 10,
           }}>
             GRITTED TEETH LIFESTYLE
           </div>
