@@ -141,7 +141,7 @@ export default function GateScreen({ onEnter, onMusicStart, swipeHintLabels }) {
               fontWeight: 700,
               letterSpacing: '0.35em',
               textTransform: 'uppercase',
-              color: '#d4181f',
+              color: '#000000',
               pointerEvents: 'none',
               userSelect: 'none',
               whiteSpace: 'nowrap',
@@ -161,7 +161,7 @@ export default function GateScreen({ onEnter, onMusicStart, swipeHintLabels }) {
               fontWeight: 700,
               letterSpacing: '0.35em',
               textTransform: 'uppercase',
-              color: '#d4181f',
+              color: '#000000',
               pointerEvents: 'none',
               userSelect: 'none',
               whiteSpace: 'nowrap',
@@ -201,7 +201,7 @@ export default function GateScreen({ onEnter, onMusicStart, swipeHintLabels }) {
           <div style={{
             fontFamily: '"JetBrains Mono", monospace',
             fontSize: '0.55rem', letterSpacing: '0.4em',
-            textTransform: 'uppercase', color: '#d4181f',
+            textTransform: 'uppercase', color: '#000000',
             animation: active ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 600ms both' : 'none',
           }}>
             GRITTED TEETH LIFESTYLE
@@ -242,7 +242,7 @@ export default function GateScreen({ onEnter, onMusicStart, swipeHintLabels }) {
           <div style={{
             fontFamily: '"JetBrains Mono", monospace',
             fontSize: '0.5rem', letterSpacing: '0.3em',
-            textTransform: 'uppercase', color: '#d4181f',
+            textTransform: 'uppercase', color: '#000000',
             animation: active ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 950ms both' : 'none',
           }}>
             // CLICK OR TOUCH TO ENTER //
