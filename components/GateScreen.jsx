@@ -332,9 +332,13 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             GTL
           </div>
 
-          {/* Slash divider removed — its 5px-tall red bar over the bg made
-              the difference-blend bg-resonance pixel cross PRESS START as a
-              "thin line" where text vanished. */}
+          {/* Slash divider — obeys the same negative-photo rule as the labels */}
+          <div style={{
+            height: 5, background: '#d4181f', transform: 'skewX(-12deg)',
+            mixBlendMode: 'difference',
+            width: active ? 'clamp(8rem, 20vw, 14rem)' : 0,
+            transition: transOf('width 1000ms cubic-bezier(0.2, 1, 0.3, 1) 1200ms'),
+          }} />
 
           {/* PRESS START — snaps in, then blinks. When `instant` is set
               (entrance tap-skip), drop the snap-in but keep the blink running
