@@ -14,6 +14,7 @@ import { pk } from '../../../../lib/storage'
 import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
 import RetreatButton from '../../../../components/RetreatButton'
+import SpeedLines from '../../../../components/SpeedLines'
 
 const MUSCLE_LABELS = {
   chest: 'CHEST', back: 'BACK', shoulders: 'SHOULDERS',
@@ -2702,6 +2703,7 @@ export default function SummaryPage() {
   // /fitness/load with the just-forged cycle pre-selected (ACTIVATE popup
   // visible, ready). User decides whether to lift or look around.
   const quickForgeFiredRef = useRef(false)
+  const [quickForgeRunning, setQuickForgeRunning] = useState(false)
   useEffect(() => {
     if (quickForgeFiredRef.current) return
     if (!days.length) return  // Wait for storage hydration
@@ -2709,6 +2711,7 @@ export default function SummaryPage() {
     try { isQuickForge = localStorage.getItem('gtl-quick-forge') === '1' } catch (_) {}
     if (!isQuickForge) return
     quickForgeFiredRef.current = true
+    setQuickForgeRunning(true)
     let cancelled = false
     const t = setTimeout(() => {
       if (cancelled) return
@@ -3596,6 +3599,7 @@ export default function SummaryPage() {
 
       <FireFadeIn duration={900} />
       <FireTransition active={fireActive} onComplete={() => router.push(fireDestRef.current)} />
+      <SpeedLines active={quickForgeRunning && !fireActive} />
     </main>
   )
 }
