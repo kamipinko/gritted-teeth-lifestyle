@@ -237,95 +237,6 @@ function CycleCard({ cycle, index, selected, onSelect }) {
         boxShadow: selected ? '0 0 24px rgba(212,24,31,0.25)' : 'none',
       }}
     >
-      {/* Top-right corner: cycle index + deadline stamp */}
-      <div className="absolute top-4 right-6 flex flex-col items-end gap-2">
-        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
-          CYCLE / {String(index + 1).padStart(2, '0')}
-        </div>
-        {lastDay && (() => {
-          const d = parseDate(lastDay)
-          return (
-            <div className="relative" style={{ transform: 'rotate(-1.5deg)' }}>
-              {/* Shadow slab */}
-              <div
-                className="absolute inset-0 bg-gtl-red-deep"
-                style={{
-                  clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)',
-                  transform: 'translate(3px, 3px)',
-                }}
-                aria-hidden="true"
-              />
-              {/* Stamp face */}
-              <div
-                className="relative px-6 py-3 bg-gtl-red border-2 border-gtl-red-deep"
-                style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)' }}
-              >
-                <div className="font-display text-base tracking-[0.3em] uppercase text-gtl-paper leading-none mb-2"
-                     style={{ textShadow: '2px 2px 0 #070708' }}>
-                  ◼ DEADLINE ◼
-                </div>
-                <div className="font-display text-gtl-paper leading-none"
-                     style={{ fontSize: '1.1rem', textShadow: '1px 1px 0 #070708' }}>
-                  {d.toLocaleDateString('en-US', { month: 'long' }).toUpperCase()}
-                </div>
-                {/* Day number with spinning square behind */}
-                <div className="relative flex items-center justify-center my-1" style={{ width: '100px', height: '100px' }}>
-                  <style>{`
-                    @keyframes spin-square {
-                      from { transform: rotate(0deg); }
-                      to   { transform: rotate(360deg); }
-                    }
-                  `}</style>
-                  {/* Spinning black square */}
-                  <div
-                    className="absolute"
-                    style={{
-                      width: '80px', height: '80px',
-                      background: '#070708',
-                      animation: 'spin-square 8s linear infinite',
-                      boxShadow: '0 0 20px rgba(0,0,0,0.8)',
-                    }}
-                    aria-hidden="true"
-                  />
-                  {/* Day number on top */}
-                  <div className="relative font-display text-gtl-paper leading-none"
-                       style={{ fontSize: '5rem', textShadow: '4px 4px 0 #070708', lineHeight: 1, zIndex: 1 }}>
-                    {String(d.getDate()).padStart(2, '0')}
-                  </div>
-                </div>
-                <div className="font-display text-gtl-paper/80 leading-none mt-1.5"
-                     style={{ fontSize: '0.85rem', textShadow: '1px 1px 0 #070708' }}>
-                  {d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()} · {d.getFullYear()}
-                </div>
-                {/* X stamp overlay — rendered after date so it sits on top */}
-                {bloodVisible && (
-                  <div
-                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                    style={{ zIndex: 10, transform: 'translateX(-12px)' }}
-                    aria-hidden="true"
-                  >
-                    <div style={{
-                      animation: 'x-stamp 600ms cubic-bezier(0.2, 1.4, 0.3, 1) 1800ms both',
-                      fontFamily: 'Anton, Impact, sans-serif',
-                      fontSize: '10rem',
-                      color: '#8b0000',
-                      lineHeight: 1,
-                      textShadow: '3px 3px 0 rgba(0,0,0,0.6)',
-                      border: '5px solid #8b0000',
-                      padding: '0 10px',
-                      opacity: 0.75,
-                      userSelect: 'none',
-                    }}>
-                      ✕
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )
-        })()}
-      </div>
-
       {/* Giant checkmark — shadow behind deadline block, face in front */}
       {selected && (
         <>
@@ -339,26 +250,115 @@ function CycleCard({ cycle, index, selected, onSelect }) {
       )}
 
       <div className="px-8 pt-6 pb-8">
-        {/* Created date */}
-        <div className="font-mono text-[9px] tracking-[0.35em] uppercase text-gtl-smoke mb-3">
-          FORGED {createdStr}
-        </div>
-
-        {/* Cycle name — dominant. Capped so it can't overlap the absolutely-
-            positioned DEADLINE stamp in the top-right corner. */}
+        {/* Cycle name — top of card, dominant. Full width now (deadline stamp
+            moved into flow below). */}
         <h2
-          className="font-display text-gtl-chalk leading-none mb-1"
+          className="font-display text-gtl-chalk leading-none mb-3"
           style={{
             fontSize: 'clamp(2.5rem, 6vw, 5rem)',
             textShadow: '3px 3px 0 #070708',
             transform: 'rotate(-1deg)',
             transformOrigin: 'left center',
-            maxWidth: 'calc(100% - 11rem)',
             wordBreak: 'break-word',
           }}
         >
           {cycle.name}
         </h2>
+
+        {/* Cycle index + deadline stamp — pulled out of absolute top-right
+            and into flow under the title. */}
+        <div className="flex flex-col items-end gap-2 mb-4">
+          <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
+            CYCLE / {String(index + 1).padStart(2, '0')}
+          </div>
+          {lastDay && (() => {
+            const d = parseDate(lastDay)
+            return (
+              <div className="relative" style={{ transform: 'rotate(-1.5deg)' }}>
+                {/* Shadow slab */}
+                <div
+                  className="absolute inset-0 bg-gtl-red-deep"
+                  style={{
+                    clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)',
+                    transform: 'translate(3px, 3px)',
+                  }}
+                  aria-hidden="true"
+                />
+                {/* Stamp face */}
+                <div
+                  className="relative px-6 py-3 bg-gtl-red border-2 border-gtl-red-deep"
+                  style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)' }}
+                >
+                  <div className="font-display text-base tracking-[0.3em] uppercase text-gtl-paper leading-none mb-2"
+                       style={{ textShadow: '2px 2px 0 #070708' }}>
+                    ◼ DEADLINE ◼
+                  </div>
+                  <div className="font-display text-gtl-paper leading-none"
+                       style={{ fontSize: '1.1rem', textShadow: '1px 1px 0 #070708' }}>
+                    {d.toLocaleDateString('en-US', { month: 'long' }).toUpperCase()}
+                  </div>
+                  {/* Day number with spinning square behind */}
+                  <div className="relative flex items-center justify-center my-1" style={{ width: '100px', height: '100px' }}>
+                    <style>{`
+                      @keyframes spin-square {
+                        from { transform: rotate(0deg); }
+                        to   { transform: rotate(360deg); }
+                      }
+                    `}</style>
+                    {/* Spinning black square */}
+                    <div
+                      className="absolute"
+                      style={{
+                        width: '80px', height: '80px',
+                        background: '#070708',
+                        animation: 'spin-square 8s linear infinite',
+                        boxShadow: '0 0 20px rgba(0,0,0,0.8)',
+                      }}
+                      aria-hidden="true"
+                    />
+                    {/* Day number on top */}
+                    <div className="relative font-display text-gtl-paper leading-none"
+                         style={{ fontSize: '5rem', textShadow: '4px 4px 0 #070708', lineHeight: 1, zIndex: 1 }}>
+                      {String(d.getDate()).padStart(2, '0')}
+                    </div>
+                  </div>
+                  <div className="font-display text-gtl-paper/80 leading-none mt-1.5"
+                       style={{ fontSize: '0.85rem', textShadow: '1px 1px 0 #070708' }}>
+                    {d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()} · {d.getFullYear()}
+                  </div>
+                  {/* X stamp overlay — rendered after date so it sits on top */}
+                  {bloodVisible && (
+                    <div
+                      className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                      style={{ zIndex: 10, transform: 'translateX(-12px)' }}
+                      aria-hidden="true"
+                    >
+                      <div style={{
+                        animation: 'x-stamp 600ms cubic-bezier(0.2, 1.4, 0.3, 1) 1800ms both',
+                        fontFamily: 'Anton, Impact, sans-serif',
+                        fontSize: '10rem',
+                        color: '#8b0000',
+                        lineHeight: 1,
+                        textShadow: '3px 3px 0 rgba(0,0,0,0.6)',
+                        border: '5px solid #8b0000',
+                        padding: '0 10px',
+                        opacity: 0.75,
+                        userSelect: 'none',
+                      }}>
+                        ✕
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
+        </div>
+
+        {/* Created date */}
+        <div className="font-mono text-[9px] tracking-[0.35em] uppercase text-gtl-smoke mb-3">
+          FORGED {createdStr}
+        </div>
 
         {/* Cycle silhouette — wakizashi (1–6 days, tinted red), ouroboros (7),
             drill (8–13), scroll (15+). For the wakizashi we use mask-image so
