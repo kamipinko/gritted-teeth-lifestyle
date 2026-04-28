@@ -273,7 +273,21 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
       {/* ── Center content ── */}
       <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
 
-        {/* Logo — forge-slam from above */}
+        {/* Logo — drops in and bounces on landing. Custom inline keyframe
+            (logo-bounce) used instead of the shared forge-slam so the homepage
+            entrance can be more dramatic without affecting other call sites. */}
+        <style>{`
+          @keyframes logo-bounce {
+            0%   { opacity: 0; transform: translateY(-140px) scale(0.6); }
+            45%  { opacity: 1; transform: translateY(0)      scale(1.18); }
+            58%  { transform: translateY(-32px) scale(0.92); }
+            70%  { transform: translateY(0)     scale(1.08); }
+            80%  { transform: translateY(-12px) scale(0.97); }
+            89%  { transform: translateY(0)     scale(1.03); }
+            96%  { transform: translateY(-3px)  scale(0.99); }
+            100% { transform: translateY(0)     scale(1); }
+          }
+        `}</style>
         <img
           src="/logo.png"
           alt="GTL"
@@ -282,7 +296,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             height: 'clamp(128px, 24vw, 200px)',
             borderRadius: '50%',
             objectFit: 'cover',
-            animation: animOf('forge-slam 1100ms cubic-bezier(0.2, 1.2, 0.4, 1) 400ms both'),
+            animation: animOf('logo-bounce 1300ms linear 400ms both'),
           }}
         />
 
