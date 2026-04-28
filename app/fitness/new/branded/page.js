@@ -170,14 +170,35 @@ function SheetCarveButton({ count, enabled, onFire, onHover, onSlash }) {
   //   228ms    phase 3  halves render at initial position (50ms gap after slash gone)
   //   ~244ms   phase 4  halves start separating (via 16ms setTimeout)
   //   ~660ms            navigate
+  const timersRef = useRef([])
+  const firedRef = useRef(false)
   const fire = () => {
     if (!enabled || phase > 0) return
     setPhase(1)
     if (onSlash) onSlash()
-    setTimeout(() => { if (mountedRef.current) setPhase(2) }, 108)   // slash fade
-    setTimeout(() => { if (mountedRef.current) setPhase(3) }, 228)   // render halves
-    setTimeout(() => { if (mountedRef.current) onFire() }, 530)      // navigate
+    timersRef.current.push(setTimeout(() => { if (mountedRef.current) setPhase(2) }, 108))
+    timersRef.current.push(setTimeout(() => { if (mountedRef.current) setPhase(3) }, 228))
+    timersRef.current.push(setTimeout(() => {
+      if (mountedRef.current && !firedRef.current) { firedRef.current = true; onFire() }
+    }, 530))
   }
+  // Tap during the slash sequence → clear all pending timers and navigate
+  // immediately. Once phase > 0 we're committed; a follow-up tap should not
+  // re-fire — just collapse the visual tail.
+  useEffect(() => {
+    if (phase === 0) return
+    const handler = () => {
+      timersRef.current.forEach(clearTimeout)
+      timersRef.current = []
+      if (!firedRef.current) { firedRef.current = true; onFire() }
+    }
+    window.addEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
+  }, [phase, onFire])
 
   const goldBg = enabled ? '#e4b022' : '#3a2f12'
   const active = phase > 0
