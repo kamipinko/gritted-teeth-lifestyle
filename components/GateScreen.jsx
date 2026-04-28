@@ -159,6 +159,13 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
       {/* Noise grain */}
       <div className="absolute inset-0 gtl-noise pointer-events-none" />
 
+      <style>{`
+        @keyframes logo-roll-in {
+          0%   { transform: translateX(-180vw) rotate(0deg); }
+          100% { transform: translateX(0) rotate(720deg); }
+        }
+      `}</style>
+
       {/* Red atmosphere bloom — bright red center fading to transparent so
           black bg shows through. Brighter than original to give the
           negative-photo difference blend a wider color range to chew on. */}
@@ -282,6 +289,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             height: 'clamp(128px, 24vw, 200px)',
             borderRadius: '50%',
             objectFit: 'cover',
+            animation: animOf('logo-roll-in 1400ms cubic-bezier(0.2, 0.8, 0.3, 1) 200ms both'),
           }}
         />
 
