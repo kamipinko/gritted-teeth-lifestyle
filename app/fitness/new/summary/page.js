@@ -2643,8 +2643,9 @@ export default function SummaryPage() {
   // quick-forge chain we want /fitness/active so the deep-launch effect
   // there continues to the first set's weight popup.
   const fireDestRef = useRef('/fitness/load')
-  // Skip-the-fire-transition: any tap routes immediately to fireDestRef
-  // (swipe-forge → /fitness/active, tap-ETCH → /fitness/load).
+  // Skip-the-fire-transition: ONLY on the swipe-forge auto-progression path
+  // (fireDestRef.current === '/fitness/active'). The tap-ETCH path's
+  // FireTransition (yakiire) plays through unskippable.
   const skippedRef = useRef(false)
   const skipNow = () => {
     if (skippedRef.current) return
@@ -2653,6 +2654,7 @@ export default function SummaryPage() {
   }
   useEffect(() => {
     if (!fireActive) return
+    if (fireDestRef.current !== '/fitness/active') return  // tap-ETCH: no skip listener
     const handler = (e) => {
       if (e.target?.closest?.('[data-retreat]')) return
       skipNow()
