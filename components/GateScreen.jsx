@@ -232,7 +232,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
               fontFamily: '"FOT-Matisse Pro EB", "JetBrains Mono", monospace',
               fontSize: '1.2rem',
               fontWeight: 900,
-              letterSpacing: '0.18em',
+              letterSpacing: '0.08em',
               textTransform: 'uppercase',
               color: '#d4181f',
               mixBlendMode: 'difference',
@@ -253,7 +253,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
               fontFamily: '"FOT-Matisse Pro EB", "JetBrains Mono", monospace',
               fontSize: '1.2rem',
               fontWeight: 900,
-              letterSpacing: '0.18em',
+              letterSpacing: '0.08em',
               textTransform: 'uppercase',
               color: '#d4181f',
               mixBlendMode: 'difference',
@@ -305,7 +305,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
               chain that produces visible live flip. */}
           <div style={{
             fontFamily: '"FOT-Matisse Pro EB", "JetBrains Mono", monospace',
-            fontSize: '1rem', letterSpacing: '0.32em',
+            fontSize: '1rem', letterSpacing: '0.16em',
             fontWeight: 900,
             textTransform: 'uppercase', color: '#d4181f',
             mixBlendMode: 'difference',
@@ -338,9 +338,10 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
               (entrance tap-skip), drop the snap-in but keep the blink running
               from t=0 so PRESS START is visible-and-pulsing immediately. */}
           <div style={{
-            fontFamily: 'Anton, Impact, sans-serif',
-            fontSize: 'clamp(1.1rem, 3.2vw, 1.9rem)',
-            letterSpacing: '0.25em', color: '#d4181f',
+            fontFamily: '"FOT-Matisse Pro EB", Anton, Impact, sans-serif',
+            fontSize: 'clamp(1.3rem, 3.8vw, 2.2rem)',
+            fontWeight: 900,
+            letterSpacing: '0.10em', color: '#d4181f',
             mixBlendMode: 'difference',
             animation: 'cursor-blink 1.2s steps(2, end) infinite',
           }}>
@@ -351,7 +352,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
               difference-blend live-flips as bands sweep behind it. */}
           <div style={{
             fontFamily: '"FOT-Matisse Pro EB", "JetBrains Mono", monospace',
-            fontSize: '0.9rem', letterSpacing: '0.28em',
+            fontSize: '0.9rem', letterSpacing: '0.14em',
             fontWeight: 900,
             textTransform: 'uppercase', color: '#d4181f',
             mixBlendMode: 'difference',
