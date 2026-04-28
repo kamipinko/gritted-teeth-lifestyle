@@ -1689,6 +1689,11 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
           0%   { transform: translateY(20px) rotate(var(--slab-rot, 0deg)); }
           100% { transform: translateY(0) rotate(var(--slab-rot, 0deg)); }
         }
+        @keyframes activate-popup-rise {
+          0%   { opacity: 0; transform: translateY(60px) scale(0.96); }
+          60%  { opacity: 1; transform: translateY(-4px) scale(1.02); }
+          100% { opacity: 1; transform: translateY(0)    scale(1); }
+        }
       `}</style>
 
       <div
@@ -2086,6 +2091,48 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
             </button>
           </div>
         </div>
+
+        {/* Quick-nav FIRST MUSCLE hero — sits at y=466 to continue the muscle-memory
+            chain from the day grid. Tap = open the first muscle's exercise panel.
+            Hidden once a muscle is focused (so it doesn't overlay the next zoom). */}
+        {hasWork && !focusMuscle && (
+          <button
+            type="button"
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect()
+              play('option-select')
+              setFocusMuscle(muscles[0])
+              setFocusMuscleRect(rect)
+            }}
+            className="fixed z-[9991] block outline-none active:scale-[0.98] transition-transform"
+            style={{
+              top: '466px',
+              left: '32px',
+              right: '32px',
+              animation: 'activate-popup-rise 320ms cubic-bezier(0.18, 1, 0.36, 1) 380ms both',
+            }}
+          >
+            <div
+              className="absolute inset-0 bg-gtl-red transition-colors group-active:bg-gtl-red-bright"
+              style={{
+                clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+                boxShadow: '0 4px 28px rgba(212, 24, 31, 0.55)',
+              }}
+              aria-hidden="true"
+            />
+            <div className="relative flex items-center justify-between px-6 py-3 gap-3">
+              <div className="flex flex-col items-start min-w-0">
+                <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-paper/80 leading-none">
+                  BEGIN HERE
+                </span>
+                <span className="font-display text-2xl text-gtl-paper leading-none mt-1 truncate">
+                  {MUSCLE_LABELS[muscles[0]] || muscles[0].toUpperCase()}
+                </span>
+              </div>
+              <span className="font-display text-2xl text-gtl-paper leading-none shrink-0">➤︎</span>
+            </div>
+          </button>
+        )}
 
         {/* Exercise panel — zooms from the tapped muscle slab */}
         {focusMuscle && (
