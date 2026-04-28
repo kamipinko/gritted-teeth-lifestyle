@@ -158,7 +158,7 @@ export default function ProfilePage() {
                   aria-hidden="true"
                   className="absolute inset-0 pointer-events-none flex items-center px-4 md:px-6 font-display text-lg md:text-2xl text-gtl-smoke tracking-wide uppercase"
                 >
-                  WHO ARE YOU
+                  ENTER YOUR N{'​'}AME
                 </div>
               )}
               <input
