@@ -195,9 +195,11 @@ function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAd
     if (inputRef.current) inputRef.current.focus()
   }
 
-  useEffect(() => {
-    if (inputRef.current) inputRef.current.focus()
-  }, [])
+  // No auto-focus on mount. iOS PWA queues a pending focus() call when the
+  // page mounts; the user's first tap *anywhere* on the page during the
+  // gesture-activation window then pops up the keyboard, even taps under the
+  // FORGE button. Keyboard now only opens on a deliberate input-area tap
+  // (handleWrapperClick) or via Enter on a hardware keyboard.
 
   return (
     <div
