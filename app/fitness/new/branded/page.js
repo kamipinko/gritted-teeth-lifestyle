@@ -292,6 +292,28 @@ export default function SchedulePage() {
   const [quickForgeRunning, setQuickForgeRunning] = useState(false)
   const dragRef = useRef(false) // true during swipe-select
   const gridRef = useRef(null)
+  const NEXT_TARGET = '/fitness/new/summary'
+  const skippedRef = useRef(false)
+  const skipNow = () => {
+    if (skippedRef.current) return
+    skippedRef.current = true
+    router.push(NEXT_TARGET)
+  }
+  // Window pointerdown+touchstart listener while transitions are active —
+  // tap anywhere routes immediately. data-retreat excluded for back nav.
+  useEffect(() => {
+    if (!fireActive && !quickHeistActive) return
+    const handler = (e) => {
+      if (e.target?.closest?.('[data-retreat]')) return
+      skipNow()
+    }
+    window.addEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
+  }, [fireActive, quickHeistActive])
 
   // Enter-key nav for edit mode
   useEffect(() => {
@@ -853,9 +875,12 @@ export default function SchedulePage() {
       <FireFadeIn duration={900} />
       <FireTransition
         active={fireActive}
-        onComplete={() => router.push('/fitness/new/summary')}
+        onComplete={() => { if (!skippedRef.current) router.push(NEXT_TARGET) }}
       />
-      <SlashWipe active={quickHeistActive} onComplete={() => router.push('/fitness/new/summary')} />
+      <SlashWipe
+        active={quickHeistActive}
+        onComplete={() => { if (!skippedRef.current) router.push(NEXT_TARGET) }}
+      />
       <SpeedLines active={quickForgeRunning} />
     </main>
   )

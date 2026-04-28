@@ -2627,6 +2627,26 @@ export default function SummaryPage() {
   // quick-forge chain we want /fitness/active so the deep-launch effect
   // there continues to the first set's weight popup.
   const fireDestRef = useRef('/fitness/load')
+  // Skip-the-fire-transition: any tap routes immediately to fireDestRef.
+  const skippedRef = useRef(false)
+  const skipNow = () => {
+    if (skippedRef.current) return
+    skippedRef.current = true
+    router.push(fireDestRef.current)
+  }
+  useEffect(() => {
+    if (!fireActive) return
+    const handler = (e) => {
+      if (e.target?.closest?.('[data-retreat]')) return
+      skipNow()
+    }
+    window.addEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
+  }, [fireActive])
   const [stampVisible, setStampVisible] = useState(false)
   const [stampLanded,  setStampLanded]  = useState(false)
   // Per-day flame/hot/cooled state arrays — sized to days.length so both CycleBlade
@@ -3598,7 +3618,7 @@ export default function SummaryPage() {
       })()}
 
       <FireFadeIn duration={900} />
-      <FireTransition active={fireActive} onComplete={() => router.push(fireDestRef.current)} />
+      <FireTransition active={fireActive} onComplete={() => { if (!skippedRef.current) router.push(fireDestRef.current) }} />
       <SpeedLines active={quickForgeRunning && !fireActive} />
     </main>
   )
