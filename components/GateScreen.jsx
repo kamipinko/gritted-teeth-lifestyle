@@ -25,6 +25,15 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
   // A subsequent tap within DOUBLE_TAP_MS triggers fastToHeist instead of the
   // full idle commit cascade — same effect as a swipe during entrance.
   const lastEntranceTapRef = useRef(0)
+  // Random roll-in direction for the logo. SSR + initial render uses 'left';
+  // useEffect re-randomizes on mount. Transition stays disabled while
+  // active=false so the direction-pick re-render pops instantly off-screen
+  // (both -180vw and +180vw are far off-viewport, no visible jump).
+  const [rollDir, setRollDir] = useState('left')
+
+  useEffect(() => {
+    setRollDir(Math.random() < 0.5 ? 'left' : 'right')
+  }, [])
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase('in'), 60)
@@ -283,8 +292,13 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             height: 'clamp(128px, 24vw, 200px)',
             borderRadius: '50%',
             objectFit: 'cover',
-            transform: active ? 'translateX(0) rotate(720deg)' : 'translateX(-180vw) rotate(0deg)',
-            transition: transOf('transform 1400ms cubic-bezier(0.2, 0.8, 0.3, 1) 200ms'),
+            transform: active
+              ? `translateX(0) rotate(${rollDir === 'left' ? 720 : -720}deg)`
+              : `translateX(${rollDir === 'left' ? '-180vw' : '180vw'}) rotate(0deg)`,
+            // Transition only enabled once active=true so the post-mount
+            // rollDir randomization pops instantly off-screen instead of
+            // animating the logo across the visible area.
+            transition: active ? transOf('transform 1400ms cubic-bezier(0.2, 0.8, 0.3, 1) 200ms') : 'none',
           }}
         />
 
