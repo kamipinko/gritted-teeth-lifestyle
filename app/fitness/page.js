@@ -151,18 +151,19 @@ export default function ProfilePage() {
               />
               <input
                 ref={inputRef}
-                type="text"
+                type="search"
+                name="gtl-warrior-token"
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 inputMode="text"
                 enterKeyHint="done"
-                autoComplete="new-password"
+                autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="characters"
                 spellCheck={false}
                 placeholder="ENTER YOUR NAME"
                 maxLength={24}
-                className="relative w-full bg-transparent font-display text-lg md:text-2xl text-gtl-chalk tracking-wide uppercase px-4 md:px-6 py-4 outline-none placeholder:text-gtl-smoke"
+                className="relative w-full bg-transparent font-display text-lg md:text-2xl text-gtl-chalk tracking-wide uppercase px-4 md:px-6 py-4 outline-none placeholder:text-gtl-smoke [&::-webkit-search-cancel-button]:hidden"
                 style={{ caretColor: '#d4181f' }}
               />
             </div>
