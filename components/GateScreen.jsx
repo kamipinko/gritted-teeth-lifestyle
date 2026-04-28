@@ -127,44 +127,21 @@ export default function GateScreen({ onEnter, onMusicStart, swipeHintLabels }) {
       <div className="absolute bottom-0 right-0 bg-gtl-red pointer-events-none"
         style={{ width: 5, height: active ? 168 : 0, transition: 'height 600ms cubic-bezier(0.2,1,0.3,1) 500ms' }} />
 
-      {/* ── Swipe hints (rendered inside GateScreen so mix-blend-mode:multiply
-          has access to the atmospheric bands as siblings — outside the button
-          they end up alone in their own stacking context and the blend never
-          engages). pointer-events:none lets taps pass through to the button. */}
+      {/* ── Swipe hints — plain red, no blend mode, no underlay. */}
       {swipeHintLabels && (
         <>
-          {/* Top swipe hint brightness underlay — invisible alone (sits beneath
-              text), but provides the brightness range that mix-blend-mode:
-              multiply on the text needs to produce visibly black with shade
-              variation. Without it, multiply on dark-red bg clamps to near-pure
-              black and reads as "transparent". */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 'calc(env(safe-area-inset-top, 0px) + 18px)',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '90%', maxWidth: '380px',
-              height: '32px',
-              zIndex: 4,
-              background: 'radial-gradient(ellipse at center, rgba(180, 40, 50, 0.85) 0%, rgba(120, 20, 30, 0.5) 50%, rgba(60, 10, 14, 0) 100%)',
-              pointerEvents: 'none',
-            }}
-          />
           <div
             style={{
               position: 'absolute',
               top: 'calc(env(safe-area-inset-top, 0px) + 24px)',
               left: '50%',
               transform: 'translateX(-50%)',
-              zIndex: 5,
               fontFamily: '"JetBrains Mono", monospace',
               fontSize: '0.95rem',
               fontWeight: 700,
               letterSpacing: '0.35em',
               textTransform: 'uppercase',
               color: '#d4181f',
-              mixBlendMode: 'multiply',
               pointerEvents: 'none',
               userSelect: 'none',
               whiteSpace: 'nowrap',
@@ -173,34 +150,18 @@ export default function GateScreen({ onEnter, onMusicStart, swipeHintLabels }) {
           >
             ▲ {swipeHintLabels.top}
           </div>
-          {/* Bottom swipe hint brightness underlay — same purpose. */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 'calc(env(safe-area-inset-bottom, 0px) + 2px)',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '90%', maxWidth: '380px',
-              height: '32px',
-              zIndex: 4,
-              background: 'radial-gradient(ellipse at center, rgba(180, 40, 50, 0.85) 0%, rgba(120, 20, 30, 0.5) 50%, rgba(60, 10, 14, 0) 100%)',
-              pointerEvents: 'none',
-            }}
-          />
           <div
             style={{
               position: 'absolute',
               bottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)',
               left: '50%',
               transform: 'translateX(-50%)',
-              zIndex: 5,
               fontFamily: '"JetBrains Mono", monospace',
               fontSize: '0.95rem',
               fontWeight: 700,
               letterSpacing: '0.35em',
               textTransform: 'uppercase',
               color: '#d4181f',
-              mixBlendMode: 'multiply',
               pointerEvents: 'none',
               userSelect: 'none',
               whiteSpace: 'nowrap',
@@ -236,26 +197,14 @@ export default function GateScreen({ onEnter, onMusicStart, swipeHintLabels }) {
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.7rem' }}>
 
-          {/* Label — wrapped with brightness underlay so multiply text
-              produces visible black with shade variation (vs reading as
-              transparent against the uniformly dark-red bg). */}
-          <div style={{ position: 'relative', display: 'inline-block', padding: '6px 18px' }}>
-            <div style={{
-              position: 'absolute', inset: 0,
-              background: 'radial-gradient(ellipse at center, rgba(180, 40, 50, 0.7) 0%, rgba(120, 20, 30, 0.4) 60%, rgba(60, 10, 14, 0) 100%)',
-              pointerEvents: 'none',
-              zIndex: 0,
-            }} />
-            <div style={{
-              position: 'relative', zIndex: 1,
-              fontFamily: '"JetBrains Mono", monospace',
-              fontSize: '0.55rem', letterSpacing: '0.4em',
-              textTransform: 'uppercase', color: '#d4181f',
-              mixBlendMode: 'multiply',
-              animation: active ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 600ms both' : 'none',
-            }}>
-              GRITTED TEETH LIFESTYLE
-            </div>
+          {/* Label */}
+          <div style={{
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: '0.55rem', letterSpacing: '0.4em',
+            textTransform: 'uppercase', color: '#d4181f',
+            animation: active ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 600ms both' : 'none',
+          }}>
+            GRITTED TEETH LIFESTYLE
           </div>
 
           {/* Big GTL headline */}
@@ -289,25 +238,14 @@ export default function GateScreen({ onEnter, onMusicStart, swipeHintLabels }) {
             PRESS START
           </div>
 
-          {/* Sub-hint — wrapped with brightness underlay (same purpose as the
-              GRITTED TEETH LIFESTYLE label above). */}
-          <div style={{ position: 'relative', display: 'inline-block', padding: '6px 18px' }}>
-            <div style={{
-              position: 'absolute', inset: 0,
-              background: 'radial-gradient(ellipse at center, rgba(180, 40, 50, 0.7) 0%, rgba(120, 20, 30, 0.4) 60%, rgba(60, 10, 14, 0) 100%)',
-              pointerEvents: 'none',
-              zIndex: 0,
-            }} />
-            <div style={{
-              position: 'relative', zIndex: 1,
-              fontFamily: '"JetBrains Mono", monospace',
-              fontSize: '0.5rem', letterSpacing: '0.3em',
-              textTransform: 'uppercase', color: '#d4181f',
-              mixBlendMode: 'multiply',
-              animation: active ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 950ms both' : 'none',
-            }}>
-              // CLICK OR TOUCH TO ENTER //
-            </div>
+          {/* Sub-hint */}
+          <div style={{
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: '0.5rem', letterSpacing: '0.3em',
+            textTransform: 'uppercase', color: '#d4181f',
+            animation: active ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 950ms both' : 'none',
+          }}>
+            // CLICK OR TOUCH TO ENTER //
           </div>
 
         </div>
