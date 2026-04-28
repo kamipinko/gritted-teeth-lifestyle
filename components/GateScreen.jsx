@@ -50,33 +50,23 @@ export default function GateScreen({ onEnter, onMusicStart, swipeHintLabels }) {
         width: '100%',
         minHeight: '100%',
         overflow: 'hidden',
-        // Dark-red base matches the html/body globals.css bg + the atmospheric
-        // base layer below, so the corners read red not black if anything clips.
-        background: '#280609', border: 'none', cursor: 'pointer',
+        // Near-black base — atmospheric bg is red bands + bloom on top of black.
+        // iOS PWA safe-area gaps fall back to html/body #280609 (globals.css) +
+        // <main>'s #280609, so any clipping reads dark red, not pure black.
+        background: '#070708', border: 'none', cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
     >
       {/* Noise grain */}
       <div className="absolute inset-0 gtl-noise pointer-events-none" />
 
-      {/* Edge-to-edge dark-red base — guarantees the corners (and the iOS PWA
-          home-indicator strip past the safe area) read red, not pure black, even
-          when the radial bloom + skewed bands don't quite reach. Painted before
-          everything else so the bands + bloom layer over it. */}
+      {/* Red atmosphere bloom — fades in with entry, fades to transparent at
+          edges so the black bg shows through (gives the negative-photo effect
+          a black-to-red color range to chew on). */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'rgba(40,6,9,1)',
-          opacity: active ? 1 : 0,
-          transition: 'opacity 900ms ease 200ms',
-        }}
-      />
-
-      {/* Red atmosphere bloom — fades in with entry */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: 'radial-gradient(ellipse at 50% 55%, rgba(122,14,20,0.55) 0%, rgba(74,10,14,0.25) 100%)',
+          background: 'radial-gradient(ellipse at 50% 55%, rgba(122,14,20,0.45) 0%, transparent 65%)',
           opacity: active ? 1 : 0,
           transition: 'opacity 900ms ease 200ms',
         }}
