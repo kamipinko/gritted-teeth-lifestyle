@@ -6,6 +6,10 @@ import { useSound } from '../lib/useSound'
 // Exit at 600ms — slashes are 95%+ across, seamless handoff to gate-reveal.
 const EXIT_MS = 600
 const SWIPE_THRESHOLD = 50
+// Double-tap window. iOS uses ~300ms for double-tap-to-zoom; 350ms is slightly
+// more lenient and still feels like a "fast second tap" rather than two
+// separate intentional taps.
+const DOUBLE_TAP_MS = 350
 
 export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, onFastToHeist, swipeHintLabels }) {
   const { play } = useSound()
@@ -17,6 +21,10 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
   const [instant, setInstant] = useState(false)
   const exitTimerRef = useRef(null)
   const touchStartY = useRef(null)
+  // Tracks the timestamp of a tap that landed during entrance (snapToIdle).
+  // A subsequent tap within DOUBLE_TAP_MS triggers fastToHeist instead of the
+  // full idle commit cascade — same effect as a swipe during entrance.
+  const lastEntranceTapRef = useRef(0)
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase('in'), 60)
@@ -69,8 +77,19 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
 
   const handleClick = () => {
     if (phase === 'out') { skipFromOut(); return }
-    if (phase === 'pre' || phase === 'in') { snapToIdle(); return }
-    commit('fitness')  // idle: full commit defaults to fitness
+    const now = Date.now()
+    const isDoubleTap = now - lastEntranceTapRef.current < DOUBLE_TAP_MS
+    if (phase === 'pre' || phase === 'in') {
+      // Two fast taps both during entrance → fastToHeist (same as swipe).
+      if (isDoubleTap) { lastEntranceTapRef.current = 0; fastToHeist('fitness'); return }
+      lastEntranceTapRef.current = now
+      snapToIdle()
+      return
+    }
+    // phase === 'idle' — second tap of a double-tap that started during
+    // entrance also fast-tracks. Past the window it's a normal commit.
+    if (isDoubleTap) { lastEntranceTapRef.current = 0; fastToHeist('fitness'); return }
+    commit('fitness')
   }
 
   const handleTouchStart = (e) => {
