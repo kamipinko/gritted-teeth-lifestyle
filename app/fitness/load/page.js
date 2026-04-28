@@ -652,7 +652,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      onPointerCancel={() => { startRef.current = null; swipedRef.current = false; setDragX(0) }}
+      onPointerCancel={() => { startRef.current = null; dxRef.current = 0; swipeFiredRef.current = false; setDragX(0) }}
       onClick={handleClick}
       className="fixed z-50 group block outline-none active:scale-[0.98] transition-transform overflow-hidden"
       style={{
