@@ -156,7 +156,7 @@ export default function ProfilePage() {
                 onChange={e => setInput(e.target.value)}
                 inputMode="text"
                 enterKeyHint="done"
-                autoComplete="off"
+                autoComplete="new-password"
                 autoCorrect="off"
                 autoCapitalize="characters"
                 spellCheck={false}
