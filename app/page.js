@@ -165,14 +165,6 @@ function SwipeHint({ position, label }) {
         pointerEvents: 'none',
         userSelect: 'none',
         whiteSpace: 'nowrap',
-        fontFamily: '"JetBrains Mono", monospace',
-        fontSize: '0.95rem',
-        fontWeight: 700,
-        letterSpacing: '0.35em',
-        textTransform: 'uppercase',
-        color: '#d4181f',
-        mixBlendMode: 'multiply',
-        animation: 'swipe-hint-pulse 2400ms ease-in-out infinite',
       }}
     >
       <style>{`
@@ -181,7 +173,24 @@ function SwipeHint({ position, label }) {
           50%      { opacity: 1.0; }
         }
       `}</style>
-      {isTop ? '▲ ' : '▼ '}{label}
+      {/* mix-blend-mode lives on an INNER span, never on the position:fixed
+          element. iOS PWA standalone WebKit has a compositor bug where a
+          fixed element with mix-blend-mode captures touches even with
+          pointer-events:none — moving the blend to a child sidesteps it. */}
+      <span
+        style={{
+          fontFamily: '"JetBrains Mono", monospace',
+          fontSize: '0.95rem',
+          fontWeight: 700,
+          letterSpacing: '0.35em',
+          textTransform: 'uppercase',
+          color: '#d4181f',
+          mixBlendMode: 'multiply',
+          animation: 'swipe-hint-pulse 2400ms ease-in-out infinite',
+        }}
+      >
+        {isTop ? '▲ ' : '▼ '}{label}
+      </span>
     </div>
   )
 }

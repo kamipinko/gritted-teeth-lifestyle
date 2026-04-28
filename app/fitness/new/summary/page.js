@@ -3033,13 +3033,8 @@ export default function SummaryPage() {
       <div className="absolute inset-0 pointer-events-none"
         style={{ background: 'linear-gradient(160deg, rgba(122,14,20,0.18) 0%, transparent 45%, rgba(74,10,14,0.28) 100%)' }} />
 
-      {/* ── Retreat button (fixed top-left, safe-area aware) ── */}
-      <div
-        className="fixed left-0 z-40"
-        style={{ top: 'env(safe-area-inset-top, 0px)' }}
-      >
-        <RetreatButton href={backHref} />
-      </div>
+      {/* ── Retreat button (fixed top-left, safe-area aware via canonical component) ── */}
+      <RetreatButton href={backHref} />
 
       {/* ── BLADE (1–6) / OUROBOROS (7) / DRILL (8–13) / FALLBACK (14) / SCROLL (15+) ── */}
       {days.length > 0 && days.length < 7 && (
