@@ -76,7 +76,6 @@ function startBgMusic() {
   }, 50)
 }
 
-const SWIPE_THRESHOLD = 50      // px — minimum vertical drag to register a swipe
 const FLASH_DURATION  = 1000    // ms — calling-card hold time before transition kicks in
 
 // CallingCard reveal — wraps the real CallingCard component (the one the original
@@ -157,7 +156,13 @@ export default function Home() {
   const [phase, setPhase] = useState('gate')
   const [transitionTarget, setTransitionTarget] = useState('/fitness')
   const [transitioning, setTransitioning] = useState(false)
-  const touchStartY = useRef(null)
+  // Holds the FLASH_DURATION → setTransitioning timer so a skip tap can clear it.
+  const flashTimerRef = useRef(null)
+  // Latches once skipAll fires so we don't double-route from a stale timer or
+  // HeistTransition's own onComplete.
+  const skippedRef = useRef(false)
+  // Stable ref to current transitionTarget for skipAll (avoids re-binding handlers).
+  const targetRef = useRef('/fitness')
 
   const activate = (kind) => {
     if (phase !== 'gate') return
@@ -165,31 +170,22 @@ export default function Home() {
     // by handleTouchEnd's swipe paths below — calling it here would be too late
     // for iOS PWA's autoplay rules (audio.play must run inside the user gesture).
     play('brand-confirm')
+    const target = kind === 'fitness' ? '/fitness' : '/diet'
     setPhase(kind === 'fitness' ? 'flash-fitness' : 'flash-nutrition')
-    setTransitionTarget(kind === 'fitness' ? '/fitness' : '/diet')
+    setTransitionTarget(target)
+    targetRef.current = target
     // After the calling-card reveal holds for FLASH_DURATION, kick off the
     // heist transition. Route push fires when the slash wipes complete.
-    setTimeout(() => setTransitioning(true), FLASH_DURATION)
+    flashTimerRef.current = setTimeout(() => setTransitioning(true), FLASH_DURATION)
   }
 
-  const handleTouchStart = (e) => {
-    if (phase !== 'gate') return
-    touchStartY.current = e.touches[0]?.clientY ?? null
-  }
-  const handleTouchEnd = (e) => {
-    if (phase !== 'gate' || touchStartY.current == null) return
-    const endY = e.changedTouches[0]?.clientY ?? touchStartY.current
-    const dy = endY - touchStartY.current
-    touchStartY.current = null
-    if (dy < -SWIPE_THRESHOLD) {
-      startBgMusic()        // synchronous to the touchend gesture — iOS PWA audio autoplay
-      activate('fitness')
-    } else if (dy > SWIPE_THRESHOLD) {
-      startBgMusic()
-      activate('nutrition')
-    }
-    // Otherwise it's a tap (small dy) — GateScreen's onClick handles fallback +
-    // calls startBgMusic via the onMusicStart prop, also inside the gesture.
+  // One extra tap after the gate commit skips the rest of the cascade
+  // (gate exit slashes → calling card → heist transition). Music is unaffected.
+  const skipAll = () => {
+    if (skippedRef.current) return
+    skippedRef.current = true
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+    router.push(targetRef.current)
   }
 
   // Keyboard shortcut: arrow up = fitness, arrow down = nutrition (desktop).
@@ -203,11 +199,31 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handler)
   }, [phase])
 
-  const handleTransitionComplete = () => router.push(transitionTarget)
+  // Skip-everything: once the gate has been committed (phase !== 'gate'),
+  // the next pointerdown anywhere on the screen routes immediately. Using
+  // window-level capture sidesteps every per-element gotcha (iOS first-tap
+  // hover absorption on the CallingCard button, HeistTransition's
+  // pointer-events-none layer, z-index races, etc).
+  useEffect(() => {
+    if (phase === 'gate') return
+    const handler = () => skipAll()
+    window.addEventListener('pointerdown', handler, { capture: true })
+    return () => window.removeEventListener('pointerdown', handler, { capture: true })
+  }, [phase])
 
-  // Tap fallback: GateScreen's onClick drives this via setPhase('out')+onEnter.
-  // Plain tap (no swipe) defaults to fitness — most-used target.
-  const handleGateTapEnter = () => activate('fitness')
+  const handleTransitionComplete = () => {
+    if (skippedRef.current) return
+    router.push(transitionTarget)
+  }
+
+  // GateScreen owns its own tap + swipe input. onCommit fires synchronously
+  // (so we have the target ref before exit slashes start, in case the user
+  // double-taps to skip mid-exit). onEnter fires after EXIT_MS once the
+  // gate-exit slashes finish.
+  const handleGateCommit = (kind) => {
+    targetRef.current = kind === 'fitness' ? '/fitness' : '/diet'
+  }
+  const handleGateEnter = (kind) => activate(kind)
 
   return (
     // Flow-based wrapper — min-h:100svh + bg-gtl-void matches the original c18b728
@@ -218,19 +234,19 @@ export default function Home() {
     // stale on the first iOS PWA mount, leaving a bottom-padding band until the
     // page re-renders. svh is locked at parse time — same race-free outcome.
     <main
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
       className="relative overflow-hidden"
       style={{ minHeight: '100%', background: '#280609', isolation: 'isolate' }}
     >
       {phase === 'gate' && (
         <GateScreen
-          onEnter={handleGateTapEnter}
+          onEnter={handleGateEnter}
+          onCommit={handleGateCommit}
           onMusicStart={startBgMusic}
+          onSkip={skipAll}
           swipeHintLabels={{ top: 'SWIPE UP FOR FITNESS', bottom: 'SWIPE DOWN FOR NUTRITION' }}
         />
       )}
-      {phase === 'flash-fitness'   && <CallingCardReveal kind="fitness" />}
+      {phase === 'flash-fitness'   && <CallingCardReveal kind="fitness"   />}
       {phase === 'flash-nutrition' && <CallingCardReveal kind="nutrition" />}
 
       <HeistTransition
