@@ -145,55 +145,9 @@ function CallingCardReveal({ kind }) {
   )
 }
 
-// Swipe hint — small mono label that floats above the GateScreen at top + bottom
-// telling the user which direction maps to which section. Z-index above the gate
-// but below transitions; pointer-events disabled so it never blocks the gate's
-// touch + click handlers.
-function SwipeHint({ position, label }) {
-  const isTop = position === 'top'
-  return (
-    <div
-      style={{
-        position: 'fixed', left: '50%', zIndex: 51,
-        // Top hint clears the Dynamic Island + 24px buffer; bottom hint sits 8px above the
-        // home indicator (just enough breathing room — the prior 24px extra margin made the
-        // bottom band read as "padding").
-        [isTop ? 'top' : 'bottom']: isTop
-          ? 'calc(env(safe-area-inset-top, 0px) + 24px)'
-          : 'calc(env(safe-area-inset-bottom, 0px) + 8px)',
-        transform: 'translateX(-50%)',
-        pointerEvents: 'none',
-        userSelect: 'none',
-        whiteSpace: 'nowrap',
-      }}
-    >
-      <style>{`
-        @keyframes swipe-hint-pulse {
-          0%, 100% { opacity: 0.85; }
-          50%      { opacity: 1.0; }
-        }
-      `}</style>
-      {/* mix-blend-mode lives on an INNER span, never on the position:fixed
-          element. iOS PWA standalone WebKit has a compositor bug where a
-          fixed element with mix-blend-mode captures touches even with
-          pointer-events:none — moving the blend to a child sidesteps it. */}
-      <span
-        style={{
-          fontFamily: '"JetBrains Mono", monospace',
-          fontSize: '0.95rem',
-          fontWeight: 700,
-          letterSpacing: '0.35em',
-          textTransform: 'uppercase',
-          color: '#d4181f',
-          mixBlendMode: 'multiply',
-          animation: 'swipe-hint-pulse 2400ms ease-in-out infinite',
-        }}
-      >
-        {isTop ? '▲ ' : '▼ '}{label}
-      </span>
-    </div>
-  )
-}
+// SwipeHints now live INSIDE GateScreen as absolute children of its button so
+// mix-blend-mode:multiply has the atmospheric bands as siblings to blend
+// against. See components/GateScreen.jsx for the rendering.
 
 export default function Home() {
   const router = useRouter()
@@ -270,11 +224,11 @@ export default function Home() {
       style={{ minHeight: '100%', background: '#280609', isolation: 'isolate' }}
     >
       {phase === 'gate' && (
-        <>
-          <GateScreen onEnter={handleGateTapEnter} onMusicStart={startBgMusic} />
-          <SwipeHint position="top"    label="SWIPE UP FOR FITNESS" />
-          <SwipeHint position="bottom" label="SWIPE DOWN FOR NUTRITION" />
-        </>
+        <GateScreen
+          onEnter={handleGateTapEnter}
+          onMusicStart={startBgMusic}
+          swipeHintLabels={{ top: 'SWIPE UP FOR FITNESS', bottom: 'SWIPE DOWN FOR NUTRITION' }}
+        />
       )}
       {phase === 'flash-fitness'   && <CallingCardReveal kind="fitness" />}
       {phase === 'flash-nutrition' && <CallingCardReveal kind="nutrition" />}

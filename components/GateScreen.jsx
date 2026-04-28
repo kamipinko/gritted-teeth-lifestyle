@@ -6,7 +6,7 @@ import { useSound } from '../lib/useSound'
 // Exit at 600ms — slashes are 95%+ across, seamless handoff to gate-reveal.
 const EXIT_MS = 600
 
-export default function GateScreen({ onEnter, onMusicStart }) {
+export default function GateScreen({ onEnter, onMusicStart, swipeHintLabels }) {
   const { play } = useSound()
   const [phase, setPhase] = useState('pre')
   // pre → in → idle → out
@@ -127,6 +127,65 @@ export default function GateScreen({ onEnter, onMusicStart }) {
       <div className="absolute bottom-0 right-0 bg-gtl-red pointer-events-none"
         style={{ width: 5, height: active ? 168 : 0, transition: 'height 600ms cubic-bezier(0.2,1,0.3,1) 500ms' }} />
 
+      {/* ── Swipe hints (rendered inside GateScreen so mix-blend-mode:multiply
+          has access to the atmospheric bands as siblings — outside the button
+          they end up alone in their own stacking context and the blend never
+          engages). pointer-events:none lets taps pass through to the button. */}
+      {swipeHintLabels && (
+        <>
+          <div
+            style={{
+              position: 'absolute',
+              top: 'calc(env(safe-area-inset-top, 0px) + 24px)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 5,
+              fontFamily: '"JetBrains Mono", monospace',
+              fontSize: '0.95rem',
+              fontWeight: 700,
+              letterSpacing: '0.35em',
+              textTransform: 'uppercase',
+              color: '#d4181f',
+              mixBlendMode: 'multiply',
+              pointerEvents: 'none',
+              userSelect: 'none',
+              whiteSpace: 'nowrap',
+              animation: 'swipe-hint-pulse 2400ms ease-in-out infinite',
+            }}
+          >
+            ▲ {swipeHintLabels.top}
+          </div>
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 5,
+              fontFamily: '"JetBrains Mono", monospace',
+              fontSize: '0.95rem',
+              fontWeight: 700,
+              letterSpacing: '0.35em',
+              textTransform: 'uppercase',
+              color: '#d4181f',
+              mixBlendMode: 'multiply',
+              pointerEvents: 'none',
+              userSelect: 'none',
+              whiteSpace: 'nowrap',
+              animation: 'swipe-hint-pulse 2400ms ease-in-out infinite',
+            }}
+          >
+            ▼ {swipeHintLabels.bottom}
+          </div>
+          <style>{`
+            @keyframes swipe-hint-pulse {
+              0%, 100% { opacity: 0.85; }
+              50%      { opacity: 1.0; }
+            }
+          `}</style>
+        </>
+      )}
+
       {/* ── Center content ── */}
       <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
 
@@ -150,6 +209,7 @@ export default function GateScreen({ onEnter, onMusicStart }) {
             fontFamily: '"JetBrains Mono", monospace',
             fontSize: '0.55rem', letterSpacing: '0.4em',
             textTransform: 'uppercase', color: '#d4181f',
+            mixBlendMode: 'multiply',
             animation: active ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 600ms both' : 'none',
           }}>
             GRITTED TEETH LIFESTYLE
@@ -191,6 +251,7 @@ export default function GateScreen({ onEnter, onMusicStart }) {
             fontFamily: '"JetBrains Mono", monospace',
             fontSize: '0.5rem', letterSpacing: '0.3em',
             textTransform: 'uppercase', color: '#d4181f',
+            mixBlendMode: 'multiply',
             animation: active ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 950ms both' : 'none',
           }}>
             // CLICK OR TOUCH TO ENTER //
