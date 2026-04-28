@@ -832,8 +832,21 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
 
           {/* Plate-math vertical rail — ascending bottom→top so heaviest sits
               at the top of the column. Absolutely positioned in the right
-              padding gutter so it doesn't push the main column around. */}
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col-reverse gap-2 z-10">
+              padding gutter so it doesn't push the main column around. Inline
+              styles (not Tailwind utilities) so the absolute + flex-col-reverse
+              can't get nuked by a stale purge. */}
+          <div
+            style={{
+              position: 'absolute',
+              right: '10px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              flexDirection: 'column-reverse',
+              gap: '8px',
+              zIndex: 10,
+            }}
+          >
             {PLATE_QUICK_PICKS.map((w) => {
               const active = weight === w
               const flashing = flashChip === w
