@@ -278,8 +278,8 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
           src="/logo.png"
           alt="GTL"
           style={{
-            width: 'clamp(96px, 16vw, 148px)',
-            height: 'clamp(96px, 16vw, 148px)',
+            width: 'clamp(128px, 24vw, 200px)',
+            height: 'clamp(128px, 24vw, 200px)',
             borderRadius: '50%',
             objectFit: 'cover',
             animation: animOf('forge-slam 1100ms cubic-bezier(0.2, 1.2, 0.4, 1) 400ms both'),

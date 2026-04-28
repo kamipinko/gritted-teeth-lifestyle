@@ -715,8 +715,8 @@ function BottomBar({ cycle, onActivate, onReview, onDelete }) {
         {/* Vertical divider */}
         <div className="w-px h-10 bg-gtl-edge self-center" style={{ transform: 'skewX(-12deg)' }} />
 
-        {/* ACTIVATE */}
-        <ActivateButton onActivate={() => { play('card-confirm'); onActivate(cycle) }} />
+        {/* ACTIVATE moved to a fixed-position quick-nav popup at y=438 (matches
+            profile-chip slot on /fitness for tap-tap-tap muscle memory). */}
 
         {/* REVIEW / EDIT */}
         <ReviewButton onReview={() => { play('option-select'); onReview(cycle) }} />
@@ -948,7 +948,47 @@ export default function LoadCyclePage() {
         )}
       </section>
 
-      {/* Sticky bottom bar — appears when a cycle is selected */}
+      {/* Quick-nav ACTIVATE popup — sits at the same screen y as the profile chip
+          on /fitness so the linear flow (profile chip → LOAD CYCLE card → ACTIVATE)
+          all hits the same tap target. Slides up from below when a cycle is selected. */}
+      <style>{`
+        @keyframes activate-popup-rise {
+          0%   { opacity: 0; transform: translateY(60px) scale(0.96); }
+          60%  { opacity: 1; transform: translateY(-4px) scale(1.02); }
+          100% { opacity: 1; transform: translateY(0)    scale(1); }
+        }
+      `}</style>
+      {selectedCycle && (
+        <button
+          key={selectedCycle.id}
+          type="button"
+          onClick={() => { play('card-confirm'); handleActivate(selectedCycle) }}
+          className="fixed z-50 group block outline-none active:scale-[0.98] transition-transform"
+          style={{
+            top: '466px',
+            left: '32px',
+            right: '32px',
+            animation: 'activate-popup-rise 320ms cubic-bezier(0.18, 1, 0.36, 1) both',
+          }}
+        >
+          <div
+            className="absolute inset-0 bg-gtl-red transition-colors group-active:bg-gtl-red-bright"
+            style={{
+              clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+              boxShadow: '0 4px 28px rgba(212, 24, 31, 0.55)',
+            }}
+            aria-hidden="true"
+          />
+          <div className="relative flex items-center justify-center px-6 py-4 gap-3">
+            <span className="font-display text-2xl text-gtl-paper leading-none tracking-tight">
+              ACTIVATE
+            </span>
+            <span className="font-display text-xl text-gtl-paper leading-none">➤︎</span>
+          </div>
+        </button>
+      )}
+
+      {/* Sticky bottom bar — appears when a cycle is selected (now without ACTIVATE) */}
       <BottomBar
         cycle={selectedCycle}
         onActivate={handleActivate}
