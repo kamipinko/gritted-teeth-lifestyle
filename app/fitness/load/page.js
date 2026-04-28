@@ -536,7 +536,7 @@ function CycleCard({ cycle, index, selected, onSelect }) {
           <div
             className="absolute pointer-events-none select-none"
             style={{
-              left: 'calc(50% + 30px)', top: 'calc(50% - 30px)', zIndex: 11,
+              left: 'calc(50% + 60px)', top: 'calc(50% - 60px)', zIndex: 11,
               animation: 'blood-text 600ms cubic-bezier(0.2, 1.4, 0.3, 1) 1500ms both',
             }}
             aria-hidden="true"
