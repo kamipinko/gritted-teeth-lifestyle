@@ -713,7 +713,11 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
   const [flashChip, setFlashChip]   = useState(null)
 
   const POPUP_WIDTH  = 380
-  const POPUP_HEIGHT = 560
+  // Estimate matches actual rendered height after the plate-chip row was added
+  // (chips wrap to 2-3 rows in 380px). The bottom-clamp uses this to push the
+  // popup up off the viewport floor when the row-centered position would put
+  // SET WEIGHT below the visible area.
+  const POPUP_HEIGHT = 640
 
   const popupTop = rowRect
     ? Math.max(20, Math.min(rowRect.top - POPUP_HEIGHT / 2 + rowRect.height / 2, window.innerHeight - POPUP_HEIGHT - 20))
