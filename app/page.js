@@ -152,7 +152,8 @@ export default function Home() {
   const router = useRouter()
   const { play } = useSound()
 
-  // phase: 'gate' (default) → 'flash-fitness' | 'flash-nutrition' → 'transitioning'
+  // phase: 'gate' (default) → 'flash-fitness' | 'flash-nutrition' → route
+  //   or:  'gate' → 'heist' (swipe during entrance: skip flash, play HeistTransition only)
   const [phase, setPhase] = useState('gate')
   const [transitionTarget, setTransitionTarget] = useState('/fitness')
   const [transitioning, setTransitioning] = useState(false)
@@ -225,6 +226,17 @@ export default function Home() {
   }
   const handleGateEnter = (kind) => activate(kind)
 
+  // Swipe during the entrance animation — skip entrance + gate exit + calling
+  // card; play HeistTransition only, then route. Phase set to 'heist' so
+  // neither GateScreen nor CallingCardReveal renders behind the transition.
+  const handleFastToHeist = (kind) => {
+    const target = kind === 'fitness' ? '/fitness' : '/diet'
+    targetRef.current = target
+    setTransitionTarget(target)
+    setPhase('heist')
+    setTransitioning(true)
+  }
+
   return (
     // Flow-based wrapper — min-h:100svh + bg-gtl-void matches the original c18b728
     // home and avoids the iOS PWA safe-area-inset clip that plagued any
@@ -243,6 +255,7 @@ export default function Home() {
           onCommit={handleGateCommit}
           onMusicStart={startBgMusic}
           onSkip={skipAll}
+          onFastToHeist={handleFastToHeist}
           swipeHintLabels={{ top: 'SWIPE UP FOR FITNESS', bottom: 'SWIPE DOWN FOR NUTRITION' }}
         />
       )}

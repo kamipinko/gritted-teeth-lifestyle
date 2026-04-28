@@ -7,7 +7,7 @@ import { useSound } from '../lib/useSound'
 const EXIT_MS = 600
 const SWIPE_THRESHOLD = 50
 
-export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, swipeHintLabels }) {
+export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, onFastToHeist, swipeHintLabels }) {
   const { play } = useSound()
   const [phase, setPhase] = useState('pre')
   // pre → in → idle → out
@@ -23,10 +23,10 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
     }
   }, [])
 
-  // Single commit path used by both tap (defaults to fitness) and swipe
-  // (direction → fitness/nutrition). Drives gate-exit slashes uniformly so
-  // the user always gets the chance to second-tap to skip.
+  // Full-cascade commit (idle → gate-exit slashes → onEnter triggers calling
+  // card + heist). Used by tap and swipe once the user is at PRESS START.
   const commit = (kind) => {
+    if (phase !== 'idle') return
     // Fire bg music start SYNCHRONOUSLY inside the user-gesture handler. iOS PWA
     // blocks audio.play() outside the synchronous click context — anything called
     // after the setTimeout below is outside that window and the play promise
@@ -34,15 +34,6 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
     if (onMusicStart) onMusicStart()
     play('brand-confirm')
     if (onCommit) onCommit(kind)  // sync, so parent can stash target
-
-    // Pre-commit (entrance animation still running): fast-track straight to
-    // the route — skip entrance, gate exit, calling card, heist transition.
-    // Music continues. onSkip routes via parent's skipAll using targetRef.
-    if (phase === 'pre' || phase === 'in') {
-      if (onSkip) onSkip()
-      return
-    }
-    if (phase !== 'idle') return
     setPhase('out')
     exitTimerRef.current = setTimeout(() => onEnter && onEnter(kind), EXIT_MS)
   }
@@ -53,9 +44,26 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
     if (onSkip) onSkip()
   }
 
+  // Tap during entrance: snap to PRESS START (idle), start music, no commit.
+  // User then needs another gesture to commit.
+  const snapToIdle = () => {
+    if (onMusicStart) onMusicStart()
+    setPhase('idle')
+  }
+
+  // Swipe during entrance: skip entrance + gate slashes + calling card,
+  // play HeistTransition, then route. Music starts here too.
+  const fastToHeist = (kind) => {
+    if (onMusicStart) onMusicStart()
+    play('brand-confirm')
+    if (onCommit) onCommit(kind)
+    if (onFastToHeist) onFastToHeist(kind)
+  }
+
   const handleClick = () => {
     if (phase === 'out') { skipFromOut(); return }
-    commit('fitness')  // plain tap defaults to fitness
+    if (phase === 'pre' || phase === 'in') { snapToIdle(); return }
+    commit('fitness')  // idle: full commit defaults to fitness
   }
 
   const handleTouchStart = (e) => {
@@ -68,6 +76,10 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
     touchStartY.current = null
     const isSwipe = Math.abs(dy) > SWIPE_THRESHOLD
     if (phase === 'out' && isSwipe) { skipFromOut(); return }
+    if (isSwipe && (phase === 'pre' || phase === 'in')) {
+      fastToHeist(dy < 0 ? 'fitness' : 'nutrition')
+      return
+    }
     if (dy < -SWIPE_THRESHOLD)      commit('fitness')
     else if (dy > SWIPE_THRESHOLD)  commit('nutrition')
     // Otherwise it's a tap — click event fires next, handleClick takes it.
