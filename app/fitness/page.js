@@ -227,7 +227,7 @@ export default function ProfilePage() {
       <div className="relative z-10 flex-1 flex flex-col">
       {/* Nav */}
       <nav
-        className="relative shrink-0 flex items-center justify-between pl-0 pr-8 pb-6"
+        className="relative shrink-0 flex items-center justify-between pl-0 pr-8 pb-3"
         style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
       >
         <RetreatButton href="/" />
@@ -237,9 +237,9 @@ export default function ProfilePage() {
       </nav>
 
       {/* Main */}
-      <section className="relative z-10 flex-1 flex flex-col px-8 pt-2 pb-8 max-w-3xl mx-auto w-full">
+      <section className="relative z-10 flex-1 flex flex-col px-8 pt-0 pb-8 max-w-3xl mx-auto w-full">
         {/* Headline */}
-        <div className="mb-6">
+        <div className="mb-2">
           <div className="flex items-center gap-4 mb-3">
             <div className="h-px w-16 bg-gtl-red" />
             <span className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-red">
@@ -250,13 +250,13 @@ export default function ProfilePage() {
             WHO<br />
             <span className="text-gtl-red inline-block rotate-1">ARE YOU</span>
           </h1>
-          <p className="font-mono text-xs tracking-[0.25em] uppercase text-gtl-ash mt-3 max-w-sm">
+          <p className="font-mono text-xs tracking-[0.25em] uppercase text-gtl-ash mt-1 max-w-sm">
             Your cycles, lifts, and EXP belong to you alone.
           </p>
         </div>
 
         {/* Input */}
-        <form onSubmit={handleSubmit} action="/" method="post" className="mb-10">
+        <form onSubmit={handleSubmit} action="/" method="post" className="mb-3">
           <div className="flex items-stretch gap-0">
             <div className="relative flex-1">
               <div
