@@ -2693,6 +2693,28 @@ export default function SummaryPage() {
     setWeekdayLetterCooled(prev  => prev.length === N * 3 ? prev : Array(N * 3).fill(false))
   }, [days.length])
 
+  // Quick-forge auto-progression: when arriving with the gtl-quick-forge flag,
+  // press ETCH CYCLE for the user. Clear the flag (final stage). The deep-launch
+  // flag (gtl-deep-launch) is also set so /fitness/active continues straight
+  // through to the first set's weight popup.
+  useEffect(() => {
+    let isQuickForge = false
+    try { isQuickForge = localStorage.getItem('gtl-quick-forge') === '1' } catch (_) {}
+    if (!isQuickForge) return
+    let cancelled = false
+    const t = setTimeout(() => {
+      if (cancelled) return
+      try {
+        localStorage.removeItem('gtl-quick-forge')
+        localStorage.setItem('gtl-deep-launch', '1')
+      } catch (_) {}
+      handleBeginRef.current?.()
+    }, 800)
+    return () => { cancelled = true; clearTimeout(t) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleBeginRef = useRef(null)
   const handleBegin = () => {
     play('card-confirm')
     try {
@@ -2985,6 +3007,10 @@ export default function SummaryPage() {
     setTimeout(() => play('stamp'),       stampPlayAt)
     setTimeout(() => setFireActive(true), fireActiveAt)
   }
+
+  // Keep handleBeginRef in sync so the quick-forge useEffect can invoke
+  // handleBegin without depending on it as a render-time closure.
+  useEffect(() => { handleBeginRef.current = handleBegin })
 
   const cols = days.length <= 5 ? days.length
              : days.length <= 10 ? Math.ceil(days.length / 2)

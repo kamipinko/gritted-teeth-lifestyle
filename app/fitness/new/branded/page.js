@@ -479,6 +479,51 @@ export default function SchedulePage() {
     ? Math.round((new Date(lastSelectedKey + 'T00:00:00Z') - new Date(firstSelectedKey + 'T00:00:00Z')) / 86400000) + 1
     : 0
 
+  // Quick-forge auto-progression: build 6-day cycle (today + 5 future, last is
+  // rest), all training days assigned all muscles, then auto-press CARVE.
+  useEffect(() => {
+    let isQuickForge = false
+    try { isQuickForge = localStorage.getItem('gtl-quick-forge') === '1' } catch (_) {}
+    if (!isQuickForge) return
+    let cancelled = false
+    const t = setTimeout(() => {
+      if (cancelled) return
+      const allMuscles = MUSCLE_ORDER
+      const today = new Date()
+      const days = []
+      for (let i = 0; i < 6; i++) {
+        const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)
+        const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+        days.push(iso)
+      }
+      const newSelected = new Set(days)
+      const newAssignments = {}
+      // First 5 days = all muscles; last day = rest (no muscles).
+      for (let i = 0; i < days.length - 1; i++) {
+        newAssignments[days[i]] = new Set(allMuscles)
+      }
+      newAssignments[days[days.length - 1]] = new Set()
+      setSelectedDays(newSelected)
+      setAssignments(newAssignments)
+      // Persist + fire after state has had a moment to flush.
+      const t2 = setTimeout(() => {
+        if (cancelled) return
+        try {
+          localStorage.setItem(pk('training-days'), JSON.stringify(days))
+          const serialized = {}
+          for (const [iso, set] of Object.entries(newAssignments)) {
+            if (set.size > 0) serialized[iso] = [...set]
+          }
+          localStorage.setItem(pk('daily-plan'), JSON.stringify(serialized))
+        } catch (_) {}
+        setFireActive(true)
+      }, 600)
+      return () => clearTimeout(t2)
+    }, 700)
+    return () => { cancelled = true; clearTimeout(t) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleCarve = () => {
     if (!carveEnabled) return
     play('card-confirm')

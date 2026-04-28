@@ -49,6 +49,84 @@ function pickRandomName() {
   return RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)]
 }
 
+/* ── FORGE button with tap-vs-swipe gesture ── */
+function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
+  const startRef = useRef(null)
+  const swipedRef = useRef(false)
+  const [dragX, setDragX] = useState(0)
+  const SWIPE_THRESHOLD = 80
+
+  const handlePointerDown = (e) => {
+    if (disabled) return
+    startRef.current = { x: e.clientX, y: e.clientY }
+    swipedRef.current = false
+    setDragX(0)
+  }
+  const handlePointerMove = (e) => {
+    if (!startRef.current) return
+    const dx = e.clientX - startRef.current.x
+    const dy = e.clientY - startRef.current.y
+    if (Math.abs(dx) > Math.abs(dy) && dx > 0) {
+      setDragX(Math.min(dx, SWIPE_THRESHOLD * 1.5))
+      if (dx > SWIPE_THRESHOLD) swipedRef.current = true
+    }
+  }
+  const handlePointerUp = () => {
+    if (swipedRef.current && onSwipe) onSwipe()
+    startRef.current = null
+    setDragX(0)
+  }
+  const handleClick = (e) => {
+    if (swipedRef.current) { e.preventDefault(); e.stopPropagation(); return }
+    onTap()
+  }
+  const swipeProgress = Math.min(1, dragX / SWIPE_THRESHOLD)
+
+  return (
+    <button
+      ref={forgeRef}
+      type="button"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={() => { startRef.current = null; swipedRef.current = false; setDragX(0) }}
+      onClick={handleClick}
+      disabled={disabled}
+      className={`
+        relative font-display tracking-[0.25em] uppercase overflow-hidden
+        px-14 py-4 min-h-[56px] min-w-[14rem]
+        text-3xl text-gtl-paper
+        transition-all duration-200 ease-out
+        disabled:opacity-30 disabled:cursor-not-allowed
+        enabled:[@media(hover:hover)]:hover:scale-[1.04] enabled:active:scale-[0.98]
+        enabled:bg-gtl-red-bright bg-gtl-red
+        shadow-[4px_4px_0_#070708]
+        enabled:[@media(hover:hover)]:hover:shadow-[6px_6px_0_#070708]
+        enabled:active:shadow-[2px_2px_0_#070708]
+      `}
+      style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)', touchAction: 'pan-y' }}
+    >
+      {/* Swipe-progress brighter overlay scales in from the left */}
+      <div
+        className="absolute inset-0 pointer-events-none bg-gtl-red-bright"
+        style={{
+          opacity: swipeProgress,
+          transform: `scaleX(${swipeProgress})`,
+          transformOrigin: 'left center',
+          transition: dragX === 0 ? 'opacity 200ms, transform 200ms' : 'none',
+        }}
+        aria-hidden="true"
+      />
+      <span
+        className="relative inline-block"
+        style={{ transform: `translateX(${dragX * 0.3}px)`, transition: dragX === 0 ? 'transform 200ms' : 'none' }}
+      >
+        {swipeProgress >= 1 ? 'LIFT NOW' : 'FORGE'}
+      </span>
+    </button>
+  )
+}
+
 
 /**
  * StampedNameInput — the main event.
@@ -551,27 +629,20 @@ export default function NewCycleNamePage() {
             iOS users who want to commit straight from the soft keyboard. */}
         {!isBranding && (
           <div className="mt-6 flex flex-col items-center">
-            <button
-              ref={forgeButtonRef}
-              type="button"
-              onClick={triggerBrandConfirm}
+            <ForgeButton
+              forgeRef={forgeButtonRef}
               disabled={name.trim().length === 0}
-              className={`
-                relative font-display tracking-[0.25em] uppercase
-                px-14 py-4 min-h-[56px] min-w-[14rem]
-                text-3xl text-gtl-paper
-                transition-all duration-200 ease-out
-                disabled:opacity-30 disabled:cursor-not-allowed
-                enabled:[@media(hover:hover)]:hover:scale-[1.04] enabled:active:scale-[0.98]
-                enabled:bg-gtl-red-bright bg-gtl-red
-                shadow-[4px_4px_0_#070708]
-                enabled:[@media(hover:hover)]:hover:shadow-[6px_6px_0_#070708]
-                enabled:active:shadow-[2px_2px_0_#070708]
-              `}
-              style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)', touchAction: 'manipulation' }}
-            >
-              FORGE
-            </button>
+              onTap={triggerBrandConfirm}
+              onSwipe={() => {
+                try { localStorage.setItem('gtl-quick-forge', '1') } catch (_) {}
+                triggerBrandConfirm()
+              }}
+            />
+            <div className="mt-2 flex items-center gap-3 font-mono text-[8px] tracking-[0.25em] uppercase text-gtl-ash/80">
+              <span>TAP TO FORGE</span>
+              <span className="text-gtl-red">·</span>
+              <span>SWIPE TO LIFT NOW →</span>
+            </div>
           </div>
         )}
       </section>
