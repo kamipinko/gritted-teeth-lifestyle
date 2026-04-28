@@ -30,6 +30,8 @@ function ProfileChip({ name, onSelect }) {
   )
 }
 
+const HUB_TARGET = '/fitness/hub'
+
 export default function ProfilePage() {
   const router = useRouter()
   const { play } = useSound()
@@ -38,6 +40,8 @@ export default function ProfilePage() {
   const [ready, setReady] = useState(false)
   const [transitioning, setTransitioning] = useState(false)
   const inputRef = useRef(null)
+  // Latches once skipAll fires so HeistTransition.onComplete won't double-route.
+  const skippedRef = useRef(false)
 
   useEffect(() => {
     try {
@@ -47,11 +51,31 @@ export default function ProfilePage() {
     setReady(true)
   }, [])
 
+  // Skip-the-transition: once HeistTransition is active, the next pointerdown
+  // anywhere on the screen routes to the hub immediately. Capture-phase so it
+  // beats any per-element handlers; HeistTransition itself is pointer-events-none
+  // so a normal tap-on-overlay listener wouldn't fire.
+  useEffect(() => {
+    if (!transitioning) return
+    const handler = () => {
+      if (skippedRef.current) return
+      skippedRef.current = true
+      router.push(HUB_TARGET)
+    }
+    window.addEventListener('pointerdown', handler, { capture: true })
+    return () => window.removeEventListener('pointerdown', handler, { capture: true })
+  }, [transitioning, router])
+
   const selectProfile = (name) => {
     try {
       localStorage.setItem('gtl-active-profile', name)
     } catch (_) {}
     setTransitioning(true)
+  }
+
+  const handleTransitionComplete = () => {
+    if (skippedRef.current) return
+    router.push(HUB_TARGET)
   }
 
   const handleSubmit = (e) => {
@@ -229,7 +253,7 @@ export default function ProfilePage() {
 
     <HeistTransition
       active={transitioning}
-      onComplete={() => router.push('/fitness/hub')}
+      onComplete={handleTransitionComplete}
     />
     </>
   )
