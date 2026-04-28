@@ -389,12 +389,27 @@ function RepsPopup({ exerciseName, initialReps, rowRect, onClose, onSave }) {
     setNumKey((k) => k + 1)
   }
 
+  const slamTimerRef = useRef(null)
   const handleSetReps = () => {
     play('stamp')
     onSave(reps)
     setSlamming(true)
-    setTimeout(onClose, 550)
+    slamTimerRef.current = setTimeout(onClose, 550)
   }
+  // Tap during slam-exit → close immediately, clear the auto-close timer.
+  useEffect(() => {
+    if (!slamming) return
+    const handler = () => {
+      if (slamTimerRef.current) clearTimeout(slamTimerRef.current)
+      onClose()
+    }
+    window.addEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
+  }, [slamming, onClose])
 
   useEffect(() => {
     const handler = (e) => {
@@ -815,12 +830,27 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
     setTimeout(() => setFlashChip(null), 220)
   }
 
+  const slamTimerRef = useRef(null)
   const handleSetWeight = () => {
     play('stamp')
     onSave(weight)
     setSlamming(true)
-    setTimeout(onClose, 550)
+    slamTimerRef.current = setTimeout(onClose, 550)
   }
+  // Tap during slam-exit → close immediately, clear the auto-close timer.
+  useEffect(() => {
+    if (!slamming) return
+    const handler = () => {
+      if (slamTimerRef.current) clearTimeout(slamTimerRef.current)
+      onClose()
+    }
+    window.addEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
+  }, [slamming, onClose])
 
   useEffect(() => {
     const handler = (e) => {
@@ -1794,13 +1824,28 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
     try { return localStorage.getItem(pk(`done-${cycleId}-${iso}`)) === 'true' } catch { return false }
   })
 
+  const stampCloseTimerRef = useRef(null)
   const handleStamp = () => {
     if (stamped) return
     play('option-select')
     try { localStorage.setItem(pk(`done-${cycleId}-${iso}`), 'true') } catch (_) {}
     setStamped(true)
-    setTimeout(() => handleClose(), 900)
+    stampCloseTimerRef.current = setTimeout(() => handleClose(), 900)
   }
+  // Tap during the post-stamp 900ms wait → close immediately.
+  useEffect(() => {
+    if (!stamped || closing) return
+    const handler = () => {
+      if (stampCloseTimerRef.current) clearTimeout(stampCloseTimerRef.current)
+      handleClose()
+    }
+    window.addEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
+  }, [stamped, closing, handleClose])
 
   const handleUnlogMuscle = (muscleId) => {
     play('menu-close')
