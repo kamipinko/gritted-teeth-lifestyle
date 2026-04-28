@@ -289,10 +289,13 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.7rem' }}>
 
           {/* Label — no entrance animation; visible from t=0 in red so the
-              difference-blend live-flips as bands sweep behind it. */}
+              difference-blend live-flips as bands sweep behind it. Sized to
+              match the swipe hints so each letter spans enough horizontal
+              area to cross band/gap boundaries and produce visible per-letter
+              flip variation. */}
           <div style={{
             fontFamily: '"JetBrains Mono", monospace',
-            fontSize: '0.85rem', letterSpacing: '0.35em',
+            fontSize: '1.05rem', letterSpacing: '0.2em',
             fontWeight: 800,
             textTransform: 'uppercase', color: '#d4181f',
             mixBlendMode: 'difference',
