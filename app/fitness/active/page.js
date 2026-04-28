@@ -827,40 +827,9 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
             aria-hidden="true" />
 
           <div className="relative font-mono text-[13px] tracking-[0.7em] uppercase text-gtl-red mb-1">WEIGHT</div>
-          <div className="relative font-display text-gtl-smoke leading-none mb-3 text-center"
+          <div className="relative font-display text-gtl-smoke leading-none mb-6 text-center"
             style={{ fontSize: 'clamp(0.9rem, 2vw, 1.4rem)', transform: 'rotate(0.4deg)' }}>
             {exerciseName}
-          </div>
-
-          {/* Plate-math quick picks — tap to jump straight to bar/95/135/185/...
-              45 reads as "BAR" because most people think in terms of "bar-only"
-              for that weight rather than the number itself. */}
-          <div className="relative flex flex-wrap justify-center gap-1.5 mb-3 max-w-[19rem]">
-            {PLATE_QUICK_PICKS.map((w) => {
-              const active = weight === w
-              const flashing = flashChip === w
-              return (
-                <button key={w} type="button"
-                  onPointerDown={() => setQuick(w)}
-                  className="relative outline-none focus-visible:outline-2 focus-visible:outline-gtl-red"
-                  aria-label={`Set weight to ${w} pounds`}>
-                  <div className="absolute inset-0 bg-gtl-red-deep"
-                    style={{ clipPath: 'polygon(12% 0%, 100% 0%, 88% 100%, 0% 100%)', transform: 'translate(2px, 2px)' }}
-                    aria-hidden="true" />
-                  <div
-                    className="relative font-display tracking-tight px-3 py-1 text-base leading-none transition-all duration-100"
-                    style={{
-                      clipPath: 'polygon(12% 0%, 100% 0%, 88% 100%, 0% 100%)',
-                      background: flashing ? '#ff2a36' : active ? '#d4181f' : '#1a1a1e',
-                      color: active || flashing ? '#ffffff' : '#c8c8c8',
-                      border: '1px solid ' + (active ? '#ff2a36' : '#3a3a42'),
-                    }}
-                  >
-                    {w === 45 ? 'BAR' : w}
-                  </div>
-                </button>
-              )
-            })}
           </div>
 
           {/* UP + FLAME */}
@@ -923,8 +892,42 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
             </div>
           </button>
 
+          {/* Plate-math quick picks — tap to jump straight to bar/95/135/185/...
+              45 reads as "BAR" because most people think in terms of "bar-only"
+              for that weight rather than the number itself. */}
+          <div className="relative w-full flex flex-wrap justify-center gap-3 mt-6 mb-2">
+            {PLATE_QUICK_PICKS.map((w) => {
+              const active = weight === w
+              const flashing = flashChip === w
+              return (
+                <button key={w} type="button"
+                  onPointerDown={() => setQuick(w)}
+                  className="relative outline-none focus-visible:outline-2 focus-visible:outline-gtl-red"
+                  style={{ touchAction: 'manipulation' }}
+                  aria-label={`Set weight to ${w} pounds`}>
+                  <div className="absolute inset-0 bg-gtl-red-deep"
+                    style={{ clipPath: 'polygon(12% 0%, 100% 0%, 88% 100%, 0% 100%)', transform: 'translate(3px, 3px)' }}
+                    aria-hidden="true" />
+                  <div
+                    className="relative font-display tracking-tight px-5 py-2 text-2xl leading-none transition-all duration-100"
+                    style={{
+                      clipPath: 'polygon(12% 0%, 100% 0%, 88% 100%, 0% 100%)',
+                      background: flashing ? '#ff2a36' : active ? '#d4181f' : '#1a1a1e',
+                      color: active || flashing ? '#ffffff' : '#c8c8c8',
+                      border: '1px solid ' + (active ? '#ff2a36' : '#3a3a42'),
+                      minWidth: '3.5rem',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {w === 45 ? 'BAR' : w}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+
           {/* SET WEIGHT */}
-          <div className="relative w-full mt-8">
+          <div className="relative w-full mt-4">
             {weight > 0 && (
               <div className="absolute -inset-1 pointer-events-none"
                 style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)', animation: 'set-reps-glow 1.8s ease-in-out infinite' }}
