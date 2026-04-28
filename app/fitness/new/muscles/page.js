@@ -593,8 +593,8 @@ export default function MusclesPage() {
     <main ref={mainRef} className={`relative overflow-hidden bg-gtl-void ${isMobile ? 'h-[100dvh] flex flex-col' : 'min-h-screen'}`}>
 {/* Top nav — responsive */}
       <nav
-        className={`relative z-20 shrink-0 flex items-center justify-between ${isMobile ? 'pl-0 pr-4 pb-2' : 'pl-0 pr-8 py-6'}`}
-        style={isMobile ? { paddingTop: 'max(0.75rem, env(safe-area-inset-top))', background: '#280609' } : undefined}
+        className={`${isMobile ? 'absolute top-0 left-0 right-0' : 'relative shrink-0'} z-20 flex items-center justify-between ${isMobile ? 'pl-0 pr-4 pb-2' : 'pl-0 pr-8 py-6'}`}
+        style={isMobile ? { paddingTop: 'max(0.75rem, env(safe-area-inset-top))' } : undefined}
       >
         <RetreatButton href={backHref} />
         <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
@@ -655,7 +655,10 @@ export default function MusclesPage() {
           </div>
 
           {/* Left column — upper body */}
-          <div className="absolute left-1.5 top-0 bottom-0 z-20 flex flex-col justify-between pt-8 pb-40 pointer-events-none">
+          <div
+            className="absolute left-1.5 bottom-0 z-20 flex flex-col justify-between pb-40 pointer-events-none"
+            style={{ top: 'calc(env(safe-area-inset-top, 0px) + 56px)' }}
+          >
             {LEFT_MUSCLES.map(id => {
               const group = MUSCLE_GROUPS.find(g => g.id === id)
               return (
@@ -667,7 +670,10 @@ export default function MusclesPage() {
           </div>
 
           {/* Right column — core + lower */}
-          <div className="absolute right-1.5 top-0 bottom-0 z-20 flex flex-col justify-between pt-8 pb-40 pointer-events-none">
+          <div
+            className="absolute right-1.5 bottom-0 z-20 flex flex-col justify-between pb-40 pointer-events-none"
+            style={{ top: 'calc(env(safe-area-inset-top, 0px) + 56px)' }}
+          >
             {RIGHT_MUSCLES.map(id => {
               const group = MUSCLE_GROUPS.find(g => g.id === id)
               return (
