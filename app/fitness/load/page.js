@@ -344,7 +344,8 @@ function CycleCard({ cycle, index, selected, onSelect }) {
           FORGED {createdStr}
         </div>
 
-        {/* Cycle name — dominant */}
+        {/* Cycle name — dominant. Capped so it can't overlap the absolutely-
+            positioned DEADLINE stamp in the top-right corner. */}
         <h2
           className="font-display text-gtl-chalk leading-none mb-1"
           style={{
@@ -352,6 +353,8 @@ function CycleCard({ cycle, index, selected, onSelect }) {
             textShadow: '3px 3px 0 #070708',
             transform: 'rotate(-1deg)',
             transformOrigin: 'left center',
+            maxWidth: 'calc(100% - 11rem)',
+            wordBreak: 'break-word',
           }}
         >
           {cycle.name}
