@@ -798,10 +798,19 @@ export default function LoadCyclePage() {
   const [fireDest, setFireDest]     = useState('/fitness/new/summary')
   // Latches once skipAll fires so FireTransition.onComplete won't double-route.
   const skippedRef = useRef(false)
+  // Synchronous flag — set on first ACTIVATE/REVIEW so a fast follow-up tap on
+  // the same button skips even if React hasn't committed `fireActive` yet.
+  const fireActiveRef = useRef(false)
   // Stable ref for the destination so the pointerdown listener doesn't have to
   // re-bind each time fireDest changes.
   const fireDestRef = useRef(fireDest)
   useEffect(() => { fireDestRef.current = fireDest }, [fireDest])
+
+  const skipNow = () => {
+    if (skippedRef.current) return
+    skippedRef.current = true
+    router.push(fireDestRef.current)
+  }
 
   useEffect(() => {
     try {
@@ -816,14 +825,10 @@ export default function LoadCyclePage() {
   // per-element handlers; FireTransition itself is pointer-events-none.
   useEffect(() => {
     if (!fireActive) return
-    const handler = () => {
-      if (skippedRef.current) return
-      skippedRef.current = true
-      router.push(fireDestRef.current)
-    }
+    const handler = () => skipNow()
     window.addEventListener('pointerdown', handler, { capture: true })
     return () => window.removeEventListener('pointerdown', handler, { capture: true })
-  }, [fireActive, router])
+  }, [fireActive])
 
   const selectedCycle = cycles.find((c) => c.id === selectedId) ?? null
 
@@ -842,15 +847,22 @@ export default function LoadCyclePage() {
   }
 
   const handleActivate = (cycle) => {
+    // Already firing → this rapid second tap is a skip.
+    if (fireActiveRef.current) { skipNow(); return }
+    fireActiveRef.current = true
     loadCycleIntoStorage(cycle)
     try { localStorage.removeItem(pk('editing-cycle-id')) } catch (_) {}
+    fireDestRef.current = '/fitness/active'  // sync for the listener
     setFireDest('/fitness/active')
     setFireActive(true)
   }
 
   const handleReview = (cycle) => {
+    if (fireActiveRef.current) { skipNow(); return }
+    fireActiveRef.current = true
     loadCycleIntoStorage(cycle)
     try { localStorage.setItem(pk('editing-cycle-id'), cycle.id) } catch (_) {}
+    fireDestRef.current = '/fitness/edit'
     setFireDest('/fitness/edit')
     setFireActive(true)
   }

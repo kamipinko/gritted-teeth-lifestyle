@@ -42,6 +42,11 @@ export default function ProfilePage() {
   const inputRef = useRef(null)
   // Latches once skipAll fires so HeistTransition.onComplete won't double-route.
   const skippedRef = useRef(false)
+  // Synchronous flag — set on first selectProfile so a fast follow-up tap on the
+  // same chip / submit button skips even if React hasn't committed `transitioning`
+  // to state yet (the window pointerdown listener installs in the post-commit
+  // useEffect, so there's a brief window where it isn't yet listening).
+  const transitioningRef = useRef(false)
 
   useEffect(() => {
     try {
@@ -51,22 +56,27 @@ export default function ProfilePage() {
     setReady(true)
   }, [])
 
+  const skipNow = () => {
+    if (skippedRef.current) return
+    skippedRef.current = true
+    router.push(HUB_TARGET)
+  }
+
   // Skip-the-transition: once HeistTransition is active, the next pointerdown
   // anywhere on the screen routes to the hub immediately. Capture-phase so it
   // beats any per-element handlers; HeistTransition itself is pointer-events-none
   // so a normal tap-on-overlay listener wouldn't fire.
   useEffect(() => {
     if (!transitioning) return
-    const handler = () => {
-      if (skippedRef.current) return
-      skippedRef.current = true
-      router.push(HUB_TARGET)
-    }
+    const handler = () => skipNow()
     window.addEventListener('pointerdown', handler, { capture: true })
     return () => window.removeEventListener('pointerdown', handler, { capture: true })
-  }, [transitioning, router])
+  }, [transitioning])
 
   const selectProfile = (name) => {
+    // Already transitioning → this rapid second tap is a skip.
+    if (transitioningRef.current) { skipNow(); return }
+    transitioningRef.current = true
     try {
       localStorage.setItem('gtl-active-profile', name)
     } catch (_) {}
