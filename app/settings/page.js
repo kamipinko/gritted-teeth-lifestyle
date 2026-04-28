@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import RetreatButton from '../../components/RetreatButton'
 import { useSound } from '../../lib/useSound'
+import { BGM_TRACKS, BGM_TRACK_KEY, getCurrentBgmTrack, getBgmTracksByGenre } from '../../lib/bgmTracks'
 
 const KEY_SFX_VOLUME   = 'gtl-sfx-volume'
 const KEY_BG_MUSIC_ON  = 'gtl-bg-music-on'
@@ -123,14 +124,46 @@ export default function SettingsPage() {
   const [sfxVolume, setSfxVolume] = useState(1)
   const [bgMusicOn, setBgMusicOn] = useState(true)
   const [hapticsOn, setHapticsOn] = useState(true)
+  const [bgmTrackId, setBgmTrackId] = useState(null)
 
   useEffect(() => {
     setActiveProfile(typeof window !== 'undefined' ? (localStorage.getItem('gtl-active-profile') || null) : null)
     setSfxVolume(readNumber(KEY_SFX_VOLUME, 1))
     setBgMusicOn(readFlag(KEY_BG_MUSIC_ON, true))
     setHapticsOn(readFlag(KEY_HAPTICS_ON, true))
+    setBgmTrackId(getCurrentBgmTrack().id)
     setReady(true)
   }, [])
+
+  // Shared "play this audio element from the top with the standard fade-in"
+  // helper — used by both the BGM toggle and the track picker so the audio
+  // ramp shape is identical.
+  const playBgmFromTop = (a) => {
+    if (typeof window === 'undefined' || !a) return
+    if (window.__gtlBgMusicFadeInterval) {
+      clearInterval(window.__gtlBgMusicFadeInterval)
+      window.__gtlBgMusicFadeInterval = null
+    }
+    a.volume = 0
+    const p = a.play()
+    if (p && typeof p.catch === 'function') {
+      p.catch(() => {
+        try { a.load(); a.play().catch(() => {}) } catch {}
+      })
+    }
+    const TARGET_VOL = 0.04
+    const FADE_MS = 1500
+    const steps = FADE_MS / 50
+    const increment = TARGET_VOL / steps
+    window.__gtlBgMusicFadeInterval = setInterval(() => {
+      const v = Math.min(TARGET_VOL, a.volume + increment)
+      a.volume = v
+      if (v >= TARGET_VOL) {
+        clearInterval(window.__gtlBgMusicFadeInterval)
+        window.__gtlBgMusicFadeInterval = null
+      }
+    }, 50)
+  }
 
   const handleSfxVolume = (v) => {
     setSfxVolume(v)
@@ -143,38 +176,45 @@ export default function SettingsPage() {
     writeRaw(KEY_BG_MUSIC_ON, next ? '1' : '0')
     if (typeof window !== 'undefined' && window.__gtlBgMusic) {
       const a = window.__gtlBgMusic
-      // Always cut any prior fade-in interval so toggling rapidly doesn't
-      // leave a stale interval cranking volume back up after we paused.
+      if (window.__gtlBgMusicFadeInterval) {
+        clearInterval(window.__gtlBgMusicFadeInterval)
+        window.__gtlBgMusicFadeInterval = null
+      }
+      try { a.pause(); a.currentTime = 0; if (!next) a.volume = 0 } catch {}
+      if (next) playBgmFromTop(a)
+    }
+    play(next ? 'option-select' : 'menu-close')
+  }
+
+  const handleBgmTrackPick = (trackId) => {
+    if (trackId === bgmTrackId) {
+      // Re-tapping the active chip re-starts it from the top (preview).
+      play('option-select')
+      if (typeof window !== 'undefined' && window.__gtlBgMusic && bgMusicOn) {
+        playBgmFromTop(window.__gtlBgMusic)
+      }
+      return
+    }
+    setBgmTrackId(trackId)
+    writeRaw(BGM_TRACK_KEY, trackId)
+    const track = BGM_TRACKS.find(t => t.id === trackId)
+    if (!track) return
+    if (typeof window !== 'undefined' && window.__gtlBgMusic) {
+      const a = window.__gtlBgMusic
+      // Cut any prior fade so the swap can't be overwritten by a stale tick.
       if (window.__gtlBgMusicFadeInterval) {
         clearInterval(window.__gtlBgMusicFadeInterval)
         window.__gtlBgMusicFadeInterval = null
       }
       try { a.pause(); a.currentTime = 0 } catch {}
-      if (next) {
-        // Restart from the top with the same fade-in shape used on the home
-        // page's GateScreen tap (TARGET_VOL = 0.04, FADE_MS = 1500).
-        a.volume = 0
-        const playPromise = a.play()
-        if (playPromise && typeof playPromise.catch === 'function') {
-          playPromise.catch(() => {
-            try { a.load(); a.play().catch(() => {}) } catch {}
-          })
-        }
-        const TARGET_VOL = 0.04
-        const FADE_MS = 1500
-        const steps = FADE_MS / 50
-        const increment = TARGET_VOL / steps
-        window.__gtlBgMusicFadeInterval = setInterval(() => {
-          const v = Math.min(TARGET_VOL, a.volume + increment)
-          a.volume = v
-          if (v >= TARGET_VOL) {
-            clearInterval(window.__gtlBgMusicFadeInterval)
-            window.__gtlBgMusicFadeInterval = null
-          }
-        }, 50)
-      }
+      // Swap source. setting src triggers an implicit load() but we call it
+      // explicitly so iOS PWA reliably refreshes the buffer.
+      a.src = track.src
+      try { a.load() } catch {}
+      window.__gtlBgMusicTrackId = track.id
+      if (bgMusicOn) playBgmFromTop(a)
     }
-    play(next ? 'option-select' : 'menu-close')
+    play('option-select')
   }
 
   const handleHaptics = (next) => {
@@ -281,6 +321,58 @@ export default function SettingsPage() {
             <div className="flex flex-col gap-3">
               {ready && <VolumeSlider value={sfxVolume} onChange={handleSfxVolume} onPreview={previewSfx} />}
               {ready && <Toggle label="BACKGROUND MUSIC" value={bgMusicOn} onChange={handleBgMusic} />}
+            </div>
+          </div>
+
+          {/* BGM TRACK PICKER */}
+          <div className="mb-8">
+            <div className="flex items-center gap-4 mb-3">
+              <div className="h-px w-8 bg-gtl-edge" />
+              <span className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">BGM TRACK</span>
+              <div className="h-px flex-1 bg-gtl-edge" />
+            </div>
+            <p className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-ash mb-3">
+              TAP A TRACK TO SWITCH · TAP THE ACTIVE ONE TO RESTART
+            </p>
+            <div className="flex flex-col gap-5">
+              {ready && getBgmTracksByGenre().map(({ genre, tracks }) => (
+                <div key={genre} className="flex flex-col gap-2">
+                  <div className="flex items-center gap-3 mb-1">
+                    <div className="h-px w-4 bg-gtl-red/60" />
+                    <span className="font-mono text-[8px] tracking-[0.45em] uppercase text-gtl-red/80">{genre}</span>
+                    <div className="h-px flex-1 bg-gtl-edge" />
+                  </div>
+                  {tracks.map(track => {
+                    const active = track.id === bgmTrackId
+                    return (
+                      <button
+                        key={track.id}
+                        type="button"
+                        onClick={() => handleBgmTrackPick(track.id)}
+                        className={`group w-full flex items-center justify-between gap-4 px-5 py-4 border transition-colors duration-200 outline-none
+                          ${active ? 'bg-gtl-red border-transparent' : 'bg-gtl-surface border-gtl-edge [@media(hover:hover)]:hover:border-gtl-red'}`}
+                        style={{ clipPath: 'polygon(2% 0%, 100% 0%, 98% 100%, 0% 100%)' }}
+                        aria-pressed={active}
+                      >
+                        <div className="flex flex-col items-start gap-1 min-w-0">
+                          <span className={`font-display text-xl leading-none truncate
+                            ${active ? 'text-gtl-paper' : 'text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper'}`}>
+                            {track.title}
+                          </span>
+                          <span className={`font-mono text-[9px] tracking-[0.3em] uppercase truncate
+                            ${active ? 'text-gtl-paper/70' : 'text-gtl-ash'}`}>
+                            {track.subtitle}
+                          </span>
+                        </div>
+                        <span aria-hidden="true" className={`font-display text-base leading-none shrink-0
+                          ${active ? 'text-gtl-paper' : 'text-gtl-red'}`}>
+                          {active ? '◆' : '➤︎'}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              ))}
             </div>
           </div>
 

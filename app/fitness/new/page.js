@@ -469,12 +469,13 @@ export default function NewCycleNamePage() {
     router.push(NEXT_TARGET)
   }
 
-  // Skip-the-cascade: once the user has committed (brand or fire), the next
-  // pointer/touch input anywhere routes to /fitness/new/muscles immediately.
-  // Excludes RetreatButton (data-retreat) so retreat goes back instead of
-  // fast-forwarding. pointerdown + touchstart for iOS PWA reliability.
+  // Skip-the-cascade: once the user has committed (brand+fire on tap, OR
+  // HeistTransition on swipe-forge), the next pointer/touch input anywhere
+  // routes to /fitness/new/muscles immediately. Excludes RetreatButton
+  // (data-retreat) so retreat goes back instead of fast-forwarding.
+  // pointerdown + touchstart for iOS PWA reliability.
   useEffect(() => {
-    if (!isBranding && !isFireActive) return
+    if (!isBranding && !isFireActive && !quickHeistActive) return
     const handler = (e) => {
       if (e.target?.closest?.('[data-retreat]')) return
       skipNow()
@@ -485,7 +486,7 @@ export default function NewCycleNamePage() {
       window.removeEventListener('pointerdown', handler, { capture: true })
       window.removeEventListener('touchstart',  handler, { capture: true })
     }
-  }, [isBranding, isFireActive])
+  }, [isBranding, isFireActive, quickHeistActive])
 
   /**
    * triggerImpact — fired by the input whenever a new character is added.
@@ -721,7 +722,7 @@ export default function NewCycleNamePage() {
       <FireTransition active={isFireActive} onComplete={handleFireComplete} />
       {/* First hop on the quick-forge swipe — uses the same HeistTransition the
           home page uses (default 'GRIT THOSE TEETH' red-slash overlay). */}
-      <HeistTransition active={quickHeistActive} onComplete={() => router.push(NEXT_TARGET)} />
+      <HeistTransition active={quickHeistActive} onComplete={() => { if (!skippedRef.current) router.push(NEXT_TARGET) }} />
       <SpeedLines active={quickForgeRunning} />
     </main>
   )

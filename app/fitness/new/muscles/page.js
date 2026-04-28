@@ -489,6 +489,28 @@ export default function MusclesPage() {
   const { play } = useSound()
   const mainRef = useRef(null)
   const router = useRouter()
+  const NEXT_TARGET = '/fitness/new/branded'
+  const skippedRef = useRef(false)
+  const skipNow = () => {
+    if (skippedRef.current) return
+    skippedRef.current = true
+    router.push(NEXT_TARGET)
+  }
+  // Window pointerdown+touchstart listener while FireTransition is active —
+  // tap anywhere routes immediately. data-retreat excluded for back nav.
+  useEffect(() => {
+    if (!fireActive && !quickHeistActive) return
+    const handler = (e) => {
+      if (e.target?.closest?.('[data-retreat]')) return
+      skipNow()
+    }
+    window.addEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
+  }, [fireActive, quickHeistActive])
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)')
@@ -968,10 +990,13 @@ export default function MusclesPage() {
       {/* Fire transition — erupts on confirm, navigates on complete */}
       <FireTransition
         active={fireActive}
-        onComplete={() => router.push('/fitness/new/branded')}
+        onComplete={() => { if (!skippedRef.current) router.push(NEXT_TARGET) }}
       />
       {/* Red slash wipe — quick-forge swipe path only (no title text) */}
-      <SlashWipe active={quickHeistActive} onComplete={() => router.push('/fitness/new/branded')} />
+      <SlashWipe
+        active={quickHeistActive}
+        onComplete={() => { if (!skippedRef.current) router.push(NEXT_TARGET) }}
+      />
       <SpeedLines active={quickForgeRunning} />
 
       {/* Fire fade-in — picks up where FireTransition left off so the
