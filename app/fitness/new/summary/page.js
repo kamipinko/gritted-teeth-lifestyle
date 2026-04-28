@@ -2627,10 +2627,8 @@ export default function SummaryPage() {
   // quick-forge chain we want /fitness/active so the deep-launch effect
   // there continues to the first set's weight popup.
   const fireDestRef = useRef('/fitness/load')
-  // Skip-the-fire-transition: only on the SWIPE-FORGE path. The tap-ETCH
-  // path's FireTransition (yakiire) plays through unskippable. Swipe-forge
-  // sets fireDestRef.current to '/fitness/active' (vs tap's '/fitness/load')
-  // so we can distinguish without storing extra state.
+  // Skip-the-fire-transition: any tap routes immediately to fireDestRef
+  // (swipe-forge → /fitness/active, tap-ETCH → /fitness/load).
   const skippedRef = useRef(false)
   const skipNow = () => {
     if (skippedRef.current) return
@@ -2639,7 +2637,6 @@ export default function SummaryPage() {
   }
   useEffect(() => {
     if (!fireActive) return
-    if (fireDestRef.current !== '/fitness/active') return  // tap-ETCH path: don't install skip listener
     const handler = (e) => {
       if (e.target?.closest?.('[data-retreat]')) return
       skipNow()
@@ -3624,13 +3621,7 @@ export default function SummaryPage() {
       <FireFadeIn duration={900} />
       <FireTransition
         active={fireActive}
-        onComplete={() => {
-          // skippedRef only ever set on the swipe-forge path (skip listener
-          // is gated on fireDestRef.current === '/fitness/active'). tap-ETCH
-          // path always reaches onComplete naturally.
-          if (skippedRef.current) return
-          router.push(fireDestRef.current)
-        }}
+        onComplete={() => { if (!skippedRef.current) router.push(fireDestRef.current) }}
       />
       <SpeedLines active={quickForgeRunning && !fireActive} />
     </main>

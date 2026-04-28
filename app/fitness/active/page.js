@@ -1301,6 +1301,21 @@ function CustomMoveInput({ value, onChange, onConfirm, onCancel, onCharAdded }) 
 function ExercisePanel({ muscleId, dayIso, originRect, onClose, cycleId }) {
   const { play } = useSound()
   const [closing, setClosing]           = useState(false)
+  // Entrance skip — first tap snaps the panel zoom-in + cascade to settled.
+  const [entranceSkipped, setEntranceSkipped] = useState(false)
+  useEffect(() => {
+    if (entranceSkipped || closing) return
+    const handler = (e) => {
+      if (e.target?.closest?.('[data-retreat]')) return
+      setEntranceSkipped(true)
+    }
+    window.addEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
+  }, [entranceSkipped, closing])
   const [reps, setReps]                 = useState({})
   const [weights, setWeights]           = useState({})
   const [setCounts, setSetCounts]       = useState({}) // exerciseName → number of sets (default 2)
@@ -1450,7 +1465,18 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose, cycleId }) {
   }, [handleClose])
 
   return (
+    <>
+    {/* Skip ExercisePanel entrance cascade on first tap. */}
+    {entranceSkipped && !closing && (
+      <style>{`
+        [data-exercise-panel-skip-target], [data-exercise-panel-skip-target] * {
+          animation-duration: 1ms !important;
+          animation-delay: 0ms !important;
+        }
+      `}</style>
+    )}
     <div
+      data-exercise-panel-skip-target
       className="fixed inset-0 z-[9995] bg-gtl-void overflow-hidden"
       style={{
         transformOrigin: `${originX} ${originY}`,
@@ -1725,6 +1751,7 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose, cycleId }) {
       </div>
     </div>
     </div>
+    </>
   )
 }
 
