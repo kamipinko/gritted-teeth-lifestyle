@@ -112,10 +112,10 @@ module.exports = {
         // The landing happens at ~70% of the animation; that's where the
         // sound + screen shake should be timed to fire.
         'char-stamp': {
-          /* Invisible during the giant-scale shrink — character only appears
-             at the slam-down moment (~70%, scale 1.5) and rides out the bounce. */
           '0%':   { transform: 'scale(38)', opacity: '0', filter: 'blur(20px)' },
-          '65%':  { transform: 'scale(2.4)', opacity: '0', filter: 'blur(2px)' },
+          '6%':   { transform: 'scale(34)', opacity: '1', filter: 'blur(16px)' },
+          '25%':  { transform: 'scale(18)', opacity: '1', filter: 'blur(8px)' },
+          '50%':  { transform: 'scale(6)',  opacity: '1', filter: 'blur(2px)' },
           '70%':  { transform: 'scale(1.5)', opacity: '1', filter: 'blur(0)' },
           '82%':  { transform: 'scale(0.82)', opacity: '1', filter: 'blur(0)' },
           '92%':  { transform: 'scale(1.06)', opacity: '1', filter: 'blur(0)' },
