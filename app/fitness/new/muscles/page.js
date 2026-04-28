@@ -972,7 +972,7 @@ export default function MusclesPage() {
       />
       {/* Red slash wipe — quick-forge swipe path only (no title text) */}
       <SlashWipe active={quickHeistActive} onComplete={() => router.push('/fitness/new/branded')} />
-      <SpeedLines active={quickForgeRunning && !quickHeistActive} />
+      <SpeedLines active={quickForgeRunning} />
 
       {/* Fire fade-in — picks up where FireTransition left off so the
           source-to-destination cut feels continuous. */}

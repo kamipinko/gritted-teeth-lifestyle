@@ -679,7 +679,7 @@ export default function NewCycleNamePage() {
       {/* First hop on the quick-forge swipe — uses the same HeistTransition the
           home page uses (default 'GRIT THOSE TEETH' red-slash overlay). */}
       <HeistTransition active={quickHeistActive} onComplete={() => router.push(NEXT_TARGET)} />
-      <SpeedLines active={quickForgeRunning && !quickHeistActive} />
+      <SpeedLines active={quickForgeRunning} />
     </main>
   )
 }

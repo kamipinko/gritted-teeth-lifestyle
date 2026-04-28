@@ -856,7 +856,7 @@ export default function SchedulePage() {
         onComplete={() => router.push('/fitness/new/summary')}
       />
       <SlashWipe active={quickHeistActive} onComplete={() => router.push('/fitness/new/summary')} />
-      <SpeedLines active={quickForgeRunning && !quickHeistActive} />
+      <SpeedLines active={quickForgeRunning} />
     </main>
   )
 }
