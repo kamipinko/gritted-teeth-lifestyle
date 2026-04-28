@@ -133,16 +133,25 @@ function CallingCardReveal({ kind }) {
           16%  { opacity: 1; }
           100% { opacity: 1; }
         }
-        @keyframes card-reveal-pop {
-          0%   { opacity: 0; transform: scale(0.85) translateY(20px); }
-          50%  { opacity: 1; transform: scale(1.04) translateY(0); }
-          100% { opacity: 1; transform: scale(1) translateY(0); }
+        /* Phantom-Thieves throw — card flies in diagonally from off-screen
+           top-right while spinning twice CCW, decelerates as it approaches
+           the center, lands with a tiny jitter and settles flat. The card's
+           own rotate-2 tilt is applied by CallingCard's wrapper inside this
+           transform, so the keyframe finishes at rotate(0) to keep the
+           final tilt clean. */
+        @keyframes card-spin-throw {
+          0%   { opacity: 0; transform: translate(140vw, -90vh) rotate(-720deg) scale(0.55); }
+          15%  { opacity: 1; }
+          70%  { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1.05); }
+          80%  { transform: translate(-6px, 3px)  rotate(3deg)    scale(0.97); }
+          90%  { transform: translate(2px, -1px)  rotate(-1.5deg) scale(1.02); }
+          100% { transform: translate(0, 0)       rotate(0deg)    scale(1); }
         }
       `}</style>
       <div
         style={{
           width: '100%', maxWidth: '20rem',
-          animation: 'card-reveal-pop 600ms cubic-bezier(0.2, 1.2, 0.4, 1) forwards',
+          animation: 'card-spin-throw 750ms cubic-bezier(0.16, 1, 0.3, 1) forwards',
         }}
       >
         <CallingCard
