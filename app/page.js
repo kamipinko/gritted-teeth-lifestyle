@@ -76,7 +76,6 @@ function startBgMusic() {
   }, 50)
 }
 
-const SWIPE_THRESHOLD = 50      // px — minimum vertical drag to register a swipe
 const FLASH_DURATION  = 1000    // ms — calling-card hold time before transition kicks in
 
 // CallingCard reveal — wraps the real CallingCard component (the one the original
@@ -157,7 +156,6 @@ export default function Home() {
   const [phase, setPhase] = useState('gate')
   const [transitionTarget, setTransitionTarget] = useState('/fitness')
   const [transitioning, setTransitioning] = useState(false)
-  const touchStartY = useRef(null)
   // Holds the FLASH_DURATION → setTransitioning timer so a skip tap can clear it.
   const flashTimerRef = useRef(null)
   // Latches once skipAll fires so we don't double-route from a stale timer or
@@ -190,26 +188,6 @@ export default function Home() {
     router.push(targetRef.current)
   }
 
-  const handleTouchStart = (e) => {
-    if (phase !== 'gate') return
-    touchStartY.current = e.touches[0]?.clientY ?? null
-  }
-  const handleTouchEnd = (e) => {
-    if (phase !== 'gate' || touchStartY.current == null) return
-    const endY = e.changedTouches[0]?.clientY ?? touchStartY.current
-    const dy = endY - touchStartY.current
-    touchStartY.current = null
-    if (dy < -SWIPE_THRESHOLD) {
-      startBgMusic()        // synchronous to the touchend gesture — iOS PWA audio autoplay
-      activate('fitness')
-    } else if (dy > SWIPE_THRESHOLD) {
-      startBgMusic()
-      activate('nutrition')
-    }
-    // Otherwise it's a tap (small dy) — GateScreen's onClick handles fallback +
-    // calls startBgMusic via the onMusicStart prop, also inside the gesture.
-  }
-
   // Keyboard shortcut: arrow up = fitness, arrow down = nutrition (desktop).
   useEffect(() => {
     if (phase !== 'gate') return
@@ -238,9 +216,14 @@ export default function Home() {
     router.push(transitionTarget)
   }
 
-  // Tap fallback: GateScreen's onClick drives this via setPhase('out')+onEnter.
-  // Plain tap (no swipe) defaults to fitness — most-used target.
-  const handleGateTapEnter = () => activate('fitness')
+  // GateScreen owns its own tap + swipe input. onCommit fires synchronously
+  // (so we have the target ref before exit slashes start, in case the user
+  // double-taps to skip mid-exit). onEnter fires after EXIT_MS once the
+  // gate-exit slashes finish.
+  const handleGateCommit = (kind) => {
+    targetRef.current = kind === 'fitness' ? '/fitness' : '/diet'
+  }
+  const handleGateEnter = (kind) => activate(kind)
 
   return (
     // Flow-based wrapper — min-h:100svh + bg-gtl-void matches the original c18b728
@@ -251,14 +234,13 @@ export default function Home() {
     // stale on the first iOS PWA mount, leaving a bottom-padding band until the
     // page re-renders. svh is locked at parse time — same race-free outcome.
     <main
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
       className="relative overflow-hidden"
       style={{ minHeight: '100%', background: '#280609', isolation: 'isolate' }}
     >
       {phase === 'gate' && (
         <GateScreen
-          onEnter={handleGateTapEnter}
+          onEnter={handleGateEnter}
+          onCommit={handleGateCommit}
           onMusicStart={startBgMusic}
           onSkip={skipAll}
           swipeHintLabels={{ top: 'SWIPE UP FOR FITNESS', bottom: 'SWIPE DOWN FOR NUTRITION' }}

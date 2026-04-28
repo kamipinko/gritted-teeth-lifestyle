@@ -5,12 +5,14 @@ import { useSound } from '../lib/useSound'
 // Slashes take 500ms + 140ms stagger = 640ms total.
 // Exit at 600ms — slashes are 95%+ across, seamless handoff to gate-reveal.
 const EXIT_MS = 600
+const SWIPE_THRESHOLD = 50
 
-export default function GateScreen({ onEnter, onMusicStart, onSkip, swipeHintLabels }) {
+export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, swipeHintLabels }) {
   const { play } = useSound()
   const [phase, setPhase] = useState('pre')
   // pre → in → idle → out
   const exitTimerRef = useRef(null)
+  const touchStartY = useRef(null)
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase('in'), 60)
@@ -21,13 +23,10 @@ export default function GateScreen({ onEnter, onMusicStart, onSkip, swipeHintLab
     }
   }, [])
 
-  const handleClick = () => {
-    // Second tap during exit slashes → skip the rest of the cascade.
-    if (phase === 'out') {
-      if (exitTimerRef.current) clearTimeout(exitTimerRef.current)
-      if (onSkip) onSkip()
-      return
-    }
+  // Single commit path used by both tap (defaults to fitness) and swipe
+  // (direction → fitness/nutrition). Drives gate-exit slashes uniformly so
+  // the user always gets the chance to second-tap to skip.
+  const commit = (kind) => {
     if (phase !== 'idle') return
     // Fire bg music start SYNCHRONOUSLY inside the user-gesture handler. iOS PWA
     // blocks audio.play() outside the synchronous click context — anything called
@@ -35,8 +34,35 @@ export default function GateScreen({ onEnter, onMusicStart, onSkip, swipeHintLab
     // rejects silently.
     if (onMusicStart) onMusicStart()
     play('brand-confirm')
+    if (onCommit) onCommit(kind)  // sync, so parent can stash target before exit slashes start
     setPhase('out')
-    exitTimerRef.current = setTimeout(onEnter, EXIT_MS)
+    exitTimerRef.current = setTimeout(() => onEnter && onEnter(kind), EXIT_MS)
+  }
+
+  // Any input during 'out' (tap OR swipe) skips the rest of the cascade.
+  const skipFromOut = () => {
+    if (exitTimerRef.current) clearTimeout(exitTimerRef.current)
+    if (onSkip) onSkip()
+  }
+
+  const handleClick = () => {
+    if (phase === 'out') { skipFromOut(); return }
+    commit('fitness')  // plain tap defaults to fitness
+  }
+
+  const handleTouchStart = (e) => {
+    touchStartY.current = e.touches[0]?.clientY ?? null
+  }
+  const handleTouchEnd = (e) => {
+    if (touchStartY.current == null) return
+    const endY = e.changedTouches[0]?.clientY ?? touchStartY.current
+    const dy = endY - touchStartY.current
+    touchStartY.current = null
+    const isSwipe = Math.abs(dy) > SWIPE_THRESHOLD
+    if (phase === 'out' && isSwipe) { skipFromOut(); return }
+    if (dy < -SWIPE_THRESHOLD)      commit('fitness')
+    else if (dy > SWIPE_THRESHOLD)  commit('nutrition')
+    // Otherwise it's a tap — click event fires next, handleClick takes it.
   }
 
   const active = phase !== 'pre'
@@ -46,6 +72,8 @@ export default function GateScreen({ onEnter, onMusicStart, onSkip, swipeHintLab
     <button
       type="button"
       onClick={handleClick}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       aria-label="Enter Gritted Teeth Lifestyle"
       style={{
         // Anchored to the parent <main> (flow-based, min-h:100svh) instead of
