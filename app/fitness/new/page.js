@@ -226,6 +226,22 @@ export default function NewCycleNamePage() {
   const [isFireActive, setIsFireActive] = useState(false)
   const mainRef = useRef(null)
   const { play } = useSound()
+  // Synchronous flag set on first FORGE tap so rapid follow-up taps short-circuit
+  // to skipNow before React commits isBranding.
+  const brandingRef = useRef(false)
+  // Latches once skipNow fires so FireTransition.onComplete + the brand→fire
+  // setTimeout don't double-route after we've already navigated.
+  const skippedRef = useRef(false)
+  // Holds the brand→fire timeout so skipNow can clear it.
+  const fireKickoffTimerRef = useRef(null)
+  const NEXT_TARGET = '/fitness/new/muscles'
+
+  const skipNow = () => {
+    if (skippedRef.current) return
+    skippedRef.current = true
+    if (fireKickoffTimerRef.current) clearTimeout(fireKickoffTimerRef.current)
+    router.push(NEXT_TARGET)
+  }
 
   // Pre-fill with the cycle's existing name when editing, otherwise random
   useEffect(() => {
@@ -251,8 +267,11 @@ export default function NewCycleNamePage() {
    * stub destination after the brand has cooled.
    */
   const triggerBrandConfirm = () => {
-    if (isBranding) return
+    // Already in brand or fire phase → this rapid follow-up tap skips the
+    // remaining cooldown + transition and routes straight to /fitness/new/muscles.
+    if (brandingRef.current) { skipNow(); return }
     if (name.trim().length === 0) return
+    brandingRef.current = true
     setIsBranding(true)
     try { localStorage.setItem(pk('cycle-name'), name.trim()) } catch (_) {}
     play('brand-confirm')
@@ -276,7 +295,7 @@ export default function NewCycleNamePage() {
     }
     // After the brand cools, fire the fire transition. It then navigates.
     const brandDuration = name.length * 20 + 1650
-    setTimeout(() => {
+    fireKickoffTimerRef.current = setTimeout(() => {
       setIsFireActive(true)
     }, brandDuration)
   }
@@ -312,8 +331,27 @@ export default function NewCycleNamePage() {
 
   /** Called from FireTransition when its sequence peaks — navigate now. */
   const handleFireComplete = () => {
-    router.push('/fitness/new/muscles')
+    if (skippedRef.current) return
+    router.push(NEXT_TARGET)
   }
+
+  // Skip-the-cascade: once the user has committed (brand or fire), the next
+  // pointer/touch input anywhere routes to /fitness/new/muscles immediately.
+  // Excludes RetreatButton (data-retreat) so retreat goes back instead of
+  // fast-forwarding. pointerdown + touchstart for iOS PWA reliability.
+  useEffect(() => {
+    if (!isBranding && !isFireActive) return
+    const handler = (e) => {
+      if (e.target?.closest?.('[data-retreat]')) return
+      skipNow()
+    }
+    window.addEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
+  }, [isBranding, isFireActive])
 
   /**
    * triggerImpact — fired by the input whenever a new character is added.
@@ -524,13 +562,13 @@ export default function NewCycleNamePage() {
                 text-3xl text-gtl-paper
                 transition-all duration-200 ease-out
                 disabled:opacity-30 disabled:cursor-not-allowed
-                enabled:hover:scale-[1.04] enabled:active:scale-[0.98]
+                enabled:[@media(hover:hover)]:hover:scale-[1.04] enabled:active:scale-[0.98]
                 enabled:bg-gtl-red-bright bg-gtl-red
                 shadow-[4px_4px_0_#070708]
-                enabled:hover:shadow-[6px_6px_0_#070708]
+                enabled:[@media(hover:hover)]:hover:shadow-[6px_6px_0_#070708]
                 enabled:active:shadow-[2px_2px_0_#070708]
               `}
-              style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)' }}
+              style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)', touchAction: 'manipulation' }}
             >
               FORGE
             </button>
