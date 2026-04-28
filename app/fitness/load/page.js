@@ -265,16 +265,81 @@ function CycleCard({ cycle, index, selected, onSelect }) {
           {cycle.name}
         </h2>
 
-        {/* Cycle index + deadline stamp — pulled out of absolute top-right
-            and into flow under the title. */}
-        <div className="flex flex-col items-end gap-2 mb-4">
+        {/* Top-meta row: FORGED date on left, CYCLE / 0X on right. */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="font-mono text-[9px] tracking-[0.35em] uppercase text-gtl-smoke">
+            FORGED {createdStr}
+          </div>
           <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
             CYCLE / {String(index + 1).padStart(2, '0')}
           </div>
+        </div>
+
+        {/* Silhouette + deadline stamp row — silhouette left, stamp right. */}
+        <div className="flex items-center justify-between gap-4 mb-4">
+          {/* Silhouette: wakizashi (1–6 days, tinted red) / ouroboros (7) /
+              drill (8–13) / scroll (15+). Wakizashi uses CSS mask-image so we
+              can recolor the silhouette to GTL red without altering the SVG. */}
+          <div className="shrink-0">
+            {(() => {
+              const n = cycle.days?.length || 0
+              if (n >= 1 && n <= 6) {
+                return (
+                  <div
+                    aria-hidden="true"
+                    className="select-none pointer-events-none"
+                    style={{
+                      width: '120px',
+                      height: '120px',
+                      backgroundColor: '#d4181f',
+                      WebkitMaskImage: 'url(/reference/wakizashi_solid_silhouette.svg)',
+                      maskImage: 'url(/reference/wakizashi_solid_silhouette.svg)',
+                      WebkitMaskRepeat: 'no-repeat',
+                      maskRepeat: 'no-repeat',
+                      WebkitMaskSize: 'contain',
+                      maskSize: 'contain',
+                      WebkitMaskPosition: 'left center',
+                      maskPosition: 'left center',
+                      opacity: 0.9,
+                    }}
+                  />
+                )
+              }
+              if (n === 7) {
+                return (
+                  <img src="/reference/ouroboros.svg" alt=""
+                    className="opacity-90 select-none pointer-events-none"
+                    style={{ height: '120px', width: 'auto', maxWidth: '140px' }}
+                    draggable={false} />
+                )
+              }
+              if (n >= 8 && n <= 13) {
+                return (
+                  <img src="/reference/drill.svg" alt=""
+                    className="opacity-90 select-none pointer-events-none"
+                    style={{ height: '120px', width: 'auto', maxWidth: '140px' }}
+                    draggable={false} />
+                )
+              }
+              if (n >= 15) {
+                return (
+                  <div style={{ width: '110px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                    <img src="/reference/scroll.svg" alt=""
+                      className="opacity-90 select-none pointer-events-none"
+                      style={{ width: '120px', height: '95px', transform: 'rotate(-90deg)' }}
+                      draggable={false} />
+                  </div>
+                )
+              }
+              return null
+            })()}
+          </div>
+
+          {/* Deadline stamp */}
           {lastDay && (() => {
             const d = parseDate(lastDay)
             return (
-              <div className="relative" style={{ transform: 'rotate(-1.5deg)' }}>
+              <div className="relative shrink-0" style={{ transform: 'rotate(-1.5deg)' }}>
                 {/* Shadow slab */}
                 <div
                   className="absolute inset-0 bg-gtl-red-deep"
@@ -305,7 +370,6 @@ function CycleCard({ cycle, index, selected, onSelect }) {
                         to   { transform: rotate(360deg); }
                       }
                     `}</style>
-                    {/* Spinning black square */}
                     <div
                       className="absolute"
                       style={{
@@ -316,7 +380,6 @@ function CycleCard({ cycle, index, selected, onSelect }) {
                       }}
                       aria-hidden="true"
                     />
-                    {/* Day number on top */}
                     <div className="relative font-display text-gtl-paper leading-none"
                          style={{ fontSize: '5rem', textShadow: '4px 4px 0 #070708', lineHeight: 1, zIndex: 1 }}>
                       {String(d.getDate()).padStart(2, '0')}
@@ -326,7 +389,6 @@ function CycleCard({ cycle, index, selected, onSelect }) {
                        style={{ fontSize: '0.85rem', textShadow: '1px 1px 0 #070708' }}>
                     {d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()} · {d.getFullYear()}
                   </div>
-                  {/* X stamp overlay — rendered after date so it sits on top */}
                   {bloodVisible && (
                     <div
                       className="absolute inset-0 flex items-center justify-center pointer-events-none"
@@ -354,76 +416,6 @@ function CycleCard({ cycle, index, selected, onSelect }) {
             )
           })()}
         </div>
-
-        {/* Created date */}
-        <div className="font-mono text-[9px] tracking-[0.35em] uppercase text-gtl-smoke mb-3">
-          FORGED {createdStr}
-        </div>
-
-        {/* Cycle silhouette — wakizashi (1–6 days, tinted red), ouroboros (7),
-            drill (8–13), scroll (15+). For the wakizashi we use mask-image so
-            we can recolor the silhouette to GTL red without altering the SVG. */}
-        {(() => {
-          const n = cycle.days?.length || 0
-          if (n >= 1 && n <= 6) {
-            return (
-              <div
-                aria-hidden="true"
-                className="select-none pointer-events-none mt-3"
-                style={{
-                  width: '120px',
-                  height: '120px',
-                  backgroundColor: '#d4181f',
-                  WebkitMaskImage: 'url(/reference/wakizashi_solid_silhouette.svg)',
-                  maskImage: 'url(/reference/wakizashi_solid_silhouette.svg)',
-                  WebkitMaskRepeat: 'no-repeat',
-                  maskRepeat: 'no-repeat',
-                  WebkitMaskSize: 'contain',
-                  maskSize: 'contain',
-                  WebkitMaskPosition: 'left center',
-                  maskPosition: 'left center',
-                  opacity: 0.9,
-                }}
-              />
-            )
-          }
-          if (n === 7) {
-            return (
-              <img
-                src="/reference/ouroboros.svg"
-                alt=""
-                className="opacity-90 select-none pointer-events-none mt-3"
-                style={{ height: '120px', width: 'auto', maxWidth: '140px' }}
-                draggable={false}
-              />
-            )
-          }
-          if (n >= 8 && n <= 13) {
-            return (
-              <img
-                src="/reference/drill.svg"
-                alt=""
-                className="opacity-90 select-none pointer-events-none mt-3"
-                style={{ height: '120px', width: 'auto', maxWidth: '140px' }}
-                draggable={false}
-              />
-            )
-          }
-          if (n >= 15) {
-            return (
-              <div className="mt-3" style={{ width: '110px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-                <img
-                  src="/reference/scroll.svg"
-                  alt=""
-                  className="opacity-90 select-none pointer-events-none"
-                  style={{ width: '120px', height: '95px', transform: 'rotate(-90deg)' }}
-                  draggable={false}
-                />
-              </div>
-            )
-          }
-          return null
-        })()}
 
         {/* Day progress chips — slanted parallelogram cells per day; red X
             overlay on completed days. Sit below the silhouette. */}
