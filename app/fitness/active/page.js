@@ -1424,22 +1424,20 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose, cycleId }) {
         className="relative z-10 h-full flex flex-col px-10 pb-8 overflow-y-auto"
         style={{ animation: 'focus-content-in 280ms 250ms ease-out both', paddingTop: 'max(2rem, env(safe-area-inset-top))' }}
       >
-        {/* Back */}
+        {/* Back — three red chevrons (matches RetreatButton style) */}
         <button
           type="button"
           onClick={handleClose}
-          className="group self-start relative inline-flex items-center mb-8 outline-none
+          aria-label="Back"
+          className="group self-start inline-flex items-center mb-8 px-3 py-3 outline-none scale-95 origin-left
             focus-visible:outline-2 focus-visible:outline-gtl-red shrink-0"
+          style={{ touchAction: 'manipulation' }}
         >
-          <div
-            className="absolute inset-0 -inset-x-2 bg-gtl-edge opacity-50 group-hover:bg-gtl-red group-hover:opacity-100 transition-all duration-300"
-            style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
-            aria-hidden="true"
-          />
-          <div className="relative flex items-center gap-3 px-4 py-2">
-            <span className="font-display text-base text-gtl-red group-hover:text-gtl-paper group-hover:-translate-x-1 transition-all duration-300 leading-none">◀︎</span>
-            <span className="font-mono text-[10px] tracking-[0.3em] uppercase font-bold text-gtl-chalk group-hover:text-gtl-paper transition-colors duration-300">BACK</span>
-          </div>
+          <span className="flex items-center gap-0.5 leading-none font-display text-2xl select-none">
+            <span aria-hidden="true" className="text-gtl-red opacity-40 transition-all duration-200 ease-out [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright [@media(hover:hover)]:group-hover:-translate-x-1.5">◀︎</span>
+            <span aria-hidden="true" className="text-gtl-red opacity-70 transition-all duration-200 ease-out delay-[40ms] [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright [@media(hover:hover)]:group-hover:-translate-x-1">◀︎</span>
+            <span aria-hidden="true" className="text-gtl-red transition-all duration-200 ease-out delay-[80ms] [@media(hover:hover)]:group-hover:text-gtl-red-bright [@media(hover:hover)]:group-hover:-translate-x-0.5">◀︎</span>
+          </span>
         </button>
 
         {/* Muscle name header */}
@@ -1875,18 +1873,16 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
             <button
               type="button"
               onClick={handleClose}
-              className="group relative inline-flex items-center outline-none
+              aria-label="Back"
+              className="group inline-flex items-center px-3 py-3 outline-none scale-95 origin-left
                 focus-visible:outline-2 focus-visible:outline-gtl-red"
+              style={{ touchAction: 'manipulation' }}
             >
-              <div
-                className="absolute inset-0 -inset-x-2 bg-gtl-edge opacity-50 group-hover:bg-gtl-red group-hover:opacity-100 transition-all duration-300"
-                style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
-                aria-hidden="true"
-              />
-              <div className="relative flex items-center gap-3 px-4 py-2">
-                <span className="font-display text-base text-gtl-red group-hover:text-gtl-paper group-hover:-translate-x-1 transition-all duration-300 leading-none">◀︎</span>
-                <span className="font-mono text-[10px] tracking-[0.3em] uppercase font-bold text-gtl-chalk group-hover:text-gtl-paper transition-colors duration-300">BACK</span>
-              </div>
+              <span className="flex items-center gap-0.5 leading-none font-display text-2xl select-none">
+                <span aria-hidden="true" className="text-gtl-red opacity-40 transition-all duration-200 ease-out [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright [@media(hover:hover)]:group-hover:-translate-x-1.5">◀︎</span>
+                <span aria-hidden="true" className="text-gtl-red opacity-70 transition-all duration-200 ease-out delay-[40ms] [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright [@media(hover:hover)]:group-hover:-translate-x-1">◀︎</span>
+                <span aria-hidden="true" className="text-gtl-red transition-all duration-200 ease-out delay-[80ms] [@media(hover:hover)]:group-hover:text-gtl-red-bright [@media(hover:hover)]:group-hover:-translate-x-0.5">◀︎</span>
+              </span>
             </button>
 
             {/* UNLOG SETS — only when sets are logged and day not stamped */}
