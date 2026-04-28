@@ -23,6 +23,7 @@ import { pk } from '../../../../lib/storage'
 import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
 import SlashWipe from '../../../../components/SlashWipe'
+import SpeedLines from '../../../../components/SpeedLines'
 import RetreatButton from '../../../../components/RetreatButton'
 
 // R3F is client-only and touches `window`; dynamic import with ssr: false
@@ -480,6 +481,7 @@ export default function MusclesPage() {
   const [stampRevision, setStampRevision] = useState(0)
   const [fireActive, setFireActive] = useState(false)
   const [quickHeistActive, setQuickHeistActive] = useState(false)
+  const [quickForgeRunning, setQuickForgeRunning] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [mobileIgnitionRevision, setMobileIgnitionRevision] = useState(0)
   const [shockwaveKey, setShockwaveKey] = useState(0)
@@ -609,6 +611,7 @@ export default function MusclesPage() {
     try { isQuickForge = localStorage.getItem('gtl-quick-forge') === '1' } catch (_) {}
     if (!isQuickForge) return
     quickForgeFiredRef.current = true
+    setQuickForgeRunning(true)
     let cancelled = false
     const t1 = setTimeout(() => { if (!cancelled) selectAllRef.current?.() }, 600)
     // Mobile cascade: 11 pills × 120ms stagger + 200ms init = 1520ms after
@@ -630,10 +633,7 @@ export default function MusclesPage() {
         style={isMobile ? { paddingTop: 'max(0.75rem, env(safe-area-inset-top))' } : undefined}
       >
         <RetreatButton href={backHref} />
-        <div className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-          {isMobile ? 'TARGETS' : 'PALACE / FITNESS / NEW CYCLE / TARGETS'}
-        </div>
-      </nav>
+        </nav>
 
       {/* ── MOBILE LAYOUT — gacha style: canvas fills screen, pills float on sides ── */}
       {isMobile && (
@@ -972,6 +972,7 @@ export default function MusclesPage() {
       />
       {/* Red slash wipe — quick-forge swipe path only (no title text) */}
       <SlashWipe active={quickHeistActive} onComplete={() => router.push('/fitness/new/branded')} />
+      <SpeedLines active={quickForgeRunning} />
 
       {/* Fire fade-in — picks up where FireTransition left off so the
           source-to-destination cut feels continuous. */}

@@ -664,24 +664,21 @@ export default function StatsPage() {
         style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
       >
         <RetreatButton href="/fitness/hub" />
-        <div className="hidden md:block font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-          PALACE / FITNESS / WAR RECORD
-        </div>
       </nav>
 
       {/* Main content */}
-      <section className="relative z-10 px-6 md:px-8 pt-8 pb-24 max-w-4xl mx-auto">
+      <section className="relative z-10 px-6 md:px-8 pt-3 md:pt-8 pb-12 md:pb-24 max-w-4xl mx-auto">
 
         {/* Headline */}
-        <div className="mb-10">
-          <div className="flex items-center gap-4 mb-3">
+        <div className="mb-5 md:mb-10">
+          <div className="flex items-center gap-4 mb-2 md:mb-3">
             <div className="h-px w-16 bg-gtl-red" />
             <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-red">
               OPERATIVE FILE
             </span>
           </div>
           <div className="flex items-end justify-between gap-4">
-            <h1 className="font-matisse text-[4.5rem] md:text-[7rem] leading-[0.9] text-gtl-chalk -rotate-1">
+            <h1 className="font-matisse text-[3rem] md:text-[7rem] leading-[0.9] text-gtl-chalk -rotate-1">
               WAR
               <br />
               <span className="text-gtl-red gtl-headline-shadow-soft inline-block rotate-1">
@@ -716,10 +713,10 @@ export default function StatsPage() {
         ) : (
           <>
             {/* ── Level + XP bar ──────────────────────────────────── */}
-            <div className="mb-10">
-              <div className="flex items-baseline justify-between mb-3">
+            <div className="mb-5 md:mb-10">
+              <div className="flex items-baseline justify-between mb-2 md:mb-3">
                 <div className="flex items-baseline gap-4">
-                  <span className="font-display text-7xl md:text-8xl leading-none text-gtl-red">
+                  <span className="font-display text-5xl md:text-8xl leading-none text-gtl-red">
                     {level}
                   </span>
                   <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-ash">
@@ -741,7 +738,7 @@ export default function StatsPage() {
             </div>
 
             {/* ── Key stats ───────────────────────────────────────── */}
-            <div className="grid grid-cols-3 gap-3 mb-10">
+            <div className="grid grid-cols-3 gap-3 mb-5 md:mb-10">
               <StatBox label="CYCLES FORGED" value={stats.cycles} />
               <StatBox label="DAYS COMPLETED" value={stats.daysCompleted} />
               <StatBox label="COMPLETION RATE" value={`${completionPct}%`} />
@@ -749,8 +746,8 @@ export default function StatsPage() {
 
             {/* ── Top muscles — P5 social stats layout ────────────── */}
             {stats.regionXP.some(x => x > 0) && (
-              <div className="mb-10">
-                <div className="flex items-center gap-4 mb-6">
+              <div className="mb-5 md:mb-10">
+                <div className="flex items-center gap-4 mb-3 md:mb-6">
                   <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-red font-bold">
                     TOP TARGETS
                   </span>
@@ -826,7 +823,7 @@ export default function StatsPage() {
         )}
 
         {/* Footer */}
-        <div className="mt-16 flex items-center gap-4">
+        <div className="mt-8 md:mt-16 flex items-center gap-4">
           <div className="h-px flex-1 bg-gtl-edge" />
           <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
             GRITTED TEETH LIFESTYLE / WAR RECORD

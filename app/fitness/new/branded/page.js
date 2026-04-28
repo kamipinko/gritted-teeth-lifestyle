@@ -16,6 +16,7 @@ import { pk } from '../../../../lib/storage'
 import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
 import SlashWipe from '../../../../components/SlashWipe'
+import SpeedLines from '../../../../components/SpeedLines'
 import RetreatButton from '../../../../components/RetreatButton'
 
 const MONTH_NAMES = [
@@ -288,6 +289,7 @@ export default function SchedulePage() {
   const [assignments,  setAssignments]  = useState({})
   const [fireActive,   setFireActive]   = useState(false)
   const [quickHeistActive, setQuickHeistActive] = useState(false)
+  const [quickForgeRunning, setQuickForgeRunning] = useState(false)
   const dragRef = useRef(false) // true during swipe-select
   const gridRef = useRef(null)
 
@@ -487,6 +489,7 @@ export default function SchedulePage() {
     let isQuickForge = false
     try { isQuickForge = localStorage.getItem('gtl-quick-forge') === '1' } catch (_) {}
     if (!isQuickForge) return
+    setQuickForgeRunning(true)
     let cancelled = false
     const t = setTimeout(() => {
       if (cancelled) return
@@ -853,6 +856,7 @@ export default function SchedulePage() {
         onComplete={() => router.push('/fitness/new/summary')}
       />
       <SlashWipe active={quickHeistActive} onComplete={() => router.push('/fitness/new/summary')} />
+      <SpeedLines active={quickForgeRunning} />
     </main>
   )
 }

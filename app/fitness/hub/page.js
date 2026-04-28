@@ -451,11 +451,7 @@ export default function FitnessPage() {
         className="relative flex items-center justify-between pl-0 pr-8 pb-6"
         style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
       >
-        <RetreatButton href="/fitness" />
-        <div className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-          PALACE / FITNESS
-        </div>
-      </nav>
+        <RetreatButton href="/fitness" />      </nav>
 
       {/* Main content */}
       <section className="relative z-10 px-8 pt-4 pb-6 md:pt-12 md:pb-20 max-w-6xl mx-auto">

@@ -2612,9 +2612,11 @@ export default function ActiveCyclePage() {
       <div className="relative z-10 flex-1 flex flex-col">
       {/* Nav */}
       <nav
-        className="relative shrink-0 flex items-center gap-4 pl-0 pr-8 pb-3"
+        className="relative shrink-0 flex items-center gap-4 pl-28 pr-8 pb-3"
         style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
       >
+        {/* RetreatButton is fixed left-0 — pl-28 above keeps the divider + XP
+            bar from painting underneath it. */}
         <RetreatButton href="/fitness/load" />
         <div className="w-px self-stretch bg-gtl-edge" style={{ transform: 'skewX(-12deg)' }} />
         {/* XP Bar inline in nav */}

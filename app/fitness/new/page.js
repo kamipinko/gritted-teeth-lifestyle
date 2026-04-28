@@ -21,6 +21,7 @@ import { useProfileGuard } from '../../../lib/useProfileGuard'
 import { pk } from '../../../lib/storage'
 import FireTransition from '../../../components/FireTransition'
 import HeistTransition from '../../../components/HeistTransition'
+import SpeedLines from '../../../components/SpeedLines'
 import RetreatButton from '../../../components/RetreatButton'
 
 const MAX_LEN = 40
@@ -138,7 +139,6 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
     </button>
   )
 }
-
 
 /**
  * StampedNameInput — the main event.
@@ -315,6 +315,7 @@ export default function NewCycleNamePage() {
   const [isBranding, setIsBranding] = useState(false)
   const [isFireActive, setIsFireActive] = useState(false)
   const [quickHeistActive, setQuickHeistActive] = useState(false)
+  const [quickForgeRunning, setQuickForgeRunning] = useState(false)
   const mainRef = useRef(null)
   const { play } = useSound()
   // Synchronous flag set on first FORGE tap so rapid follow-up taps short-circuit
@@ -556,11 +557,7 @@ export default function NewCycleNamePage() {
         className="relative flex items-center justify-between pl-0 pr-8 pb-6"
         style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
       >
-        <RetreatButton href={backHref} />
-        <div className="hidden md:block font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-          PALACE / FITNESS / NEW CYCLE / NAME
-        </div>
-      </nav>
+        <RetreatButton href={backHref} />      </nav>
 
       {/* Main content area */}
       <section className="relative z-10 px-8 pt-12 pb-20 max-w-6xl mx-auto" style={{ overflow: 'visible' }}>
@@ -654,6 +651,7 @@ export default function NewCycleNamePage() {
                   localStorage.setItem(pk('cycle-name'), name.trim())
                   localStorage.setItem('gtl-quick-forge', '1')
                 } catch (_) {}
+                setQuickForgeRunning(true)
                 setQuickHeistActive(true)
               }}
             />
@@ -681,6 +679,7 @@ export default function NewCycleNamePage() {
       {/* First hop on the quick-forge swipe — uses the same HeistTransition the
           home page uses (default 'GRIT THOSE TEETH' red-slash overlay). */}
       <HeistTransition active={quickHeistActive} onComplete={() => router.push(NEXT_TARGET)} />
+      <SpeedLines active={quickForgeRunning} />
     </main>
   )
 }
