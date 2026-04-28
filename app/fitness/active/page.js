@@ -1377,9 +1377,12 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose, cycleId }) {
           </div>
         )}
 
-        {/* Exercise list */}
+        {/* Exercise list. exercises[0] is rendered separately as the FIRST SET
+            quick-nav hero at y=466, so slice(1) here. */}
         <ol className="flex flex-col gap-0 shrink-0">
-          {exercises.map((name, i) => (
+          {exercises.slice(1).map((name, idx) => {
+            const i = idx + 1
+            return (
             <ExerciseRow
               key={name}
               name={name}
@@ -1421,7 +1424,7 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose, cycleId }) {
                 })
               }}
             />
-          ))}
+          )})}
 
           {/* Custom exercise slot */}
           <li style={{ listStyle: 'none', animation: 'focus-content-in 250ms 470ms ease-out both' }}>
@@ -1519,6 +1522,46 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose, cycleId }) {
             )}
           </li>
         </ol>
+
+        {/* Quick-nav FIRST SET hero — sits at y=466 to continue the muscle-memory
+            chain. Tap = open the first exercise's first set (weight popup). Hidden
+            once a set's weight/reps popup is open. */}
+        {!activeExercise && exercises.length > 0 && (
+          <button
+            type="button"
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect()
+              openExercise(exercises[0], rect, 0)
+            }}
+            className="fixed z-[9996] block outline-none active:scale-[0.98] transition-transform"
+            style={{
+              top: '466px',
+              left: '32px',
+              right: '32px',
+              animation: 'activate-popup-rise 320ms cubic-bezier(0.18, 1, 0.36, 1) 380ms both',
+            }}
+          >
+            <div
+              className="absolute inset-0 bg-gtl-red transition-colors group-active:bg-gtl-red-bright"
+              style={{
+                clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+                boxShadow: '0 4px 28px rgba(212, 24, 31, 0.55)',
+              }}
+              aria-hidden="true"
+            />
+            <div className="relative flex items-center justify-between px-6 py-3 gap-3">
+              <div className="flex flex-col items-start min-w-0">
+                <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-paper/80 leading-none">
+                  FIRST SET
+                </span>
+                <span className="font-display text-xl text-gtl-paper leading-none mt-1 truncate">
+                  {exercises[0]}
+                </span>
+              </div>
+              <span className="font-display text-2xl text-gtl-paper leading-none shrink-0">➤︎</span>
+            </div>
+          </button>
+        )}
 
         {/* Weight popup — opens first */}
         {activeExercise && phase === 'weight' && (
@@ -1885,10 +1928,11 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
               style={{ transform: 'skewX(-6deg)', transformOrigin: 'left center' }}
             />
 
-            {/* Muscle slabs or REST */}
+            {/* Muscle slabs or REST. muscles[0] is rendered separately as the
+                BEGIN HERE quick-nav hero at y=466, so skip index 0 here. */}
             {hasWork ? (
               <div className="flex flex-wrap gap-x-4 gap-y-3">
-                {muscles.map((id, i) => {
+                {muscles.slice(1).map((id, i) => {
                   const rot = SLAB_ROTATIONS[i % SLAB_ROTATIONS.length]
                   return (
                     <MuscleSlab
@@ -2392,11 +2436,6 @@ export default function ActiveCyclePage() {
 
   const plannedSessions = days.filter((iso) => (dailyPlan[iso] || []).length > 0).length
 
-  const cols = days.length <= 4 ? days.length
-             : days.length <= 8 ? Math.ceil(days.length / 2)
-             : Math.ceil(days.length / 3)
-  const rows = Math.ceil(days.length / cols)
-
   // Quick-nav TODAY hero: closest day to today's date — sits at y=466 to continue
   // the muscle-memory tap chain (chip → LOAD card → ACTIVATE → TODAY hero).
   const todayIsoStr = (() => {
@@ -2420,6 +2459,13 @@ export default function ActiveCyclePage() {
   const heroMon = heroDate ? MONTH_SHORT[heroDate.getMonth()] : ''
   const heroMuscles = heroIso ? (dailyPlan[heroIso] || []) : []
   const heroLabel = heroIsToday ? 'TODAY' : heroIsPast ? 'LAST TRAINING' : 'NEXT TRAINING'
+
+  // Day grid below the hero shows the OTHER days only (heroIso is filtered out).
+  const gridCount = heroIso ? Math.max(0, days.length - 1) : days.length
+  const cols = gridCount <= 4 ? Math.max(1, gridCount)
+             : gridCount <= 8 ? Math.ceil(gridCount / 2)
+             : Math.ceil(gridCount / 3)
+  const rows = Math.max(1, Math.ceil(gridCount / cols))
 
   return (
     <main className="relative h-[100dvh] flex flex-col overflow-hidden bg-gtl-void">
@@ -2548,11 +2594,11 @@ export default function ActiveCyclePage() {
           <div
             className="grid gap-2 flex-1 min-h-0"
             style={{
-              gridTemplateColumns: `repeat(${Math.min(cols, days.length)}, 1fr)`,
+              gridTemplateColumns: `repeat(${Math.min(cols, Math.max(1, gridCount))}, 1fr)`,
               gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
             }}
           >
-            {days.map((iso, i) => (
+            {days.filter((iso) => iso !== heroIso).map((iso, i) => (
               <DayCard
                 key={iso}
                 iso={iso}

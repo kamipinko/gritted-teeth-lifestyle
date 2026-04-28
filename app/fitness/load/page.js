@@ -820,14 +820,23 @@ export default function LoadCyclePage() {
     setReady(true)
   }, [])
 
-  // Skip-the-fire-transition: once it's running, the next pointerdown anywhere
-  // routes to the destination immediately. Capture-phase so it beats any
-  // per-element handlers; FireTransition itself is pointer-events-none.
+  // Skip-the-fire-transition: once it's running, the next pointer/touch input
+  // anywhere routes to the destination immediately. Listen for both
+  // pointerdown AND touchstart in case iOS PWA suppresses pointerdown events
+  // during rapid-tap sequences. Taps on RetreatButton (data-retreat) are
+  // excluded so retreat navigates back instead of fast-forwarding.
   useEffect(() => {
     if (!fireActive) return
-    const handler = () => skipNow()
+    const handler = (e) => {
+      if (e.target?.closest?.('[data-retreat]')) return
+      skipNow()
+    }
     window.addEventListener('pointerdown', handler, { capture: true })
-    return () => window.removeEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
   }, [fireActive])
 
   const selectedCycle = cycles.find((c) => c.id === selectedId) ?? null
@@ -1000,6 +1009,7 @@ export default function LoadCyclePage() {
             top: '466px',
             left: '32px',
             right: '32px',
+            touchAction: 'manipulation',
             animation: 'activate-popup-rise 320ms cubic-bezier(0.18, 1, 0.36, 1) both',
           }}
         >

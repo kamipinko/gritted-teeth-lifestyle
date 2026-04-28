@@ -13,6 +13,7 @@ function ProfileChip({ name, onSelect }) {
       type="button"
       onClick={() => { play('option-select'); onSelect(name) }}
       className="relative group outline-none text-left"
+      style={{ touchAction: 'manipulation' }}
     >
       {/* Hover effects gated on (hover: hover) so iOS doesn't sticky-hover on first tap. */}
       <div
@@ -62,15 +63,23 @@ export default function ProfilePage() {
     router.push(HUB_TARGET)
   }
 
-  // Skip-the-transition: once HeistTransition is active, the next pointerdown
-  // anywhere on the screen routes to the hub immediately. Capture-phase so it
-  // beats any per-element handlers; HeistTransition itself is pointer-events-none
-  // so a normal tap-on-overlay listener wouldn't fire.
+  // Skip-the-transition: once HeistTransition is active, the next pointer/touch
+  // input anywhere on the screen routes to the hub immediately. Listen for
+  // both pointerdown AND touchstart in case iOS PWA suppresses pointerdown
+  // events during rapid-tap sequences. Taps on RetreatButton (data-retreat)
+  // are excluded so retreat navigates back instead of fast-forwarding.
   useEffect(() => {
     if (!transitioning) return
-    const handler = () => skipNow()
+    const handler = (e) => {
+      if (e.target?.closest?.('[data-retreat]')) return
+      skipNow()
+    }
     window.addEventListener('pointerdown', handler, { capture: true })
-    return () => window.removeEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
   }, [transitioning])
 
   const selectProfile = (name) => {

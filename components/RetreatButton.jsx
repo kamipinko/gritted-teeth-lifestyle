@@ -14,8 +14,12 @@ export default function RetreatButton({ href = '/fitness/hub' }) {
     <Link
       href={href}
       onClick={() => play('menu-close')}
+      // data-retreat lets page-level skip listeners (window pointerdown/
+      // touchstart that route forward to the in-flight transition's destination)
+      // opt out — taps on retreat should navigate back, not fast-forward.
+      data-retreat="true"
       className="group fixed left-0 z-40 inline-flex items-center"
-      style={{ top: 'env(safe-area-inset-top, 0px)' }}
+      style={{ top: 'env(safe-area-inset-top, 0px)', touchAction: 'manipulation' }}
     >
       {/* Clip-path slash bg — visible at idle, brightens on hover (hover-capable devices only) */}
       <div

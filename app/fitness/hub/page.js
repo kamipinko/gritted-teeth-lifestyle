@@ -50,6 +50,10 @@ function CycleOption({
       onClick={handleClick}
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
+      // touch-action: manipulation disables the iOS 300ms double-tap-to-zoom
+      // delay, which was suppressing rapid follow-up taps on the LOAD CYCLE /
+      // NEW CYCLE buttons (so the skip-on-second-tap path never fired).
+      style={{ touchAction: 'manipulation' }}
       className={`
         group relative block w-full text-left
         transition-all duration-300 ease-out
@@ -225,7 +229,7 @@ function GhostOption({ number, label, caption, href, onClick }) {
         focus:outline-none focus-visible:outline-2 focus-visible:outline-dashed focus-visible:outline-gtl-red focus-visible:outline-offset-4
         ${hovered ? '-translate-y-1 scale-[1.01]' : 'translate-y-0 scale-100'}
       `}
-      style={{ minHeight: '7rem' }}
+      style={{ minHeight: '7rem', touchAction: 'manipulation' }}
     >
       {/* Outer red glow — far more subtle than the main options */}
       <div
@@ -383,13 +387,24 @@ export default function FitnessPage() {
     setTransitioning(true)
   }
 
-  // Skip-the-transition: once HeistTransition is active, the next pointerdown
-  // anywhere on the screen routes to the destination immediately.
+  // Skip-the-transition: once HeistTransition is active, the next pointer/touch
+  // input anywhere on the screen routes to the destination immediately.
+  // Listen for both pointerdown AND touchstart in case iOS PWA suppresses
+  // pointerdown events during rapid-tap sequences. Taps on RetreatButton
+  // (data-retreat) are excluded so retreat navigates back instead of fast-
+  // forwarding to the in-flight transition's destination.
   useEffect(() => {
     if (!transitioning) return
-    const handler = () => skipNow()
+    const handler = (e) => {
+      if (e.target?.closest?.('[data-retreat]')) return
+      skipNow()
+    }
     window.addEventListener('pointerdown', handler, { capture: true })
-    return () => window.removeEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
   }, [transitioning])
 
   const handleTransitionComplete = () => {
