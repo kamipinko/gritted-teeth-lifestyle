@@ -796,6 +796,12 @@ export default function LoadCyclePage() {
   const [selectedId, setSelectedId] = useState(null)
   const [fireActive, setFireActive] = useState(false)
   const [fireDest, setFireDest]     = useState('/fitness/new/summary')
+  // Latches once skipAll fires so FireTransition.onComplete won't double-route.
+  const skippedRef = useRef(false)
+  // Stable ref for the destination so the pointerdown listener doesn't have to
+  // re-bind each time fireDest changes.
+  const fireDestRef = useRef(fireDest)
+  useEffect(() => { fireDestRef.current = fireDest }, [fireDest])
 
   useEffect(() => {
     try {
@@ -804,6 +810,20 @@ export default function LoadCyclePage() {
     } catch (_) {}
     setReady(true)
   }, [])
+
+  // Skip-the-fire-transition: once it's running, the next pointerdown anywhere
+  // routes to the destination immediately. Capture-phase so it beats any
+  // per-element handlers; FireTransition itself is pointer-events-none.
+  useEffect(() => {
+    if (!fireActive) return
+    const handler = () => {
+      if (skippedRef.current) return
+      skippedRef.current = true
+      router.push(fireDestRef.current)
+    }
+    window.addEventListener('pointerdown', handler, { capture: true })
+    return () => window.removeEventListener('pointerdown', handler, { capture: true })
+  }, [fireActive, router])
 
   const selectedCycle = cycles.find((c) => c.id === selectedId) ?? null
 
@@ -998,7 +1018,13 @@ export default function LoadCyclePage() {
 
       </div>
       <FireFadeIn duration={900} />
-      <FireTransition active={fireActive} onComplete={() => router.push(fireDest)} />
+      <FireTransition
+        active={fireActive}
+        onComplete={() => {
+          if (skippedRef.current) return
+          router.push(fireDest)
+        }}
+      />
     </main>
   )
 }
