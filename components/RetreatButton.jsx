@@ -23,7 +23,7 @@ export default function RetreatButton({ href = '/fitness/hub' }) {
         style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
         aria-hidden="true"
       />
-      <div className="relative flex items-center gap-3 px-4 py-2">
+      <div className="relative flex items-center gap-1.5 pl-2 pr-3 py-2">
         <span className="font-display text-base leading-none transition-all duration-300 text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper [@media(hover:hover)]:group-hover:-translate-x-1">◀︎</span>
         <span className="font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300 text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper">RETREAT</span>
       </div>
