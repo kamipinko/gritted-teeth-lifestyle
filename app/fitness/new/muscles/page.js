@@ -630,10 +630,7 @@ export default function MusclesPage() {
         style={isMobile ? { paddingTop: 'max(0.75rem, env(safe-area-inset-top))' } : undefined}
       >
         <RetreatButton href={backHref} />
-        <div className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-          {isMobile ? 'TARGETS' : 'PALACE / FITNESS / NEW CYCLE / TARGETS'}
-        </div>
-      </nav>
+        </nav>
 
       {/* ── MOBILE LAYOUT — gacha style: canvas fills screen, pills float on sides ── */}
       {isMobile && (

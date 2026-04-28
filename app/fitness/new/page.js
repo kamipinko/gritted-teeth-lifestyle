@@ -139,7 +139,6 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
   )
 }
 
-
 /**
  * StampedNameInput — the main event.
  *
@@ -556,11 +555,7 @@ export default function NewCycleNamePage() {
         className="relative flex items-center justify-between pl-0 pr-8 pb-6"
         style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
       >
-        <RetreatButton href={backHref} />
-        <div className="hidden md:block font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-          PALACE / FITNESS / NEW CYCLE / NAME
-        </div>
-      </nav>
+        <RetreatButton href={backHref} />      </nav>
 
       {/* Main content area */}
       <section className="relative z-10 px-8 pt-12 pb-20 max-w-6xl mx-auto" style={{ overflow: 'visible' }}>

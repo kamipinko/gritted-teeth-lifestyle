@@ -152,11 +152,7 @@ export default function EditCyclePage() {
         style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
       >
         <RetreatButton href="/fitness/load" />
-        <div className="w-px self-stretch bg-gtl-edge" style={{ transform: 'skewX(-12deg)' }} />
-        <div className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
-          PALACE / FITNESS / EDIT CYCLE
-        </div>
-      </nav>
+        <div className="w-px self-stretch bg-gtl-edge" style={{ transform: 'skewX(-12deg)' }} />      </nav>
 
       <div className="relative z-10 mx-8 mb-6 h-[2px] shrink-0"
            style={{ background: '#d4181f', transform: 'skewX(-6deg)', transformOrigin: 'left center' }} />

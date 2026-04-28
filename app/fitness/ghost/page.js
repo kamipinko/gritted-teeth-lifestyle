@@ -52,7 +52,6 @@ function MuscleTag({ id, index }) {
   )
 }
 
-
 function CheckSlam({ part = 'face' }) {
   return (
     <>
@@ -657,11 +656,7 @@ export default function GhostCyclePage() {
 
       {/* Nav */}
       <nav className="relative z-10 shrink-0 flex items-center justify-between pl-0 pr-8 py-5">
-        <RetreatButton href="/fitness/hub" />
-        <div className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-          PALACE / FITNESS / GHOST CYCLE
-        </div>
-      </nav>
+        <RetreatButton href="/fitness/hub" />      </nav>
 
       {/* Ghost mode banner */}
       <div className="relative z-10 mx-8 mb-4">

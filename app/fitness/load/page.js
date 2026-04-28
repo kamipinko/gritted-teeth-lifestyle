@@ -561,7 +561,6 @@ function CycleCard({ cycle, index, selected, onSelect }) {
               stroke="rgba(255,100,100,0.35)" strokeWidth="2" strokeLinecap="round" fill="none"
               strokeDasharray="2000" style={{ animation: 'blood-stroke-1 800ms cubic-bezier(0.3,0,0.2,1) 100ms both' }} />
 
-
 {/* ── INK SPLATTER — randomly placed on mount ── */}
             {splatter.map(({ cx, cy, rx, ry, rot, fill, delay }, i) => (
               <g key={i} transform={`rotate(${rot} ${cx} ${cy})`}>
@@ -1056,11 +1055,7 @@ export default function LoadCyclePage() {
         className="relative shrink-0 flex items-center justify-between pl-0 pr-8 pb-5"
         style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top))' }}
       >
-        <RetreatButton href="/fitness/hub" />
-        <div className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-          PALACE / FITNESS / LOAD CYCLE
-        </div>
-      </nav>
+        <RetreatButton href="/fitness/hub" />      </nav>
 
       {/* Headline */}
       <div className="relative z-10 px-8 pb-6">

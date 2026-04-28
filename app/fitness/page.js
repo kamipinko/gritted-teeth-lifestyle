@@ -246,11 +246,7 @@ export default function ProfilePage() {
         className="relative shrink-0 flex items-center justify-between pl-0 pr-8 pb-6"
         style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
       >
-        <RetreatButton href="/" />
-        <div className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-          PALACE / IDENTITY
-        </div>
-      </nav>
+        <RetreatButton href="/" />      </nav>
 
       {/* Main */}
       <section className="relative z-10 flex-1 flex flex-col px-8 pt-2 pb-8 max-w-3xl mx-auto w-full">

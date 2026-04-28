@@ -664,9 +664,6 @@ export default function StatsPage() {
         style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
       >
         <RetreatButton href="/fitness/hub" />
-        <div className="hidden md:block font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-          PALACE / FITNESS / WAR RECORD
-        </div>
       </nav>
 
       {/* Main content */}
