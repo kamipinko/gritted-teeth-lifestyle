@@ -645,8 +645,17 @@ export default function NewCycleNamePage() {
               disabled={name.trim().length === 0}
               onTap={triggerBrandConfirm}
               onSwipe={() => {
-                try { localStorage.setItem('gtl-quick-forge', '1') } catch (_) {}
-                triggerBrandConfirm()
+                if (name.trim().length === 0) return
+                // Quick-forge path: skip the brand+fire transition entirely. Persist
+                // the cycle name, set the chain flag, jump to muscles directly. The
+                // in-page slash/clip animations on subsequent buttons are the only
+                // visuals — no FireTransition.
+                try {
+                  localStorage.setItem(pk('cycle-name'), name.trim())
+                  localStorage.setItem('gtl-quick-forge', '1')
+                } catch (_) {}
+                play('brand-confirm')
+                router.push(NEXT_TARGET)
               }}
             />
             <div className="mt-2 flex items-center gap-3 font-mono text-[8px] tracking-[0.25em] uppercase text-gtl-ash/80">

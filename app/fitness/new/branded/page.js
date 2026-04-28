@@ -505,7 +505,7 @@ export default function SchedulePage() {
       newAssignments[days[days.length - 1]] = new Set()
       setSelectedDays(newSelected)
       setAssignments(newAssignments)
-      // Persist + fire after state has had a moment to flush.
+      // Persist + direct router.push (no FireTransition on the quick-forge path).
       const t2 = setTimeout(() => {
         if (cancelled) return
         try {
@@ -516,7 +516,7 @@ export default function SchedulePage() {
           }
           localStorage.setItem(pk('daily-plan'), JSON.stringify(serialized))
         } catch (_) {}
-        setFireActive(true)
+        router.push('/fitness/new/summary')
       }, 600)
       return () => clearTimeout(t2)
     }, 700)

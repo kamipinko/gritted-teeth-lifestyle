@@ -2693,26 +2693,47 @@ export default function SummaryPage() {
     setWeekdayLetterCooled(prev  => prev.length === N * 3 ? prev : Array(N * 3).fill(false))
   }, [days.length])
 
-  // Quick-forge auto-progression: when arriving with the gtl-quick-forge flag,
-  // press ETCH CYCLE for the user. Clear the flag (final stage). The deep-launch
-  // flag (gtl-deep-launch) is also set so /fitness/active continues straight
-  // through to the first set's weight popup.
+  // Quick-forge auto-progression: persist the cycle to localStorage (same writes
+  // handleBegin does on tap-path), set the deep-launch flag for /fitness/active,
+  // and router.push directly — NO FireTransition or ETCH CYCLE animation.
+  const quickForgeFiredRef = useRef(false)
   useEffect(() => {
+    if (quickForgeFiredRef.current) return
+    if (!days.length) return  // Wait for storage hydration
     let isQuickForge = false
     try { isQuickForge = localStorage.getItem('gtl-quick-forge') === '1' } catch (_) {}
     if (!isQuickForge) return
+    quickForgeFiredRef.current = true
     let cancelled = false
     const t = setTimeout(() => {
       if (cancelled) return
       try {
+        // Persist the cycle (mirrors the localStorage writes inside handleBegin).
+        const existing  = JSON.parse(localStorage.getItem(pk('cycles')) || '[]')
+        const editingId = localStorage.getItem(pk('editing-cycle-id'))
+        if (editingId) {
+          const updated = existing.map((c) =>
+            c.id === editingId ? { ...c, name: cycleName, targets, days, dailyPlan } : c
+          )
+          localStorage.setItem(pk('cycles'), JSON.stringify(updated))
+          localStorage.removeItem(pk('editing-cycle-id'))
+        } else {
+          const cycle = {
+            id: Date.now().toString(),
+            name: cycleName, targets, days, dailyPlan,
+            createdAt: new Date().toISOString(),
+          }
+          localStorage.setItem(pk('cycles'), JSON.stringify([cycle, ...existing]))
+          localStorage.setItem(pk('active-cycle-id'), cycle.id)
+        }
         localStorage.removeItem('gtl-quick-forge')
         localStorage.setItem('gtl-deep-launch', '1')
       } catch (_) {}
-      handleBeginRef.current?.()
-    }, 800)
+      router.push('/fitness/active')
+    }, 400)
     return () => { cancelled = true; clearTimeout(t) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [days, dailyPlan, cycleName, targets])
 
   const handleBeginRef = useRef(null)
   const handleBegin = () => {

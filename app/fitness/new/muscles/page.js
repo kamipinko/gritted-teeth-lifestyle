@@ -610,14 +610,15 @@ export default function MusclesPage() {
     let cancelled = false
     const t1 = setTimeout(() => { if (!cancelled) selectAllRef.current?.() }, 600)
     // 11 muscles × 500ms stagger + 740ms initial delay + 1s buffer ≈ 7240ms.
+    // After the cascade, persist + direct router.push (no FireTransition).
     const t2 = setTimeout(() => {
       if (cancelled) return
       const allIds = MUSCLE_GROUPS.map(g => g.id)
       try { localStorage.setItem(pk('muscle-targets'), JSON.stringify(allIds)) } catch (_) {}
-      setFireActive(true)
+      router.push('/fitness/new/branded')
     }, 7240)
     return () => { cancelled = true; clearTimeout(t1); clearTimeout(t2) }
-  }, [isMobile])
+  }, [isMobile, router])
 
   return (
     <main ref={mainRef} className={`relative overflow-hidden bg-gtl-void ${isMobile ? 'h-[100dvh] flex flex-col' : 'min-h-screen'}`}>
