@@ -237,95 +237,6 @@ function CycleCard({ cycle, index, selected, onSelect }) {
         boxShadow: selected ? '0 0 24px rgba(212,24,31,0.25)' : 'none',
       }}
     >
-      {/* Top-right corner: cycle index + deadline stamp */}
-      <div className="absolute top-4 right-6 flex flex-col items-end gap-2">
-        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
-          CYCLE / {String(index + 1).padStart(2, '0')}
-        </div>
-        {lastDay && (() => {
-          const d = parseDate(lastDay)
-          return (
-            <div className="relative" style={{ transform: 'rotate(-1.5deg)' }}>
-              {/* Shadow slab */}
-              <div
-                className="absolute inset-0 bg-gtl-red-deep"
-                style={{
-                  clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)',
-                  transform: 'translate(3px, 3px)',
-                }}
-                aria-hidden="true"
-              />
-              {/* Stamp face */}
-              <div
-                className="relative px-6 py-3 bg-gtl-red border-2 border-gtl-red-deep"
-                style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)' }}
-              >
-                <div className="font-display text-base tracking-[0.3em] uppercase text-gtl-paper leading-none mb-2"
-                     style={{ textShadow: '2px 2px 0 #070708' }}>
-                  ◼ DEADLINE ◼
-                </div>
-                <div className="font-display text-gtl-paper leading-none"
-                     style={{ fontSize: '1.1rem', textShadow: '1px 1px 0 #070708' }}>
-                  {d.toLocaleDateString('en-US', { month: 'long' }).toUpperCase()}
-                </div>
-                {/* Day number with spinning square behind */}
-                <div className="relative flex items-center justify-center my-1" style={{ width: '100px', height: '100px' }}>
-                  <style>{`
-                    @keyframes spin-square {
-                      from { transform: rotate(0deg); }
-                      to   { transform: rotate(360deg); }
-                    }
-                  `}</style>
-                  {/* Spinning black square */}
-                  <div
-                    className="absolute"
-                    style={{
-                      width: '80px', height: '80px',
-                      background: '#070708',
-                      animation: 'spin-square 8s linear infinite',
-                      boxShadow: '0 0 20px rgba(0,0,0,0.8)',
-                    }}
-                    aria-hidden="true"
-                  />
-                  {/* Day number on top */}
-                  <div className="relative font-display text-gtl-paper leading-none"
-                       style={{ fontSize: '5rem', textShadow: '4px 4px 0 #070708', lineHeight: 1, zIndex: 1 }}>
-                    {String(d.getDate()).padStart(2, '0')}
-                  </div>
-                </div>
-                <div className="font-display text-gtl-paper/80 leading-none mt-1.5"
-                     style={{ fontSize: '0.85rem', textShadow: '1px 1px 0 #070708' }}>
-                  {d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()} · {d.getFullYear()}
-                </div>
-                {/* X stamp overlay — rendered after date so it sits on top */}
-                {bloodVisible && (
-                  <div
-                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                    style={{ zIndex: 10, transform: 'translateX(-12px)' }}
-                    aria-hidden="true"
-                  >
-                    <div style={{
-                      animation: 'x-stamp 600ms cubic-bezier(0.2, 1.4, 0.3, 1) 1800ms both',
-                      fontFamily: 'Anton, Impact, sans-serif',
-                      fontSize: '10rem',
-                      color: '#8b0000',
-                      lineHeight: 1,
-                      textShadow: '3px 3px 0 rgba(0,0,0,0.6)',
-                      border: '5px solid #8b0000',
-                      padding: '0 10px',
-                      opacity: 0.75,
-                      userSelect: 'none',
-                    }}>
-                      ✕
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )
-        })()}
-      </div>
-
       {/* Giant checkmark — shadow behind deadline block, face in front */}
       {selected && (
         <>
@@ -339,161 +250,210 @@ function CycleCard({ cycle, index, selected, onSelect }) {
       )}
 
       <div className="px-8 pt-6 pb-8">
-        {/* Created date */}
-        <div className="font-mono text-[9px] tracking-[0.35em] uppercase text-gtl-smoke mb-3">
-          FORGED {createdStr}
-        </div>
-
-        {/* Cycle name — dominant */}
+        {/* Cycle name — top of card, dominant. Full width now (deadline stamp
+            moved into flow below). */}
         <h2
-          className="font-display text-gtl-chalk leading-none mb-1"
+          className="font-display text-gtl-chalk leading-none mb-3"
           style={{
             fontSize: 'clamp(2.5rem, 6vw, 5rem)',
             textShadow: '3px 3px 0 #070708',
             transform: 'rotate(-1deg)',
             transformOrigin: 'left center',
+            wordBreak: 'break-word',
           }}
         >
           {cycle.name}
         </h2>
 
-        {/* Date range */}
-        {firstDay && lastDay && (
-          <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-red mb-5">
-            {formatDateShort(firstDay)} — {formatDateShort(lastDay)}
+        {/* Top-meta row: FORGED date on left, CYCLE / 0X on right. */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="font-mono text-[9px] tracking-[0.35em] uppercase text-gtl-smoke">
+            FORGED {createdStr}
           </div>
-        )}
-
-        {/* Stats + day grid — same row */}
-        <div className="flex items-center gap-6 mb-6 flex-wrap">
-          {/* Stats */}
-          <div className="flex items-center gap-6 shrink-0">
-            <div className="flex flex-col items-start gap-3">
-              <div>
-                <div className="font-display text-3xl leading-none"
-                     style={{ color: '#e4b022', textShadow: '2px 2px 0 #8a6612' }}>
-                  {String(cycle.days?.length ?? 0).padStart(2, '0')}
-                </div>
-                <div className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-smoke mt-0.5">BATTLEDAYS</div>
-              </div>
-              {(() => {
-                const n = cycle.days?.length || 0
-                if (n >= 1 && n <= 6) {
-                  return (
-                    <img
-                      src="/reference/wakizashi_solid_silhouette.svg"
-                      alt=""
-                      className="opacity-90 select-none pointer-events-none"
-                      style={{ height: '140px', width: 'auto', maxWidth: '160px' }}
-                      draggable={false}
-                    />
-                  )
-                }
-                if (n === 7) {
-                  return (
-                    <img
-                      src="/reference/ouroboros.svg"
-                      alt=""
-                      className="opacity-90 select-none pointer-events-none"
-                      style={{ height: '140px', width: 'auto', maxWidth: '160px' }}
-                      draggable={false}
-                    />
-                  )
-                }
-                if (n >= 8 && n <= 13) {
-                  return (
-                    <img
-                      src="/reference/drill.svg"
-                      alt=""
-                      className="opacity-90 select-none pointer-events-none"
-                      style={{ height: '140px', width: 'auto', maxWidth: '160px' }}
-                      draggable={false}
-                    />
-                  )
-                }
-                if (n >= 15) {
-                  // Vertical scroll silhouette — rotated -90° to mirror the summary-page render.
-                  return (
-                    <div style={{ width: '110px', height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <img
-                        src="/reference/scroll.svg"
-                        alt=""
-                        className="opacity-90 select-none pointer-events-none"
-                        style={{ width: '140px', height: '110px', transform: 'rotate(-90deg)' }}
-                        draggable={false}
-                      />
-                    </div>
-                  )
-                }
-                return null
-              })()}
-            </div>
-            <div className="w-px h-10 bg-gtl-red" style={{ transform: 'skewX(-12deg)' }} />
-            <div>
-              <div className="font-display text-3xl leading-none"
-                   style={{ color: '#e4b022', textShadow: '2px 2px 0 #8a6612' }}>
-                {String(cycle.targets?.length ?? 0).padStart(2, '0')}
-              </div>
-              <div className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-smoke mt-0.5">TARGETS</div>
-            </div>
-            <div className="w-px h-10 bg-gtl-red" style={{ transform: 'skewX(-12deg)' }} />
-            <div>
-              <div className="font-display text-3xl leading-none"
-                   style={{ color: '#e4b022', textShadow: '2px 2px 0 #8a6612' }}>
-                {String(plannedSessions).padStart(2, '0')}
-              </div>
-              <div className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-smoke mt-0.5">SESSIONS</div>
-            </div>
+          <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
+            CYCLE / {String(index + 1).padStart(2, '0')}
           </div>
-
-          {/* Day progress chips */}
-          {cycle.days?.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 ml-24">
-              {cycle.days.map((iso) => {
-                const date = new Date(iso + 'T12:00:00')
-                const dayNum = date.getDate()
-                const hasWork = (cycle.dailyPlan?.[iso] || []).length > 0
-                const done = doneDays[iso]
-                return (
-                  <div key={iso} className="relative" style={{ width: '34px', height: '34px' }}>
-                    <div style={{
-                      width: '100%', height: '100%',
-                      background: hasWork ? 'rgba(212,24,31,0.12)' : 'rgba(26,26,30,0.6)',
-                      border: `1px solid ${hasWork ? 'rgba(212,24,31,0.35)' : 'rgba(58,58,66,0.4)'}`,
-                      clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <span className="font-display leading-none"
-                        style={{ fontSize: '0.85rem', color: hasWork ? '#c8c8c8' : '#3a3a42' }}>
-                        {dayNum}
-                      </span>
-                    </div>
-                    {done && (
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
-                        <span className="font-display leading-none"
-                          style={{ fontSize: '1.6rem', color: 'rgba(212,24,31,0.55)', transform: 'rotate(-5deg)', textShadow: '1px 1px 0 rgba(0,0,0,0.5)' }}>
-                          X
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
         </div>
 
-        {/* Red slash divider */}
-        <div className="mb-5 h-px bg-gtl-red" style={{ transform: 'skewX(-8deg)', position: 'relative', zIndex: 10 }} />
+        {/* Silhouette + deadline stamp row — silhouette left, stamp right. */}
+        <div className="flex items-center justify-between gap-4 mb-4">
+          {/* Silhouette: wakizashi (1–6 days, tinted red) / ouroboros (7) /
+              drill (8–13) / scroll (15+). Wakizashi uses CSS mask-image so we
+              can recolor the silhouette to GTL red without altering the SVG. */}
+          <div className="shrink-0">
+            {(() => {
+              const n = cycle.days?.length || 0
+              if (n >= 1 && n <= 6) {
+                return (
+                  <div
+                    aria-hidden="true"
+                    className="select-none pointer-events-none"
+                    style={{
+                      width: '120px',
+                      height: '120px',
+                      backgroundColor: '#d4181f',
+                      WebkitMaskImage: 'url(/reference/wakizashi_solid_silhouette.svg)',
+                      maskImage: 'url(/reference/wakizashi_solid_silhouette.svg)',
+                      WebkitMaskRepeat: 'no-repeat',
+                      maskRepeat: 'no-repeat',
+                      WebkitMaskSize: 'contain',
+                      maskSize: 'contain',
+                      WebkitMaskPosition: 'left center',
+                      maskPosition: 'left center',
+                      opacity: 0.9,
+                    }}
+                  />
+                )
+              }
+              if (n === 7) {
+                return (
+                  <img src="/reference/ouroboros.svg" alt=""
+                    className="opacity-90 select-none pointer-events-none"
+                    style={{ height: '120px', width: 'auto', maxWidth: '140px' }}
+                    draggable={false} />
+                )
+              }
+              if (n >= 8 && n <= 13) {
+                return (
+                  <img src="/reference/drill.svg" alt=""
+                    className="opacity-90 select-none pointer-events-none"
+                    style={{ height: '120px', width: 'auto', maxWidth: '140px' }}
+                    draggable={false} />
+                )
+              }
+              if (n >= 15) {
+                return (
+                  <div style={{ width: '110px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                    <img src="/reference/scroll.svg" alt=""
+                      className="opacity-90 select-none pointer-events-none"
+                      style={{ width: '120px', height: '95px', transform: 'rotate(-90deg)' }}
+                      draggable={false} />
+                  </div>
+                )
+              }
+              return null
+            })()}
+          </div>
 
-        {/* Muscle targets */}
-        {cycle.targets?.length > 0 && (
-          <div className="flex flex-wrap gap-x-3 gap-y-4" style={{ overflow: 'visible' }}>
-            {cycle.targets.map((id, i) => (
-              <MuscleTag key={id} id={id} index={i} />
-            ))}
+          {/* Deadline stamp */}
+          {lastDay && (() => {
+            const d = parseDate(lastDay)
+            return (
+              <div className="relative shrink-0" style={{ transform: 'rotate(-1.5deg)' }}>
+                {/* Shadow slab */}
+                <div
+                  className="absolute inset-0 bg-gtl-red-deep"
+                  style={{
+                    clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)',
+                    transform: 'translate(3px, 3px)',
+                  }}
+                  aria-hidden="true"
+                />
+                {/* Stamp face */}
+                <div
+                  className="relative px-6 py-3 bg-gtl-red border-2 border-gtl-red-deep"
+                  style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)' }}
+                >
+                  <div className="font-display text-base tracking-[0.3em] uppercase text-gtl-paper leading-none mb-2"
+                       style={{ textShadow: '2px 2px 0 #070708' }}>
+                    ◼ DEADLINE ◼
+                  </div>
+                  <div className="font-display text-gtl-paper leading-none"
+                       style={{ fontSize: '1.1rem', textShadow: '1px 1px 0 #070708' }}>
+                    {d.toLocaleDateString('en-US', { month: 'long' }).toUpperCase()}
+                  </div>
+                  {/* Day number with spinning square behind */}
+                  <div className="relative flex items-center justify-center my-1" style={{ width: '100px', height: '100px' }}>
+                    <style>{`
+                      @keyframes spin-square {
+                        from { transform: rotate(0deg); }
+                        to   { transform: rotate(360deg); }
+                      }
+                    `}</style>
+                    <div
+                      className="absolute"
+                      style={{
+                        width: '80px', height: '80px',
+                        background: '#070708',
+                        animation: 'spin-square 8s linear infinite',
+                        boxShadow: '0 0 20px rgba(0,0,0,0.8)',
+                      }}
+                      aria-hidden="true"
+                    />
+                    <div className="relative font-display text-gtl-paper leading-none"
+                         style={{ fontSize: '5rem', textShadow: '4px 4px 0 #070708', lineHeight: 1, zIndex: 1 }}>
+                      {String(d.getDate()).padStart(2, '0')}
+                    </div>
+                  </div>
+                  <div className="font-display text-gtl-paper/80 leading-none mt-1.5"
+                       style={{ fontSize: '0.85rem', textShadow: '1px 1px 0 #070708' }}>
+                    {d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()} · {d.getFullYear()}
+                  </div>
+                  {bloodVisible && (
+                    <div
+                      className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                      style={{ zIndex: 10, transform: 'translateX(-12px)' }}
+                      aria-hidden="true"
+                    >
+                      <div style={{
+                        animation: 'x-stamp 600ms cubic-bezier(0.2, 1.4, 0.3, 1) 1800ms both',
+                        fontFamily: 'Anton, Impact, sans-serif',
+                        fontSize: '10rem',
+                        color: '#8b0000',
+                        lineHeight: 1,
+                        textShadow: '3px 3px 0 rgba(0,0,0,0.6)',
+                        border: '5px solid #8b0000',
+                        padding: '0 10px',
+                        opacity: 0.75,
+                        userSelect: 'none',
+                      }}>
+                        ✕
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
+        </div>
+
+        {/* Day progress chips — slanted parallelogram cells per day; red X
+            overlay on completed days. Sit below the silhouette. */}
+        {cycle.days?.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-4">
+            {cycle.days.map((iso) => {
+              const date = new Date(iso + 'T12:00:00')
+              const dayNum = date.getDate()
+              const hasWork = (cycle.dailyPlan?.[iso] || []).length > 0
+              const done = doneDays[iso]
+              return (
+                <div key={iso} className="relative" style={{ width: '34px', height: '34px' }}>
+                  <div style={{
+                    width: '100%', height: '100%',
+                    background: hasWork ? 'rgba(212,24,31,0.12)' : 'rgba(26,26,30,0.6)',
+                    border: `1px solid ${hasWork ? 'rgba(212,24,31,0.35)' : 'rgba(58,58,66,0.4)'}`,
+                    clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <span className="font-display leading-none"
+                      style={{ fontSize: '0.85rem', color: hasWork ? '#c8c8c8' : '#3a3a42' }}>
+                      {dayNum}
+                    </span>
+                  </div>
+                  {done && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+                      <span className="font-display leading-none"
+                        style={{ fontSize: '1.6rem', color: 'rgba(212,24,31,0.55)', transform: 'rotate(-5deg)', textShadow: '1px 1px 0 rgba(0,0,0,0.5)' }}>
+                        X
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
+
       </div>
 
       {/* Completed cycle — blood spilt X (only renders once card enters viewport) */}
