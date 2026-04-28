@@ -340,7 +340,7 @@ function CycleCard({ cycle, index, selected, onSelect }) {
           {lastDay && (() => {
             const d = parseDate(lastDay)
             return (
-              <div className="relative shrink-0" style={{ transform: 'rotate(-1.5deg)' }}>
+              <div className="relative shrink-0" style={{ transform: 'rotate(-1.5deg)', marginLeft: '-8px' }}>
                 {/* Shadow slab */}
                 <div
                   className="absolute inset-0 bg-gtl-red-deep"
@@ -504,21 +504,21 @@ function CycleCard({ cycle, index, selected, onSelect }) {
               </filter>
             </defs>
 
-            {/* ── STROKE 1: top-left → bottom-right ── */}
+            {/* ── STROKE 1: top-left → bottom-right (straight diagonal) ── */}
             {/* shadow */}
-            <path d="M 18,22 C 120,48 310,160 498,215 C 680,268 850,340 982,400"
+            <path d="M 18,22 L 982,400"
               stroke="rgba(0,0,0,0.55)" strokeWidth="14" strokeLinecap="round" fill="none"
               strokeDasharray="2000" style={{ animation: 'blood-stroke-1 800ms cubic-bezier(0.3,0,0.2,1) 100ms both' }} />
             {/* main */}
-            <path d="M 16,20 C 118,46 308,158 496,213 C 678,266 848,338 980,398"
+            <path d="M 16,20 L 980,398"
               stroke="#8b0000" strokeWidth="11" strokeLinecap="round" fill="none"
               strokeDasharray="2000" style={{ animation: 'blood-stroke-1 800ms cubic-bezier(0.3,0,0.2,1) 100ms both', filter: 'url(#blood-blur)' }} />
             {/* wet sheen */}
-            <path d="M 16,18 C 118,44 308,156 496,211 C 678,264 848,336 980,396"
+            <path d="M 16,18 L 980,396"
               stroke="#d4181f" strokeWidth="5" strokeLinecap="round" fill="none" opacity="0.7"
               strokeDasharray="2000" style={{ animation: 'blood-stroke-1 800ms cubic-bezier(0.3,0,0.2,1) 100ms both' }} />
             {/* highlight */}
-            <path d="M 16,17 C 118,43 308,155 496,210 C 678,263 848,335 980,395"
+            <path d="M 16,17 L 980,395"
               stroke="rgba(255,100,100,0.35)" strokeWidth="2" strokeLinecap="round" fill="none"
               strokeDasharray="2000" style={{ animation: 'blood-stroke-1 800ms cubic-bezier(0.3,0,0.2,1) 100ms both' }} />
 
