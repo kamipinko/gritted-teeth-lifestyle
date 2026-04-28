@@ -286,14 +286,14 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.7rem' }}>
 
-          {/* Label */}
+          {/* Label — no entrance animation; visible from t=0 in red so the
+              difference-blend live-flips as bands sweep behind it. */}
           <div style={{
             fontFamily: '"JetBrains Mono", monospace',
             fontSize: '0.85rem', letterSpacing: '0.35em',
             fontWeight: 800,
             textTransform: 'uppercase', color: '#d4181f',
             mixBlendMode: 'difference',
-            animation: animOf('snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 600ms both'),
           }}>
             GRITTED TEETH LIFESTYLE
           </div>
@@ -334,14 +334,14 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             PRESS START
           </div>
 
-          {/* Sub-hint */}
+          {/* Sub-hint — no entrance animation; visible from t=0 in red so the
+              difference-blend live-flips as bands sweep behind it. */}
           <div style={{
             fontFamily: '"JetBrains Mono", monospace',
             fontSize: '0.75rem', letterSpacing: '0.3em',
             fontWeight: 800,
             textTransform: 'uppercase', color: '#d4181f',
             mixBlendMode: 'difference',
-            animation: animOf('snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 950ms both'),
           }}>
             // CLICK OR TOUCH TO ENTER //
           </div>
