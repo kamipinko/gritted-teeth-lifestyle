@@ -66,10 +66,14 @@ export default function ProfilePage() {
   // Skip-the-transition: once HeistTransition is active, the next pointer/touch
   // input anywhere on the screen routes to the hub immediately. Listen for
   // both pointerdown AND touchstart in case iOS PWA suppresses pointerdown
-  // events during rapid-tap sequences.
+  // events during rapid-tap sequences. Taps on RetreatButton (data-retreat)
+  // are excluded so retreat navigates back instead of fast-forwarding.
   useEffect(() => {
     if (!transitioning) return
-    const handler = () => skipNow()
+    const handler = (e) => {
+      if (e.target?.closest?.('[data-retreat]')) return
+      skipNow()
+    }
     window.addEventListener('pointerdown', handler, { capture: true })
     window.addEventListener('touchstart',  handler, { capture: true, passive: true })
     return () => {
