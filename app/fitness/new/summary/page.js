@@ -13,6 +13,7 @@ import { useProfileGuard } from '../../../../lib/useProfileGuard'
 import { pk } from '../../../../lib/storage'
 import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
+import HeistTransition from '../../../../components/HeistTransition'
 import RetreatButton from '../../../../components/RetreatButton'
 
 const MUSCLE_LABELS = {
@@ -2622,6 +2623,7 @@ export default function SummaryPage() {
   const [days,        setDays]       = useState([])
   const [dailyPlan,   setDailyPlan]  = useState({})
   const [fireActive,  setFireActive] = useState(false)
+  const [quickHeistActive, setQuickHeistActive] = useState(false)
   const [stampVisible, setStampVisible] = useState(false)
   const [stampLanded,  setStampLanded]  = useState(false)
   // Per-day flame/hot/cooled state arrays — sized to days.length so both CycleBlade
@@ -2729,7 +2731,7 @@ export default function SummaryPage() {
         localStorage.removeItem('gtl-quick-forge')
         localStorage.setItem('gtl-deep-launch', '1')
       } catch (_) {}
-      router.push('/fitness/active')
+      setQuickHeistActive(true)
     }, 400)
     return () => { cancelled = true; clearTimeout(t) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -3604,6 +3606,7 @@ export default function SummaryPage() {
 
       <FireFadeIn duration={900} />
       <FireTransition active={fireActive} onComplete={() => router.push('/fitness/load')} />
+      <HeistTransition active={quickHeistActive} onComplete={() => router.push('/fitness/active')} />
     </main>
   )
 }

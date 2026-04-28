@@ -20,6 +20,7 @@ import { useSound } from '../../../lib/useSound'
 import { useProfileGuard } from '../../../lib/useProfileGuard'
 import { pk } from '../../../lib/storage'
 import FireTransition from '../../../components/FireTransition'
+import HeistTransition from '../../../components/HeistTransition'
 import RetreatButton from '../../../components/RetreatButton'
 
 const MAX_LEN = 40
@@ -313,6 +314,7 @@ export default function NewCycleNamePage() {
   const [isInitialMount, setIsInitialMount] = useState(true)
   const [isBranding, setIsBranding] = useState(false)
   const [isFireActive, setIsFireActive] = useState(false)
+  const [quickHeistActive, setQuickHeistActive] = useState(false)
   const mainRef = useRef(null)
   const { play } = useSound()
   // Synchronous flag set on first FORGE tap so rapid follow-up taps short-circuit
@@ -646,16 +648,13 @@ export default function NewCycleNamePage() {
               onTap={triggerBrandConfirm}
               onSwipe={() => {
                 if (name.trim().length === 0) return
-                // Quick-forge path: skip the brand+fire transition entirely. Persist
-                // the cycle name, set the chain flag, jump to muscles directly. The
-                // in-page slash/clip animations on subsequent buttons are the only
-                // visuals — no FireTransition.
+                // Quick-forge path: persist + flag + HeistTransition (red slash)
+                // to muscles. No FireTransition.
                 try {
                   localStorage.setItem(pk('cycle-name'), name.trim())
                   localStorage.setItem('gtl-quick-forge', '1')
                 } catch (_) {}
-                play('brand-confirm')
-                router.push(NEXT_TARGET)
+                setQuickHeistActive(true)
               }}
             />
             <div className="mt-2 flex items-center gap-3 font-mono text-[8px] tracking-[0.25em] uppercase text-gtl-ash/80">
@@ -679,6 +678,7 @@ export default function NewCycleNamePage() {
       </div>
       {/* Fire transition overlay — plays after brand cools, then navigates */}
       <FireTransition active={isFireActive} onComplete={handleFireComplete} />
+      <HeistTransition active={quickHeistActive} onComplete={() => router.push(NEXT_TARGET)} />
     </main>
   )
 }

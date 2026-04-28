@@ -22,6 +22,7 @@ import { useProfileGuard } from '../../../../lib/useProfileGuard'
 import { pk } from '../../../../lib/storage'
 import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
+import HeistTransition from '../../../../components/HeistTransition'
 import RetreatButton from '../../../../components/RetreatButton'
 
 // R3F is client-only and touches `window`; dynamic import with ssr: false
@@ -478,6 +479,7 @@ export default function MusclesPage() {
   const [modelKey, setModelKey] = useState('goku')
   const [stampRevision, setStampRevision] = useState(0)
   const [fireActive, setFireActive] = useState(false)
+  const [quickHeistActive, setQuickHeistActive] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [mobileIgnitionRevision, setMobileIgnitionRevision] = useState(0)
   const [shockwaveKey, setShockwaveKey] = useState(0)
@@ -610,12 +612,12 @@ export default function MusclesPage() {
     let cancelled = false
     const t1 = setTimeout(() => { if (!cancelled) selectAllRef.current?.() }, 600)
     // 11 muscles × 500ms stagger + 740ms initial delay + 1s buffer ≈ 7240ms.
-    // After the cascade, persist + direct router.push (no FireTransition).
+    // After the cascade, persist + HeistTransition (red slash) to branded.
     const t2 = setTimeout(() => {
       if (cancelled) return
       const allIds = MUSCLE_GROUPS.map(g => g.id)
       try { localStorage.setItem(pk('muscle-targets'), JSON.stringify(allIds)) } catch (_) {}
-      router.push('/fitness/new/branded')
+      setQuickHeistActive(true)
     }, 7240)
     return () => { cancelled = true; clearTimeout(t1); clearTimeout(t2) }
   }, [isMobile, router])
@@ -968,6 +970,8 @@ export default function MusclesPage() {
         active={fireActive}
         onComplete={() => router.push('/fitness/new/branded')}
       />
+      {/* Heist (red slash) transition — quick-forge swipe path only */}
+      <HeistTransition active={quickHeistActive} onComplete={() => router.push('/fitness/new/branded')} />
 
       {/* Fire fade-in — picks up where FireTransition left off so the
           source-to-destination cut feels continuous. */}

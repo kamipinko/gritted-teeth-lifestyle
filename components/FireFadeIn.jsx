@@ -14,9 +14,20 @@
 import { useEffect, useState } from 'react'
 
 export default function FireFadeIn({ duration = 800 }) {
-  const [active, setActive] = useState(true)
+  // Quick-forge / deep-launch paths suppress the fire entirely — the user is
+  // speedrunning the cycle build/lift and shouldn't see flame wipes between
+  // pages. Initial state respects the flag so the fire never paints.
+  const isFastPath = (() => {
+    if (typeof window === 'undefined') return false
+    try {
+      return localStorage.getItem('gtl-quick-forge') === '1'
+          || localStorage.getItem('gtl-deep-launch') === '1'
+    } catch (_) { return false }
+  })()
+  const [active, setActive] = useState(isFastPath ? 'done' : true)
 
   useEffect(() => {
+    if (active === 'done') return
     // Trigger fade after a single frame so the initial paint is full fire
     const t = setTimeout(() => setActive(false), 50)
     const t2 = setTimeout(() => {
@@ -25,6 +36,7 @@ export default function FireFadeIn({ duration = 800 }) {
       setActive('done')
     }, duration + 200)
     return () => { clearTimeout(t); clearTimeout(t2) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [duration])
 
   if (active === 'done') return null

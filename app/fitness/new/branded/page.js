@@ -15,6 +15,7 @@ import { useProfileGuard } from '../../../../lib/useProfileGuard'
 import { pk } from '../../../../lib/storage'
 import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
+import HeistTransition from '../../../../components/HeistTransition'
 import RetreatButton from '../../../../components/RetreatButton'
 
 const MONTH_NAMES = [
@@ -286,6 +287,7 @@ export default function SchedulePage() {
   const [selectedDays, setSelectedDays] = useState(new Set())
   const [assignments,  setAssignments]  = useState({})
   const [fireActive,   setFireActive]   = useState(false)
+  const [quickHeistActive, setQuickHeistActive] = useState(false)
   const dragRef = useRef(false) // true during swipe-select
   const gridRef = useRef(null)
 
@@ -505,7 +507,7 @@ export default function SchedulePage() {
       newAssignments[days[days.length - 1]] = new Set()
       setSelectedDays(newSelected)
       setAssignments(newAssignments)
-      // Persist + direct router.push (no FireTransition on the quick-forge path).
+      // Persist + HeistTransition (red slash) to summary. No FireTransition.
       const t2 = setTimeout(() => {
         if (cancelled) return
         try {
@@ -516,7 +518,7 @@ export default function SchedulePage() {
           }
           localStorage.setItem(pk('daily-plan'), JSON.stringify(serialized))
         } catch (_) {}
-        router.push('/fitness/new/summary')
+        setQuickHeistActive(true)
       }, 600)
       return () => clearTimeout(t2)
     }, 700)
@@ -850,6 +852,7 @@ export default function SchedulePage() {
         active={fireActive}
         onComplete={() => router.push('/fitness/new/summary')}
       />
+      <HeistTransition active={quickHeistActive} onComplete={() => router.push('/fitness/new/summary')} />
     </main>
   )
 }
