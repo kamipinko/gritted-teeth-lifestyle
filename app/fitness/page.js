@@ -149,6 +149,18 @@ export default function ProfilePage() {
                 }}
                 aria-hidden="true"
               />
+              {/* Visible-prompt overlay — shows when input is empty. Sits inside the
+                  input's slot but is a sibling div, NOT the input's placeholder. iOS
+                  heuristics scan placeholder text for "name"/"email" keywords; moving
+                  the prompt out of the placeholder attribute kills that signal. */}
+              {input.length === 0 && (
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0 pointer-events-none flex items-center px-4 md:px-6 font-display text-lg md:text-2xl text-gtl-smoke tracking-wide uppercase"
+                >
+                  ENTER YOUR NAME
+                </div>
+              )}
               <input
                 ref={inputRef}
                 type="search"
@@ -161,9 +173,8 @@ export default function ProfilePage() {
                 autoCorrect="off"
                 autoCapitalize="characters"
                 spellCheck={false}
-                placeholder="ENTER YOUR NAME"
                 maxLength={24}
-                className="relative w-full bg-transparent font-display text-lg md:text-2xl text-gtl-chalk tracking-wide uppercase px-4 md:px-6 py-4 outline-none placeholder:text-gtl-smoke [&::-webkit-search-cancel-button]:hidden"
+                className="relative w-full bg-transparent font-display text-lg md:text-2xl text-gtl-chalk tracking-wide uppercase px-4 md:px-6 py-4 outline-none [&::-webkit-search-cancel-button]:hidden"
                 style={{ caretColor: '#d4181f' }}
               />
             </div>
