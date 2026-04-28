@@ -5,6 +5,7 @@ import CallingCard from '../components/CallingCard'
 import HeistTransition from '../components/HeistTransition'
 import GateScreen from '../components/GateScreen'
 import { useSound } from '../lib/useSound'
+import { getCurrentBgmTrack } from '../lib/bgmTracks'
 
 // Pre-create the Audio element at module load with preload='auto' so it's ready
 // when the user gestures. iOS PWA standalone mode rejects audio.play() if the
@@ -17,11 +18,13 @@ import { useSound } from '../lib/useSound'
 const bgMusicAudio = (() => {
   if (typeof window === 'undefined') return null
   if (window.__gtlBgMusic) return window.__gtlBgMusic
-  const a = new Audio('/sounds/chrono-cut-1.wav')
+  const track = getCurrentBgmTrack()
+  const a = new Audio(track.src)
   a.loop = true
   a.preload = 'auto'
   a.volume = 0
   window.__gtlBgMusic = a
+  window.__gtlBgMusicTrackId = track.id
   return a
 })()
 
