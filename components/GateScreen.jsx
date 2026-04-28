@@ -28,7 +28,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase('in'), 60)
-    const t2 = setTimeout(() => setPhase('idle'), 1700)
+    const t2 = setTimeout(() => setPhase('idle'), 1400)
     return () => {
       clearTimeout(t1); clearTimeout(t2)
       if (exitTimerRef.current) clearTimeout(exitTimerRef.current)
@@ -233,8 +233,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
               pointerEvents: 'none',
               userSelect: 'none',
               whiteSpace: 'nowrap',
-              opacity: 0,
-              animation: animOf('swipe-hint-fadein 400ms ease 1000ms forwards, swipe-hint-pulse 2400ms ease-in-out 1400ms infinite'),
+              animation: 'swipe-hint-pulse 2400ms ease-in-out infinite',
             }}
           >
             ▲ {swipeHintLabels.top}
@@ -255,17 +254,12 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
               pointerEvents: 'none',
               userSelect: 'none',
               whiteSpace: 'nowrap',
-              opacity: 0,
-              animation: animOf('swipe-hint-fadein 400ms ease 1000ms forwards, swipe-hint-pulse 2400ms ease-in-out 1400ms infinite'),
+              animation: 'swipe-hint-pulse 2400ms ease-in-out infinite',
             }}
           >
             ▼ {swipeHintLabels.bottom}
           </div>
           <style>{`
-            @keyframes swipe-hint-fadein {
-              0%   { opacity: 0; }
-              100% { opacity: 0.85; }
-            }
             @keyframes swipe-hint-pulse {
               0%, 100% { opacity: 0.85; }
               50%      { opacity: 1.0; }
@@ -299,7 +293,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             fontWeight: 800,
             textTransform: 'uppercase', color: '#d4181f',
             mixBlendMode: 'difference',
-            animation: animOf('snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 1000ms both'),
+            animation: animOf('snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 600ms both'),
           }}>
             GRITTED TEETH LIFESTYLE
           </div>
@@ -321,7 +315,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             height: 5, background: '#d4181f', transform: 'skewX(-12deg)',
             mixBlendMode: 'difference',
             width: active ? 'clamp(8rem, 20vw, 14rem)' : 0,
-            transition: transOf('width 600ms cubic-bezier(0.2, 1, 0.3, 1) 1100ms'),
+            transition: transOf('width 600ms cubic-bezier(0.2, 1, 0.3, 1) 750ms'),
           }} />
 
           {/* PRESS START — snaps in, then blinks. When `instant` is set
@@ -334,7 +328,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             animation: instant
               ? 'cursor-blink 1.2s steps(2, end) infinite'
               : (active
-                  ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 1150ms both, cursor-blink 1.2s steps(2, end) 1700ms infinite'
+                  ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 800ms both, cursor-blink 1.2s steps(2, end) 1350ms infinite'
                   : 'none'),
           }}>
             PRESS START
@@ -347,7 +341,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             fontWeight: 800,
             textTransform: 'uppercase', color: '#d4181f',
             mixBlendMode: 'difference',
-            animation: animOf('snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 1300ms both'),
+            animation: animOf('snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 950ms both'),
           }}>
             // CLICK OR TOUCH TO ENTER //
           </div>
