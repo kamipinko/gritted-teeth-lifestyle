@@ -223,7 +223,7 @@ export default function SettingsPage() {
           style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
         >
           <RetreatButton href="/fitness" />
-          <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
+          <div className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
             CONFIG / 00
           </div>
         </nav>
@@ -232,16 +232,16 @@ export default function SettingsPage() {
           <div className="mb-8">
             <div className="flex items-center gap-4 mb-3">
               <div className="h-px w-16 bg-gtl-red" />
-              <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-red">
+              <span className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-red">
                 CONFIG
               </span>
             </div>
-            <h1 className="font-display text-[5rem] md:text-[7rem] leading-[0.9] text-gtl-chalk -rotate-1">
+            <h1 className="font-matisse text-[5rem] md:text-[7rem] leading-[0.9] text-gtl-chalk -rotate-1">
               SETT<br />
               <span className="text-gtl-red inline-block rotate-1">INGS</span>
             </h1>
             {activeProfile && (
-              <p className="font-mono text-xs tracking-[0.25em] uppercase text-gtl-ash mt-3">
+              <p className="font-matisse text-xs tracking-[0.25em] uppercase text-gtl-ash mt-3">
                 ACTIVE WARRIOR — <span className="text-gtl-chalk">{activeProfile}</span>
               </p>
             )}
@@ -251,7 +251,7 @@ export default function SettingsPage() {
           <div className="mb-8">
             <div className="flex items-center gap-4 mb-3">
               <div className="h-px w-8 bg-gtl-edge" />
-              <span className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">AUDIO</span>
+              <span className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">AUDIO</span>
               <div className="h-px flex-1 bg-gtl-edge" />
             </div>
             <div className="flex flex-col gap-3">
@@ -264,7 +264,7 @@ export default function SettingsPage() {
           <div className="mb-8">
             <div className="flex items-center gap-4 mb-3">
               <div className="h-px w-8 bg-gtl-edge" />
-              <span className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">HAPTICS</span>
+              <span className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">HAPTICS</span>
               <div className="h-px flex-1 bg-gtl-edge" />
             </div>
             {ready && <Toggle label="VIBRATION" value={hapticsOn} onChange={handleHaptics} />}
@@ -274,10 +274,10 @@ export default function SettingsPage() {
           <div className="mb-8">
             <div className="flex items-center gap-4 mb-3">
               <div className="h-px w-8 bg-gtl-red" />
-              <span className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-red">DANGER ZONE</span>
+              <span className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-red">DANGER ZONE</span>
               <div className="h-px flex-1 bg-gtl-red" />
             </div>
-            <p className="font-mono text-[10px] tracking-[0.25em] uppercase text-gtl-ash mb-3">
+            <p className="font-matisse text-[10px] tracking-[0.25em] uppercase text-gtl-ash mb-3">
               TAP ONCE TO ARM · TAP AGAIN TO CONFIRM
             </p>
             <div className="flex flex-col gap-3">
@@ -293,7 +293,7 @@ export default function SettingsPage() {
               />
             </div>
             {!activeProfile && (
-              <p className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-smoke mt-3">
+              <p className="font-matisse text-[9px] tracking-[0.3em] uppercase text-gtl-smoke mt-3">
                 NO ACTIVE WARRIOR — RETURN TO IDENTITY
               </p>
             )}
@@ -303,12 +303,12 @@ export default function SettingsPage() {
           <div className="mt-auto">
             <div className="flex items-center gap-4 mb-3">
               <div className="h-px w-8 bg-gtl-edge" />
-              <span className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">CREDITS</span>
+              <span className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">CREDITS</span>
               <div className="h-px flex-1 bg-gtl-edge" />
             </div>
             <div className="bg-gtl-surface border border-gtl-edge px-5 py-4" style={{ clipPath: 'polygon(2% 0%, 100% 0%, 98% 100%, 0% 100%)' }}>
-              <p className="font-display text-2xl text-gtl-chalk leading-tight mb-2">GRITTED TEETH LIFESTYLE</p>
-              <p className="font-mono text-[10px] tracking-[0.25em] uppercase text-gtl-ash leading-relaxed">
+              <p className="font-matisse text-2xl text-gtl-chalk leading-tight mb-2">GRITTED TEETH LIFESTYLE</p>
+              <p className="font-matisse text-[10px] tracking-[0.25em] uppercase text-gtl-ash leading-relaxed">
                 BUILT BY JORDAN HILLMAN<br />
                 INSPIRED BY PERSONA 5 + GURREN LAGANN<br />
                 FORGED WITH GRITTED TEETH
