@@ -149,7 +149,7 @@ export default function GateScreen({ onEnter, onMusicStart }) {
           <div style={{
             fontFamily: '"JetBrains Mono", monospace',
             fontSize: '0.55rem', letterSpacing: '0.4em',
-            textTransform: 'uppercase', color: '#7d7d83',
+            textTransform: 'uppercase', color: '#d4181f',
             animation: active ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 600ms both' : 'none',
           }}>
             GRITTED TEETH LIFESTYLE
@@ -190,7 +190,7 @@ export default function GateScreen({ onEnter, onMusicStart }) {
           <div style={{
             fontFamily: '"JetBrains Mono", monospace',
             fontSize: '0.5rem', letterSpacing: '0.3em',
-            textTransform: 'uppercase', color: '#4a4a4f',
+            textTransform: 'uppercase', color: '#d4181f',
             animation: active ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 950ms both' : 'none',
           }}>
             // CLICK OR TOUCH TO ENTER //

@@ -165,39 +165,23 @@ function SwipeHint({ position, label }) {
         pointerEvents: 'none',
         userSelect: 'none',
         whiteSpace: 'nowrap',
+        fontFamily: '"JetBrains Mono", monospace',
+        fontSize: '0.95rem',
+        fontWeight: 700,
+        letterSpacing: '0.35em',
+        textTransform: 'uppercase',
+        color: '#d4181f',
+        mixBlendMode: 'difference',
+        animation: 'swipe-hint-pulse 2400ms ease-in-out infinite',
       }}
     >
-      {/* Negative-photo panel: white fill + mix-blend-mode:difference inverts
-          whatever atmospheric layer (bloom / red band / dark base) is behind. */}
-      <div
-        style={{
-          position: 'relative',
-          display: 'inline-block',
-          padding: '6px 14px',
-          background: '#ffffff',
-          mixBlendMode: 'difference',
-          animation: 'swipe-hint-pulse 2400ms ease-in-out infinite',
-        }}
-      >
-        <span
-          style={{
-            fontFamily: '"JetBrains Mono", monospace',
-            fontSize: '0.85rem',
-            fontWeight: 700,
-            letterSpacing: '0.35em',
-            textTransform: 'uppercase',
-            color: '#000000',
-          }}
-        >
-          {isTop ? '▲ ' : '▼ '}{label}
-        </span>
-      </div>
       <style>{`
         @keyframes swipe-hint-pulse {
           0%, 100% { opacity: 0.85; }
           50%      { opacity: 1.0; }
         }
       `}</style>
+      {isTop ? '▲ ' : '▼ '}{label}
     </div>
   )
 }
