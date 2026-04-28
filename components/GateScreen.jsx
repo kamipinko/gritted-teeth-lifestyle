@@ -282,7 +282,6 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             height: 'clamp(128px, 24vw, 200px)',
             borderRadius: '50%',
             objectFit: 'cover',
-            animation: animOf('forge-slam 1100ms cubic-bezier(0.2, 1.2, 0.4, 1) 400ms both'),
           }}
         />
 
