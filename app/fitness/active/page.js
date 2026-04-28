@@ -2502,19 +2502,6 @@ export default function ActiveCyclePage() {
 
       {/* Kanji watermark — 動 (motion/active). Top rooted at safe-area floor so it
           never clips into the iOS Dynamic Island camera area. */}
-      <div
-        className="absolute -right-24 pointer-events-none select-none"
-        aria-hidden="true"
-        style={{
-          top: 'calc(env(safe-area-inset-top, 0px) - 64px)',
-          fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-          fontSize: '52rem', lineHeight: '0.8',
-          color: '#d4181f', opacity: 0.045, fontWeight: 900,
-        }}
-      >
-        動
-      </div>
-
       {/* Cycle name watermark — floats above grid */}
       <div className="absolute inset-0 flex items-center justify-start pointer-events-none select-none overflow-hidden" style={{ zIndex: 20 }}>
         <div

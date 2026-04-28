@@ -222,22 +222,6 @@ export default function ProfilePage() {
 
       {/* Kanji watermark — top offset rooted at the safe-area floor so it never clips
           into the iOS Dynamic Island camera area. */}
-      <div
-        className="absolute -left-8 pointer-events-none select-none animate-flicker"
-        aria-hidden="true"
-        style={{
-          top: 'calc(env(safe-area-inset-top, 0px) - 48px)',
-          fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-          fontSize: '40rem',
-          lineHeight: '0.8',
-          color: '#ffffff',
-          opacity: 0.04,
-          fontWeight: 900,
-        }}
-      >
-        名
-      </div>
-
       {/* Content wrapper — atmospheric layers above paint full-bleed (incl. safe area);
           this wrapper holds the actual UI and pads down by the iOS top inset. */}
       <div className="relative z-10 flex-1 flex flex-col">
