@@ -151,7 +151,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
  * Calls `onCharAdded` whenever a NEW character is typed (not on delete),
  * so the parent can fire the screen shake and sound at the right moment.
  */
-function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAdded, onConfirm, isBranding, onInputFocus }) {
+function StampedNameInput({ value, onChange, maxLength, isInitialMount, entranceSkipped, onCharAdded, onConfirm, isBranding, onInputFocus }) {
   const inputRef = useRef(null)
   const charKeysRef = useRef([])
   const { play } = useSound()
@@ -249,6 +249,10 @@ function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAd
               ${isBranding ? 'animate-brand-letter' : 'text-gtl-chalk animate-char-stamp'}
             `}
             style={{
+              // entranceSkipped: kill the in-flight char-stamp animation so
+              // every character snaps to its settled (final) state — natural
+              // HTML render is scale(1)/opacity(1), which is the keyframe end.
+              animation: entranceSkipped && !isBranding ? 'none' : undefined,
               animationDelay: isBranding
                 ? `${i * 20}ms`
                 : (isInitialMount ? `${i * 35}ms` : '0ms'),
@@ -320,6 +324,8 @@ export default function NewCycleNamePage() {
     return () => window.removeEventListener('keydown', handleKey)
   }, [router])
   const [isInitialMount, setIsInitialMount] = useState(true)
+  const [entranceSkipped, setEntranceSkipped] = useState(false)
+  const initialMountTimerRef = useRef(null)
   const [isBranding, setIsBranding] = useState(false)
   const [isFireActive, setIsFireActive] = useState(false)
   const [quickHeistActive, setQuickHeistActive] = useState(false)
@@ -356,9 +362,29 @@ export default function NewCycleNamePage() {
       initial = pickRandomName()
     }
     setName(initial)
-    const t = setTimeout(() => setIsInitialMount(false), initial.length * 35 + 500)
-    return () => clearTimeout(t)
+    initialMountTimerRef.current = setTimeout(() => setIsInitialMount(false), initial.length * 35 + 500)
+    return () => clearTimeout(initialMountTimerRef.current)
   }, [])
+
+  // Skip-the-entrance: any pointerdown / touchstart during the initial
+  // char-stamp cascade snaps the characters to their settled state and clears
+  // the auto-finish timer. Excludes RetreatButton so retreat still navigates
+  // back instead of just dismissing the cascade.
+  useEffect(() => {
+    if (!isInitialMount) return
+    const handler = (e) => {
+      if (e.target?.closest?.('[data-retreat]')) return
+      setEntranceSkipped(true)
+      setIsInitialMount(false)
+      if (initialMountTimerRef.current) clearTimeout(initialMountTimerRef.current)
+    }
+    window.addEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
+  }, [isInitialMount])
 
   /**
    * triggerBrandConfirm — fired when the user presses Enter on a non-empty
@@ -601,6 +627,7 @@ export default function NewCycleNamePage() {
             onChange={setName}
             maxLength={MAX_LEN}
             isInitialMount={isInitialMount}
+            entranceSkipped={entranceSkipped}
             onCharAdded={triggerImpact}
             onConfirm={triggerBrandConfirm}
             isBranding={isBranding}
