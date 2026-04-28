@@ -1269,6 +1269,23 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose, cycleId }) {
     setPhase('weight')
   }
 
+  // Quick-nav: when the muscle's panel opens, jump straight into entering the
+  // first set's weight for the first exercise. Continues the tap-tap-tap chain
+  // (chip → LOAD → ACTIVATE → TODAY → BEGIN HERE muscle → here, weight popup).
+  // Delayed so the panel's zoom-in animation gets to land first.
+  useEffect(() => {
+    if (!exercises.length) return
+    const t = setTimeout(() => {
+      setActiveExercise(exercises[0])
+      setActiveExerciseRect(null)
+      setActiveSetIndex(0)
+      setPhase('weight')
+    }, 450)
+    return () => clearTimeout(t)
+  // Mount-only auto-open; deliberately ignoring exercises identity churn.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const closePopup = () => {
     setActiveExercise(null)
     setActiveExerciseRect(null)
@@ -1377,12 +1394,9 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose, cycleId }) {
           </div>
         )}
 
-        {/* Exercise list. exercises[0] is rendered separately as the FIRST SET
-            quick-nav hero at y=466, so slice(1) here. */}
+        {/* Exercise list */}
         <ol className="flex flex-col gap-0 shrink-0">
-          {exercises.slice(1).map((name, idx) => {
-            const i = idx + 1
-            return (
+          {exercises.map((name, i) => (
             <ExerciseRow
               key={name}
               name={name}
@@ -1424,7 +1438,7 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose, cycleId }) {
                 })
               }}
             />
-          )})}
+          ))}
 
           {/* Custom exercise slot */}
           <li style={{ listStyle: 'none', animation: 'focus-content-in 250ms 470ms ease-out both' }}>
@@ -1522,46 +1536,6 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose, cycleId }) {
             )}
           </li>
         </ol>
-
-        {/* Quick-nav FIRST SET hero — sits at y=466 to continue the muscle-memory
-            chain. Tap = open the first exercise's first set (weight popup). Hidden
-            once a set's weight/reps popup is open. */}
-        {!activeExercise && exercises.length > 0 && (
-          <button
-            type="button"
-            onClick={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect()
-              openExercise(exercises[0], rect, 0)
-            }}
-            className="fixed z-[9996] block outline-none active:scale-[0.98] transition-transform"
-            style={{
-              top: '466px',
-              left: '32px',
-              right: '32px',
-              animation: 'activate-popup-rise 320ms cubic-bezier(0.18, 1, 0.36, 1) 380ms both',
-            }}
-          >
-            <div
-              className="absolute inset-0 bg-gtl-red transition-colors group-active:bg-gtl-red-bright"
-              style={{
-                clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
-                boxShadow: '0 4px 28px rgba(212, 24, 31, 0.55)',
-              }}
-              aria-hidden="true"
-            />
-            <div className="relative flex items-center justify-between px-6 py-3 gap-3">
-              <div className="flex flex-col items-start min-w-0">
-                <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-paper/80 leading-none">
-                  FIRST SET
-                </span>
-                <span className="font-display text-xl text-gtl-paper leading-none mt-1 truncate">
-                  {exercises[0]}
-                </span>
-              </div>
-              <span className="font-display text-2xl text-gtl-paper leading-none shrink-0">➤︎</span>
-            </div>
-          </button>
-        )}
 
         {/* Weight popup — opens first */}
         {activeExercise && phase === 'weight' && (
@@ -1684,6 +1658,26 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
     setClosing(true)
     setTimeout(onClose, 350)
   }, [onClose, play])
+
+  // Deep-launch: continue the auto-progression chain from /fitness/load ACTIVATE.
+  // After zoom-in lands, auto-open the first muscle's exercise panel — which
+  // in turn auto-opens the first set's weight popup. Flag is cleared INSIDE the
+  // timer callback (after success) so React StrictMode's mount/unmount/remount
+  // doesn't consume the flag before the timer can fire.
+  useEffect(() => {
+    if (!hasWork) return
+    let isDeepLaunch = false
+    try { isDeepLaunch = localStorage.getItem('gtl-deep-launch') === '1' } catch (_) {}
+    if (!isDeepLaunch) return
+    const t = setTimeout(() => {
+      try { localStorage.removeItem('gtl-deep-launch') } catch (_) {}
+      setFocusMuscle(muscles[0])
+      setFocusMuscleRect(null)
+    }, 500)
+    return () => clearTimeout(t)
+  // Mount-only auto-progress.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Lock body scroll while open
   useEffect(() => {
@@ -2334,6 +2328,37 @@ export default function ActiveCyclePage() {
     }
     setCompletedDays(count)
   }, [days, cardRefreshKey])
+
+  // Deep-launch: when the user came from ACTIVATE on /fitness/load, skip the
+  // schedule view and jump straight into today's day-focus. DayFocus then
+  // continues the auto-progression into ExercisePanel, which auto-opens the
+  // first set's weight popup. Flag is consumed in DayFocus (so it survives the
+  // mount chain).
+  useEffect(() => {
+    if (!days.length) return
+    let isDeepLaunch = false
+    try { isDeepLaunch = localStorage.getItem('gtl-deep-launch') === '1' } catch (_) {}
+    if (!isDeepLaunch) return
+    // Compute hero day inline (heroIso identifier is defined later in render).
+    const todayD = new Date()
+    const todayStr = `${todayD.getFullYear()}-${String(todayD.getMonth()+1).padStart(2,'0')}-${String(todayD.getDate()).padStart(2,'0')}`
+    const target = days.reduce((closest, iso) => {
+      const dC = Math.abs(parseDate(closest) - parseDate(todayStr))
+      const dI = Math.abs(parseDate(iso) - parseDate(todayStr))
+      return dI < dC ? iso : closest
+    }, days[0])
+    // Center-of-viewport synthetic rect for the zoom-in origin.
+    const syntheticRect = {
+      left: window.innerWidth / 2 - 100, top: 466,
+      width: 200, height: 60,
+      right: window.innerWidth / 2 + 100, bottom: 526,
+    }
+    const t = setTimeout(() => {
+      setFocusRect(syntheticRect)
+      setFocusDay(target)
+    }, 100)
+    return () => clearTimeout(t)
+  }, [days])
 
 
   const handleDayClick = (iso, rect) => {

@@ -861,6 +861,10 @@ export default function LoadCyclePage() {
     fireActiveRef.current = true
     loadCycleIntoStorage(cycle)
     try { localStorage.removeItem(pk('editing-cycle-id')) } catch (_) {}
+    // Deep-launch flag — tells the next pages in the chain to auto-progress
+    // straight to the first set's weight popup (today → first muscle → first
+    // exercise S1). Cleared once consumed.
+    try { localStorage.setItem('gtl-deep-launch', '1') } catch (_) {}
     fireDestRef.current = '/fitness/active'  // sync for the listener
     setFireDest('/fitness/active')
     setFireActive(true)
