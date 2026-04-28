@@ -306,7 +306,6 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             lineHeight: 1, letterSpacing: '-0.02em',
             color: '#f1eee5',
             textShadow: '3px 3px 0 #d4181f, 6px 6px 0 #070708',
-            animation: animOf('snap-in 800ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 650ms both'),
           }}>
             GTL
           </div>
