@@ -15,7 +15,7 @@ import { useProfileGuard } from '../../../../lib/useProfileGuard'
 import { pk } from '../../../../lib/storage'
 import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
-import HeistTransition from '../../../../components/HeistTransition'
+import SlashWipe from '../../../../components/SlashWipe'
 import RetreatButton from '../../../../components/RetreatButton'
 
 const MONTH_NAMES = [
@@ -852,7 +852,7 @@ export default function SchedulePage() {
         active={fireActive}
         onComplete={() => router.push('/fitness/new/summary')}
       />
-      <HeistTransition active={quickHeistActive} onComplete={() => router.push('/fitness/new/summary')} />
+      <SlashWipe active={quickHeistActive} onComplete={() => router.push('/fitness/new/summary')} />
     </main>
   )
 }

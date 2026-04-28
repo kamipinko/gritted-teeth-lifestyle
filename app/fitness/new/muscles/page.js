@@ -22,7 +22,7 @@ import { useProfileGuard } from '../../../../lib/useProfileGuard'
 import { pk } from '../../../../lib/storage'
 import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
-import HeistTransition from '../../../../components/HeistTransition'
+import SlashWipe from '../../../../components/SlashWipe'
 import RetreatButton from '../../../../components/RetreatButton'
 
 // R3F is client-only and touches `window`; dynamic import with ssr: false
@@ -970,8 +970,8 @@ export default function MusclesPage() {
         active={fireActive}
         onComplete={() => router.push('/fitness/new/branded')}
       />
-      {/* Heist (red slash) transition — quick-forge swipe path only */}
-      <HeistTransition active={quickHeistActive} onComplete={() => router.push('/fitness/new/branded')} />
+      {/* Red slash wipe — quick-forge swipe path only (no title text) */}
+      <SlashWipe active={quickHeistActive} onComplete={() => router.push('/fitness/new/branded')} />
 
       {/* Fire fade-in — picks up where FireTransition left off so the
           source-to-destination cut feels continuous. */}

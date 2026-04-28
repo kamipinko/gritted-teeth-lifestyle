@@ -13,7 +13,6 @@ import { useProfileGuard } from '../../../../lib/useProfileGuard'
 import { pk } from '../../../../lib/storage'
 import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
-import HeistTransition from '../../../../components/HeistTransition'
 import RetreatButton from '../../../../components/RetreatButton'
 
 const MUSCLE_LABELS = {
@@ -2623,7 +2622,10 @@ export default function SummaryPage() {
   const [days,        setDays]       = useState([])
   const [dailyPlan,   setDailyPlan]  = useState({})
   const [fireActive,  setFireActive] = useState(false)
-  const [quickHeistActive, setQuickHeistActive] = useState(false)
+  // FireTransition's onComplete normally routes to /fitness/load. On the
+  // quick-forge chain we want /fitness/active so the deep-launch effect
+  // there continues to the first set's weight popup.
+  const fireDestRef = useRef('/fitness/load')
   const [stampVisible, setStampVisible] = useState(false)
   const [stampLanded,  setStampLanded]  = useState(false)
   // Per-day flame/hot/cooled state arrays — sized to days.length so both CycleBlade
@@ -2695,9 +2697,11 @@ export default function SummaryPage() {
     setWeekdayLetterCooled(prev  => prev.length === N * 3 ? prev : Array(N * 3).fill(false))
   }, [days.length])
 
-  // Quick-forge auto-progression: persist the cycle to localStorage (same writes
-  // handleBegin does on tap-path), set the deep-launch flag for /fitness/active,
-  // and router.push directly — NO FireTransition or ETCH CYCLE animation.
+  // Quick-forge auto-progression: ONLY on summary, run the full default
+  // ETCH CYCLE flow (handleBegin) — flame animation, fire transition, all of
+  // it. Jordan wants the epic "cycle is forged" moment to play out at the
+  // end of the chain. We just clear gtl-quick-forge and set gtl-deep-launch
+  // so /fitness/active continues to the first set's weight popup.
   const quickForgeFiredRef = useRef(false)
   useEffect(() => {
     if (quickForgeFiredRef.current) return
@@ -2710,32 +2714,15 @@ export default function SummaryPage() {
     const t = setTimeout(() => {
       if (cancelled) return
       try {
-        // Persist the cycle (mirrors the localStorage writes inside handleBegin).
-        const existing  = JSON.parse(localStorage.getItem(pk('cycles')) || '[]')
-        const editingId = localStorage.getItem(pk('editing-cycle-id'))
-        if (editingId) {
-          const updated = existing.map((c) =>
-            c.id === editingId ? { ...c, name: cycleName, targets, days, dailyPlan } : c
-          )
-          localStorage.setItem(pk('cycles'), JSON.stringify(updated))
-          localStorage.removeItem(pk('editing-cycle-id'))
-        } else {
-          const cycle = {
-            id: Date.now().toString(),
-            name: cycleName, targets, days, dailyPlan,
-            createdAt: new Date().toISOString(),
-          }
-          localStorage.setItem(pk('cycles'), JSON.stringify([cycle, ...existing]))
-          localStorage.setItem(pk('active-cycle-id'), cycle.id)
-        }
         localStorage.removeItem('gtl-quick-forge')
         localStorage.setItem('gtl-deep-launch', '1')
       } catch (_) {}
-      setQuickHeistActive(true)
-    }, 400)
+      fireDestRef.current = '/fitness/active'
+      handleBeginRef.current?.()
+    }, 800)
     return () => { cancelled = true; clearTimeout(t) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [days, dailyPlan, cycleName, targets])
+  }, [days])
 
   const handleBeginRef = useRef(null)
   const handleBegin = () => {
@@ -3605,8 +3592,7 @@ export default function SummaryPage() {
       })()}
 
       <FireFadeIn duration={900} />
-      <FireTransition active={fireActive} onComplete={() => router.push('/fitness/load')} />
-      <HeistTransition active={quickHeistActive} onComplete={() => router.push('/fitness/active')} />
+      <FireTransition active={fireActive} onComplete={() => router.push(fireDestRef.current)} />
     </main>
   )
 }

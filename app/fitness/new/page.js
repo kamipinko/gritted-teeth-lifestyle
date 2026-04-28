@@ -20,7 +20,7 @@ import { useSound } from '../../../lib/useSound'
 import { useProfileGuard } from '../../../lib/useProfileGuard'
 import { pk } from '../../../lib/storage'
 import FireTransition from '../../../components/FireTransition'
-import HeistTransition from '../../../components/HeistTransition'
+import SlashWipe from '../../../components/SlashWipe'
 import RetreatButton from '../../../components/RetreatButton'
 
 const MAX_LEN = 40
@@ -678,7 +678,7 @@ export default function NewCycleNamePage() {
       </div>
       {/* Fire transition overlay — plays after brand cools, then navigates */}
       <FireTransition active={isFireActive} onComplete={handleFireComplete} />
-      <HeistTransition active={quickHeistActive} onComplete={() => router.push(NEXT_TARGET)} />
+      <SlashWipe active={quickHeistActive} onComplete={() => router.push(NEXT_TARGET)} />
     </main>
   )
 }

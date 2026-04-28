@@ -14,17 +14,15 @@
 import { useEffect, useState } from 'react'
 
 export default function FireFadeIn({ duration = 800 }) {
-  // Quick-forge / deep-launch paths suppress the fire entirely — the user is
-  // speedrunning the cycle build/lift and shouldn't see flame wipes between
-  // pages. Initial state respects the flag so the fire never paints.
-  const isFastPath = (() => {
+  // Quick-forge chain (FORGE swipe) suppresses the destination-side fire wall
+  // because those pages cut to red slashes instead. Summary's default
+  // ETCH-CYCLE flow keeps the fire wall on /fitness/active for visual continuity
+  // — so we ONLY check gtl-quick-forge here, not gtl-deep-launch.
+  const isQuickForge = (() => {
     if (typeof window === 'undefined') return false
-    try {
-      return localStorage.getItem('gtl-quick-forge') === '1'
-          || localStorage.getItem('gtl-deep-launch') === '1'
-    } catch (_) { return false }
+    try { return localStorage.getItem('gtl-quick-forge') === '1' } catch (_) { return false }
   })()
-  const [active, setActive] = useState(isFastPath ? 'done' : true)
+  const [active, setActive] = useState(isQuickForge ? 'done' : true)
 
   useEffect(() => {
     if (active === 'done') return
