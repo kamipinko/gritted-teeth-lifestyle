@@ -496,10 +496,10 @@ export default function MusclesPage() {
     skippedRef.current = true
     router.push(NEXT_TARGET)
   }
-  // Window pointerdown+touchstart listener while FireTransition is active —
-  // tap anywhere routes immediately. data-retreat excluded for back nav.
+  // Window pointerdown+touchstart listener — SWIPE-FORGE PATH ONLY (SlashWipe).
+  // Tap-path FireTransition (yakiire flame) plays through unskippable.
   useEffect(() => {
-    if (!fireActive && !quickHeistActive) return
+    if (!quickHeistActive) return
     const handler = (e) => {
       if (e.target?.closest?.('[data-retreat]')) return
       skipNow()
@@ -510,7 +510,7 @@ export default function MusclesPage() {
       window.removeEventListener('pointerdown', handler, { capture: true })
       window.removeEventListener('touchstart',  handler, { capture: true })
     }
-  }, [fireActive, quickHeistActive])
+  }, [quickHeistActive])
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)')
@@ -988,11 +988,12 @@ export default function MusclesPage() {
       )}
 
       {/* Fire transition — erupts on confirm, navigates on complete */}
+      {/* FireTransition (yakiire) is NOT skippable — plays through. */}
       <FireTransition
         active={fireActive}
-        onComplete={() => { if (!skippedRef.current) router.push(NEXT_TARGET) }}
+        onComplete={() => router.push(NEXT_TARGET)}
       />
-      {/* Red slash wipe — quick-forge swipe path only (no title text) */}
+      {/* Red slash wipe — quick-forge swipe path only (no yakiire) — IS skippable. */}
       <SlashWipe
         active={quickHeistActive}
         onComplete={() => { if (!skippedRef.current) router.push(NEXT_TARGET) }}
