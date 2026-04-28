@@ -594,7 +594,7 @@ export default function MusclesPage() {
 {/* Top nav — responsive */}
       <nav
         className={`relative z-20 shrink-0 flex items-center justify-between ${isMobile ? 'pl-0 pr-4 pb-2' : 'pl-0 pr-8 py-6'}`}
-        style={isMobile ? { paddingTop: 'max(0.75rem, env(safe-area-inset-top))' } : undefined}
+        style={isMobile ? { paddingTop: 'max(0.75rem, env(safe-area-inset-top))', background: '#280609' } : undefined}
       >
         <RetreatButton href={backHref} />
         <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
@@ -655,7 +655,7 @@ export default function MusclesPage() {
           </div>
 
           {/* Left column — upper body */}
-          <div className="absolute left-1.5 top-0 bottom-0 z-20 flex flex-col justify-between pt-3 pb-24 pointer-events-none">
+          <div className="absolute left-1.5 top-0 bottom-0 z-20 flex flex-col justify-between pt-8 pb-40 pointer-events-none">
             {LEFT_MUSCLES.map(id => {
               const group = MUSCLE_GROUPS.find(g => g.id === id)
               return (
@@ -667,7 +667,7 @@ export default function MusclesPage() {
           </div>
 
           {/* Right column — core + lower */}
-          <div className="absolute right-1.5 top-0 bottom-0 z-20 flex flex-col justify-between pt-3 pb-24 pointer-events-none">
+          <div className="absolute right-1.5 top-0 bottom-0 z-20 flex flex-col justify-between pt-8 pb-40 pointer-events-none">
             {RIGHT_MUSCLES.map(id => {
               const group = MUSCLE_GROUPS.find(g => g.id === id)
               return (
@@ -698,12 +698,12 @@ export default function MusclesPage() {
               </div>
               <div className="flex flex-col gap-1 mb-0.5">
                 <button type="button" onClick={selectAll}
-                  className="font-mono text-[8px] tracking-[0.2em] uppercase text-gtl-ash border border-gtl-edge px-2 py-0.5 active:text-gtl-red active:border-gtl-red transition-colors"
+                  className="font-mono text-[12px] tracking-[0.2em] uppercase font-bold text-gtl-chalk border border-gtl-red px-3 py-1.5 active:text-gtl-red active:border-gtl-red-bright transition-colors"
                   style={{ touchAction: 'manipulation' }}>
                   ALL
                 </button>
                 <button type="button" onClick={clearAll}
-                  className="font-mono text-[8px] tracking-[0.2em] uppercase text-gtl-ash border border-gtl-edge px-2 py-0.5 active:text-gtl-red active:border-gtl-red transition-colors"
+                  className="font-mono text-[12px] tracking-[0.2em] uppercase font-bold text-gtl-chalk border border-gtl-red px-3 py-1.5 active:text-gtl-red active:border-gtl-red-bright transition-colors"
                   style={{ touchAction: 'manipulation' }}>
                   NONE
                 </button>
