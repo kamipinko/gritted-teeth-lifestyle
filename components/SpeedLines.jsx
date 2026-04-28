@@ -1,28 +1,36 @@
 'use client'
 /*
- * SpeedLines — horizontal manga-style speed dashes.
+ * SpeedLines — many short horizontal streaks flying right-to-left, each with
+ * a soft radial-gradient glow and randomized speed/delay/y-position. Adapted
+ * from the CodePen "anime lines" pattern Jordan shared. Recolored to the GTL
+ * red palette to match the brand.
  *
- * Multiple rows of alternating black/white dashes that scroll horizontally
- * at varied speeds to indicate motion / speed / "we're moving fast." Used
- * during the quick-forge auto-progression so the user sees the chain is
- * actively flying through pages, not stuck.
- *
- * Subtle by default (low opacity, non-blocking pointer-events). Render with
- * `<SpeedLines active={someFlag} />` and it'll auto-mount/unmount.
+ * Render with `<SpeedLines active={...} />`. Mounts a fixed-position pool of
+ * line elements that loop infinitely while active; on `active=false` it
+ * fades out (250ms) and unmounts.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
-const ROWS = [
-  // {top%, height-px, duration-ms, direction (1 right→left, -1 left→right), opacity}
-  { top: 8,  h: 4, dur: 700,  dir: -1, op: 0.85 },
-  { top: 18, h: 2, dur: 480,  dir: -1, op: 0.7  },
-  { top: 28, h: 6, dur: 900,  dir: -1, op: 0.95 },
-  { top: 40, h: 3, dur: 520,  dir: -1, op: 0.6  },
-  { top: 55, h: 5, dur: 820,  dir: -1, op: 0.9  },
-  { top: 67, h: 2, dur: 440,  dir: -1, op: 0.55 },
-  { top: 78, h: 4, dur: 760,  dir: -1, op: 0.8  },
-  { top: 88, h: 3, dur: 600,  dir: -1, op: 0.65 },
+const LINE_COUNT = 80
+const VARIANTS = [
+  // {h, w, gradient} — 5 visual variants like the original
+  { h: 3,  w: '100vw', g: 'radial-gradient(50% 50%, #ffd6da 50%, rgba(212,24,31,0.99) 83%, rgba(122,14,20,0.0) 100%)' },
+  { h: 6,  w: '80vw',  g: 'radial-gradient(50% 50%, #ffd6da 50%, rgba(212,24,31,0.99) 83%, rgba(122,14,20,0.0) 100%)' },
+  { h: 10, w: '100vw', g: 'radial-gradient(50% 50%, #ffd6da 50%, rgba(255,42,54,0.99) 83%, rgba(122,14,20,0.0) 100%)' },
+  { h: 24, w: '120vw', g: 'radial-gradient(50% 50%, #ffeef0 50%, rgba(255,42,54,0.99) 83%, rgba(122,14,20,0.0) 100%)' },
+  { h: 14, w: '100vw', g: 'radial-gradient(50% 50%, #ffd6da 50%, rgba(212,24,31,0.99) 83%, rgba(122,14,20,0.0) 100%)' },
 ]
+
+// Deterministic PRNG so SSR + CSR produce the same line layout (no hydration
+// mismatch warnings). Seeded with a constant — every mount looks the same.
+function mulberry32(seed) {
+  return function () {
+    let t = seed += 0x6D2B79F5
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
 
 export default function SpeedLines({ active }) {
   const [mounted, setMounted] = useState(active)
@@ -30,11 +38,29 @@ export default function SpeedLines({ active }) {
   useEffect(() => {
     if (active) setMounted(true)
     else {
-      // Brief fade-out before unmount so the dashes don't pop off
       const t = setTimeout(() => setMounted(false), 250)
       return () => clearTimeout(t)
     }
   }, [active])
+
+  // Generate the full line pool once. Each line gets a random variant, top%,
+  // duration (0.5-1.4s), and delay (0-2s) so they overlap and feel chaotic
+  // like the original GSAP version.
+  const lines = useMemo(() => {
+    const rand = mulberry32(31415926)
+    const out = []
+    for (let i = 0; i < LINE_COUNT; i++) {
+      const variantIdx = Math.floor(rand() * VARIANTS.length)
+      out.push({
+        i,
+        v: VARIANTS[variantIdx],
+        top: rand() * 100,            // % of viewport height
+        dur: 0.5 + rand() * 0.9,      // seconds
+        delay: rand() * 2.0,          // seconds
+      })
+    }
+    return out
+  }, [])
 
   if (!mounted) return null
 
@@ -49,30 +75,25 @@ export default function SpeedLines({ active }) {
       }}
     >
       <style>{`
-        @keyframes speed-line-l {
-          0%   { transform: translateX(100vw); }
-          100% { transform: translateX(-100%); }
+        @keyframes speed-line-fly {
+          0%   { transform: translate3d(110vw, 0, 0); opacity: 0; }
+          10%  { opacity: 1; }
+          90%  { opacity: 1; }
+          100% { transform: translate3d(-220vw, 0, 0); opacity: 0; }
         }
       `}</style>
-      {ROWS.map((r, i) => (
+      {lines.map(({ i, v, top, dur, delay }) => (
         <div
           key={i}
           style={{
             position: 'absolute',
-            top: `${r.top}%`,
+            top: `${top}%`,
             left: 0,
-            height: `${r.h}px`,
-            width: '300vw',
-            // Repeating dashes — pattern of alternating white and black/transparent
-            backgroundImage: i % 3 === 0
-              ? 'repeating-linear-gradient(90deg, rgba(255,255,255,0.95) 0px, rgba(255,255,255,0.95) 60px, transparent 60px, transparent 110px)'
-              : i % 3 === 1
-              ? 'repeating-linear-gradient(90deg, rgba(255,255,255,0.7) 0px, rgba(255,255,255,0.7) 32px, transparent 32px, transparent 84px)'
-              : 'repeating-linear-gradient(90deg, rgba(20,20,20,0.85) 0px, rgba(20,20,20,0.85) 48px, transparent 48px, transparent 96px)',
-            animation: `speed-line-l ${r.dur}ms linear infinite`,
-            animationDelay: `${i * 60}ms`,
-            opacity: r.op,
-            filter: r.h <= 2 ? 'blur(0.5px)' : 'none',
+            height: `${v.h}px`,
+            width: v.w,
+            backgroundImage: v.g,
+            animation: `speed-line-fly ${dur}s linear ${delay}s infinite`,
+            willChange: 'transform, opacity',
           }}
         />
       ))}
