@@ -728,7 +728,10 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
   const slamDX = rowRect ? (rowRect.left + rowRect.width / 2) - (window.innerWidth / 2) : 0
   const slamDY = rowRect ? (rowRect.top + rowRect.height / 2) - (popupTop + POPUP_HEIGHT / 2) : 200
 
-  const flameScale   = Math.min(0.25 + weight * 0.013, 3.0)
+  // Flame scales with weight but is capped much lower than before — at scale 3
+  // the flame would extend up past the WEIGHT label and exercise name. Cap 1.4
+  // keeps the visual top below the title even at the heaviest setting.
+  const flameScale   = Math.min(0.3 + weight * 0.005, 1.4)
   const flameOpacity = Math.min(0.3 + weight * 0.007, 1.0)
 
   // Functional setters so timer-driven calls don't see a stale `weight` closure.
