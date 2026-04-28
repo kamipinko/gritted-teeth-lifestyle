@@ -192,7 +192,7 @@ export default function NewCycleNamePage() {
   const forgeButtonRef = useRef(null)
   const handleInputFocus = () => {
     setTimeout(() => {
-      forgeButtonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      forgeButtonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
     }, 300)
   }
   useEffect(() => {
