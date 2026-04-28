@@ -611,14 +611,14 @@ export default function MusclesPage() {
     quickForgeFiredRef.current = true
     let cancelled = false
     const t1 = setTimeout(() => { if (!cancelled) selectAllRef.current?.() }, 600)
-    // 11 muscles × 500ms stagger + 740ms initial delay + 1s buffer ≈ 7240ms.
-    // After the cascade, persist + HeistTransition (red slash) to branded.
+    // Mobile cascade: 11 pills × 120ms stagger + 200ms init = 1520ms after
+    // selectAll fires. Plus 600ms pre-delay = ~2120ms total. Small buffer.
     const t2 = setTimeout(() => {
       if (cancelled) return
       const allIds = MUSCLE_GROUPS.map(g => g.id)
       try { localStorage.setItem(pk('muscle-targets'), JSON.stringify(allIds)) } catch (_) {}
       setQuickHeistActive(true)
-    }, 7240)
+    }, 2400)
     return () => { cancelled = true; clearTimeout(t1); clearTimeout(t2) }
   }, [isMobile, router])
 

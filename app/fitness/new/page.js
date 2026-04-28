@@ -20,7 +20,7 @@ import { useSound } from '../../../lib/useSound'
 import { useProfileGuard } from '../../../lib/useProfileGuard'
 import { pk } from '../../../lib/storage'
 import FireTransition from '../../../components/FireTransition'
-import SlashWipe from '../../../components/SlashWipe'
+import HeistTransition from '../../../components/HeistTransition'
 import RetreatButton from '../../../components/RetreatButton'
 
 const MAX_LEN = 40
@@ -678,7 +678,9 @@ export default function NewCycleNamePage() {
       </div>
       {/* Fire transition overlay — plays after brand cools, then navigates */}
       <FireTransition active={isFireActive} onComplete={handleFireComplete} />
-      <SlashWipe active={quickHeistActive} onComplete={() => router.push(NEXT_TARGET)} />
+      {/* First hop on the quick-forge swipe — uses the same HeistTransition the
+          home page uses (default 'GRIT THOSE TEETH' red-slash overlay). */}
+      <HeistTransition active={quickHeistActive} onComplete={() => router.push(NEXT_TARGET)} />
     </main>
   )
 }

@@ -910,7 +910,19 @@ export default function LoadCyclePage() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(pk('cycles'))
-      if (raw) setCycles(JSON.parse(raw))
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        setCycles(parsed)
+        // Quick-forge landing: auto-select the most-recent cycle (the one the
+        // user just forged) so the ACTIVATE popup appears immediately. Clear
+        // the flag so this only fires once.
+        try {
+          if (localStorage.getItem('gtl-just-forged') === '1' && parsed.length > 0) {
+            setSelectedId(parsed[0].id)
+            localStorage.removeItem('gtl-just-forged')
+          }
+        } catch (_) {}
+      }
     } catch (_) {}
     setReady(true)
   }, [])

@@ -2698,10 +2698,9 @@ export default function SummaryPage() {
   }, [days.length])
 
   // Quick-forge auto-progression: ONLY on summary, run the full default
-  // ETCH CYCLE flow (handleBegin) — flame animation, fire transition, all of
-  // it. Jordan wants the epic "cycle is forged" moment to play out at the
-  // end of the chain. We just clear gtl-quick-forge and set gtl-deep-launch
-  // so /fitness/active continues to the first set's weight popup.
+  // ETCH CYCLE flow (handleBegin) — flame animation, fire transition. Land on
+  // /fitness/load with the just-forged cycle pre-selected (ACTIVATE popup
+  // visible, ready). User decides whether to lift or look around.
   const quickForgeFiredRef = useRef(false)
   useEffect(() => {
     if (quickForgeFiredRef.current) return
@@ -2715,9 +2714,13 @@ export default function SummaryPage() {
       if (cancelled) return
       try {
         localStorage.removeItem('gtl-quick-forge')
-        localStorage.setItem('gtl-deep-launch', '1')
+        // /fitness/load reads this on mount, auto-selects the matching cycle,
+        // then clears the flag. The cycle id is set by handleBegin's
+        // localStorage.setItem(pk('cycles'), [newCycle, ...]) — newCycle.id
+        // is `Date.now().toString()` so we mark "use the most-recent cycle".
+        localStorage.setItem('gtl-just-forged', '1')
       } catch (_) {}
-      fireDestRef.current = '/fitness/active'
+      fireDestRef.current = '/fitness/load'
       handleBeginRef.current?.()
     }, 800)
     return () => { cancelled = true; clearTimeout(t) }
