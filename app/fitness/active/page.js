@@ -719,9 +719,12 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
   // SET WEIGHT below the visible area.
   const POPUP_HEIGHT = 640
 
+  // Small upward nudge so the popup sits 10px higher than row-center.
+  const TOP_BIAS = 10
+
   const popupTop = rowRect
-    ? Math.max(20, Math.min(rowRect.top - POPUP_HEIGHT / 2 + rowRect.height / 2, window.innerHeight - POPUP_HEIGHT - 20))
-    : Math.max(20, (window.innerHeight - POPUP_HEIGHT) / 2)
+    ? Math.max(20, Math.min(rowRect.top - POPUP_HEIGHT / 2 + rowRect.height / 2 - TOP_BIAS, window.innerHeight - POPUP_HEIGHT - 20))
+    : Math.max(20, (window.innerHeight - POPUP_HEIGHT) / 2 - TOP_BIAS)
 
   const slamDX = rowRect ? (rowRect.left + rowRect.width / 2) - (window.innerWidth / 2) : 0
   const slamDY = rowRect ? (rowRect.top + rowRect.height / 2) - (popupTop + POPUP_HEIGHT / 2) : 200

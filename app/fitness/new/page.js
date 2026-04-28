@@ -151,7 +151,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
  * Calls `onCharAdded` whenever a NEW character is typed (not on delete),
  * so the parent can fire the screen shake and sound at the right moment.
  */
-function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAdded, onConfirm, isBranding, onInputFocus }) {
+function StampedNameInput({ value, onChange, maxLength, isInitialMount, entranceSkipped, onCharAdded, onConfirm, isBranding, onInputFocus }) {
   const inputRef = useRef(null)
   const charKeysRef = useRef([])
   const { play } = useSound()
@@ -246,7 +246,11 @@ function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAd
             key={isBranding ? `brand-${i}` : charKeysRef.current[i]}
             className={`
               inline-block font-display text-4xl md:text-7xl lg:text-8xl leading-none
-              ${isBranding ? 'animate-brand-letter' : 'text-gtl-chalk animate-char-stamp'}
+              ${isBranding
+                ? 'animate-brand-letter'
+                : entranceSkipped
+                  ? 'text-gtl-chalk'        /* class-based skip: drop animate-char-stamp so the keyframe doesn't run */
+                  : 'text-gtl-chalk animate-char-stamp'}
             `}
             style={{
               animationDelay: isBranding
@@ -279,8 +283,21 @@ export default function NewCycleNamePage() {
   const router = useRouter()
   let backHref = '/fitness/hub'
   try { if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit' } catch (_) {}
-  const [name, setName] = useState('')
-  const nameRef = useRef('')
+  // Initialize name SYNCHRONOUSLY on first render so the cascade text is on
+  // screen frame-1 (no flash of empty content). Editing flow still needs the
+  // localStorage lookup; useState initializer reads it on the client only
+  // (typeof window check) — server render falls back to empty so hydration
+  // matches.
+  const [name, setName] = useState(() => {
+    if (typeof window === 'undefined') return ''
+    try {
+      const editingId = window.localStorage.getItem(pk('editing-cycle-id'))
+      const savedName = window.localStorage.getItem(pk('cycle-name'))
+      if (editingId && savedName && savedName.trim().length > 0) return savedName.trim()
+    } catch (_) {}
+    return pickRandomName()
+  })
+  const nameRef = useRef(name)
   useEffect(() => { nameRef.current = name }, [name])
 
   // Ref + focus handler for scrolling FORGE into view when the iOS keyboard opens.
@@ -320,6 +337,8 @@ export default function NewCycleNamePage() {
     return () => window.removeEventListener('keydown', handleKey)
   }, [router])
   const [isInitialMount, setIsInitialMount] = useState(true)
+  const [entranceSkipped, setEntranceSkipped] = useState(false)
+  const initialMountTimerRef = useRef(null)
   const [isBranding, setIsBranding] = useState(false)
   const [isFireActive, setIsFireActive] = useState(false)
   const [quickHeistActive, setQuickHeistActive] = useState(false)
@@ -343,22 +362,37 @@ export default function NewCycleNamePage() {
     router.push(NEXT_TARGET)
   }
 
-  // Pre-fill with the cycle's existing name when editing, otherwise random
+  // Auto-finish the initial char-stamp cascade (initial.length * 35ms stagger
+  // + ~500ms tail). Held in a ref so the entrance-skip handler can clear it.
   useEffect(() => {
-    let initial
-    try {
-      const editingId = localStorage.getItem(pk('editing-cycle-id'))
-      const savedName = localStorage.getItem(pk('cycle-name'))
-      initial = editingId && savedName && savedName.trim().length > 0
-        ? savedName.trim()
-        : pickRandomName()
-    } catch (_) {
-      initial = pickRandomName()
-    }
-    setName(initial)
-    const t = setTimeout(() => setIsInitialMount(false), initial.length * 35 + 500)
-    return () => clearTimeout(t)
+    initialMountTimerRef.current = setTimeout(
+      () => setIsInitialMount(false),
+      nameRef.current.length * 35 + 500
+    )
+    return () => clearTimeout(initialMountTimerRef.current)
   }, [])
+
+  // Skip-the-entrance: any pointerdown / touchstart during the initial
+  // char-stamp cascade snaps the characters to settled state. Excludes
+  // RetreatButton so retreat still navigates back. The class-based skip
+  // (drop animate-char-stamp from each span via entranceSkipped prop) is
+  // what makes the snap actually take effect — overriding inline animation
+  // didn't reliably stop the in-flight Tailwind keyframe.
+  useEffect(() => {
+    if (!isInitialMount) return
+    const handler = (e) => {
+      if (e.target?.closest?.('[data-retreat]')) return
+      setEntranceSkipped(true)
+      setIsInitialMount(false)
+      if (initialMountTimerRef.current) clearTimeout(initialMountTimerRef.current)
+    }
+    window.addEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
+  }, [isInitialMount])
 
   /**
    * triggerBrandConfirm — fired when the user presses Enter on a non-empty
@@ -601,6 +635,7 @@ export default function NewCycleNamePage() {
             onChange={setName}
             maxLength={MAX_LEN}
             isInitialMount={isInitialMount}
+            entranceSkipped={entranceSkipped}
             onCharAdded={triggerImpact}
             onConfirm={triggerBrandConfirm}
             isBranding={isBranding}
