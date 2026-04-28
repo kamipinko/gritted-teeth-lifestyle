@@ -106,6 +106,15 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
       fastToHeist(dy < 0 ? 'fitness' : 'nutrition')
       return
     }
+    // Tap-then-swipe within DOUBLE_TAP_MS — same effect as double-tap.
+    // (Caller's first tap snapped to idle; this swipe lands during 'idle'
+    // but inside the followup window, so it short-circuits to fastToHeist
+    // instead of running the full commit cascade.)
+    if (isSwipe && Date.now() - lastEntranceTapRef.current < DOUBLE_TAP_MS) {
+      lastEntranceTapRef.current = 0
+      fastToHeist(dy < 0 ? 'fitness' : 'nutrition')
+      return
+    }
     if (dy < -SWIPE_THRESHOLD)      commit('fitness')
     else if (dy > SWIPE_THRESHOLD)  commit('nutrition')
     // Otherwise it's a tap — click event fires next, handleClick takes it.
