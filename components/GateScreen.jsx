@@ -200,7 +200,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
               fontWeight: 800,
               letterSpacing: '0.2em',
               textTransform: 'uppercase',
-              color: '#c3181f',
+              color: '#d4181f',
               mixBlendMode: 'difference',
               pointerEvents: 'none',
               userSelect: 'none',
@@ -221,7 +221,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
               fontWeight: 800,
               letterSpacing: '0.2em',
               textTransform: 'uppercase',
-              color: '#c3181f',
+              color: '#d4181f',
               mixBlendMode: 'difference',
               pointerEvents: 'none',
               userSelect: 'none',
@@ -263,7 +263,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             fontFamily: '"JetBrains Mono", monospace',
             fontSize: '0.85rem', letterSpacing: '0.35em',
             fontWeight: 800,
-            textTransform: 'uppercase', color: '#c3181f',
+            textTransform: 'uppercase', color: '#d4181f',
             mixBlendMode: 'difference',
             animation: animOf('snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 600ms both'),
           }}>
@@ -282,9 +282,10 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             GTL
           </div>
 
-          {/* Slash divider */}
+          {/* Slash divider — obeys the same negative-photo rule as the labels */}
           <div style={{
             height: 5, background: '#d4181f', transform: 'skewX(-12deg)',
+            mixBlendMode: 'difference',
             width: active ? 'clamp(8rem, 20vw, 14rem)' : 0,
             transition: transOf('width 600ms cubic-bezier(0.2, 1, 0.3, 1) 750ms'),
           }} />
@@ -310,7 +311,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             fontFamily: '"JetBrains Mono", monospace',
             fontSize: '0.75rem', letterSpacing: '0.3em',
             fontWeight: 800,
-            textTransform: 'uppercase', color: '#c3181f',
+            textTransform: 'uppercase', color: '#d4181f',
             mixBlendMode: 'difference',
             animation: animOf('snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 950ms both'),
           }}>
