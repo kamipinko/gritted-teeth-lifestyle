@@ -230,9 +230,15 @@ function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAd
 
       {/* Visible character display.
           IMPORTANT: overflow visible at every level so the giant scaled
-          characters can extend beyond the container without being clipped. */}
+          characters can extend beyond the container without being clipped.
+          pointer-events: none — during char-stamp animation the spans are
+          scaled to ~20x and cover the whole screen; without this any tap
+          (including under FORGE) bubbles up to the wrapper's onClick →
+          focus → iOS keyboard pops on first gesture. The wrapper still
+          receives taps on its own natural bbox so deliberate input-area
+          taps still focus the input. */}
       <div
-        className="relative flex flex-wrap items-baseline justify-center gap-y-2 min-h-[2.5rem] md:min-h-[6rem] px-4"
+        className="relative flex flex-wrap items-baseline justify-center gap-y-2 min-h-[2.5rem] md:min-h-[6rem] px-4 pointer-events-none"
         style={{ overflow: 'visible' }}
       >
         {value.split('').map((char, i) => (
