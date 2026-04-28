@@ -19,7 +19,7 @@ export default function RetreatButton({ href = '/fitness/hub' }) {
       // touchstart that route forward to the in-flight transition's destination)
       // opt out — taps on retreat should navigate back, not fast-forward.
       data-retreat="true"
-      className="group fixed left-0 z-40 inline-flex items-center px-3 py-3"
+      className="group fixed left-0 z-40 inline-flex items-center px-3 py-3 scale-95 origin-left"
       style={{ top: 'env(safe-area-inset-top, 0px)', touchAction: 'manipulation' }}
     >
       {/* Three red chevrons. Decreasing opacity at idle gives directional read
