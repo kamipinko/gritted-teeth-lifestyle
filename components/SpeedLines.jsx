@@ -11,7 +11,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 
-const LINE_COUNT = 80
+const LINE_COUNT = 50
 const VARIANTS = [
   // {h, w, gradient} — 5 visual variants like the original
   { h: 3,  w: '100vw', g: 'radial-gradient(50% 50%, #ffd6da 50%, rgba(212,24,31,0.99) 83%, rgba(122,14,20,0.0) 100%)' },
