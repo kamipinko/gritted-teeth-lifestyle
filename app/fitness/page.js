@@ -156,7 +156,10 @@ export default function ProfilePage() {
                 onChange={e => setInput(e.target.value)}
                 inputMode="text"
                 enterKeyHint="done"
-                autoComplete="name"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="characters"
+                spellCheck={false}
                 placeholder="ENTER YOUR NAME"
                 maxLength={24}
                 className="relative w-full bg-transparent font-display text-lg md:text-2xl text-gtl-chalk tracking-wide uppercase px-4 md:px-6 py-4 outline-none placeholder:text-gtl-smoke"
