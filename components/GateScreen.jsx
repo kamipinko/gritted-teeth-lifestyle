@@ -1,23 +1,33 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSound } from '../lib/useSound'
 
 // Slashes take 500ms + 140ms stagger = 640ms total.
 // Exit at 600ms — slashes are 95%+ across, seamless handoff to gate-reveal.
 const EXIT_MS = 600
 
-export default function GateScreen({ onEnter, onMusicStart, swipeHintLabels }) {
+export default function GateScreen({ onEnter, onMusicStart, onSkip, swipeHintLabels }) {
   const { play } = useSound()
   const [phase, setPhase] = useState('pre')
   // pre → in → idle → out
+  const exitTimerRef = useRef(null)
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase('in'), 60)
     const t2 = setTimeout(() => setPhase('idle'), 1400)
-    return () => { clearTimeout(t1); clearTimeout(t2) }
+    return () => {
+      clearTimeout(t1); clearTimeout(t2)
+      if (exitTimerRef.current) clearTimeout(exitTimerRef.current)
+    }
   }, [])
 
   const handleClick = () => {
+    // Second tap during exit slashes → skip the rest of the cascade.
+    if (phase === 'out') {
+      if (exitTimerRef.current) clearTimeout(exitTimerRef.current)
+      if (onSkip) onSkip()
+      return
+    }
     if (phase !== 'idle') return
     // Fire bg music start SYNCHRONOUSLY inside the user-gesture handler. iOS PWA
     // blocks audio.play() outside the synchronous click context — anything called
@@ -26,7 +36,7 @@ export default function GateScreen({ onEnter, onMusicStart, swipeHintLabels }) {
     if (onMusicStart) onMusicStart()
     play('brand-confirm')
     setPhase('out')
-    setTimeout(onEnter, EXIT_MS)
+    exitTimerRef.current = setTimeout(onEnter, EXIT_MS)
   }
 
   const active = phase !== 'pre'

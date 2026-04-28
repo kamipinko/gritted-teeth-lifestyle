@@ -100,16 +100,18 @@ const NUTRITION_CARD = {
   compact: true,
 }
 
-function CallingCardReveal({ kind }) {
+function CallingCardReveal({ kind, onSkip }) {
   const card = kind === 'fitness' ? FITNESS_CARD : NUTRITION_CARD
   return (
     <div
       aria-hidden="true"
+      onClick={onSkip}
       style={{
         position: 'fixed', inset: 0, zIndex: 60,
         background: 'radial-gradient(ellipse at 50% 55%, rgba(74,10,14,0.55) 0%, rgba(7,7,8,0.94) 70%)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: '2rem',
+        cursor: 'pointer',
         animation: 'card-reveal-fade 1000ms ease-out forwards',
       }}
     >
@@ -158,6 +160,13 @@ export default function Home() {
   const [transitionTarget, setTransitionTarget] = useState('/fitness')
   const [transitioning, setTransitioning] = useState(false)
   const touchStartY = useRef(null)
+  // Holds the FLASH_DURATION → setTransitioning timer so a skip tap can clear it.
+  const flashTimerRef = useRef(null)
+  // Latches once skipAll fires so we don't double-route from a stale timer or
+  // HeistTransition's own onComplete.
+  const skippedRef = useRef(false)
+  // Stable ref to current transitionTarget for skipAll (avoids re-binding handlers).
+  const targetRef = useRef('/fitness')
 
   const activate = (kind) => {
     if (phase !== 'gate') return
@@ -165,11 +174,22 @@ export default function Home() {
     // by handleTouchEnd's swipe paths below — calling it here would be too late
     // for iOS PWA's autoplay rules (audio.play must run inside the user gesture).
     play('brand-confirm')
+    const target = kind === 'fitness' ? '/fitness' : '/diet'
     setPhase(kind === 'fitness' ? 'flash-fitness' : 'flash-nutrition')
-    setTransitionTarget(kind === 'fitness' ? '/fitness' : '/diet')
+    setTransitionTarget(target)
+    targetRef.current = target
     // After the calling-card reveal holds for FLASH_DURATION, kick off the
     // heist transition. Route push fires when the slash wipes complete.
-    setTimeout(() => setTransitioning(true), FLASH_DURATION)
+    flashTimerRef.current = setTimeout(() => setTransitioning(true), FLASH_DURATION)
+  }
+
+  // One extra tap after the gate commit skips the rest of the cascade
+  // (gate exit slashes → calling card → heist transition). Music is unaffected.
+  const skipAll = () => {
+    if (skippedRef.current) return
+    skippedRef.current = true
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+    router.push(targetRef.current)
   }
 
   const handleTouchStart = (e) => {
@@ -203,7 +223,10 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handler)
   }, [phase])
 
-  const handleTransitionComplete = () => router.push(transitionTarget)
+  const handleTransitionComplete = () => {
+    if (skippedRef.current) return
+    router.push(transitionTarget)
+  }
 
   // Tap fallback: GateScreen's onClick drives this via setPhase('out')+onEnter.
   // Plain tap (no swipe) defaults to fitness — most-used target.
@@ -227,17 +250,32 @@ export default function Home() {
         <GateScreen
           onEnter={handleGateTapEnter}
           onMusicStart={startBgMusic}
+          onSkip={skipAll}
           swipeHintLabels={{ top: 'SWIPE UP FOR FITNESS', bottom: 'SWIPE DOWN FOR NUTRITION' }}
         />
       )}
-      {phase === 'flash-fitness'   && <CallingCardReveal kind="fitness" />}
-      {phase === 'flash-nutrition' && <CallingCardReveal kind="nutrition" />}
+      {phase === 'flash-fitness'   && <CallingCardReveal kind="fitness"   onSkip={skipAll} />}
+      {phase === 'flash-nutrition' && <CallingCardReveal kind="nutrition" onSkip={skipAll} />}
 
       <HeistTransition
         active={transitioning}
         onComplete={handleTransitionComplete}
         title="GTL"
       />
+
+      {/* Tap catcher — sits above HeistTransition (z 9999) so a tap during the
+          slash wipes routes immediately. Active only while transitioning so it
+          never blocks input on the static gate screen. */}
+      {transitioning && (
+        <div
+          onClick={skipAll}
+          aria-hidden="true"
+          style={{
+            position: 'fixed', inset: 0, zIndex: 10000,
+            background: 'transparent', cursor: 'pointer',
+          }}
+        />
+      )}
     </main>
   )
 }
