@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import RetreatButton from '../../components/RetreatButton'
 import { useSound } from '../../lib/useSound'
-import { BGM_TRACKS, BGM_TRACK_KEY, getCurrentBgmTrack } from '../../lib/bgmTracks'
+import { BGM_TRACKS, BGM_TRACK_KEY, getCurrentBgmTrack, getBgmTracksByGenre } from '../../lib/bgmTracks'
 
 const KEY_SFX_VOLUME   = 'gtl-sfx-volume'
 const KEY_BG_MUSIC_ON  = 'gtl-bg-music-on'
@@ -334,36 +334,45 @@ export default function SettingsPage() {
             <p className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-ash mb-3">
               TAP A TRACK TO SWITCH · TAP THE ACTIVE ONE TO RESTART
             </p>
-            <div className="flex flex-col gap-3">
-              {ready && BGM_TRACKS.map(track => {
-                const active = track.id === bgmTrackId
-                return (
-                  <button
-                    key={track.id}
-                    type="button"
-                    onClick={() => handleBgmTrackPick(track.id)}
-                    className={`group w-full flex items-center justify-between gap-4 px-5 py-4 border transition-colors duration-200 outline-none
-                      ${active ? 'bg-gtl-red border-transparent' : 'bg-gtl-surface border-gtl-edge [@media(hover:hover)]:hover:border-gtl-red'}`}
-                    style={{ clipPath: 'polygon(2% 0%, 100% 0%, 98% 100%, 0% 100%)' }}
-                    aria-pressed={active}
-                  >
-                    <div className="flex flex-col items-start gap-1 min-w-0">
-                      <span className={`font-display text-xl leading-none truncate
-                        ${active ? 'text-gtl-paper' : 'text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper'}`}>
-                        {track.title}
-                      </span>
-                      <span className={`font-mono text-[9px] tracking-[0.3em] uppercase truncate
-                        ${active ? 'text-gtl-paper/70' : 'text-gtl-ash'}`}>
-                        {track.subtitle}
-                      </span>
-                    </div>
-                    <span aria-hidden="true" className={`font-display text-base leading-none shrink-0
-                      ${active ? 'text-gtl-paper' : 'text-gtl-red'}`}>
-                      {active ? '◆' : '➤︎'}
-                    </span>
-                  </button>
-                )
-              })}
+            <div className="flex flex-col gap-5">
+              {ready && getBgmTracksByGenre().map(({ genre, tracks }) => (
+                <div key={genre} className="flex flex-col gap-2">
+                  <div className="flex items-center gap-3 mb-1">
+                    <div className="h-px w-4 bg-gtl-red/60" />
+                    <span className="font-mono text-[8px] tracking-[0.45em] uppercase text-gtl-red/80">{genre}</span>
+                    <div className="h-px flex-1 bg-gtl-edge" />
+                  </div>
+                  {tracks.map(track => {
+                    const active = track.id === bgmTrackId
+                    return (
+                      <button
+                        key={track.id}
+                        type="button"
+                        onClick={() => handleBgmTrackPick(track.id)}
+                        className={`group w-full flex items-center justify-between gap-4 px-5 py-4 border transition-colors duration-200 outline-none
+                          ${active ? 'bg-gtl-red border-transparent' : 'bg-gtl-surface border-gtl-edge [@media(hover:hover)]:hover:border-gtl-red'}`}
+                        style={{ clipPath: 'polygon(2% 0%, 100% 0%, 98% 100%, 0% 100%)' }}
+                        aria-pressed={active}
+                      >
+                        <div className="flex flex-col items-start gap-1 min-w-0">
+                          <span className={`font-display text-xl leading-none truncate
+                            ${active ? 'text-gtl-paper' : 'text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper'}`}>
+                            {track.title}
+                          </span>
+                          <span className={`font-mono text-[9px] tracking-[0.3em] uppercase truncate
+                            ${active ? 'text-gtl-paper/70' : 'text-gtl-ash'}`}>
+                            {track.subtitle}
+                          </span>
+                        </div>
+                        <span aria-hidden="true" className={`font-display text-base leading-none shrink-0
+                          ${active ? 'text-gtl-paper' : 'text-gtl-red'}`}>
+                          {active ? '◆' : '➤︎'}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              ))}
             </div>
           </div>
 
