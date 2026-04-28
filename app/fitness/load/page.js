@@ -1003,7 +1003,7 @@ export default function LoadCyclePage() {
         aria-hidden="true"
         style={{
           top: 'calc(env(safe-area-inset-top, 0px) - 64px)',
-          fontFamily: '"FOT-Matisse Pro EB", "Noto Serif JP", "Yu Mincho", serif',
+          fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '52rem', lineHeight: '0.8',
           color: '#d4181f', opacity: 0.045, fontWeight: 900,
         }}
@@ -1019,7 +1019,7 @@ export default function LoadCyclePage() {
         style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top))' }}
       >
         <RetreatButton href="/fitness/hub" />
-        <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
+        <div className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
           PALACE / FITNESS / LOAD CYCLE
         </div>
       </nav>
@@ -1028,11 +1028,11 @@ export default function LoadCyclePage() {
       <div className="relative z-10 px-8 pb-6">
         <div className="flex items-center gap-4 mb-2">
           <div className="h-0.5 w-12 bg-gtl-red" />
-          <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-red font-bold">
+          <span className="font-matisse text-[10px] tracking-[0.4em] uppercase text-gtl-red font-bold">
             WAR RECORD
           </span>
         </div>
-        <h1 className="font-display text-5xl text-gtl-chalk leading-none -rotate-1">
+        <h1 className="font-matisse text-5xl text-gtl-chalk leading-none -rotate-1">
           YOUR
           <span className="text-gtl-red gtl-headline-shadow-soft inline-block rotate-1 ml-3">CYCLES</span>
         </h1>

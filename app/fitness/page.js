@@ -227,7 +227,7 @@ export default function ProfilePage() {
         aria-hidden="true"
         style={{
           top: 'calc(env(safe-area-inset-top, 0px) - 48px)',
-          fontFamily: '"FOT-Matisse Pro EB", "Noto Serif JP", "Yu Mincho", serif',
+          fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '40rem',
           lineHeight: '0.8',
           color: '#ffffff',
@@ -247,7 +247,7 @@ export default function ProfilePage() {
         style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
       >
         <RetreatButton href="/" />
-        <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
+        <div className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
           PALACE / IDENTITY
         </div>
       </nav>
@@ -258,11 +258,11 @@ export default function ProfilePage() {
         <div className="mb-6">
           <div className="flex items-center gap-4 mb-3">
             <div className="h-px w-16 bg-gtl-red" />
-            <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-red">
+            <span className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-red">
               IDENTITY / 01
             </span>
           </div>
-          <h1 className="font-display text-[5rem] md:text-[7rem] leading-[0.9] text-gtl-chalk -rotate-1">
+          <h1 className="font-matisse text-[5rem] md:text-[7rem] leading-[0.9] text-gtl-chalk -rotate-1">
             WHO<br />
             <span className="text-gtl-red inline-block rotate-1">ARE YOU</span>
           </h1>
@@ -346,7 +346,7 @@ export default function ProfilePage() {
           <div>
             <div className="flex items-center gap-4 mb-1">
               <div className="h-px w-8 bg-gtl-edge" />
-              <span className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
+              <span className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
                 KNOWN WARRIORS
               </span>
               <div className="h-px flex-1 bg-gtl-edge" />

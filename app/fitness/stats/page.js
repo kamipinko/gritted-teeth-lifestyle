@@ -645,7 +645,7 @@ export default function StatsPage() {
         aria-hidden="true"
         style={{
           top: 'calc(env(safe-area-inset-top, 0px) - 32px)',
-          fontFamily: '"FOT-Matisse Pro EB", "Noto Serif JP", "Yu Mincho", serif',
+          fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '36rem',
           lineHeight: '0.8',
           color: '#ffffff',
@@ -664,7 +664,7 @@ export default function StatsPage() {
         style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
       >
         <RetreatButton href="/fitness/hub" />
-        <div className="hidden md:block font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
+        <div className="hidden md:block font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
           PALACE / FITNESS / WAR RECORD
         </div>
       </nav>
@@ -681,7 +681,7 @@ export default function StatsPage() {
             </span>
           </div>
           <div className="flex items-end justify-between gap-4">
-            <h1 className="font-display text-[4.5rem] md:text-[7rem] leading-[0.9] text-gtl-chalk -rotate-1">
+            <h1 className="font-matisse text-[4.5rem] md:text-[7rem] leading-[0.9] text-gtl-chalk -rotate-1">
               WAR
               <br />
               <span className="text-gtl-red gtl-headline-shadow-soft inline-block rotate-1">

@@ -232,7 +232,7 @@ export default function FireTransition({ active, onComplete }) {
         >
           <div
             style={{
-              fontFamily: '"FOT-Matisse Pro EB", "Noto Serif JP", "Yu Mincho", serif',
+              fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
               fontSize: '32rem',
               fontWeight: 900,
               lineHeight: '0.8',

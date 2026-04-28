@@ -1227,7 +1227,7 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose }) {
           />
         )}
 
-        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke mt-10 shrink-0">
+        <div className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke mt-10 shrink-0">
           PALACE / FITNESS / GHOST CYCLE / {label} / EXERCISES
         </div>
       </div>
@@ -1539,7 +1539,7 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId, onSta
 
           <div className="mt-auto pt-6 flex items-end justify-between gap-4" style={{ position: 'relative', zIndex: 10 }}>
             <div>
-              <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
+              <div className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
                 PALACE / FITNESS / GHOST CYCLE / {dayName}
               </div>
             </div>
@@ -1715,7 +1715,7 @@ export default function GhostActivePage() {
       {/* Kanji watermark — 幽 (ghost/spirit). Top rooted at safe-area floor so it
           never clips into the iOS Dynamic Island camera area. */}
       <div className="absolute -right-24 pointer-events-none select-none" aria-hidden="true"
-        style={{ top: 'calc(env(safe-area-inset-top, 0px) - 64px)', fontFamily: '"FOT-Matisse Pro EB", "Noto Serif JP", "Yu Mincho", serif', fontSize: '52rem', lineHeight: '0.8', color: '#6060a0', opacity: 0.045, fontWeight: 900 }}>
+        style={{ top: 'calc(env(safe-area-inset-top, 0px) - 64px)', fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '52rem', lineHeight: '0.8', color: '#6060a0', opacity: 0.045, fontWeight: 900 }}>
         幽
       </div>
 

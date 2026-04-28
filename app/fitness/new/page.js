@@ -521,7 +521,7 @@ export default function NewCycleNamePage() {
         aria-hidden="true"
         style={{
           top: 'calc(env(safe-area-inset-top, 0px) - 48px)',
-          fontFamily: '"FOT-Matisse Pro EB", "Noto Serif JP", "Yu Mincho", serif',
+          fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '46rem',
           lineHeight: '0.8',
           color: '#ffffff',
@@ -557,7 +557,7 @@ export default function NewCycleNamePage() {
         style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
       >
         <RetreatButton href={backHref} />
-        <div className="hidden md:block font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
+        <div className="hidden md:block font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
           PALACE / FITNESS / NEW CYCLE / NAME
         </div>
       </nav>
@@ -568,12 +568,12 @@ export default function NewCycleNamePage() {
         <div className="mb-12 text-center">
           <div className="inline-flex items-center gap-4 mb-6">
             <div className="h-0.5 w-20 bg-gtl-red" />
-            <span className="font-mono text-xs tracking-[0.4em] uppercase text-gtl-red font-bold">
+            <span className="font-matisse text-xs tracking-[0.4em] uppercase text-gtl-red font-bold">
               STEP / 01 / NAME
             </span>
             <div className="h-0.5 w-20 bg-gtl-red" />
           </div>
-          <h1 className="font-display text-6xl md:text-7xl lg:text-8xl text-gtl-chalk leading-none -rotate-1">
+          <h1 className="font-matisse text-6xl md:text-7xl lg:text-8xl text-gtl-chalk leading-none -rotate-1">
             NAME
             <span className="text-gtl-red gtl-headline-shadow-soft inline-block rotate-2 ml-4">
               YOUR CYCLE
@@ -669,7 +669,7 @@ export default function NewCycleNamePage() {
       {/* Footer slash */}
       <div className="absolute bottom-6 left-0 right-0 z-10 flex items-center gap-4 px-8">
         <div className="h-px flex-1 bg-gtl-edge" />
-        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
+        <div className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
           GRITTED TEETH LIFESTYLE / FITNESS PALACE / NAMING
         </div>
         <div className="h-px flex-1 bg-gtl-edge" />

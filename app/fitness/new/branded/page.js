@@ -122,7 +122,7 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
       <span
         className={`leading-none ${active ? 'text-gtl-paper' : 'text-gtl-chalk/70'}`}
         style={{
-          fontFamily: '"FOT-Matisse Pro EB", "Noto Serif JP", "Yu Mincho", serif',
+          fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '1.25rem',
           fontWeight: 400,
           textShadow: active ? '1px 1px 0 #070708' : 'none',
@@ -659,7 +659,7 @@ export default function SchedulePage() {
                     <span
                       className="absolute inset-0 flex items-center justify-center select-none pointer-events-none"
                       style={{
-                        fontFamily: '"FOT-Matisse Pro EB", "Noto Serif JP", "Yu Mincho", serif',
+                        fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
                         fontSize: '4rem',
                         color: 'rgba(212, 24, 31, 0.7)',
                         fontWeight: 700,
@@ -753,7 +753,7 @@ export default function SchedulePage() {
                   const count = badges.length
                   const kanjiColor = selected ? '#f5f0e8' : '#d4181f'
                   const shadow = '1px 1px 0 rgba(0,0,0,0.5)'
-                  const serif = '"FOT-Matisse Pro EB", "Noto Serif JP", "Yu Mincho", serif'
+                  const serif = '"Noto Serif JP", "Yu Mincho", serif'
                   if (count === 1) {
                     return (
                       <span className="absolute inset-0 z-10 flex items-center justify-center select-none pointer-events-none kanji-stamp"

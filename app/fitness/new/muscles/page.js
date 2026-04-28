@@ -630,7 +630,7 @@ export default function MusclesPage() {
         style={isMobile ? { paddingTop: 'max(0.75rem, env(safe-area-inset-top))' } : undefined}
       >
         <RetreatButton href={backHref} />
-        <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
+        <div className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
           {isMobile ? 'TARGETS' : 'PALACE / FITNESS / NEW CYCLE / TARGETS'}
         </div>
       </nav>
@@ -772,7 +772,7 @@ export default function MusclesPage() {
           </span>
           <div className="h-0.5 w-16 bg-gtl-red" />
         </div>
-        <h1 className="font-display text-6xl md:text-7xl text-gtl-chalk leading-none -rotate-1">
+        <h1 className="font-matisse text-6xl md:text-7xl text-gtl-chalk leading-none -rotate-1">
           MARK YOUR
           <span className="text-gtl-red gtl-headline-shadow-soft inline-block rotate-2 ml-4">
             TARGETS
@@ -956,7 +956,7 @@ export default function MusclesPage() {
       {/* Footer slash */}
       <div className="absolute bottom-6 left-0 right-0 z-10 flex items-center gap-4 px-8">
         <div className="h-px flex-1 bg-gtl-edge" />
-        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
+        <div className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
           GRITTED TEETH LIFESTYLE / FITNESS PALACE / TARGETING
         </div>
         <div className="h-px flex-1 bg-gtl-edge" />

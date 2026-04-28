@@ -433,7 +433,7 @@ export default function FitnessPage() {
         aria-hidden="true"
         style={{
           top: 'calc(env(safe-area-inset-top, 0px) - 48px)',
-          fontFamily: '"FOT-Matisse Pro EB", "Noto Serif JP", "Yu Mincho", serif',
+          fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '40rem',
           lineHeight: '0.8',
           color: '#ffffff',
@@ -452,7 +452,7 @@ export default function FitnessPage() {
         style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
       >
         <RetreatButton href="/fitness" />
-        <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
+        <div className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
           PALACE / FITNESS
         </div>
       </nav>
@@ -463,12 +463,12 @@ export default function FitnessPage() {
         <div className="mb-6 md:mb-16">
           <div className="flex items-center gap-4 mb-3">
             <div className="h-px w-16 bg-gtl-red" />
-            <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-red">
+            <span className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-red">
               ENTRY POINT / 01
             </span>
           </div>
 
-          <h1 className="font-display text-[3rem] md:text-[8rem] leading-[0.9] text-gtl-chalk -rotate-1">
+          <h1 className="font-matisse text-[3rem] md:text-[8rem] leading-[0.9] text-gtl-chalk -rotate-1">
             CHOOSE
             <br />
             <span className="text-gtl-red gtl-headline-shadow-soft inline-block rotate-2">
@@ -476,7 +476,7 @@ export default function FitnessPage() {
             </span>
           </h1>
 
-          <p className="font-mono text-xs tracking-[0.25em] uppercase text-gtl-ash mt-6 max-w-md">
+          <p className="font-matisse text-xs tracking-[0.25em] uppercase text-gtl-ash mt-6 max-w-md">
             Forge a new climb, or return to one already in progress.
           </p>
         </div>
@@ -511,7 +511,7 @@ export default function FitnessPage() {
         <div className="mt-20 md:mt-24">
           <div className="flex items-center gap-4 mb-4">
             <div className="h-px w-8 bg-gtl-edge" />
-            <span className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
+            <span className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
               ALTERNATE PATH
             </span>
             <div className="h-px flex-1 bg-gtl-edge" />
@@ -537,7 +537,7 @@ export default function FitnessPage() {
         {/* Decorative footer slash */}
         <div className="mt-24 flex items-center gap-4">
           <div className="h-px flex-1 bg-gtl-edge" />
-          <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
+          <div className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
             GRITTED TEETH LIFESTYLE / FITNESS PALACE
           </div>
           <div className="h-px flex-1 bg-gtl-edge" />

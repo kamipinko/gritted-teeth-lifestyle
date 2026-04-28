@@ -647,7 +647,7 @@ export default function GhostCyclePage() {
         aria-hidden="true"
         style={{
           top: 'calc(env(safe-area-inset-top, 0px) - 64px)',
-          fontFamily: '"FOT-Matisse Pro EB", "Noto Serif JP", "Yu Mincho", serif',
+          fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '52rem', lineHeight: '0.8',
           color: '#6060a0', opacity: 0.045, fontWeight: 900,
         }}
@@ -658,7 +658,7 @@ export default function GhostCyclePage() {
       {/* Nav */}
       <nav className="relative z-10 shrink-0 flex items-center justify-between pl-0 pr-8 py-5">
         <RetreatButton href="/fitness/hub" />
-        <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
+        <div className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
           PALACE / FITNESS / GHOST CYCLE
         </div>
       </nav>
@@ -688,7 +688,7 @@ export default function GhostCyclePage() {
             GHOST TRAIN
           </span>
         </div>
-        <h1 className="font-display text-5xl text-gtl-chalk leading-none -rotate-1">
+        <h1 className="font-matisse text-5xl text-gtl-chalk leading-none -rotate-1">
           CHOOSE
           <span className="inline-block rotate-1 ml-3"
             style={{ color: '#6060a0', textShadow: '3px 3px 0 #1a1a3e' }}>YOUR CYCLE</span>

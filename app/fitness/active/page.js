@@ -1578,7 +1578,7 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose, cycleId }) {
         )}
 
         {/* Bottom breadcrumb */}
-        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke mt-10 shrink-0">
+        <div className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke mt-10 shrink-0">
           PALACE / FITNESS / ACTIVE CYCLE / {label} / EXERCISES
         </div>
       </div>
@@ -2092,7 +2092,7 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
           {/* Bottom row: breadcrumb + stamp button */}
           <div className="mt-auto pt-6 flex items-end justify-between gap-4" style={{ position: 'relative', zIndex: 10 }}>
             <div>
-              <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
+              <div className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
                 PALACE / FITNESS / ACTIVE CYCLE / {dayName}
               </div>
             </div>
@@ -2507,7 +2507,7 @@ export default function ActiveCyclePage() {
         aria-hidden="true"
         style={{
           top: 'calc(env(safe-area-inset-top, 0px) - 64px)',
-          fontFamily: '"FOT-Matisse Pro EB", "Noto Serif JP", "Yu Mincho", serif',
+          fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '52rem', lineHeight: '0.8',
           color: '#d4181f', opacity: 0.045, fontWeight: 900,
         }}
