@@ -589,6 +589,26 @@ export default function MusclesPage() {
 
   const count = selected.size
 
+  // Quick-forge auto-progression: when arriving with the gtl-quick-forge flag,
+  // press ALL → wait for animation → press HONE. Flag survives for the next
+  // pages in the chain (branded, summary).
+  useEffect(() => {
+    let isQuickForge = false
+    try { isQuickForge = localStorage.getItem('gtl-quick-forge') === '1' } catch (_) {}
+    if (!isQuickForge) return
+    let cancelled = false
+    const t1 = setTimeout(() => { if (!cancelled) selectAll() }, 600)
+    // 11 muscles × 500ms stagger + 740ms initial delay + 1s buffer ≈ 7240ms.
+    const t2 = setTimeout(() => {
+      if (cancelled) return
+      const allIds = MUSCLE_GROUPS.map(g => g.id)
+      try { localStorage.setItem(pk('muscle-targets'), JSON.stringify(allIds)) } catch (_) {}
+      setFireActive(true)
+    }, 7240)
+    return () => { cancelled = true; clearTimeout(t1); clearTimeout(t2) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   return (
     <main ref={mainRef} className={`relative overflow-hidden bg-gtl-void ${isMobile ? 'h-[100dvh] flex flex-col' : 'min-h-screen'}`}>
 {/* Top nav — responsive */}
