@@ -7,10 +7,14 @@ import { useSound } from '../lib/useSound'
 const EXIT_MS = 600
 const SWIPE_THRESHOLD = 50
 
-export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, swipeHintLabels }) {
+export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, onFastToHeist, swipeHintLabels }) {
   const { play } = useSound()
   const [phase, setPhase] = useState('pre')
   // pre → in → idle → out
+  // `instant` flag: when set by snapToIdle, all entrance keyframes + transitions
+  // null out so elements jump to their settled state instead of continuing to
+  // play out their delayed animation schedule.
+  const [instant, setInstant] = useState(false)
   const exitTimerRef = useRef(null)
   const touchStartY = useRef(null)
 
@@ -23,10 +27,10 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
     }
   }, [])
 
-  // Single commit path used by both tap (defaults to fitness) and swipe
-  // (direction → fitness/nutrition). Drives gate-exit slashes uniformly so
-  // the user always gets the chance to second-tap to skip.
+  // Full-cascade commit (idle → gate-exit slashes → onEnter triggers calling
+  // card + heist). Used by tap and swipe once the user is at PRESS START.
   const commit = (kind) => {
+    if (phase !== 'idle') return
     // Fire bg music start SYNCHRONOUSLY inside the user-gesture handler. iOS PWA
     // blocks audio.play() outside the synchronous click context — anything called
     // after the setTimeout below is outside that window and the play promise
@@ -34,15 +38,6 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
     if (onMusicStart) onMusicStart()
     play('brand-confirm')
     if (onCommit) onCommit(kind)  // sync, so parent can stash target
-
-    // Pre-commit (entrance animation still running): fast-track straight to
-    // the route — skip entrance, gate exit, calling card, heist transition.
-    // Music continues. onSkip routes via parent's skipAll using targetRef.
-    if (phase === 'pre' || phase === 'in') {
-      if (onSkip) onSkip()
-      return
-    }
-    if (phase !== 'idle') return
     setPhase('out')
     exitTimerRef.current = setTimeout(() => onEnter && onEnter(kind), EXIT_MS)
   }
@@ -53,9 +48,29 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
     if (onSkip) onSkip()
   }
 
+  // Tap during entrance: snap to PRESS START (idle), start music, no commit.
+  // User then needs another gesture to commit. `instant` kills the in-flight
+  // entrance keyframes/transitions so elements jump to their final state
+  // instead of continuing the delayed schedule.
+  const snapToIdle = () => {
+    if (onMusicStart) onMusicStart()
+    setInstant(true)
+    setPhase('idle')
+  }
+
+  // Swipe during entrance: skip entrance + gate slashes + calling card,
+  // play HeistTransition, then route. Music starts here too.
+  const fastToHeist = (kind) => {
+    if (onMusicStart) onMusicStart()
+    play('brand-confirm')
+    if (onCommit) onCommit(kind)
+    if (onFastToHeist) onFastToHeist(kind)
+  }
+
   const handleClick = () => {
     if (phase === 'out') { skipFromOut(); return }
-    commit('fitness')  // plain tap defaults to fitness
+    if (phase === 'pre' || phase === 'in') { snapToIdle(); return }
+    commit('fitness')  // idle: full commit defaults to fitness
   }
 
   const handleTouchStart = (e) => {
@@ -68,6 +83,10 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
     touchStartY.current = null
     const isSwipe = Math.abs(dy) > SWIPE_THRESHOLD
     if (phase === 'out' && isSwipe) { skipFromOut(); return }
+    if (isSwipe && (phase === 'pre' || phase === 'in')) {
+      fastToHeist(dy < 0 ? 'fitness' : 'nutrition')
+      return
+    }
     if (dy < -SWIPE_THRESHOLD)      commit('fitness')
     else if (dy > SWIPE_THRESHOLD)  commit('nutrition')
     // Otherwise it's a tap — click event fires next, handleClick takes it.
@@ -75,6 +94,10 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
 
   const active = phase !== 'pre'
   const exiting = phase === 'out'
+  // Helpers: when `instant` is set, drop all entrance animation/transition so
+  // the styled `active`-true target values apply immediately (no in-flight tween).
+  const animOf  = (s) => instant ? 'none' : (active ? s : 'none')
+  const transOf = (s) => instant ? 'none' : s
 
   return (
     <button
@@ -114,7 +137,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
         style={{
           background: 'radial-gradient(ellipse at 50% 55%, rgba(212,24,31,0.45) 0%, transparent 65%)',
           opacity: active ? 1 : 0,
-          transition: 'opacity 900ms ease 200ms',
+          transition: transOf('opacity 900ms ease 200ms'),
         }}
       />
 
@@ -129,7 +152,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
           top: '-25%', bottom: '-25%', left: '-5%', width: '52%',
           background: 'rgba(212,24,31,0.75)',
           transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(-120%)',
-          transition: 'transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 100ms',
+          transition: transOf('transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 100ms'),
         }}
       />
       {/* Band 2 — bright red, medium */}
@@ -139,7 +162,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
           top: '-25%', bottom: '-25%', left: '10%', width: '38%',
           background: 'rgba(212,24,31,0.4)',
           transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(-120%)',
-          transition: 'transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 200ms',
+          transition: transOf('transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 200ms'),
         }}
       />
       {/* Band 3 — bright red, right-side accent */}
@@ -149,19 +172,19 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
           top: '-25%', bottom: '-25%', right: '-8%', width: '20%',
           background: 'rgba(212,24,31,0.55)',
           transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(120%)',
-          transition: 'transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 150ms',
+          transition: transOf('transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 150ms'),
         }}
       />
 
       {/* ── Corner accent lines ── */}
       <div className="absolute top-0 left-0 bg-gtl-red pointer-events-none"
-        style={{ height: 5, width: active ? 168 : 0, transition: 'width 600ms cubic-bezier(0.2,1,0.3,1) 450ms' }} />
+        style={{ height: 5, width: active ? 168 : 0, transition: transOf('width 600ms cubic-bezier(0.2,1,0.3,1) 450ms') }} />
       <div className="absolute top-0 left-0 bg-gtl-red pointer-events-none"
-        style={{ width: 5, height: active ? 168 : 0, transition: 'height 600ms cubic-bezier(0.2,1,0.3,1) 500ms' }} />
+        style={{ width: 5, height: active ? 168 : 0, transition: transOf('height 600ms cubic-bezier(0.2,1,0.3,1) 500ms') }} />
       <div className="absolute bottom-0 right-0 bg-gtl-red pointer-events-none"
-        style={{ height: 5, width: active ? 168 : 0, transition: 'width 600ms cubic-bezier(0.2,1,0.3,1) 450ms' }} />
+        style={{ height: 5, width: active ? 168 : 0, transition: transOf('width 600ms cubic-bezier(0.2,1,0.3,1) 450ms') }} />
       <div className="absolute bottom-0 right-0 bg-gtl-red pointer-events-none"
-        style={{ width: 5, height: active ? 168 : 0, transition: 'height 600ms cubic-bezier(0.2,1,0.3,1) 500ms' }} />
+        style={{ width: 5, height: active ? 168 : 0, transition: transOf('height 600ms cubic-bezier(0.2,1,0.3,1) 500ms') }} />
 
       {/* ── Swipe hints — plain red, no blend mode, no underlay. */}
       {swipeHintLabels && (
@@ -229,7 +252,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
             height: 'clamp(96px, 16vw, 148px)',
             borderRadius: '50%',
             objectFit: 'cover',
-            animation: active ? 'forge-slam 700ms cubic-bezier(0.2, 1.2, 0.4, 1) 250ms both' : 'none',
+            animation: animOf('forge-slam 700ms cubic-bezier(0.2, 1.2, 0.4, 1) 250ms both'),
           }}
         />
 
@@ -242,7 +265,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
             fontWeight: 800,
             textTransform: 'uppercase', color: '#c3181f',
             mixBlendMode: 'difference',
-            animation: active ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 600ms both' : 'none',
+            animation: animOf('snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 600ms both'),
           }}>
             GRITTED TEETH LIFESTYLE
           </div>
@@ -254,7 +277,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
             lineHeight: 1, letterSpacing: '-0.02em',
             color: '#f1eee5',
             textShadow: '3px 3px 0 #d4181f, 6px 6px 0 #070708',
-            animation: active ? 'snap-in 500ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 400ms both' : 'none',
+            animation: animOf('snap-in 500ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 400ms both'),
           }}>
             GTL
           </div>
@@ -263,17 +286,21 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
           <div style={{
             height: 5, background: '#d4181f', transform: 'skewX(-12deg)',
             width: active ? 'clamp(8rem, 20vw, 14rem)' : 0,
-            transition: 'width 600ms cubic-bezier(0.2, 1, 0.3, 1) 750ms',
+            transition: transOf('width 600ms cubic-bezier(0.2, 1, 0.3, 1) 750ms'),
           }} />
 
-          {/* PRESS START — snaps in, then blinks */}
+          {/* PRESS START — snaps in, then blinks. When `instant` is set
+              (entrance tap-skip), drop the snap-in but keep the blink running
+              from t=0 so PRESS START is visible-and-pulsing immediately. */}
           <div style={{
             fontFamily: 'Anton, Impact, sans-serif',
             fontSize: 'clamp(1.1rem, 3.2vw, 1.9rem)',
             letterSpacing: '0.25em', color: '#d4181f',
-            animation: active
-              ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 800ms both, cursor-blink 1.2s steps(2, end) 1350ms infinite'
-              : 'none',
+            animation: instant
+              ? 'cursor-blink 1.2s steps(2, end) infinite'
+              : (active
+                  ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 800ms both, cursor-blink 1.2s steps(2, end) 1350ms infinite'
+                  : 'none'),
           }}>
             PRESS START
           </div>
@@ -285,7 +312,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, sw
             fontWeight: 800,
             textTransform: 'uppercase', color: '#c3181f',
             mixBlendMode: 'difference',
-            animation: active ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 950ms both' : 'none',
+            animation: animOf('snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 950ms both'),
           }}>
             // CLICK OR TOUCH TO ENTER //
           </div>
