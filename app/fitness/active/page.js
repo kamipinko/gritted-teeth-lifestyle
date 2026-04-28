@@ -713,11 +713,17 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
   const [flashChip, setFlashChip]   = useState(null)
 
   const POPUP_WIDTH  = 380
-  const POPUP_HEIGHT = 560
+  // Bumped from 560 to 640 because the new plate-chips row wraps to 2-3 rows in
+  // the 380px-wide popup, pushing total content past the old estimate. The
+  // bottom-clamp uses this value to push the popup up off the bottom edge.
+  const POPUP_HEIGHT = 640
+  // Visual lift — popup is biased above the tapped row's center so the SET
+  // WEIGHT button isn't kissing the bottom of the screen on phones.
+  const TOP_BIAS = 60
 
   const popupTop = rowRect
-    ? Math.max(20, Math.min(rowRect.top - POPUP_HEIGHT / 2 + rowRect.height / 2, window.innerHeight - POPUP_HEIGHT - 20))
-    : Math.max(20, (window.innerHeight - POPUP_HEIGHT) / 2)
+    ? Math.max(20, Math.min(rowRect.top - POPUP_HEIGHT / 2 + rowRect.height / 2 - TOP_BIAS, window.innerHeight - POPUP_HEIGHT - 20))
+    : Math.max(20, (window.innerHeight - POPUP_HEIGHT) / 2 - TOP_BIAS)
 
   const slamDX = rowRect ? (rowRect.left + rowRect.width / 2) - (window.innerWidth / 2) : 0
   const slamDY = rowRect ? (rowRect.top + rowRect.height / 2) - (popupTop + POPUP_HEIGHT / 2) : 200
@@ -840,7 +846,7 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
                 opacity: flameOpacity,
                 transform: `scale(${flameScale})`, transformOrigin: 'center bottom',
                 transition: 'transform 200ms ease-out, opacity 200ms ease-out',
-                marginBottom: weight > 0 ? `${Math.min(weight * 0.3, 60)}px` : '0px',
+                marginBottom: weight > 0 ? `${Math.min(weight * 0.12, 24)}px` : '0px',
               }}
               aria-hidden="true">
               <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 55% 80% at 50% 90%, #ff6a00 0%, #ff2a00 40%, transparent 100%)', borderRadius: '50% 50% 35% 35% / 60% 60% 40% 40%', animation: 'flame-core 0.9s ease-in-out infinite', transformOrigin: 'center bottom' }} />
