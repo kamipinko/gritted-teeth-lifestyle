@@ -184,13 +184,15 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
       {/* ── Diagonal background bands (slide from left) ──
           Each band uses top/bottom anchors instead of explicit height so it
           naturally over-spans the parent in both directions, regardless of
-          iOS safe-area or dvh oddities. */}
+          iOS safe-area or dvh oddities. Backgrounds are linear-gradients that
+          fade to transparent at the band's left+right edges so there's no
+          hard seam where the red color cuts off against the black bg. */}
       {/* Band 1 — bright red, widest */}
       <div
         className="absolute pointer-events-none"
         style={{
           top: '-25%', bottom: '-25%', left: '-5%', width: '52%',
-          background: 'rgba(212,24,31,0.75)',
+          background: 'linear-gradient(to right, rgba(212,24,31,0) 0%, rgba(212,24,31,0.75) 22%, rgba(212,24,31,0.75) 78%, rgba(212,24,31,0) 100%)',
           transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(-120%)',
           transition: transOf('transform 1100ms cubic-bezier(0.15, 0, 0.1, 1) 150ms'),
         }}
@@ -200,7 +202,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
         className="absolute pointer-events-none"
         style={{
           top: '-25%', bottom: '-25%', left: '10%', width: '38%',
-          background: 'rgba(212,24,31,0.4)',
+          background: 'linear-gradient(to right, rgba(212,24,31,0) 0%, rgba(212,24,31,0.4) 22%, rgba(212,24,31,0.4) 78%, rgba(212,24,31,0) 100%)',
           transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(-120%)',
           transition: transOf('transform 1100ms cubic-bezier(0.15, 0, 0.1, 1) 300ms'),
         }}
@@ -210,7 +212,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
         className="absolute pointer-events-none"
         style={{
           top: '-25%', bottom: '-25%', right: '-8%', width: '20%',
-          background: 'rgba(212,24,31,0.55)',
+          background: 'linear-gradient(to right, rgba(212,24,31,0) 0%, rgba(212,24,31,0.55) 22%, rgba(212,24,31,0.55) 78%, rgba(212,24,31,0) 100%)',
           transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(120%)',
           transition: transOf('transform 1100ms cubic-bezier(0.15, 0, 0.1, 1) 225ms'),
         }}
