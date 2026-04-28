@@ -332,12 +332,18 @@ export default function ProfilePage() {
         {/* Existing profiles */}
         {ready && profiles.length > 0 && (
           <div>
-            <div className="flex items-center gap-4 mb-5">
+            <div className="flex items-center gap-4 mb-2">
               <div className="h-px w-8 bg-gtl-edge" />
               <span className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
                 KNOWN WARRIORS
               </span>
               <div className="h-px flex-1 bg-gtl-edge" />
+            </div>
+            {/* Gesture hint — teaches both interactions for the chip below. */}
+            <div className="flex items-center gap-3 mb-3 font-mono text-[8px] tracking-[0.25em] uppercase text-gtl-ash/80">
+              <span>TAP TO LOAD PROFILE</span>
+              <span className="text-gtl-red">·</span>
+              <span>SWIPE TO LIFT NOW →</span>
             </div>
             <div className="flex flex-col gap-3">
               {profiles.map(name => (

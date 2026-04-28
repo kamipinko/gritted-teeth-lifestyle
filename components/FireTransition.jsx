@@ -5,10 +5,8 @@
  * After the brand cools, the entire screen erupts in fire. Layered phases:
  *
  *   - 0ms:    pre-buildup heat shimmer
- *   - 60ms:   triple shockwave rings expand from center
- *   - 200ms:  central fireball blooms outward
+ *   - 150ms:  flame base layer + tongues whip up from below
  *   - 280ms:  white flash 1
- *   - 350ms:  flame tongues whip up from below (12 of them)
  *   - 450ms:  embers begin flying upward (24 of them)
  *   - 700ms:  full conflagration — everything visible
  *   - 950ms:  kanji 火 slams into center
@@ -47,18 +45,18 @@ export default function FireTransition({ active, onComplete }) {
   // 12 flame tongues at varied positions/widths/timings/colors
   const tongues = useMemo(
     () => [
-      { left: '-8%',  width: '24%', delay: 350, color: 'rgba(255,200,60,0.95)' },
-      { left: '6%',   width: '20%', delay: 410, color: 'rgba(255,150,30,0.92)' },
-      { left: '18%',  width: '22%', delay: 380, color: 'rgba(255,180,40,0.95)' },
-      { left: '30%',  width: '24%', delay: 460, color: 'rgba(255,120,30,0.9)'  },
-      { left: '40%',  width: '22%', delay: 360, color: 'rgba(255,170,50,0.95)' },
-      { left: '50%',  width: '24%', delay: 430, color: 'rgba(255,140,30,0.92)' },
-      { left: '60%',  width: '22%', delay: 400, color: 'rgba(255,190,60,0.95)' },
-      { left: '70%',  width: '24%', delay: 470, color: 'rgba(255,130,30,0.9)'  },
-      { left: '80%',  width: '22%', delay: 390, color: 'rgba(255,160,40,0.93)' },
-      { left: '88%',  width: '20%', delay: 440, color: 'rgba(255,200,60,0.95)' },
-      { left: '5%',   width: '18%', delay: 520, color: 'rgba(255,255,180,0.85)' },
-      { left: '78%',  width: '18%', delay: 490, color: 'rgba(255,255,180,0.85)' },
+      { left: '-8%',  width: '24%', delay: 180, color: 'rgba(255,200,60,0.95)' },
+      { left: '6%',   width: '20%', delay: 220, color: 'rgba(255,150,30,0.92)' },
+      { left: '18%',  width: '22%', delay: 200, color: 'rgba(255,180,40,0.95)' },
+      { left: '30%',  width: '24%', delay: 260, color: 'rgba(255,120,30,0.9)'  },
+      { left: '40%',  width: '22%', delay: 190, color: 'rgba(255,170,50,0.95)' },
+      { left: '50%',  width: '24%', delay: 240, color: 'rgba(255,140,30,0.92)' },
+      { left: '60%',  width: '22%', delay: 210, color: 'rgba(255,190,60,0.95)' },
+      { left: '70%',  width: '24%', delay: 270, color: 'rgba(255,130,30,0.9)'  },
+      { left: '80%',  width: '22%', delay: 200, color: 'rgba(255,160,40,0.93)' },
+      { left: '88%',  width: '20%', delay: 250, color: 'rgba(255,200,60,0.95)' },
+      { left: '5%',   width: '18%', delay: 320, color: 'rgba(255,255,180,0.85)' },
+      { left: '78%',  width: '18%', delay: 290, color: 'rgba(255,255,180,0.85)' },
     ],
     []
   )
@@ -108,42 +106,9 @@ export default function FireTransition({ active, onComplete }) {
         }}
       />
 
-      {/* ── Phase 2: Triple shockwave rings ───────────────────────── */}
-      {[
-        { delay: 60,  borderColor: '#ffffff' },
-        { delay: 140, borderColor: '#ffe066' },
-        { delay: 220, borderColor: '#ff8c00' },
-      ].map((sw, i) => (
-        <div
-          key={`sw-${i}`}
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full border-[12px]"
-          style={{
-            borderColor: sw.borderColor,
-            boxShadow: `0 0 60px ${sw.borderColor}, 0 0 120px ${sw.borderColor}`,
-            mixBlendMode: 'screen',
-            opacity: 0,
-            animation: armed
-              ? `shockwave 900ms cubic-bezier(0.2, 0.8, 0.3, 1) ${sw.delay}ms forwards`
-              : 'none',
-            willChange: 'transform, opacity',
-          }}
-        />
-      ))}
-
-      {/* ── Phase 3: Massive central fireball bloom ───────────────── */}
-      <div
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full"
-        style={{
-          background:
-            'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,180,0.95) 12%, rgba(255,200,60,0.9) 30%, rgba(255,120,30,0.85) 55%, rgba(212,24,31,0.6) 80%, transparent 100%)',
-          mixBlendMode: 'screen',
-          opacity: 0,
-          animation: armed
-            ? 'fireball-bloom 900ms cubic-bezier(0.25, 0.6, 0.35, 1) 200ms forwards'
-            : 'none',
-          willChange: 'transform, opacity',
-        }}
-      />
+      {/* (Removed: ripple-style shockwave rings + central fireball bloom — both
+          read as a tap/ripple effect we don't want. Flame layer below now starts
+          earlier (150ms) so the impact doesn't feel empty.) */}
 
       {/* ── Phase 4: White flash 1 — at impact peak ───────────────── */}
       <div
@@ -166,7 +131,7 @@ export default function FireTransition({ active, onComplete }) {
           mixBlendMode: 'screen',
           opacity: 0,
           animation: armed
-            ? 'flame-rise 1100ms cubic-bezier(0.3, 0.5, 0.3, 1) 350ms forwards'
+            ? 'flame-rise 1100ms cubic-bezier(0.3, 0.5, 0.3, 1) 150ms forwards'
             : 'none',
           willChange: 'transform, opacity',
         }}
