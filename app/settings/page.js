@@ -222,7 +222,7 @@ export default function SettingsPage() {
           className="relative shrink-0 flex items-center justify-between pl-0 pr-8 pb-6"
           style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
         >
-          <RetreatButton href="/fitness" />
+          <RetreatButton href="/fitness/hub" />
           <div className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
             CONFIG / 00
           </div>
