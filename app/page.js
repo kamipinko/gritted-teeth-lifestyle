@@ -171,7 +171,7 @@ function SwipeHint({ position, label }) {
         letterSpacing: '0.35em',
         textTransform: 'uppercase',
         color: '#d4181f',
-        mixBlendMode: 'difference',
+        mixBlendMode: 'multiply',
         animation: 'swipe-hint-pulse 2400ms ease-in-out infinite',
       }}
     >
