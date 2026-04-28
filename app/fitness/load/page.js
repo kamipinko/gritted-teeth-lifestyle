@@ -606,31 +606,42 @@ function CycleCard({ cycle, index, selected, onSelect }) {
 /* ── Quick-nav ACTIVATE popup with tap-vs-swipe gesture ── */
 function ActivatePopup({ cycle, onTap, onSwipe }) {
   const startRef = useRef(null)
-  const swipedRef = useRef(false)
+  const dxRef = useRef(0)
+  const swipeFiredRef = useRef(false)
   const [dragX, setDragX] = useState(0)
   const SWIPE_THRESHOLD = 80
 
   const handlePointerDown = (e) => {
     startRef.current = { x: e.clientX, y: e.clientY }
-    swipedRef.current = false
+    dxRef.current = 0
+    swipeFiredRef.current = false
     setDragX(0)
   }
   const handlePointerMove = (e) => {
     if (!startRef.current) return
     const dx = e.clientX - startRef.current.x
     const dy = e.clientY - startRef.current.y
-    if (Math.abs(dx) > Math.abs(dy) && dx > 0) {
-      setDragX(Math.min(dx, SWIPE_THRESHOLD * 1.5))
-      if (dx > SWIPE_THRESHOLD) swipedRef.current = true
+    if (Math.abs(dx) > Math.abs(dy)) {
+      const clamped = Math.max(0, Math.min(dx, SWIPE_THRESHOLD * 1.5))
+      dxRef.current = clamped
+      setDragX(clamped)
     }
   }
   const handlePointerUp = () => {
-    if (swipedRef.current && onSwipe) onSwipe(cycle)
+    if (dxRef.current > SWIPE_THRESHOLD && onSwipe) {
+      swipeFiredRef.current = true
+      onSwipe(cycle)
+    }
     startRef.current = null
+    dxRef.current = 0
     setDragX(0)
   }
   const handleClick = (e) => {
-    if (swipedRef.current) { e.preventDefault(); e.stopPropagation(); return }
+    if (swipeFiredRef.current) {
+      e.preventDefault(); e.stopPropagation()
+      swipeFiredRef.current = false
+      return
+    }
     onTap(cycle)
   }
   const swipeProgress = Math.min(1, dragX / SWIPE_THRESHOLD)

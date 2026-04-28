@@ -8,40 +8,52 @@ import RetreatButton from '../../components/RetreatButton'
 
 function ProfileChip({ name, onSelect, onSwipeSelect }) {
   const { play } = useSound()
-  // Pointer-tracking refs for swipe-vs-tap discrimination. Swipe-right past
-  // the threshold = onSwipeSelect (deep-launch straight to first-set weight
-  // popup). Tap = onSelect (normal nav to /fitness/hub).
+  // Pointer-tracking refs for swipe-vs-tap discrimination. The decision is
+  // made at pointerUp based on the FINAL dx — not a sticky armed flag — so
+  // pulling back below the threshold cancels the swipe and falls through to
+  // a normal tap.
   const startRef = useRef(null)
-  const swipedRef = useRef(false)
+  const dxRef = useRef(0)
+  const swipeFiredRef = useRef(false)
   const [dragX, setDragX] = useState(0)
   const SWIPE_THRESHOLD = 60
 
   const handlePointerDown = (e) => {
     startRef.current = { x: e.clientX, y: e.clientY }
-    swipedRef.current = false
+    dxRef.current = 0
+    swipeFiredRef.current = false
     setDragX(0)
   }
   const handlePointerMove = (e) => {
     if (!startRef.current) return
     const dx = e.clientX - startRef.current.x
     const dy = e.clientY - startRef.current.y
-    // Only follow horizontal-dominant motion to the right.
-    if (Math.abs(dx) > Math.abs(dy) && dx > 0) {
-      setDragX(Math.min(dx, SWIPE_THRESHOLD * 1.5))
-      if (dx > SWIPE_THRESHOLD) swipedRef.current = true
+    // Only follow horizontal-dominant motion. dx clamped to [0, threshold*1.5]
+    // so visual progress reflects pullback (release below threshold = cancel).
+    if (Math.abs(dx) > Math.abs(dy)) {
+      const clamped = Math.max(0, Math.min(dx, SWIPE_THRESHOLD * 1.5))
+      dxRef.current = clamped
+      setDragX(clamped)
     }
   }
   const handlePointerUp = () => {
-    if (swipedRef.current && onSwipeSelect) {
+    const completed = dxRef.current > SWIPE_THRESHOLD
+    if (completed && onSwipeSelect) {
+      swipeFiredRef.current = true
       play('card-confirm')
       onSwipeSelect(name)
     }
     startRef.current = null
+    dxRef.current = 0
     setDragX(0)
   }
   const handleClick = (e) => {
-    // Suppress click when the gesture resolved as a swipe.
-    if (swipedRef.current) { e.preventDefault(); e.stopPropagation(); return }
+    // Suppress click only when the gesture actually resolved as a full swipe.
+    if (swipeFiredRef.current) {
+      e.preventDefault(); e.stopPropagation()
+      swipeFiredRef.current = false
+      return
+    }
     play('option-select')
     onSelect(name)
   }
