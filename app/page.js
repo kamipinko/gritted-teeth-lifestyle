@@ -39,9 +39,21 @@ if (typeof window !== 'undefined' && bgMusicAudio && !window.__gtlBgMusicHideHoo
 // Audio element stays locked until it's played-once inside a user gesture.
 // Prime it silently on first pointerdown so the actual play() in handleClick
 // succeeds. once:true means it runs exactly once, on the first interaction.
+//
+// IMPORTANT: skip the prime entirely when the user has BGM disabled. iOS
+// WKWebView has a known quirk where `muted = true` set immediately before
+// `play()` doesn't always silence the first ~100-300ms of playback — if the
+// singleton survived a prior session at volume 0.04, that brief window is
+// audible. If BGM is off, settings/toggle-on will handle the unlock at the
+// moment the user re-enables it (that toggle tap is itself a user gesture).
 if (typeof window !== 'undefined' && bgMusicAudio) {
   const primeBgMusic = () => {
+    try {
+      if (window.localStorage.getItem('gtl-bg-music-on') === '0') return
+    } catch {}
     bgMusicAudio.muted = true
+    // Belt-and-suspenders: if iOS leaks the muted prime, volume 0 = silent.
+    bgMusicAudio.volume = 0
     const p = bgMusicAudio.play()
     if (p && typeof p.then === 'function') {
       p.then(() => {
@@ -60,9 +72,15 @@ if (typeof window !== 'undefined' && bgMusicAudio) {
 
 function startBgMusic() {
   if (!bgMusicAudio) return
-  // Settings toggle — if the user disabled bg music, don't start it.
+  // Settings toggle — if the user disabled bg music, don't start it. Also
+  // backstop any audio that primeBgMusic or another race-y path may have
+  // left playing (iOS PWA muted-prime leak). Force-pause + reset so we
+  // don't leak audible BGM after a fresh launch with the flag off.
   try {
-    if (window.localStorage.getItem('gtl-bg-music-on') === '0') return
+    if (window.localStorage.getItem('gtl-bg-music-on') === '0') {
+      try { bgMusicAudio.pause(); bgMusicAudio.currentTime = 0; bgMusicAudio.volume = 0 } catch {}
+      return
+    }
   } catch {}
   // Trust the audio element's own state: if it's already playing (because a
   // previous mount started it and the module-level singleton is still alive),

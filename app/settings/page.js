@@ -149,7 +149,9 @@ export default function SettingsPage() {
         clearInterval(window.__gtlBgMusicFadeInterval)
         window.__gtlBgMusicFadeInterval = null
       }
-      try { a.pause(); a.currentTime = 0 } catch {}
+      // Reset volume to 0 too — if anything later plays the singleton (a
+      // stale primeBgMusic race on a fresh launch, etc.), it stays silent.
+      try { a.pause(); a.currentTime = 0; if (!next) a.volume = 0 } catch {}
       if (next) {
         // Restart from the top with the same fade-in shape used on the home
         // page's GateScreen tap (TARGET_VOL = 0.04, FADE_MS = 1500).
