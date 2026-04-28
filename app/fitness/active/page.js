@@ -713,7 +713,11 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
   const [flashChip, setFlashChip]   = useState(null)
 
   const POPUP_WIDTH  = 380
-  const POPUP_HEIGHT = 560
+  // Estimate matches actual rendered height after the plate-chip row was added
+  // (chips wrap to 2-3 rows in 380px). The bottom-clamp uses this to push the
+  // popup up off the viewport floor when the row-centered position would put
+  // SET WEIGHT below the visible area.
+  const POPUP_HEIGHT = 640
 
   const popupTop = rowRect
     ? Math.max(20, Math.min(rowRect.top - POPUP_HEIGHT / 2 + rowRect.height / 2, window.innerHeight - POPUP_HEIGHT - 20))
@@ -722,10 +726,7 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
   const slamDX = rowRect ? (rowRect.left + rowRect.width / 2) - (window.innerWidth / 2) : 0
   const slamDY = rowRect ? (rowRect.top + rowRect.height / 2) - (popupTop + POPUP_HEIGHT / 2) : 200
 
-  // Flame scales with weight but is capped much lower than before — at scale 3
-  // the flame would extend up past the WEIGHT label and exercise name. Cap 1.4
-  // keeps the visual top below the title even at the heaviest setting.
-  const flameScale   = Math.min(0.3 + weight * 0.005, 1.4)
+  const flameScale   = Math.min(0.25 + weight * 0.013, 3.0)
   const flameOpacity = Math.min(0.3 + weight * 0.007, 1.0)
 
   // Functional setters so timer-driven calls don't see a stale `weight` closure.
