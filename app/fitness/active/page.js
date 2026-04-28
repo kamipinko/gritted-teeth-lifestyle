@@ -1884,10 +1884,13 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
                 focus-visible:outline-2 focus-visible:outline-gtl-red"
               style={{ touchAction: 'manipulation' }}
             >
+              {/* Day-focus back: chevrons brighten on hover but DON'T translate
+                  — UNLOG sits opposite via justify-between, so any translate
+                  would visually shift this button. Color change only. */}
               <span className="flex items-center gap-0.5 leading-none font-display text-2xl select-none">
-                <span aria-hidden="true" className="text-gtl-red opacity-40 transition-all duration-200 ease-out [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright [@media(hover:hover)]:group-hover:-translate-x-1.5">◀︎</span>
-                <span aria-hidden="true" className="text-gtl-red opacity-70 transition-all duration-200 ease-out delay-[40ms] [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright [@media(hover:hover)]:group-hover:-translate-x-1">◀︎</span>
-                <span aria-hidden="true" className="text-gtl-red transition-all duration-200 ease-out delay-[80ms] [@media(hover:hover)]:group-hover:text-gtl-red-bright [@media(hover:hover)]:group-hover:-translate-x-0.5">◀︎</span>
+                <span aria-hidden="true" className="text-gtl-red opacity-40 transition-colors duration-200 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright">◀︎</span>
+                <span aria-hidden="true" className="text-gtl-red opacity-70 transition-colors duration-200 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright">◀︎</span>
+                <span aria-hidden="true" className="text-gtl-red transition-colors duration-200 [@media(hover:hover)]:group-hover:text-gtl-red-bright">◀︎</span>
               </span>
             </button>
 
