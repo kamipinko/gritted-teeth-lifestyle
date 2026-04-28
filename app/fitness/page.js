@@ -364,6 +364,27 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
+
+        {/* Settings link — bottom of the IDENTITY page. */}
+        <div className="mt-auto pt-10 flex justify-center">
+          <Link
+            href="/settings"
+            onClick={() => play('menu-open')}
+            className="group relative outline-none"
+          >
+            <div
+              className="absolute inset-0 pointer-events-none transition-all duration-200 bg-gtl-surface border border-gtl-edge [@media(hover:hover)]:group-hover:border-gtl-red"
+              style={{ clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)' }}
+              aria-hidden="true"
+            />
+            <div className="relative px-6 py-3 flex items-center gap-2">
+              <span aria-hidden="true" className="font-display text-base leading-none text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper transition-colors duration-200">⚙</span>
+              <span className="font-mono text-[10px] tracking-[0.4em] uppercase font-bold text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper transition-colors duration-200">
+                SETTINGS
+              </span>
+            </div>
+          </Link>
+        </div>
       </section>
       </div>
     </main>

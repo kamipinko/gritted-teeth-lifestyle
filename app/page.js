@@ -60,6 +60,10 @@ if (typeof window !== 'undefined' && bgMusicAudio) {
 
 function startBgMusic() {
   if (!bgMusicAudio) return
+  // Settings toggle — if the user disabled bg music, don't start it.
+  try {
+    if (window.localStorage.getItem('gtl-bg-music-on') === '0') return
+  } catch {}
   // Trust the audio element's own state: if it's already playing (because a
   // previous mount started it and the module-level singleton is still alive),
   // don't kick another play() and don't re-run the fade interval.
