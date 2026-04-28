@@ -609,7 +609,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
   const dxRef = useRef(0)
   const swipeFiredRef = useRef(false)
   const [dragX, setDragX] = useState(0)
-  const SWIPE_THRESHOLD = 80
+  const SWIPE_THRESHOLD = 160
 
   const handlePointerDown = (e) => {
     startRef.current = { x: e.clientX, y: e.clientY }
@@ -647,6 +647,14 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
   const swipeProgress = Math.min(1, dragX / SWIPE_THRESHOLD)
 
   return (
+    <>
+    <style>{`
+      @keyframes swipe-pulse {
+        0%, 100% { transform: translateX(0); opacity: 0.6; }
+        50%      { transform: translateX(6px); opacity: 1; }
+      }
+      .animate-swipe-pulse { animation: swipe-pulse 1.2s ease-in-out infinite; display: inline-block; }
+    `}</style>
     <button
       type="button"
       onPointerDown={handlePointerDown}
@@ -686,15 +694,33 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
         aria-hidden="true"
       />
       <div
-        className="relative flex items-center justify-center px-6 py-4 gap-3"
+        className="relative flex items-center justify-between px-5 py-4 gap-3"
         style={{ transform: `translateX(${dragX * 0.3}px)`, transition: dragX === 0 ? 'transform 200ms' : 'none' }}
       >
+        {/* Left side: TAP label */}
+        <span
+          className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-paper/70 leading-none whitespace-nowrap"
+          style={{ opacity: 1 - swipeProgress }}
+          aria-hidden="true"
+        >
+          TAP
+        </span>
+        {/* Center: action label */}
         <span className="font-display text-2xl text-gtl-paper leading-none tracking-tight">
           {swipeProgress >= 1 ? 'LIFT NOW' : 'ACTIVATE'}
         </span>
-        <span className="font-display text-xl text-gtl-paper leading-none">➤︎</span>
+        {/* Right side: SWIPE chevrons (animated at idle, fade as user drags) */}
+        <span
+          className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-paper/90 leading-none whitespace-nowrap flex items-center gap-1"
+          style={{ opacity: 1 - swipeProgress * 0.6 }}
+          aria-hidden="true"
+        >
+          SWIPE
+          <span className="animate-swipe-pulse text-base leading-none">»</span>
+        </span>
       </div>
     </button>
+    </>
   )
 }
 
