@@ -29,15 +29,15 @@ export default function RetreatButton({ href = '/fitness/hub' }) {
         <span
           aria-hidden="true"
           className="text-gtl-red opacity-40 transition-all duration-200 ease-out [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright [@media(hover:hover)]:group-hover:-translate-x-1.5"
-        >◀</span>
+        >◀︎</span>
         <span
           aria-hidden="true"
           className="text-gtl-red opacity-70 transition-all duration-200 ease-out delay-[40ms] [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright [@media(hover:hover)]:group-hover:-translate-x-1"
-        >◀</span>
+        >◀︎</span>
         <span
           aria-hidden="true"
           className="text-gtl-red transition-all duration-200 ease-out delay-[80ms] [@media(hover:hover)]:group-hover:text-gtl-red-bright [@media(hover:hover)]:group-hover:-translate-x-0.5"
-        >◀</span>
+        >◀︎</span>
       </span>
     </Link>
   )
