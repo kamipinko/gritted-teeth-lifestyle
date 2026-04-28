@@ -78,13 +78,13 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
         aria-hidden="true"
       />
       <div
-        className="relative px-6 py-3 flex items-center gap-3"
+        className="relative px-7 py-5 flex items-center gap-3"
         style={{ transform: `translateX(${dragX * 0.3}px)`, transition: dragX === 0 ? 'transform 200ms' : 'none' }}
       >
-        <span className="font-display text-2xl leading-none transition-colors duration-200 text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper">
+        <span className="font-display text-3xl leading-none transition-colors duration-200 text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper">
           {name.toUpperCase()}
         </span>
-        <span className="font-display text-base leading-none transition-all duration-200 text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper [@media(hover:hover)]:group-hover:translate-x-1">➤︎</span>
+        <span className="font-display text-xl leading-none transition-all duration-200 text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper [@media(hover:hover)]:group-hover:translate-x-1">➤︎</span>
         {/* Swipe hint — appears on the right, fades in as user drags */}
         <span
           className="ml-auto font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-paper leading-none whitespace-nowrap pointer-events-none"
@@ -332,7 +332,7 @@ export default function ProfilePage() {
         {/* Existing profiles */}
         {ready && profiles.length > 0 && (
           <div>
-            <div className="flex items-center gap-4 mb-2">
+            <div className="flex items-center gap-4 mb-1">
               <div className="h-px w-8 bg-gtl-edge" />
               <span className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
                 KNOWN WARRIORS
@@ -340,7 +340,7 @@ export default function ProfilePage() {
               <div className="h-px flex-1 bg-gtl-edge" />
             </div>
             {/* Gesture hint — teaches both interactions for the chip below. */}
-            <div className="flex items-center gap-3 mb-3 font-mono text-[8px] tracking-[0.25em] uppercase text-gtl-ash/80">
+            <div className="flex items-center gap-3 mb-1 font-mono text-[8px] tracking-[0.25em] uppercase text-gtl-ash/80">
               <span>TAP TO LOAD PROFILE</span>
               <span className="text-gtl-red">·</span>
               <span>SWIPE TO LIFT NOW →</span>
