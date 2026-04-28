@@ -469,12 +469,13 @@ export default function NewCycleNamePage() {
     router.push(NEXT_TARGET)
   }
 
-  // Skip-the-cascade: SWIPE-FORGE PATH ONLY. Tap-FORGE uses the brand
-  // cooldown + FireTransition (yakiire) and that should play through
-  // unskippable. Swipe-FORGE uses HeistTransition (red slash, no yakiire)
-  // and IS skippable. Excludes RetreatButton via data-retreat.
+  // Skip-the-cascade: once the user has committed (brand+fire on tap, OR
+  // HeistTransition on swipe-forge), the next pointer/touch input anywhere
+  // routes to /fitness/new/muscles immediately. Excludes RetreatButton
+  // (data-retreat) so retreat goes back instead of fast-forwarding.
+  // pointerdown + touchstart for iOS PWA reliability.
   useEffect(() => {
-    if (!quickHeistActive) return
+    if (!isBranding && !isFireActive && !quickHeistActive) return
     const handler = (e) => {
       if (e.target?.closest?.('[data-retreat]')) return
       skipNow()
@@ -485,7 +486,7 @@ export default function NewCycleNamePage() {
       window.removeEventListener('pointerdown', handler, { capture: true })
       window.removeEventListener('touchstart',  handler, { capture: true })
     }
-  }, [quickHeistActive])
+  }, [isBranding, isFireActive, quickHeistActive])
 
   /**
    * triggerImpact — fired by the input whenever a new character is added.

@@ -299,10 +299,10 @@ export default function SchedulePage() {
     skippedRef.current = true
     router.push(NEXT_TARGET)
   }
-  // Window pointerdown+touchstart listener — SWIPE-FORGE PATH ONLY (SlashWipe).
-  // Tap-path FireTransition (yakiire flame) plays through unskippable.
+  // Window pointerdown+touchstart listener while transitions are active —
+  // tap anywhere routes immediately. data-retreat excluded for back nav.
   useEffect(() => {
-    if (!quickHeistActive) return
+    if (!fireActive && !quickHeistActive) return
     const handler = (e) => {
       if (e.target?.closest?.('[data-retreat]')) return
       skipNow()
@@ -313,7 +313,7 @@ export default function SchedulePage() {
       window.removeEventListener('pointerdown', handler, { capture: true })
       window.removeEventListener('touchstart',  handler, { capture: true })
     }
-  }, [quickHeistActive])
+  }, [fireActive, quickHeistActive])
 
   // Enter-key nav for edit mode
   useEffect(() => {
@@ -873,12 +873,10 @@ export default function SchedulePage() {
 
       </div>
       <FireFadeIn duration={900} />
-      {/* FireTransition (yakiire) is NOT skippable — plays through. */}
       <FireTransition
         active={fireActive}
-        onComplete={() => router.push(NEXT_TARGET)}
+        onComplete={() => { if (!skippedRef.current) router.push(NEXT_TARGET) }}
       />
-      {/* Red slash wipe — quick-forge swipe path only (no yakiire) — IS skippable. */}
       <SlashWipe
         active={quickHeistActive}
         onComplete={() => { if (!skippedRef.current) router.push(NEXT_TARGET) }}
