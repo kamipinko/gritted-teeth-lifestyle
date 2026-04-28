@@ -1,40 +1,166 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSound } from '../lib/useSound'
 
 // Slashes take 500ms + 140ms stagger = 640ms total.
 // Exit at 600ms — slashes are 95%+ across, seamless handoff to gate-reveal.
 const EXIT_MS = 600
+const SWIPE_THRESHOLD = 50
+// Double-tap window. iOS uses ~300ms for double-tap-to-zoom; 350ms is slightly
+// more lenient and still feels like a "fast second tap" rather than two
+// separate intentional taps.
+const DOUBLE_TAP_MS = 350
 
-export default function GateScreen({ onEnter }) {
+export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, onFastToHeist, swipeHintLabels }) {
   const { play } = useSound()
   const [phase, setPhase] = useState('pre')
   // pre → in → idle → out
+  // `instant` flag: when set by snapToIdle, all entrance keyframes + transitions
+  // null out so elements jump to their settled state instead of continuing to
+  // play out their delayed animation schedule.
+  const [instant, setInstant] = useState(false)
+  const exitTimerRef = useRef(null)
+  const touchStartY = useRef(null)
+  // Tracks the timestamp of a tap that landed during entrance (snapToIdle).
+  // A subsequent tap within DOUBLE_TAP_MS triggers fastToHeist instead of the
+  // full idle commit cascade — same effect as a swipe during entrance.
+  const lastEntranceTapRef = useRef(0)
+  // Random roll-in direction for the logo. SSR + initial render uses 'left';
+  // useEffect re-randomizes on mount. Transition stays disabled while
+  // active=false so the direction-pick re-render pops instantly off-screen
+  // (both -180vw and +180vw are far off-viewport, no visible jump).
+  const [rollDir, setRollDir] = useState('left')
+
+  useEffect(() => {
+    setRollDir(Math.random() < 0.5 ? 'left' : 'right')
+  }, [])
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase('in'), 60)
-    const t2 = setTimeout(() => setPhase('idle'), 1400)
-    return () => { clearTimeout(t1); clearTimeout(t2) }
+    // Entrance cascade ends at ~2150ms (sub-hint snap-in: 1500ms delay + 650ms
+    // duration). Trigger idle just after that for a clean handoff.
+    const t2 = setTimeout(() => setPhase('idle'), 2200)
+    return () => {
+      clearTimeout(t1); clearTimeout(t2)
+      if (exitTimerRef.current) clearTimeout(exitTimerRef.current)
+    }
   }, [])
 
-  const handleClick = () => {
+  // Full-cascade commit (idle → gate-exit slashes → onEnter triggers calling
+  // card + heist). Used by tap and swipe once the user is at PRESS START.
+  const commit = (kind) => {
     if (phase !== 'idle') return
+    // Fire bg music start SYNCHRONOUSLY inside the user-gesture handler. iOS PWA
+    // blocks audio.play() outside the synchronous click context — anything called
+    // after the setTimeout below is outside that window and the play promise
+    // rejects silently.
+    if (onMusicStart) onMusicStart()
     play('brand-confirm')
+    if (onCommit) onCommit(kind)  // sync, so parent can stash target
     setPhase('out')
-    setTimeout(onEnter, EXIT_MS)
+    exitTimerRef.current = setTimeout(() => onEnter && onEnter(kind), EXIT_MS)
+  }
+
+  // Any input during 'out' (tap OR swipe) skips the rest of the cascade.
+  const skipFromOut = () => {
+    if (exitTimerRef.current) clearTimeout(exitTimerRef.current)
+    if (onSkip) onSkip()
+  }
+
+  // Tap during entrance: snap to PRESS START (idle), start music, no commit.
+  // User then needs another gesture to commit. `instant` kills the in-flight
+  // entrance keyframes/transitions so elements jump to their final state
+  // instead of continuing the delayed schedule.
+  const snapToIdle = () => {
+    if (onMusicStart) onMusicStart()
+    setInstant(true)
+    setPhase('idle')
+  }
+
+  // Swipe during entrance: skip entrance + gate slashes + calling card,
+  // play HeistTransition, then route. Music starts here too.
+  const fastToHeist = (kind) => {
+    if (onMusicStart) onMusicStart()
+    play('brand-confirm')
+    if (onCommit) onCommit(kind)
+    if (onFastToHeist) onFastToHeist(kind)
+  }
+
+  const handleClick = () => {
+    if (phase === 'out') { skipFromOut(); return }
+    const now = Date.now()
+    const isDoubleTap = now - lastEntranceTapRef.current < DOUBLE_TAP_MS
+    if (phase === 'pre' || phase === 'in') {
+      // Two fast taps both during entrance → fastToHeist (same as swipe).
+      if (isDoubleTap) { lastEntranceTapRef.current = 0; fastToHeist('fitness'); return }
+      lastEntranceTapRef.current = now
+      snapToIdle()
+      return
+    }
+    // phase === 'idle' — second tap of a double-tap that started during
+    // entrance also fast-tracks. Past the window it's a normal commit.
+    if (isDoubleTap) { lastEntranceTapRef.current = 0; fastToHeist('fitness'); return }
+    commit('fitness')
+  }
+
+  const handleTouchStart = (e) => {
+    touchStartY.current = e.touches[0]?.clientY ?? null
+  }
+  const handleTouchEnd = (e) => {
+    if (touchStartY.current == null) return
+    const endY = e.changedTouches[0]?.clientY ?? touchStartY.current
+    const dy = endY - touchStartY.current
+    touchStartY.current = null
+    const isSwipe = Math.abs(dy) > SWIPE_THRESHOLD
+    if (phase === 'out' && isSwipe) { skipFromOut(); return }
+    if (isSwipe && (phase === 'pre' || phase === 'in')) {
+      fastToHeist(dy < 0 ? 'fitness' : 'nutrition')
+      return
+    }
+    // Tap-then-swipe within DOUBLE_TAP_MS — same effect as double-tap.
+    // (Caller's first tap snapped to idle; this swipe lands during 'idle'
+    // but inside the followup window, so it short-circuits to fastToHeist
+    // instead of running the full commit cascade.)
+    if (isSwipe && Date.now() - lastEntranceTapRef.current < DOUBLE_TAP_MS) {
+      lastEntranceTapRef.current = 0
+      fastToHeist(dy < 0 ? 'fitness' : 'nutrition')
+      return
+    }
+    if (dy < -SWIPE_THRESHOLD)      commit('fitness')
+    else if (dy > SWIPE_THRESHOLD)  commit('nutrition')
+    // Otherwise it's a tap — click event fires next, handleClick takes it.
   }
 
   const active = phase !== 'pre'
   const exiting = phase === 'out'
+  // Helpers: when `instant` is set, drop all entrance animation/transition so
+  // the styled `active`-true target values apply immediately (no in-flight tween).
+  const animOf  = (s) => instant ? 'none' : (active ? s : 'none')
+  const transOf = (s) => instant ? 'none' : s
 
   return (
     <button
       type="button"
       onClick={handleClick}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       aria-label="Enter Gritted Teeth Lifestyle"
       style={{
-        position: 'fixed', inset: 0, zIndex: 50,
-        width: '100%', overflow: 'hidden',
+        // Anchored to the parent <main> (flow-based, min-h:100svh) instead of
+        // the viewport. Avoids the iOS PWA safe-area-inset-bottom clip that hits
+        // any position:fixed element — even with viewport-fit=cover and a
+        // negative-bottom calc. 100svh (small viewport height, locked at parse
+        // time) sidesteps the dvh-stale-on-first-mount band on iOS PWA cold
+        // launch.
+        position: 'absolute',
+        inset: 0,
+        zIndex: 50,
+        width: '100%',
+        minHeight: '100%',
+        overflow: 'hidden',
+        // Near-black base — atmospheric bg is red bands + bloom on top of black.
+        // iOS PWA safe-area gaps fall back to html/body #280609 (globals.css) +
+        // <main>'s #280609, so any clipping reads dark red, not pure black.
         background: '#070708', border: 'none', cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
@@ -42,57 +168,111 @@ export default function GateScreen({ onEnter }) {
       {/* Noise grain */}
       <div className="absolute inset-0 gtl-noise pointer-events-none" />
 
-      {/* Red atmosphere bloom — fades in with entry */}
+
+      {/* Red atmosphere bloom — bright red center fading to transparent so
+          black bg shows through. Brighter than original to give the
+          negative-photo difference blend a wider color range to chew on. */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 55%, rgba(122,14,20,0.45) 0%, transparent 65%)',
+          background: 'radial-gradient(ellipse at 50% 55%, rgba(212,24,31,0.45) 0%, transparent 65%)',
           opacity: active ? 1 : 0,
-          transition: 'opacity 900ms ease 200ms',
+          transition: transOf('opacity 1400ms ease 300ms'),
         }}
       />
 
-      {/* ── Diagonal background bands (slide from left) ── */}
-      {/* Band 1 — deep red, widest */}
+      {/* ── Diagonal background bands (slide from left) ──
+          Each band uses top/bottom anchors instead of explicit height so it
+          naturally over-spans the parent in both directions, regardless of
+          iOS safe-area or dvh oddities. */}
+      {/* Band 1 — bright red, widest */}
       <div
         className="absolute pointer-events-none"
         style={{
-          top: '-20%', left: '-5%', width: '52%', height: '140%',
-          background: 'rgba(74,10,14,0.65)',
+          top: '-25%', bottom: '-25%', left: '-5%', width: '52%',
+          background: 'rgba(212,24,31,0.75)',
           transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(-120%)',
-          transition: 'transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 100ms',
+          transition: transOf('transform 1100ms cubic-bezier(0.15, 0, 0.1, 1) 150ms'),
         }}
       />
-      {/* Band 2 — blood red, medium */}
+      {/* Band 2 removed — it overlapped Band 1 inside ~10–47% of the viewport,
+          and the composited area read as a darker stripe through the F in
+          FITNESS / E in SWIPE. Without Band 2, Band 1 is a clean uniform
+          color across its full width with no overlap-induced color shift. */}
+      {/* Band 3 — bright red, right-side accent */}
       <div
         className="absolute pointer-events-none"
         style={{
-          top: '-20%', left: '10%', width: '38%', height: '140%',
-          background: 'rgba(122,14,20,0.28)',
-          transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(-120%)',
-          transition: 'transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 200ms',
-        }}
-      />
-      {/* Band 3 — right side counter-accent */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          top: '-20%', right: '-8%', width: '20%', height: '140%',
-          background: 'rgba(74,10,14,0.4)',
+          top: '-25%', bottom: '-25%', right: '-8%', width: '20%',
+          background: 'rgba(212,24,31,0.55)',
           transform: active ? 'skewX(-12deg) translateX(0)' : 'skewX(-12deg) translateX(120%)',
-          transition: 'transform 700ms cubic-bezier(0.15, 0, 0.1, 1) 150ms',
+          transition: transOf('transform 1100ms cubic-bezier(0.15, 0, 0.1, 1) 225ms'),
         }}
       />
 
       {/* ── Corner accent lines ── */}
       <div className="absolute top-0 left-0 bg-gtl-red pointer-events-none"
-        style={{ height: 5, width: active ? 168 : 0, transition: 'width 600ms cubic-bezier(0.2,1,0.3,1) 450ms' }} />
+        style={{ height: 5, width: active ? 168 : 0, transition: transOf('width 1000ms cubic-bezier(0.2,1,0.3,1) 700ms') }} />
       <div className="absolute top-0 left-0 bg-gtl-red pointer-events-none"
-        style={{ width: 5, height: active ? 168 : 0, transition: 'height 600ms cubic-bezier(0.2,1,0.3,1) 500ms' }} />
+        style={{ width: 5, height: active ? 168 : 0, transition: transOf('height 1000ms cubic-bezier(0.2,1,0.3,1) 800ms') }} />
       <div className="absolute bottom-0 right-0 bg-gtl-red pointer-events-none"
-        style={{ height: 5, width: active ? 168 : 0, transition: 'width 600ms cubic-bezier(0.2,1,0.3,1) 450ms' }} />
+        style={{ height: 5, width: active ? 168 : 0, transition: transOf('width 1000ms cubic-bezier(0.2,1,0.3,1) 700ms') }} />
       <div className="absolute bottom-0 right-0 bg-gtl-red pointer-events-none"
-        style={{ width: 5, height: active ? 168 : 0, transition: 'height 600ms cubic-bezier(0.2,1,0.3,1) 500ms' }} />
+        style={{ width: 5, height: active ? 168 : 0, transition: transOf('height 1000ms cubic-bezier(0.2,1,0.3,1) 800ms') }} />
+
+      {/* ── Swipe hints — plain red, no blend mode, no underlay. */}
+      {swipeHintLabels && (
+        <>
+          <div
+            style={{
+              position: 'absolute',
+              top: 'calc(env(safe-area-inset-top, 0px) + 24px)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              fontFamily: '"FOT-Matisse Pro EB", "JetBrains Mono", monospace',
+              fontSize: '1.2rem',
+              fontWeight: 900,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: '#d4181f',
+              mixBlendMode: 'difference',
+              pointerEvents: 'none',
+              userSelect: 'none',
+              whiteSpace: 'nowrap',
+              animation: 'swipe-hint-pulse 2400ms ease-in-out infinite',
+            }}
+          >
+            ▲ {swipeHintLabels.top}
+          </div>
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              fontFamily: '"FOT-Matisse Pro EB", "JetBrains Mono", monospace',
+              fontSize: '1.2rem',
+              fontWeight: 900,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: '#d4181f',
+              mixBlendMode: 'difference',
+              pointerEvents: 'none',
+              userSelect: 'none',
+              whiteSpace: 'nowrap',
+              animation: 'swipe-hint-pulse 2400ms ease-in-out infinite',
+            }}
+          >
+            ▼ {swipeHintLabels.bottom}
+          </div>
+          <style>{`
+            @keyframes swipe-hint-pulse {
+              0%, 100% { opacity: 0.85; }
+              50%      { opacity: 1.0; }
+            }
+          `}</style>
+        </>
+      )}
 
       {/* ── Center content ── */}
       <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
@@ -102,22 +282,35 @@ export default function GateScreen({ onEnter }) {
           src="/logo.png"
           alt="GTL"
           style={{
-            width: 'clamp(96px, 16vw, 148px)',
-            height: 'clamp(96px, 16vw, 148px)',
+            width: 'clamp(128px, 24vw, 200px)',
+            height: 'clamp(128px, 24vw, 200px)',
             borderRadius: '50%',
             objectFit: 'cover',
-            animation: active ? 'forge-slam 700ms cubic-bezier(0.2, 1.2, 0.4, 1) 250ms both' : 'none',
+            transform: active
+              ? `translateX(0) rotate(${rollDir === 'left' ? 720 : -720}deg)`
+              : `translateX(${rollDir === 'left' ? '-180vw' : '180vw'}) rotate(0deg)`,
+            // Transition only enabled once active=true so the post-mount
+            // rollDir randomization pops instantly off-screen instead of
+            // animating the logo across the visible area.
+            transition: active ? transOf('transform 1400ms cubic-bezier(0.2, 0.8, 0.3, 1) 200ms') : 'none',
           }}
         />
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.7rem' }}>
 
-          {/* Label */}
+          {/* Label — no entrance animation; visible from t=0 in red so the
+              difference-blend live-flips as bands sweep behind it. zIndex
+              forces this to paint LAST among inner-stack siblings (like
+              sub-hint naturally does), giving the blend the same backdrop
+              chain that produces visible live flip. */}
           <div style={{
-            fontFamily: '"JetBrains Mono", monospace',
-            fontSize: '0.55rem', letterSpacing: '0.4em',
-            textTransform: 'uppercase', color: '#7d7d83',
-            animation: active ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 600ms both' : 'none',
+            fontFamily: '"FOT-Matisse Pro EB", "JetBrains Mono", monospace',
+            fontSize: '1rem', letterSpacing: '0.16em',
+            fontWeight: 900,
+            textTransform: 'uppercase', color: '#d4181f',
+            mixBlendMode: 'difference',
+            position: 'relative',
+            zIndex: 10,
           }}>
             GRITTED TEETH LIFESTYLE
           </div>
@@ -129,36 +322,40 @@ export default function GateScreen({ onEnter }) {
             lineHeight: 1, letterSpacing: '-0.02em',
             color: '#f1eee5',
             textShadow: '3px 3px 0 #d4181f, 6px 6px 0 #070708',
-            animation: active ? 'snap-in 500ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 400ms both' : 'none',
           }}>
             GTL
           </div>
 
-          {/* Slash divider */}
+          {/* Slash divider — obeys the same negative-photo rule as the labels */}
           <div style={{
             height: 5, background: '#d4181f', transform: 'skewX(-12deg)',
+            mixBlendMode: 'difference',
             width: active ? 'clamp(8rem, 20vw, 14rem)' : 0,
-            transition: 'width 600ms cubic-bezier(0.2, 1, 0.3, 1) 750ms',
+            transition: transOf('width 1000ms cubic-bezier(0.2, 1, 0.3, 1) 1200ms'),
           }} />
 
-          {/* PRESS START — snaps in, then blinks */}
+          {/* PRESS START — snaps in, then blinks. When `instant` is set
+              (entrance tap-skip), drop the snap-in but keep the blink running
+              from t=0 so PRESS START is visible-and-pulsing immediately. */}
           <div style={{
-            fontFamily: 'Anton, Impact, sans-serif',
-            fontSize: 'clamp(1.1rem, 3.2vw, 1.9rem)',
-            letterSpacing: '0.25em', color: '#d4181f',
-            animation: active
-              ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 800ms both, cursor-blink 1.2s steps(2, end) 1350ms infinite'
-              : 'none',
+            fontFamily: '"FOT-Matisse Pro EB", Anton, Impact, sans-serif',
+            fontSize: 'clamp(1.3rem, 3.8vw, 2.2rem)',
+            fontWeight: 900,
+            letterSpacing: '0.10em', color: '#d4181f',
+            mixBlendMode: 'difference',
+            animation: 'cursor-blink 1.2s steps(2, end) infinite',
           }}>
             PRESS START
           </div>
 
-          {/* Sub-hint */}
+          {/* Sub-hint — no entrance animation; visible from t=0 in red so the
+              difference-blend live-flips as bands sweep behind it. */}
           <div style={{
-            fontFamily: '"JetBrains Mono", monospace',
-            fontSize: '0.5rem', letterSpacing: '0.3em',
-            textTransform: 'uppercase', color: '#4a4a4f',
-            animation: active ? 'snap-in 400ms cubic-bezier(0.2, 0.9, 0.3, 1.1) 950ms both' : 'none',
+            fontFamily: '"FOT-Matisse Pro EB", "JetBrains Mono", monospace',
+            fontSize: '0.9rem', letterSpacing: '0.14em',
+            fontWeight: 900,
+            textTransform: 'uppercase', color: '#d4181f',
+            mixBlendMode: 'difference',
           }}>
             // CLICK OR TOUCH TO ENTER //
           </div>

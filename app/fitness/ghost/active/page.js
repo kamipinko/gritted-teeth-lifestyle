@@ -13,6 +13,7 @@ import { useSound } from '../../../../lib/useSound'
 import { useProfileGuard } from '../../../../lib/useProfileGuard'
 import { pk } from '../../../../lib/storage'
 import FireFadeIn from '../../../../components/FireFadeIn'
+import RetreatButton from '../../../../components/RetreatButton'
 
 const MUSCLE_LABELS = {
   chest: 'CHEST', back: 'BACK', shoulders: 'SHOULDERS',
@@ -44,33 +45,6 @@ const EXERCISES = {
 
 function parseDate(iso) {
   return new Date(iso + 'T12:00:00')
-}
-
-function RetreatButton() {
-  const { play } = useSound()
-  const [hovered, setHovered] = useState(false)
-  return (
-    <Link
-      href="/fitness/ghost"
-      onMouseEnter={() => { setHovered(true); play('button-hover') }}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => play('menu-close')}
-      className="group relative inline-flex items-center"
-    >
-      <div
-        className={`absolute inset-0 -inset-x-2 transition-all duration-300 ease-out
-          ${hovered ? 'bg-gtl-red opacity-100' : 'bg-gtl-edge opacity-50'}`}
-        style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
-        aria-hidden="true"
-      />
-      <div className="relative flex items-center gap-3 px-4 py-2">
-        <span className={`font-display text-base leading-none transition-all duration-300
-          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red'}`}>◀</span>
-        <span className={`font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300
-          ${hovered ? 'text-gtl-paper' : 'text-gtl-chalk'}`}>RETREAT</span>
-      </div>
-    </Link>
-  )
 }
 
 function MuscleChip({ id, index, total }) {
@@ -929,7 +903,7 @@ function CustomMoveInput({ value, onChange, onConfirm, onCancel, onCharAdded }) 
   return (
     <div className="flex-1 relative cursor-text select-none" onClick={() => inputRef.current?.focus()}>
       <input ref={inputRef} type="text" value={value} onChange={handleChange} onKeyDown={handleKeyDown}
-        maxLength={24} className="sr-only" autoComplete="off" autoCorrect="off" spellCheck="false" />
+        maxLength={24} className="sr-only" inputMode="text" enterKeyHint="done" autoComplete="off" autoCorrect="off" spellCheck="false" />
       <div className="flex flex-wrap items-baseline gap-y-1 min-h-[3rem]" style={{ overflow: 'visible' }}>
         {value.split('').map((char, i) => (
           <span key={charKeysRef.current[i]} className="inline-block font-display leading-none animate-char-stamp text-gtl-chalk"
@@ -1080,17 +1054,26 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose }) {
         </div>
       </div>
 
+      {/* ExercisePanel back — fixed top-left, same anchor as RetreatButton +
+          DayFocus back so the back button stays in the same on-screen
+          position the entire active → day → exercise navigation chain. */}
+      <button
+        type="button"
+        onClick={handleClose}
+        aria-label="Back"
+        className="group fixed left-0 z-40 inline-flex items-center px-3 py-3 outline-none scale-95 origin-left
+          focus-visible:outline-2 focus-visible:outline-gtl-red"
+        style={{ top: 'env(safe-area-inset-top, 0px)', touchAction: 'manipulation' }}
+      >
+        <span className="flex items-center gap-0.5 leading-none font-display text-2xl select-none">
+          <span aria-hidden="true" className="text-gtl-red opacity-40 transition-colors duration-200 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright">◀︎</span>
+          <span aria-hidden="true" className="text-gtl-red opacity-70 transition-colors duration-200 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright">◀︎</span>
+          <span aria-hidden="true" className="text-gtl-red transition-colors duration-200 [@media(hover:hover)]:group-hover:text-gtl-red-bright">◀︎</span>
+        </span>
+      </button>
+
       <div className="relative z-10 h-full flex flex-col px-10 py-8 overflow-y-auto"
         style={{ animation: 'focus-content-in 280ms 250ms ease-out both' }}>
-        <button type="button" onClick={handleClose}
-          className="group self-start relative inline-flex items-center mb-8 outline-none focus-visible:outline-2 focus-visible:outline-gtl-red shrink-0">
-          <div className="absolute inset-0 -inset-x-2 bg-gtl-edge opacity-50 group-hover:bg-gtl-red group-hover:opacity-100 transition-all duration-300"
-            style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }} aria-hidden="true" />
-          <div className="relative flex items-center gap-3 px-4 py-2">
-            <span className="font-display text-base text-gtl-red group-hover:text-gtl-paper group-hover:-translate-x-1 transition-all duration-300 leading-none">◀</span>
-            <span className="font-mono text-[10px] tracking-[0.3em] uppercase font-bold text-gtl-chalk group-hover:text-gtl-paper transition-colors duration-300">BACK</span>
-          </div>
-        </button>
 
         <div className="shrink-0 mb-2">
           <div className="font-mono text-[10px] tracking-[0.5em] uppercase text-gtl-red mb-3">
@@ -1253,7 +1236,7 @@ function ExercisePanel({ muscleId, dayIso, originRect, onClose }) {
           />
         )}
 
-        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke mt-10 shrink-0">
+        <div className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke mt-10 shrink-0">
           PALACE / FITNESS / GHOST CYCLE / {label} / EXERCISES
         </div>
       </div>
@@ -1399,17 +1382,24 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId, onSta
             </div>
           )}
 
-          <div className="flex items-start justify-between mb-auto" style={{ zIndex: 10 }}>
-            <button type="button" onClick={handleClose}
-              className="group relative inline-flex items-center outline-none focus-visible:outline-2 focus-visible:outline-gtl-red">
-              <div className="absolute inset-0 -inset-x-2 bg-gtl-edge opacity-50 group-hover:bg-gtl-red group-hover:opacity-100 transition-all duration-300"
-                style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }} aria-hidden="true" />
-              <div className="relative flex items-center gap-3 px-4 py-2">
-                <span className="font-display text-base text-gtl-red group-hover:text-gtl-paper group-hover:-translate-x-1 transition-all duration-300 leading-none">◀</span>
-                <span className="font-mono text-[10px] tracking-[0.3em] uppercase font-bold text-gtl-chalk group-hover:text-gtl-paper transition-colors duration-300">BACK</span>
-              </div>
-            </button>
+          {/* DayFocus back — fixed top-left, same anchor as RetreatButton. */}
+          <button
+            type="button"
+            onClick={handleClose}
+            aria-label="Back"
+            className="group fixed left-0 z-40 inline-flex items-center px-3 py-3 outline-none scale-95 origin-left
+              focus-visible:outline-2 focus-visible:outline-gtl-red"
+            style={{ top: 'env(safe-area-inset-top, 0px)', touchAction: 'manipulation' }}
+          >
+            <span className="flex items-center gap-0.5 leading-none font-display text-2xl select-none">
+              <span aria-hidden="true" className="text-gtl-red opacity-40 transition-colors duration-200 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright">◀︎</span>
+              <span aria-hidden="true" className="text-gtl-red opacity-70 transition-colors duration-200 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright">◀︎</span>
+              <span aria-hidden="true" className="text-gtl-red transition-colors duration-200 [@media(hover:hover)]:group-hover:text-gtl-red-bright">◀︎</span>
+            </span>
+          </button>
 
+          {/* Top nav row — UNLOG on right (BACK is now fixed top-left, above) */}
+          <div className="flex items-start justify-end mb-auto" style={{ zIndex: 10 }}>
             {!stamped && Object.keys(allReps).some(m => Object.values(allReps[m] || {}).flat().some(v => v > 0)) && (
               <div className="flex flex-col items-end gap-1.5">
                 <button type="button" onClick={() => { play('button-hover'); setUnlogOpen(o => !o) }}
@@ -1565,7 +1555,7 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId, onSta
 
           <div className="mt-auto pt-6 flex items-end justify-between gap-4" style={{ position: 'relative', zIndex: 10 }}>
             <div>
-              <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
+              <div className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
                 PALACE / FITNESS / GHOST CYCLE / {dayName}
               </div>
             </div>
@@ -1580,7 +1570,7 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId, onSta
                   style={{ fontSize: 'clamp(1rem, 1.8vw, 1.4rem)', color: '#f5f0e8', textShadow: '2px 2px 0 #070708' }}>
                   {stamped ? 'TOMORROW WILL COME' : isLastDay ? 'ASCEND TO THE NEXT LEVEL' : 'BRING ON TOMORROW'}
                 </span>
-                {!stamped && <span className="font-display text-gtl-paper leading-none" style={{ fontSize: '1.2rem' }}>▶</span>}
+                {!stamped && <span className="font-display text-gtl-paper leading-none" style={{ fontSize: '1.2rem' }}>▶︎</span>}
               </div>
             </button>
           </div>
@@ -1738,9 +1728,10 @@ export default function GhostActivePage() {
       <div className="absolute inset-0 pointer-events-none"
         style={{ background: 'linear-gradient(160deg, rgba(30,30,80,0.18) 0%, transparent 45%, rgba(20,20,60,0.28) 100%)' }} />
 
-      {/* Kanji watermark — 幽 (ghost/spirit) */}
-      <div className="absolute -top-16 -right-24 pointer-events-none select-none" aria-hidden="true"
-        style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '52rem', lineHeight: '0.8', color: '#6060a0', opacity: 0.045, fontWeight: 900 }}>
+      {/* Kanji watermark — 幽 (ghost/spirit). Top rooted at safe-area floor so it
+          never clips into the iOS Dynamic Island camera area. */}
+      <div className="absolute -right-24 pointer-events-none select-none" aria-hidden="true"
+        style={{ top: 'calc(env(safe-area-inset-top, 0px) - 64px)', fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '52rem', lineHeight: '0.8', color: '#6060a0', opacity: 0.045, fontWeight: 900 }}>
         幽
       </div>
 
@@ -1753,8 +1744,8 @@ export default function GhostActivePage() {
       </div>
 
       {/* Nav */}
-      <nav className="relative z-10 shrink-0 flex items-center gap-4 px-8 py-3">
-        <RetreatButton />
+      <nav className="relative z-10 shrink-0 flex items-center gap-4 pl-0 pr-8 py-3">
+        <RetreatButton href="/fitness/ghost" />
         <div className="w-px self-stretch bg-gtl-edge" style={{ transform: 'skewX(-12deg)' }} />
 
         {/* Ghost mode indicator in nav */}

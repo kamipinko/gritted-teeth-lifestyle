@@ -14,13 +14,14 @@
  * /fitness/new and /fitness/load respectively, neither of which exists
  * yet. We'll wire those up in the next slice.
  */
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useSound } from '../../../lib/useSound'
 import { useProfileGuard } from '../../../lib/useProfileGuard'
 import { pk } from '../../../lib/storage'
 import HeistTransition from '../../../components/HeistTransition'
+import RetreatButton from '../../../components/RetreatButton'
 
 function CycleOption({
   number,
@@ -49,13 +50,17 @@ function CycleOption({
       onClick={handleClick}
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
+      // touch-action: manipulation disables the iOS 300ms double-tap-to-zoom
+      // delay, which was suppressing rapid follow-up taps on the LOAD CYCLE /
+      // NEW CYCLE buttons (so the skip-on-second-tap path never fired).
+      style={{ touchAction: 'manipulation' }}
       className={`
         group relative block w-full text-left
         transition-all duration-300 ease-out
         focus:outline-none focus-visible:outline-2 focus-visible:outline-dashed focus-visible:outline-gtl-red focus-visible:outline-offset-4
-        ${hovered ? '-translate-y-3 scale-[1.04]' : 'translate-y-0 scale-100'}
+        min-h-[11rem] md:min-h-[20rem]
+        ${hovered ? '[@media(hover:hover)]:-translate-y-3 [@media(hover:hover)]:scale-[1.04]' : 'translate-y-0 scale-100'}
       `}
-      style={{ minHeight: '20rem' }}
     >
       {/* Idle red glow ring — telegraphs interactivity even at rest */}
       <div
@@ -183,7 +188,7 @@ function CycleOption({
               ${isPrimary ? 'text-gtl-paper' : 'text-gtl-red'}
             `}
           >
-            ➤
+            ➤︎
           </div>
         </div>
       </div>
@@ -222,9 +227,9 @@ function GhostOption({ number, label, caption, href, onClick }) {
         group relative block w-full text-left
         transition-all duration-300 ease-out
         focus:outline-none focus-visible:outline-2 focus-visible:outline-dashed focus-visible:outline-gtl-red focus-visible:outline-offset-4
-        ${hovered ? '-translate-y-1 scale-[1.01]' : 'translate-y-0 scale-100'}
+        ${hovered ? '[@media(hover:hover)]:-translate-y-1 [@media(hover:hover)]:scale-[1.01]' : 'translate-y-0 scale-100'}
       `}
-      style={{ minHeight: '7rem' }}
+      style={{ minHeight: '7rem', touchAction: 'manipulation' }}
     >
       {/* Outer red glow — far more subtle than the main options */}
       <div
@@ -329,62 +334,11 @@ function GhostOption({ number, label, caption, href, onClick }) {
               ${hovered ? 'text-gtl-red-bright' : 'text-gtl-red'}
             `}
           >
-            ➤
+            ➤︎
           </span>
         </div>
       </div>
     </button>
-  )
-}
-
-/**
- * RetreatButton — clearly button-like at idle, not just a text link.
- * Has a polygonal slash background, red bracket marker, and a strong
- * hover state.
- */
-function RetreatButton() {
-  const { play } = useSound()
-  const [hovered, setHovered] = useState(false)
-
-  return (
-    <Link
-      href="/fitness"
-      onMouseEnter={() => { setHovered(true); play('button-hover') }}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => play('menu-close')}
-      className="group relative inline-flex items-center"
-    >
-      {/* Background slash that appears on hover */}
-      <div
-        className={`
-          absolute inset-0 -inset-x-2 transition-all duration-300 ease-out
-          ${hovered ? 'bg-gtl-red opacity-100' : 'bg-gtl-edge opacity-50'}
-        `}
-        style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
-        aria-hidden="true"
-      />
-
-      <div className="relative flex items-center gap-3 px-4 py-2">
-        {/* Red bracket marker — always visible */}
-        <span
-          className={`
-            font-display text-base leading-none transition-all duration-300
-            ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red translate-x-0'}
-          `}
-        >
-          ◀
-        </span>
-        <span
-          className={`
-            font-mono text-[10px] tracking-[0.3em] uppercase font-bold
-            transition-colors duration-300
-            ${hovered ? 'text-gtl-paper' : 'text-gtl-chalk'}
-          `}
-        >
-          RETREAT
-        </span>
-      </div>
-    </Link>
   )
 }
 
@@ -394,8 +348,28 @@ export default function FitnessPage() {
   const { play } = useSound()
   const [transitioning, setTransitioning] = useState(false)
   const [transitionConfig, setTransitionConfig] = useState({ href: '', title: 'GRIT THOSE TEETH', intensity: 'normal' })
+  // Latches once a skip tap fires so HeistTransition.onComplete won't double-route.
+  const skippedRef = useRef(false)
+  // Synchronous flag — set on first select so a fast follow-up tap on the same
+  // button skips even if React hasn't committed `transitioning` to state yet.
+  // (The window pointerdown listener installs in the post-commit useEffect, so
+  // there's a brief window where it isn't yet listening.)
+  const transitioningRef = useRef(false)
+  // Stable ref to current href so the pointerdown listener doesn't have to
+  // re-bind on every transitionConfig update.
+  const hrefRef = useRef('')
+  useEffect(() => { hrefRef.current = transitionConfig.href }, [transitionConfig.href])
+
+  const skipNow = () => {
+    if (skippedRef.current) return
+    skippedRef.current = true
+    router.push(hrefRef.current)
+  }
 
   const handleSelect = (href) => {
+    // Already transitioning → this rapid second tap is a skip.
+    if (transitioningRef.current) { skipNow(); return }
+    transitioningRef.current = true
     // NEW CYCLE gets the mega transition; the others get the normal one.
     if (href === '/fitness/new') {
       // Clear any in-progress edit so ETCH CYCLE creates a fresh entry
@@ -409,10 +383,32 @@ export default function FitnessPage() {
     } else {
       setTransitionConfig({ href, title: 'GHOST CYCLE', intensity: 'normal' })
     }
+    hrefRef.current = href  // sync immediately so a fast follow-up tap routes to the right place
     setTransitioning(true)
   }
 
+  // Skip-the-transition: once HeistTransition is active, the next pointer/touch
+  // input anywhere on the screen routes to the destination immediately.
+  // Listen for both pointerdown AND touchstart in case iOS PWA suppresses
+  // pointerdown events during rapid-tap sequences. Taps on RetreatButton
+  // (data-retreat) are excluded so retreat navigates back instead of fast-
+  // forwarding to the in-flight transition's destination.
+  useEffect(() => {
+    if (!transitioning) return
+    const handler = (e) => {
+      if (e.target?.closest?.('[data-retreat]')) return
+      skipNow()
+    }
+    window.addEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
+  }, [transitioning])
+
   const handleTransitionComplete = () => {
+    if (skippedRef.current) return
     router.push(transitionConfig.href)
   }
 
@@ -430,11 +426,13 @@ export default function FitnessPage() {
         }}
       />
 
-      {/* Kanji watermark — top-left, oversized, very faint */}
+      {/* Kanji watermark — top-left, oversized, very faint. Rooted at safe-area floor
+          so it never clips into the iOS Dynamic Island camera area. */}
       <div
-        className="absolute -top-12 -left-8 pointer-events-none select-none animate-flicker"
+        className="absolute -left-8 pointer-events-none select-none animate-flicker"
         aria-hidden="true"
         style={{
+          top: 'calc(env(safe-area-inset-top, 0px) - 48px)',
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '40rem',
           lineHeight: '0.8',
@@ -446,26 +444,27 @@ export default function FitnessPage() {
         闘
       </div>
 
+      {/* Content wrapper — atmospheric layers paint full-bleed (incl. safe area). */}
+      <div className="relative z-10 flex-1 flex flex-col">
       {/* Top nav row — back link and palace breadcrumb */}
-      <nav className="relative z-10 flex items-center justify-between px-8 py-6">
-        <RetreatButton />
-        <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-          PALACE / FITNESS
-        </div>
-      </nav>
+      <nav
+        className="relative flex items-center justify-between pl-0 pr-8 pb-6"
+        style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
+      >
+        <RetreatButton href="/fitness" />      </nav>
 
       {/* Main content */}
-      <section className="relative z-10 px-8 pt-12 pb-20 max-w-6xl mx-auto">
+      <section className="relative z-10 px-8 pt-4 pb-6 md:pt-12 md:pb-20 max-w-6xl mx-auto">
         {/* Headline block */}
-        <div className="mb-16">
+        <div className="mb-6 md:mb-16">
           <div className="flex items-center gap-4 mb-3">
             <div className="h-px w-16 bg-gtl-red" />
-            <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-red">
+            <span className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-red">
               ENTRY POINT / 01
             </span>
           </div>
 
-          <h1 className="font-display text-[6rem] md:text-[8rem] leading-[0.9] text-gtl-chalk -rotate-1">
+          <h1 className="font-matisse text-[3rem] md:text-[8rem] leading-[0.9] text-gtl-chalk -rotate-1">
             CHOOSE
             <br />
             <span className="text-gtl-red gtl-headline-shadow-soft inline-block rotate-2">
@@ -473,30 +472,32 @@ export default function FitnessPage() {
             </span>
           </h1>
 
-          <p className="font-mono text-xs tracking-[0.25em] uppercase text-gtl-ash mt-6 max-w-md">
+          <p className="font-matisse text-xs tracking-[0.25em] uppercase text-gtl-ash mt-6 max-w-md">
             Forge a new climb, or return to one already in progress.
           </p>
         </div>
 
-        {/* Two options — staggered grid */}
+        {/* Two options — LOAD first so its tap target overlays the profile-chip
+            slot from /fitness (chip y≈444 lands inside LOAD card y=272–530). Quick-nav
+            muscle memory. */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
           <div className="md:translate-y-0">
             <CycleOption
               number="01"
-              label="NEW CYCLE"
-              caption="Begin from zero. Define the climb. Forge a fresh program."
-              href="/fitness/new"
-              variant="primary"
+              label="LOAD CYCLE"
+              caption="Resume an active program. Continue where you left off."
+              href="/fitness/load"
+              variant="secondary"
               onClick={handleSelect}
             />
           </div>
           <div className="md:translate-y-12">
             <CycleOption
               number="02"
-              label="LOAD CYCLE"
-              caption="Resume an active program. Continue where you left off."
-              href="/fitness/load"
-              variant="secondary"
+              label="NEW CYCLE"
+              caption="Begin from zero. Define the climb. Forge a fresh program."
+              href="/fitness/new"
+              variant="primary"
               onClick={handleSelect}
             />
           </div>
@@ -506,7 +507,7 @@ export default function FitnessPage() {
         <div className="mt-20 md:mt-24">
           <div className="flex items-center gap-4 mb-4">
             <div className="h-px w-8 bg-gtl-edge" />
-            <span className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
+            <span className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
               ALTERNATE PATH
             </span>
             <div className="h-px flex-1 bg-gtl-edge" />
@@ -532,13 +533,46 @@ export default function FitnessPage() {
         {/* Decorative footer slash */}
         <div className="mt-24 flex items-center gap-4">
           <div className="h-px flex-1 bg-gtl-edge" />
-          <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
+          <div className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
             GRITTED TEETH LIFESTYLE / FITNESS PALACE
           </div>
           <div className="h-px flex-1 bg-gtl-edge" />
         </div>
+
+        {/* Settings link — bottom of CHOOSE YOUR CYCLE. */}
+        <div className="mt-8 flex justify-center">
+          <Link
+            href="/settings"
+            onClick={() => play('menu-open')}
+            className="group relative outline-none"
+          >
+            <div
+              className="absolute inset-0 pointer-events-none transition-all duration-200 bg-gtl-surface border border-gtl-edge [@media(hover:hover)]:group-hover:border-gtl-red"
+              style={{ clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)' }}
+              aria-hidden="true"
+            />
+            <div className="relative px-6 py-3 flex items-center gap-2">
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="w-4 h-4 shrink-0"
+                fill="none"
+              >
+                <path
+                  d="M12 1.5l1.6 2.4 2.8-.8 1 2.8 2.8.4-.2 2.9 2.5 1.5-1.4 2.5 1.4 2.5-2.5 1.5.2 2.9-2.8.4-1 2.8-2.8-.8L12 22.5l-1.6-2.4-2.8.8-1-2.8-2.8-.4.2-2.9-2.5-1.5 1.4-2.5L1.5 8.3 4 6.8l-.2-2.9 2.8-.4 1-2.8 2.8.8L12 1.5z"
+                  fill="#d4181f"
+                />
+                <circle cx="12" cy="12" r="4" fill="#070708" />
+              </svg>
+              <span className="font-matisse text-[10px] tracking-[0.4em] uppercase font-bold text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper transition-colors duration-200">
+                SETTINGS
+              </span>
+            </div>
+          </Link>
+        </div>
       </section>
 
+      </div>
       {/* Heist transition overlay — fires when an option is selected */}
       <HeistTransition
         active={transitioning}

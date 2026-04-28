@@ -4,62 +4,113 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useSound } from '../../lib/useSound'
 import HeistTransition from '../../components/HeistTransition'
+import RetreatButton from '../../components/RetreatButton'
 
-function RetreatButton() {
+function ProfileChip({ name, onSelect, onSwipeSelect }) {
   const { play } = useSound()
-  const [hovered, setHovered] = useState(false)
-  return (
-    <Link
-      href="/"
-      onMouseEnter={() => { setHovered(true); play('button-hover') }}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => play('menu-close')}
-      className="group relative inline-flex items-center"
-    >
-      <div
-        className={`absolute inset-0 -inset-x-2 transition-all duration-300 ease-out
-          ${hovered ? 'bg-gtl-red opacity-100' : 'bg-gtl-edge opacity-50'}`}
-        style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
-        aria-hidden="true"
-      />
-      <div className="relative flex items-center gap-3 px-4 py-2">
-        <span className={`font-display text-base leading-none transition-all duration-300
-          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red'}`}>◀</span>
-        <span className={`font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300
-          ${hovered ? 'text-gtl-paper' : 'text-gtl-chalk'}`}>RETREAT</span>
-      </div>
-    </Link>
-  )
-}
+  // Pointer-tracking refs for swipe-vs-tap discrimination. The decision is
+  // made at pointerUp based on the FINAL dx — not a sticky armed flag — so
+  // pulling back below the threshold cancels the swipe and falls through to
+  // a normal tap.
+  const startRef = useRef(null)
+  const dxRef = useRef(0)
+  const swipeFiredRef = useRef(false)
+  const [dragX, setDragX] = useState(0)
+  const SWIPE_THRESHOLD = 60
 
-function ProfileChip({ name, onSelect }) {
-  const { play } = useSound()
-  const [hovered, setHovered] = useState(false)
+  const handlePointerDown = (e) => {
+    startRef.current = { x: e.clientX, y: e.clientY }
+    dxRef.current = 0
+    swipeFiredRef.current = false
+    setDragX(0)
+  }
+  const handlePointerMove = (e) => {
+    if (!startRef.current) return
+    const dx = e.clientX - startRef.current.x
+    const dy = e.clientY - startRef.current.y
+    // Only follow horizontal-dominant motion. dx clamped to [0, threshold*1.5]
+    // so visual progress reflects pullback (release below threshold = cancel).
+    if (Math.abs(dx) > Math.abs(dy)) {
+      const clamped = Math.max(0, Math.min(dx, SWIPE_THRESHOLD * 1.5))
+      dxRef.current = clamped
+      setDragX(clamped)
+    }
+  }
+  const handlePointerUp = () => {
+    const completed = dxRef.current > SWIPE_THRESHOLD
+    if (completed && onSwipeSelect) {
+      swipeFiredRef.current = true
+      play('card-confirm')
+      onSwipeSelect(name)
+    }
+    startRef.current = null
+    dxRef.current = 0
+    setDragX(0)
+  }
+  const handleClick = (e) => {
+    // Suppress click only when the gesture actually resolved as a full swipe.
+    if (swipeFiredRef.current) {
+      e.preventDefault(); e.stopPropagation()
+      swipeFiredRef.current = false
+      return
+    }
+    play('option-select')
+    onSelect(name)
+  }
+  const swipeProgress = Math.min(1, dragX / SWIPE_THRESHOLD)
+
   return (
     <button
       type="button"
-      onClick={() => { play('option-select'); onSelect(name) }}
-      onMouseEnter={() => { setHovered(true); play('button-hover') }}
-      onMouseLeave={() => setHovered(false)}
-      className="relative group outline-none text-left"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={() => { startRef.current = null; dxRef.current = 0; swipeFiredRef.current = false; setDragX(0) }}
+      onClick={handleClick}
+      className="relative group outline-none text-left overflow-hidden"
+      style={{ touchAction: 'pan-y' }}
     >
+      {/* Hover effects gated on (hover: hover) so iOS doesn't sticky-hover on first tap. */}
       <div
-        className={`absolute inset-0 transition-all duration-200
-          ${hovered ? 'bg-gtl-red' : 'bg-gtl-surface border border-gtl-edge'}`}
+        className="absolute inset-0 pointer-events-none transition-all duration-200 bg-gtl-surface border border-gtl-edge [@media(hover:hover)]:group-hover:bg-gtl-red [@media(hover:hover)]:group-hover:border-transparent"
         style={{ clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)' }}
         aria-hidden="true"
       />
-      <div className="relative px-6 py-3 flex items-center gap-3">
-        <span className={`font-display text-2xl leading-none transition-colors duration-200
-          ${hovered ? 'text-gtl-paper' : 'text-gtl-chalk'}`}>
+      {/* Swipe-progress fill — slides in from left as the user drags right. Reaches
+          full red at the threshold to telegraph that the swipe is armed. */}
+      <div
+        className="absolute inset-0 pointer-events-none bg-gtl-red"
+        style={{
+          clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)',
+          opacity: swipeProgress * 0.85,
+          transform: `scaleX(${swipeProgress})`,
+          transformOrigin: 'left center',
+          transition: dragX === 0 ? 'opacity 200ms, transform 200ms' : 'none',
+        }}
+        aria-hidden="true"
+      />
+      <div
+        className="relative px-7 py-5 flex items-center gap-3"
+        style={{ transform: `translateX(${dragX * 0.3}px)`, transition: dragX === 0 ? 'transform 200ms' : 'none' }}
+      >
+        <span className="font-display text-3xl leading-none transition-colors duration-200 text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper">
           {name.toUpperCase()}
         </span>
-        <span className={`font-display text-base leading-none transition-all duration-200
-          ${hovered ? 'text-gtl-paper translate-x-1' : 'text-gtl-red'}`}>➤</span>
+        <span className="font-display text-xl leading-none transition-all duration-200 text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper [@media(hover:hover)]:group-hover:translate-x-1">➤︎</span>
+        {/* Swipe hint — appears on the right, fades in as user drags */}
+        <span
+          className="ml-auto font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-paper leading-none whitespace-nowrap pointer-events-none"
+          style={{ opacity: swipeProgress }}
+          aria-hidden="true"
+        >
+          SKIP →
+        </span>
       </div>
     </button>
   )
 }
+
+const HUB_TARGET = '/fitness/hub'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -69,6 +120,13 @@ export default function ProfilePage() {
   const [ready, setReady] = useState(false)
   const [transitioning, setTransitioning] = useState(false)
   const inputRef = useRef(null)
+  // Latches once skipAll fires so HeistTransition.onComplete won't double-route.
+  const skippedRef = useRef(false)
+  // Synchronous flag — set on first selectProfile so a fast follow-up tap on the
+  // same chip / submit button skips even if React hasn't committed `transitioning`
+  // to state yet (the window pointerdown listener installs in the post-commit
+  // useEffect, so there's a brief window where it isn't yet listening).
+  const transitioningRef = useRef(false)
 
   useEffect(() => {
     try {
@@ -78,11 +136,57 @@ export default function ProfilePage() {
     setReady(true)
   }, [])
 
+  const skipNow = () => {
+    if (skippedRef.current) return
+    skippedRef.current = true
+    router.push(HUB_TARGET)
+  }
+
+  // Skip-the-transition: once HeistTransition is active, the next pointer/touch
+  // input anywhere on the screen routes to the hub immediately. Listen for
+  // both pointerdown AND touchstart in case iOS PWA suppresses pointerdown
+  // events during rapid-tap sequences. Taps on RetreatButton (data-retreat)
+  // are excluded so retreat navigates back instead of fast-forwarding.
+  useEffect(() => {
+    if (!transitioning) return
+    const handler = (e) => {
+      if (e.target?.closest?.('[data-retreat]')) return
+      skipNow()
+    }
+    window.addEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
+  }, [transitioning])
+
   const selectProfile = (name) => {
+    // Already transitioning → this rapid second tap is a skip.
+    if (transitioningRef.current) { skipNow(); return }
+    transitioningRef.current = true
     try {
       localStorage.setItem('gtl-active-profile', name)
     } catch (_) {}
     setTransitioning(true)
+  }
+
+  // Swipe-select on a profile chip → deep-launch straight through hub/load/active
+  // to the first set's weight popup. Skips HeistTransition entirely. Only works
+  // if the profile already has an active cycle (training-days populated under pk).
+  const swipeSelectProfile = (name) => {
+    if (transitioningRef.current) return
+    transitioningRef.current = true
+    try {
+      localStorage.setItem('gtl-active-profile', name)
+      localStorage.setItem('gtl-deep-launch', '1')
+    } catch (_) {}
+    router.push('/fitness/active')
+  }
+
+  const handleTransitionComplete = () => {
+    if (skippedRef.current) return
+    router.push(HUB_TARGET)
   }
 
   const handleSubmit = (e) => {
@@ -107,8 +211,8 @@ export default function ProfilePage() {
 
   return (
     <>
-    <main className="relative min-h-screen overflow-hidden bg-gtl-void flex flex-col">
-      <div className="absolute inset-0 gtl-noise" />
+    <main className="relative min-h-screen bg-gtl-void flex flex-col overflow-hidden">
+      <div className="absolute inset-0 gtl-noise pointer-events-none" />
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -116,11 +220,13 @@ export default function ProfilePage() {
         }}
       />
 
-      {/* Kanji watermark */}
+      {/* Kanji watermark — top offset rooted at the safe-area floor so it never clips
+          into the iOS Dynamic Island camera area. */}
       <div
-        className="absolute -top-12 -left-8 pointer-events-none select-none animate-flicker"
+        className="absolute -left-8 pointer-events-none select-none animate-flicker"
         aria-hidden="true"
         style={{
+          top: 'calc(env(safe-area-inset-top, 0px) - 48px)',
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '40rem',
           lineHeight: '0.8',
@@ -132,39 +238,41 @@ export default function ProfilePage() {
         名
       </div>
 
+      {/* Content wrapper — atmospheric layers above paint full-bleed (incl. safe area);
+          this wrapper holds the actual UI and pads down by the iOS top inset. */}
+      <div className="relative z-10 flex-1 flex flex-col">
       {/* Nav */}
-      <nav className="relative z-10 shrink-0 flex items-center justify-between px-8 py-6">
-        <RetreatButton />
-        <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-          PALACE / IDENTITY
-        </div>
-      </nav>
+      <nav
+        className="relative shrink-0 flex items-center justify-between pl-0 pr-8 pb-3"
+        style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
+      >
+        <RetreatButton href="/" />      </nav>
 
       {/* Main */}
-      <section className="relative z-10 flex-1 flex flex-col justify-center px-8 pb-20 max-w-3xl mx-auto w-full">
+      <section className="relative z-10 flex-1 flex flex-col px-8 pt-0 pb-8 max-w-3xl mx-auto w-full">
         {/* Headline */}
-        <div className="mb-14">
+        <div className="mb-2">
           <div className="flex items-center gap-4 mb-3">
             <div className="h-px w-16 bg-gtl-red" />
-            <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-red">
+            <span className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-red">
               IDENTITY / 01
             </span>
           </div>
-          <h1 className="font-display text-[5rem] md:text-[7rem] leading-[0.9] text-gtl-chalk -rotate-1">
+          <h1 className="font-matisse text-[5rem] md:text-[7rem] leading-[0.9] text-gtl-chalk -rotate-1">
             WHO<br />
             <span className="text-gtl-red inline-block rotate-1">ARE YOU</span>
           </h1>
-          <p className="font-mono text-xs tracking-[0.25em] uppercase text-gtl-ash mt-6 max-w-sm">
+          <p className="font-mono text-xs tracking-[0.25em] uppercase text-gtl-ash mt-1 max-w-sm">
             Your cycles, lifts, and EXP belong to you alone.
           </p>
         </div>
 
         {/* Input */}
-        <form onSubmit={handleSubmit} className="mb-10">
+        <form onSubmit={handleSubmit} action="/" method="post" className="mb-3">
           <div className="flex items-stretch gap-0">
             <div className="relative flex-1">
               <div
-                className="absolute inset-0"
+                className="absolute inset-0 pointer-events-none"
                 style={{
                   clipPath: 'polygon(0% 0%, 97% 0%, 100% 100%, 0% 100%)',
                   background: '#111115',
@@ -172,15 +280,32 @@ export default function ProfilePage() {
                 }}
                 aria-hidden="true"
               />
+              {/* Visible-prompt overlay — shows when input is empty. Sits inside the
+                  input's slot but is a sibling div, NOT the input's placeholder. iOS
+                  heuristics scan placeholder text for "name"/"email" keywords; moving
+                  the prompt out of the placeholder attribute kills that signal. */}
+              {input.length === 0 && (
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0 pointer-events-none flex items-center px-4 md:px-6 font-display text-lg md:text-2xl text-gtl-smoke tracking-wide uppercase"
+                >
+                  ENTER YOUR N{'​'}AME
+                </div>
+              )}
               <input
                 ref={inputRef}
-                type="text"
+                type="search"
+                name="gtl-warrior-token"
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                placeholder="ENTER YOUR NAME"
+                inputMode="text"
+                enterKeyHint="done"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="characters"
+                spellCheck={false}
                 maxLength={24}
-                autoFocus
-                className="relative w-full bg-transparent font-display text-lg md:text-2xl text-gtl-chalk tracking-wide uppercase px-4 md:px-6 py-4 outline-none placeholder:text-gtl-smoke"
+                className="relative w-full bg-transparent font-display text-lg md:text-2xl text-gtl-chalk tracking-wide uppercase px-4 md:px-6 py-4 outline-none [&::-webkit-search-cancel-button]:hidden"
                 style={{ caretColor: '#d4181f' }}
               />
             </div>
@@ -190,7 +315,7 @@ export default function ProfilePage() {
               className="relative shrink-0 outline-none group"
             >
               <div
-                className={`absolute inset-0 transition-colors duration-200
+                className={`absolute inset-0 pointer-events-none transition-colors duration-200
                   ${trimmed ? 'bg-gtl-red group-hover:bg-gtl-red-bright' : 'bg-gtl-surface'}`}
                 style={{ clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)' }}
                 aria-hidden="true"
@@ -201,7 +326,7 @@ export default function ProfilePage() {
                   {isNew ? 'CREATE' : isExisting ? 'ENTER' : 'ENTER'}
                 </span>
                 <span className={`font-display text-lg leading-none transition-colors duration-200
-                  ${trimmed ? 'text-gtl-paper' : 'text-gtl-ash'}`}>➤</span>
+                  ${trimmed ? 'text-gtl-paper' : 'text-gtl-ash'}`}>➤︎</span>
               </div>
             </button>
           </div>
@@ -215,26 +340,33 @@ export default function ProfilePage() {
         {/* Existing profiles */}
         {ready && profiles.length > 0 && (
           <div>
-            <div className="flex items-center gap-4 mb-5">
+            <div className="flex items-center gap-4 mb-1">
               <div className="h-px w-8 bg-gtl-edge" />
-              <span className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
+              <span className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
                 KNOWN WARRIORS
               </span>
               <div className="h-px flex-1 bg-gtl-edge" />
             </div>
+            {/* Gesture hint — teaches both interactions for the chip below. */}
+            <div className="flex items-center gap-3 mb-1 font-mono text-[8px] tracking-[0.25em] uppercase text-gtl-ash/80">
+              <span>TAP TO LOAD PROFILE</span>
+              <span className="text-gtl-red">·</span>
+              <span>SWIPE TO LIFT NOW →</span>
+            </div>
             <div className="flex flex-col gap-3">
               {profiles.map(name => (
-                <ProfileChip key={name} name={name} onSelect={selectProfile} />
+                <ProfileChip key={name} name={name} onSelect={selectProfile} onSwipeSelect={swipeSelectProfile} />
               ))}
             </div>
           </div>
         )}
       </section>
+      </div>
     </main>
 
     <HeistTransition
       active={transitioning}
-      onComplete={() => router.push('/fitness/hub')}
+      onComplete={handleTransitionComplete}
     />
     </>
   )

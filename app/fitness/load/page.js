@@ -15,6 +15,7 @@ import { useProfileGuard } from '../../../lib/useProfileGuard'
 import { pk } from '../../../lib/storage'
 import FireFadeIn from '../../../components/FireFadeIn'
 import FireTransition from '../../../components/FireTransition'
+import RetreatButton from '../../../components/RetreatButton'
 
 const MUSCLE_LABELS = {
   chest: 'CHEST', back: 'BACK', shoulders: 'SHOULDERS',
@@ -33,33 +34,6 @@ function formatDateShort(iso) {
 }
 
 const SLAB_ROTATIONS = ['-1.2deg','0.9deg','-0.7deg','1.4deg','-1deg','0.6deg','-1.5deg','1.1deg']
-
-function RetreatButton() {
-  const { play } = useSound()
-  const [hovered, setHovered] = useState(false)
-  return (
-    <Link
-      href="/fitness/hub"
-      onMouseEnter={() => { setHovered(true); play('button-hover') }}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => play('menu-close')}
-      className="group relative inline-flex items-center"
-    >
-      <div
-        className={`absolute inset-0 -inset-x-2 transition-all duration-300 ease-out
-          ${hovered ? 'bg-gtl-red opacity-100' : 'bg-gtl-edge opacity-50'}`}
-        style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
-        aria-hidden="true"
-      />
-      <div className="relative flex items-center gap-3 px-4 py-2">
-        <span className={`font-display text-base leading-none transition-all duration-300
-          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red'}`}>◀</span>
-        <span className={`font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300
-          ${hovered ? 'text-gtl-paper' : 'text-gtl-chalk'}`}>RETREAT</span>
-      </div>
-    </Link>
-  )
-}
 
 function MuscleTag({ id, index }) {
   const rot = SLAB_ROTATIONS[index % SLAB_ROTATIONS.length]
@@ -263,95 +237,6 @@ function CycleCard({ cycle, index, selected, onSelect }) {
         boxShadow: selected ? '0 0 24px rgba(212,24,31,0.25)' : 'none',
       }}
     >
-      {/* Top-right corner: cycle index + deadline stamp */}
-      <div className="absolute top-4 right-6 flex flex-col items-end gap-2">
-        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
-          CYCLE / {String(index + 1).padStart(2, '0')}
-        </div>
-        {lastDay && (() => {
-          const d = parseDate(lastDay)
-          return (
-            <div className="relative" style={{ transform: 'rotate(-1.5deg)' }}>
-              {/* Shadow slab */}
-              <div
-                className="absolute inset-0 bg-gtl-red-deep"
-                style={{
-                  clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)',
-                  transform: 'translate(3px, 3px)',
-                }}
-                aria-hidden="true"
-              />
-              {/* Stamp face */}
-              <div
-                className="relative px-6 py-3 bg-gtl-red border-2 border-gtl-red-deep"
-                style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)' }}
-              >
-                <div className="font-display text-base tracking-[0.3em] uppercase text-gtl-paper leading-none mb-2"
-                     style={{ textShadow: '2px 2px 0 #070708' }}>
-                  ◼ DEADLINE ◼
-                </div>
-                <div className="font-display text-gtl-paper leading-none"
-                     style={{ fontSize: '1.1rem', textShadow: '1px 1px 0 #070708' }}>
-                  {d.toLocaleDateString('en-US', { month: 'long' }).toUpperCase()}
-                </div>
-                {/* Day number with spinning square behind */}
-                <div className="relative flex items-center justify-center my-1" style={{ width: '100px', height: '100px' }}>
-                  <style>{`
-                    @keyframes spin-square {
-                      from { transform: rotate(0deg); }
-                      to   { transform: rotate(360deg); }
-                    }
-                  `}</style>
-                  {/* Spinning black square */}
-                  <div
-                    className="absolute"
-                    style={{
-                      width: '80px', height: '80px',
-                      background: '#070708',
-                      animation: 'spin-square 8s linear infinite',
-                      boxShadow: '0 0 20px rgba(0,0,0,0.8)',
-                    }}
-                    aria-hidden="true"
-                  />
-                  {/* Day number on top */}
-                  <div className="relative font-display text-gtl-paper leading-none"
-                       style={{ fontSize: '5rem', textShadow: '4px 4px 0 #070708', lineHeight: 1, zIndex: 1 }}>
-                    {String(d.getDate()).padStart(2, '0')}
-                  </div>
-                </div>
-                <div className="font-display text-gtl-paper/80 leading-none mt-1.5"
-                     style={{ fontSize: '0.85rem', textShadow: '1px 1px 0 #070708' }}>
-                  {d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()} · {d.getFullYear()}
-                </div>
-                {/* X stamp overlay — rendered after date so it sits on top */}
-                {bloodVisible && (
-                  <div
-                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                    style={{ zIndex: 10, transform: 'translateX(-12px)' }}
-                    aria-hidden="true"
-                  >
-                    <div style={{
-                      animation: 'x-stamp 600ms cubic-bezier(0.2, 1.4, 0.3, 1) 1800ms both',
-                      fontFamily: 'Anton, Impact, sans-serif',
-                      fontSize: '10rem',
-                      color: '#8b0000',
-                      lineHeight: 1,
-                      textShadow: '3px 3px 0 rgba(0,0,0,0.6)',
-                      border: '5px solid #8b0000',
-                      padding: '0 10px',
-                      opacity: 0.75,
-                      userSelect: 'none',
-                    }}>
-                      ✕
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )
-        })()}
-      </div>
-
       {/* Giant checkmark — shadow behind deadline block, face in front */}
       {selected && (
         <>
@@ -365,161 +250,211 @@ function CycleCard({ cycle, index, selected, onSelect }) {
       )}
 
       <div className="px-8 pt-6 pb-8">
-        {/* Created date */}
-        <div className="font-mono text-[9px] tracking-[0.35em] uppercase text-gtl-smoke mb-3">
-          FORGED {createdStr}
-        </div>
-
-        {/* Cycle name — dominant */}
+        {/* Cycle name — top of card, dominant. Full width now (deadline stamp
+            moved into flow below). */}
         <h2
-          className="font-display text-gtl-chalk leading-none mb-1"
+          className="font-display text-gtl-chalk leading-none mb-3"
           style={{
             fontSize: 'clamp(2.5rem, 6vw, 5rem)',
             textShadow: '3px 3px 0 #070708',
             transform: 'rotate(-1deg)',
             transformOrigin: 'left center',
+            wordBreak: 'break-word',
           }}
         >
           {cycle.name}
         </h2>
 
-        {/* Date range */}
-        {firstDay && lastDay && (
-          <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-red mb-5">
-            {formatDateShort(firstDay)} — {formatDateShort(lastDay)}
+        {/* Top-meta row: FORGED date on left, CYCLE / 0X on right. */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="font-mono text-[9px] tracking-[0.35em] uppercase text-gtl-smoke">
+            FORGED {createdStr}
           </div>
-        )}
-
-        {/* Stats + day grid — same row */}
-        <div className="flex items-center gap-6 mb-6 flex-wrap">
-          {/* Stats */}
-          <div className="flex items-center gap-6 shrink-0">
-            <div className="flex flex-col items-start gap-3">
-              <div>
-                <div className="font-display text-3xl leading-none"
-                     style={{ color: '#e4b022', textShadow: '2px 2px 0 #8a6612' }}>
-                  {String(cycle.days?.length ?? 0).padStart(2, '0')}
-                </div>
-                <div className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-smoke mt-0.5">BATTLEDAYS</div>
-              </div>
-              {(() => {
-                const n = cycle.days?.length || 0
-                if (n >= 1 && n <= 6) {
-                  return (
-                    <img
-                      src="/reference/wakizashi_solid_silhouette.svg"
-                      alt=""
-                      className="opacity-90 select-none pointer-events-none"
-                      style={{ height: '140px', width: 'auto', maxWidth: '160px' }}
-                      draggable={false}
-                    />
-                  )
-                }
-                if (n === 7) {
-                  return (
-                    <img
-                      src="/reference/ouroboros.svg"
-                      alt=""
-                      className="opacity-90 select-none pointer-events-none"
-                      style={{ height: '140px', width: 'auto', maxWidth: '160px' }}
-                      draggable={false}
-                    />
-                  )
-                }
-                if (n >= 8 && n <= 13) {
-                  return (
-                    <img
-                      src="/reference/drill.svg"
-                      alt=""
-                      className="opacity-90 select-none pointer-events-none"
-                      style={{ height: '140px', width: 'auto', maxWidth: '160px' }}
-                      draggable={false}
-                    />
-                  )
-                }
-                if (n >= 15) {
-                  // Vertical scroll silhouette — rotated -90° to mirror the summary-page render.
-                  return (
-                    <div style={{ width: '110px', height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <img
-                        src="/reference/scroll.svg"
-                        alt=""
-                        className="opacity-90 select-none pointer-events-none"
-                        style={{ width: '140px', height: '110px', transform: 'rotate(-90deg)' }}
-                        draggable={false}
-                      />
-                    </div>
-                  )
-                }
-                return null
-              })()}
-            </div>
-            <div className="w-px h-10 bg-gtl-red" style={{ transform: 'skewX(-12deg)' }} />
-            <div>
-              <div className="font-display text-3xl leading-none"
-                   style={{ color: '#e4b022', textShadow: '2px 2px 0 #8a6612' }}>
-                {String(cycle.targets?.length ?? 0).padStart(2, '0')}
-              </div>
-              <div className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-smoke mt-0.5">TARGETS</div>
-            </div>
-            <div className="w-px h-10 bg-gtl-red" style={{ transform: 'skewX(-12deg)' }} />
-            <div>
-              <div className="font-display text-3xl leading-none"
-                   style={{ color: '#e4b022', textShadow: '2px 2px 0 #8a6612' }}>
-                {String(plannedSessions).padStart(2, '0')}
-              </div>
-              <div className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-smoke mt-0.5">SESSIONS</div>
-            </div>
+          <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
+            CYCLE / {String(index + 1).padStart(2, '0')}
           </div>
-
-          {/* Day progress chips */}
-          {cycle.days?.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 ml-24">
-              {cycle.days.map((iso) => {
-                const date = new Date(iso + 'T12:00:00')
-                const dayNum = date.getDate()
-                const hasWork = (cycle.dailyPlan?.[iso] || []).length > 0
-                const done = doneDays[iso]
-                return (
-                  <div key={iso} className="relative" style={{ width: '34px', height: '34px' }}>
-                    <div style={{
-                      width: '100%', height: '100%',
-                      background: hasWork ? 'rgba(212,24,31,0.12)' : 'rgba(26,26,30,0.6)',
-                      border: `1px solid ${hasWork ? 'rgba(212,24,31,0.35)' : 'rgba(58,58,66,0.4)'}`,
-                      clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <span className="font-display leading-none"
-                        style={{ fontSize: '0.85rem', color: hasWork ? '#c8c8c8' : '#3a3a42' }}>
-                        {dayNum}
-                      </span>
-                    </div>
-                    {done && (
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
-                        <span className="font-display leading-none"
-                          style={{ fontSize: '1.6rem', color: 'rgba(212,24,31,0.55)', transform: 'rotate(-5deg)', textShadow: '1px 1px 0 rgba(0,0,0,0.5)' }}>
-                          X
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
         </div>
 
-        {/* Red slash divider */}
-        <div className="mb-5 h-px bg-gtl-red" style={{ transform: 'skewX(-8deg)', position: 'relative', zIndex: 10 }} />
+        {/* Silhouette + deadline stamp row — silhouette left, stamp right with
+            tight 10px gap between them. */}
+        <div className="flex items-center mb-4" style={{ gap: '10px' }}>
+          {/* Silhouette: wakizashi (1–6 days, tinted red) / ouroboros (7) /
+              drill (8–13) / scroll (15+). Wakizashi uses CSS mask-image so we
+              can recolor the silhouette to GTL red without altering the SVG. */}
+          <div className="shrink-0" style={{ marginLeft: '-16px' }}>
+            {(() => {
+              const n = cycle.days?.length || 0
+              if (n >= 1 && n <= 6) {
+                return (
+                  <div
+                    aria-hidden="true"
+                    className="select-none pointer-events-none"
+                    style={{
+                      width: '90px',
+                      height: '120px',
+                      backgroundColor: '#d4181f',
+                      WebkitMaskImage: 'url(/reference/wakizashi_solid_silhouette.svg)',
+                      maskImage: 'url(/reference/wakizashi_solid_silhouette.svg)',
+                      WebkitMaskRepeat: 'no-repeat',
+                      maskRepeat: 'no-repeat',
+                      WebkitMaskSize: 'contain',
+                      maskSize: 'contain',
+                      WebkitMaskPosition: 'left center',
+                      maskPosition: 'left center',
+                      opacity: 0.9,
+                    }}
+                  />
+                )
+              }
+              if (n === 7) {
+                return (
+                  <img src="/reference/ouroboros.svg" alt=""
+                    className="opacity-90 select-none pointer-events-none"
+                    style={{ height: '120px', width: 'auto', maxWidth: '140px' }}
+                    draggable={false} />
+                )
+              }
+              if (n >= 8 && n <= 13) {
+                return (
+                  <img src="/reference/drill.svg" alt=""
+                    className="opacity-90 select-none pointer-events-none"
+                    style={{ height: '120px', width: 'auto', maxWidth: '140px' }}
+                    draggable={false} />
+                )
+              }
+              if (n >= 15) {
+                return (
+                  <div style={{ width: '110px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                    <img src="/reference/scroll.svg" alt=""
+                      className="opacity-90 select-none pointer-events-none"
+                      style={{ width: '120px', height: '95px', transform: 'rotate(-90deg)' }}
+                      draggable={false} />
+                  </div>
+                )
+              }
+              return null
+            })()}
+          </div>
 
-        {/* Muscle targets */}
-        {cycle.targets?.length > 0 && (
-          <div className="flex flex-wrap gap-x-3 gap-y-4" style={{ overflow: 'visible' }}>
-            {cycle.targets.map((id, i) => (
-              <MuscleTag key={id} id={id} index={i} />
-            ))}
+          {/* Deadline stamp */}
+          {lastDay && (() => {
+            const d = parseDate(lastDay)
+            return (
+              <div className="relative shrink-0" style={{ transform: 'rotate(-1.5deg)', marginLeft: '-8px' }}>
+                {/* Shadow slab */}
+                <div
+                  className="absolute inset-0 bg-gtl-red-deep"
+                  style={{
+                    clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)',
+                    transform: 'translate(3px, 3px)',
+                  }}
+                  aria-hidden="true"
+                />
+                {/* Stamp face */}
+                <div
+                  className="relative px-6 py-3 bg-gtl-red border-2 border-gtl-red-deep"
+                  style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)' }}
+                >
+                  <div className="font-display text-base tracking-[0.3em] uppercase text-gtl-paper leading-none mb-2"
+                       style={{ textShadow: '2px 2px 0 #070708' }}>
+                    ◼ DEADLINE ◼
+                  </div>
+                  <div className="font-display text-gtl-paper leading-none"
+                       style={{ fontSize: '1.1rem', textShadow: '1px 1px 0 #070708' }}>
+                    {d.toLocaleDateString('en-US', { month: 'long' }).toUpperCase()}
+                  </div>
+                  {/* Day number with spinning square behind */}
+                  <div className="relative flex items-center justify-center my-1" style={{ width: '100px', height: '100px' }}>
+                    <style>{`
+                      @keyframes spin-square {
+                        from { transform: rotate(0deg); }
+                        to   { transform: rotate(360deg); }
+                      }
+                    `}</style>
+                    <div
+                      className="absolute"
+                      style={{
+                        width: '80px', height: '80px',
+                        background: '#070708',
+                        animation: 'spin-square 8s linear infinite',
+                        boxShadow: '0 0 20px rgba(0,0,0,0.8)',
+                      }}
+                      aria-hidden="true"
+                    />
+                    <div className="relative font-display text-gtl-paper leading-none"
+                         style={{ fontSize: '5rem', textShadow: '4px 4px 0 #070708', lineHeight: 1, zIndex: 1 }}>
+                      {String(d.getDate()).padStart(2, '0')}
+                    </div>
+                  </div>
+                  <div className="font-display text-gtl-paper/80 leading-none mt-1.5"
+                       style={{ fontSize: '0.85rem', textShadow: '1px 1px 0 #070708' }}>
+                    {d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()} · {d.getFullYear()}
+                  </div>
+                  {bloodVisible && (
+                    <div
+                      className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                      style={{ zIndex: 10, transform: 'translateX(-12px)' }}
+                      aria-hidden="true"
+                    >
+                      <div style={{
+                        animation: 'x-stamp 600ms cubic-bezier(0.2, 1.4, 0.3, 1) 1800ms both',
+                        fontFamily: 'Anton, Impact, sans-serif',
+                        fontSize: '10rem',
+                        color: '#8b0000',
+                        lineHeight: 1,
+                        textShadow: '3px 3px 0 rgba(0,0,0,0.6)',
+                        border: '5px solid #8b0000',
+                        padding: '0 10px',
+                        opacity: 0.75,
+                        userSelect: 'none',
+                      }}>
+                        ✕
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
+        </div>
+
+        {/* Day progress chips — slanted parallelogram cells per day; red X
+            overlay on completed days. Sit below the silhouette. */}
+        {cycle.days?.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-4">
+            {cycle.days.map((iso) => {
+              const date = new Date(iso + 'T12:00:00')
+              const dayNum = date.getDate()
+              const hasWork = (cycle.dailyPlan?.[iso] || []).length > 0
+              const done = doneDays[iso]
+              return (
+                <div key={iso} className="relative" style={{ width: '34px', height: '34px' }}>
+                  <div style={{
+                    width: '100%', height: '100%',
+                    background: hasWork ? 'rgba(212,24,31,0.12)' : 'rgba(26,26,30,0.6)',
+                    border: `1px solid ${hasWork ? 'rgba(212,24,31,0.35)' : 'rgba(58,58,66,0.4)'}`,
+                    clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <span className="font-display leading-none"
+                      style={{ fontSize: '0.85rem', color: hasWork ? '#c8c8c8' : '#3a3a42' }}>
+                      {dayNum}
+                    </span>
+                  </div>
+                  {done && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+                      <span className="font-display leading-none"
+                        style={{ fontSize: '1.6rem', color: 'rgba(212,24,31,0.55)', transform: 'rotate(-5deg)', textShadow: '1px 1px 0 rgba(0,0,0,0.5)' }}>
+                        X
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
+
       </div>
 
       {/* Completed cycle — blood spilt X (only renders once card enters viewport) */}
@@ -569,24 +504,23 @@ function CycleCard({ cycle, index, selected, onSelect }) {
               </filter>
             </defs>
 
-            {/* ── STROKE 1: top-left → bottom-right ── */}
+            {/* ── STROKE 1: top-left → bottom-right (straight diagonal) ── */}
             {/* shadow */}
-            <path d="M 18,22 C 120,48 310,160 498,215 C 680,268 850,340 982,400"
+            <path d="M 18,22 L 982,400"
               stroke="rgba(0,0,0,0.55)" strokeWidth="14" strokeLinecap="round" fill="none"
               strokeDasharray="2000" style={{ animation: 'blood-stroke-1 800ms cubic-bezier(0.3,0,0.2,1) 100ms both' }} />
             {/* main */}
-            <path d="M 16,20 C 118,46 308,158 496,213 C 678,266 848,338 980,398"
+            <path d="M 16,20 L 980,398"
               stroke="#8b0000" strokeWidth="11" strokeLinecap="round" fill="none"
               strokeDasharray="2000" style={{ animation: 'blood-stroke-1 800ms cubic-bezier(0.3,0,0.2,1) 100ms both', filter: 'url(#blood-blur)' }} />
             {/* wet sheen */}
-            <path d="M 16,18 C 118,44 308,156 496,211 C 678,264 848,336 980,396"
+            <path d="M 16,18 L 980,396"
               stroke="#d4181f" strokeWidth="5" strokeLinecap="round" fill="none" opacity="0.7"
               strokeDasharray="2000" style={{ animation: 'blood-stroke-1 800ms cubic-bezier(0.3,0,0.2,1) 100ms both' }} />
             {/* highlight */}
-            <path d="M 16,17 C 118,43 308,155 496,210 C 678,263 848,335 980,395"
+            <path d="M 16,17 L 980,395"
               stroke="rgba(255,100,100,0.35)" strokeWidth="2" strokeLinecap="round" fill="none"
               strokeDasharray="2000" style={{ animation: 'blood-stroke-1 800ms cubic-bezier(0.3,0,0.2,1) 100ms both' }} />
-
 
 {/* ── INK SPLATTER — randomly placed on mount ── */}
             {splatter.map(({ cx, cy, rx, ry, rot, fill, delay }, i) => (
@@ -602,7 +536,7 @@ function CycleCard({ cycle, index, selected, onSelect }) {
           <div
             className="absolute pointer-events-none select-none"
             style={{
-              left: '50%', top: '50%', zIndex: 11,
+              left: 'calc(50% + 120px)', top: 'calc(50% - 110px)', zIndex: 11,
               animation: 'blood-text 600ms cubic-bezier(0.2, 1.4, 0.3, 1) 1500ms both',
             }}
             aria-hidden="true"
@@ -626,6 +560,127 @@ function CycleCard({ cycle, index, selected, onSelect }) {
         </>
       )}
     </div>
+  )
+}
+
+/* ── Quick-nav ACTIVATE popup with tap-vs-swipe gesture ── */
+function ActivatePopup({ cycle, onTap, onSwipe }) {
+  const startRef = useRef(null)
+  const dxRef = useRef(0)
+  const swipeFiredRef = useRef(false)
+  const [dragX, setDragX] = useState(0)
+  const SWIPE_THRESHOLD = 160
+
+  const handlePointerDown = (e) => {
+    startRef.current = { x: e.clientX, y: e.clientY }
+    dxRef.current = 0
+    swipeFiredRef.current = false
+    setDragX(0)
+  }
+  const handlePointerMove = (e) => {
+    if (!startRef.current) return
+    const dx = e.clientX - startRef.current.x
+    const dy = e.clientY - startRef.current.y
+    if (Math.abs(dx) > Math.abs(dy)) {
+      const clamped = Math.max(0, Math.min(dx, SWIPE_THRESHOLD * 1.5))
+      dxRef.current = clamped
+      setDragX(clamped)
+    }
+  }
+  const handlePointerUp = () => {
+    if (dxRef.current > SWIPE_THRESHOLD && onSwipe) {
+      swipeFiredRef.current = true
+      onSwipe(cycle)
+    }
+    startRef.current = null
+    dxRef.current = 0
+    setDragX(0)
+  }
+  const handleClick = (e) => {
+    if (swipeFiredRef.current) {
+      e.preventDefault(); e.stopPropagation()
+      swipeFiredRef.current = false
+      return
+    }
+    onTap(cycle)
+  }
+  const swipeProgress = Math.min(1, dragX / SWIPE_THRESHOLD)
+
+  return (
+    <>
+    <style>{`
+      @keyframes swipe-pulse {
+        0%, 100% { transform: translateX(0); opacity: 0.6; }
+        50%      { transform: translateX(6px); opacity: 1; }
+      }
+      .animate-swipe-pulse { animation: swipe-pulse 1.2s ease-in-out infinite; display: inline-block; }
+    `}</style>
+    <button
+      type="button"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={() => { startRef.current = null; dxRef.current = 0; swipeFiredRef.current = false; setDragX(0) }}
+      onClick={handleClick}
+      className="fixed z-50 group block outline-none active:scale-[0.98] transition-transform overflow-hidden"
+      style={{
+        top: '479px',
+        left: '32px',
+        right: '32px',
+        touchAction: 'pan-y',
+        animation: 'activate-popup-rise 320ms cubic-bezier(0.18, 1, 0.36, 1) both',
+      }}
+    >
+      {/* Base red fill */}
+      <div
+        className="absolute inset-0 bg-gtl-red transition-colors group-active:bg-gtl-red-bright"
+        style={{
+          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+          boxShadow: '0 4px 28px rgba(212, 24, 31, 0.55)',
+        }}
+        aria-hidden="true"
+      />
+      {/* Swipe-progress brighter fill — slides in from left, tells the user the
+          gesture is armed once it covers the full button. */}
+      <div
+        className="absolute inset-0 pointer-events-none bg-gtl-red-bright"
+        style={{
+          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+          opacity: swipeProgress,
+          transform: `scaleX(${swipeProgress})`,
+          transformOrigin: 'left center',
+          transition: dragX === 0 ? 'opacity 200ms, transform 200ms' : 'none',
+        }}
+        aria-hidden="true"
+      />
+      <div
+        className="relative flex items-center justify-between px-7 py-5 gap-3"
+        style={{ transform: `translateX(${dragX * 0.3}px)`, transition: dragX === 0 ? 'transform 200ms' : 'none' }}
+      >
+        {/* Left side: TAP label */}
+        <span
+          className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-paper/70 leading-none whitespace-nowrap"
+          style={{ opacity: 1 - swipeProgress }}
+          aria-hidden="true"
+        >
+          TAP
+        </span>
+        {/* Center: action label */}
+        <span className="font-display text-3xl text-gtl-paper leading-none tracking-tight">
+          {swipeProgress >= 1 ? 'LIFT NOW' : 'ACTIVATE'}
+        </span>
+        {/* Right side: SWIPE chevrons (animated at idle, fade as user drags) */}
+        <span
+          className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-paper/90 leading-none whitespace-nowrap flex items-center gap-1"
+          style={{ opacity: 1 - swipeProgress * 0.6 }}
+          aria-hidden="true"
+        >
+          SWIPE
+          <span className="animate-swipe-pulse text-base leading-none">»</span>
+        </span>
+      </div>
+    </button>
+    </>
   )
 }
 
@@ -721,8 +776,8 @@ function BottomBar({ cycle, onActivate, onReview, onDelete }) {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-50"
-      style={{ background: 'rgba(7,7,8,0.97)', borderTop: '2px solid #d4181f' }}
+      className="fixed left-0 right-0 z-50"
+      style={{ top: '549px', background: 'rgba(7,7,8,0.97)', borderTop: '2px solid #d4181f' }}
     >
       {/* Skewed red accent line */}
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-gtl-red pointer-events-none"
@@ -741,8 +796,8 @@ function BottomBar({ cycle, onActivate, onReview, onDelete }) {
         {/* Vertical divider */}
         <div className="w-px h-10 bg-gtl-edge self-center" style={{ transform: 'skewX(-12deg)' }} />
 
-        {/* ACTIVATE */}
-        <ActivateButton onActivate={() => { play('card-confirm'); onActivate(cycle) }} />
+        {/* ACTIVATE moved to a fixed-position quick-nav popup at y=438 (matches
+            profile-chip slot on /fitness for tap-tap-tap muscle memory). */}
 
         {/* REVIEW / EDIT */}
         <ReviewButton onReview={() => { play('option-select'); onReview(cycle) }} />
@@ -822,14 +877,60 @@ export default function LoadCyclePage() {
   const [selectedId, setSelectedId] = useState(null)
   const [fireActive, setFireActive] = useState(false)
   const [fireDest, setFireDest]     = useState('/fitness/new/summary')
+  // Latches once skipAll fires so FireTransition.onComplete won't double-route.
+  const skippedRef = useRef(false)
+  // Synchronous flag — set on first ACTIVATE/REVIEW so a fast follow-up tap on
+  // the same button skips even if React hasn't committed `fireActive` yet.
+  const fireActiveRef = useRef(false)
+  // Stable ref for the destination so the pointerdown listener doesn't have to
+  // re-bind each time fireDest changes.
+  const fireDestRef = useRef(fireDest)
+  useEffect(() => { fireDestRef.current = fireDest }, [fireDest])
+
+  const skipNow = () => {
+    if (skippedRef.current) return
+    skippedRef.current = true
+    router.push(fireDestRef.current)
+  }
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(pk('cycles'))
-      if (raw) setCycles(JSON.parse(raw))
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        setCycles(parsed)
+        // Quick-forge landing: auto-select the most-recent cycle (the one the
+        // user just forged) so the ACTIVATE popup appears immediately. Clear
+        // the flag so this only fires once.
+        try {
+          if (localStorage.getItem('gtl-just-forged') === '1' && parsed.length > 0) {
+            setSelectedId(parsed[0].id)
+            localStorage.removeItem('gtl-just-forged')
+          }
+        } catch (_) {}
+      }
     } catch (_) {}
     setReady(true)
   }, [])
+
+  // Skip-the-fire-transition: once it's running, the next pointer/touch input
+  // anywhere routes to the destination immediately. Listen for both
+  // pointerdown AND touchstart in case iOS PWA suppresses pointerdown events
+  // during rapid-tap sequences. Taps on RetreatButton (data-retreat) are
+  // excluded so retreat navigates back instead of fast-forwarding.
+  useEffect(() => {
+    if (!fireActive) return
+    const handler = (e) => {
+      if (e.target?.closest?.('[data-retreat]')) return
+      skipNow()
+    }
+    window.addEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
+  }, [fireActive])
 
   const selectedCycle = cycles.find((c) => c.id === selectedId) ?? null
 
@@ -847,16 +948,29 @@ export default function LoadCyclePage() {
     } catch (_) {}
   }
 
-  const handleActivate = (cycle) => {
+  const handleActivate = (cycle, { deepLaunch = false } = {}) => {
+    // Already firing → this rapid second tap is a skip.
+    if (fireActiveRef.current) { skipNow(); return }
+    fireActiveRef.current = true
     loadCycleIntoStorage(cycle)
     try { localStorage.removeItem(pk('editing-cycle-id')) } catch (_) {}
+    // Deep-launch flag — only set on swipe-activate; tap-activate just lands
+    // on /fitness/active normally. When set, the chain auto-progresses to
+    // today → first muscle → first exercise S1 weight popup.
+    if (deepLaunch) {
+      try { localStorage.setItem('gtl-deep-launch', '1') } catch (_) {}
+    }
+    fireDestRef.current = '/fitness/active'  // sync for the listener
     setFireDest('/fitness/active')
     setFireActive(true)
   }
 
   const handleReview = (cycle) => {
+    if (fireActiveRef.current) { skipNow(); return }
+    fireActiveRef.current = true
     loadCycleIntoStorage(cycle)
     try { localStorage.setItem(pk('editing-cycle-id'), cycle.id) } catch (_) {}
+    fireDestRef.current = '/fitness/edit'
     setFireDest('/fitness/edit')
     setFireActive(true)
   }
@@ -880,11 +994,13 @@ export default function LoadCyclePage() {
         style={{ background: 'linear-gradient(135deg, rgba(122,14,20,0.18) 0%, transparent 45%, rgba(74,10,14,0.28) 100%)' }}
       />
 
-      {/* Kanji watermark — 歴 (record/history) */}
+      {/* Kanji watermark — 歴 (record/history). Top rooted at safe-area floor so it
+          never clips into the iOS Dynamic Island camera area. */}
       <div
-        className="absolute -top-16 -right-24 pointer-events-none select-none"
+        className="absolute -right-24 pointer-events-none select-none"
         aria-hidden="true"
         style={{
+          top: 'calc(env(safe-area-inset-top, 0px) - 64px)',
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '52rem', lineHeight: '0.8',
           color: '#d4181f', opacity: 0.045, fontWeight: 900,
@@ -893,23 +1009,24 @@ export default function LoadCyclePage() {
         歴
       </div>
 
+      {/* Content wrapper — atmospheric layers paint full-bleed (incl. safe area). */}
+      <div className="relative z-10 flex-1 flex flex-col">
       {/* Nav */}
-      <nav className="relative z-10 shrink-0 flex items-center justify-between px-8 py-5">
-        <RetreatButton />
-        <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-          PALACE / FITNESS / LOAD CYCLE
-        </div>
-      </nav>
+      <nav
+        className="relative shrink-0 flex items-center justify-between pl-0 pr-8 pb-5"
+        style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top))' }}
+      >
+        <RetreatButton href="/fitness/hub" />      </nav>
 
       {/* Headline */}
       <div className="relative z-10 px-8 pb-6">
         <div className="flex items-center gap-4 mb-2">
           <div className="h-0.5 w-12 bg-gtl-red" />
-          <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-red font-bold">
+          <span className="font-matisse text-[10px] tracking-[0.4em] uppercase text-gtl-red font-bold">
             WAR RECORD
           </span>
         </div>
-        <h1 className="font-display text-5xl text-gtl-chalk leading-none -rotate-1">
+        <h1 className="font-matisse text-5xl text-gtl-chalk leading-none -rotate-1">
           YOUR
           <span className="text-gtl-red gtl-headline-shadow-soft inline-block rotate-1 ml-3">CYCLES</span>
         </h1>
@@ -967,7 +1084,44 @@ export default function LoadCyclePage() {
         )}
       </section>
 
-      {/* Sticky bottom bar — appears when a cycle is selected */}
+      {/* Quick-nav ACTIVATE popup — sits at the same screen y as the profile chip
+          on /fitness so the linear flow (profile chip → LOAD CYCLE card → ACTIVATE)
+          all hits the same tap target. Slides up from below when a cycle is selected. */}
+      <style>{`
+        @keyframes activate-popup-rise {
+          0%   { opacity: 0; transform: translateY(60px) scale(0.96); }
+          60%  { opacity: 1; transform: translateY(-4px) scale(1.02); }
+          100% { opacity: 1; transform: translateY(0)    scale(1); }
+        }
+      `}</style>
+      {selectedCycle && (
+        <>
+          <ActivatePopup
+            key={selectedCycle.id}
+            cycle={selectedCycle}
+            onTap={(c) => { play('card-confirm'); handleActivate(c) }}
+            onSwipe={(c) => { play('card-confirm'); handleActivate(c, { deepLaunch: true }) }}
+          />
+          {/* Gesture hint — sits just below the ACTIVATE popup. */}
+          <div
+            className="fixed z-50 flex items-center gap-3 font-mono text-[8px] tracking-[0.25em] uppercase text-gtl-ash/80 pointer-events-none"
+            style={{
+              top: '530px',
+              left: '32px',
+              right: '32px',
+              justifyContent: 'center',
+              animation: 'activate-popup-rise 320ms 100ms cubic-bezier(0.18, 1, 0.36, 1) both',
+            }}
+            aria-hidden="true"
+          >
+            <span>TAP TO ACTIVATE</span>
+            <span className="text-gtl-red">·</span>
+            <span>SWIPE TO LIFT NOW →</span>
+          </div>
+        </>
+      )}
+
+      {/* Sticky bottom bar — appears when a cycle is selected (now without ACTIVATE) */}
       <BottomBar
         cycle={selectedCycle}
         onActivate={handleActivate}
@@ -975,8 +1129,15 @@ export default function LoadCyclePage() {
         onDelete={handleDelete}
       />
 
+      </div>
       <FireFadeIn duration={900} />
-      <FireTransition active={fireActive} onComplete={() => router.push(fireDest)} />
+      <FireTransition
+        active={fireActive}
+        onComplete={() => {
+          if (skippedRef.current) return
+          router.push(fireDest)
+        }}
+      />
     </main>
   )
 }

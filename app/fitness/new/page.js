@@ -20,6 +20,9 @@ import { useSound } from '../../../lib/useSound'
 import { useProfileGuard } from '../../../lib/useProfileGuard'
 import { pk } from '../../../lib/storage'
 import FireTransition from '../../../components/FireTransition'
+import HeistTransition from '../../../components/HeistTransition'
+import SpeedLines from '../../../components/SpeedLines'
+import RetreatButton from '../../../components/RetreatButton'
 
 const MAX_LEN = 40
 
@@ -48,49 +51,92 @@ function pickRandomName() {
   return RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)]
 }
 
-/**
- * Reusable retreat button.
- */
-function RetreatButton({ href = '/fitness/hub' }) {
-  const { play } = useSound()
-  const [hovered, setHovered] = useState(false)
-  try { if (localStorage.getItem('gtl-back-to-edit') === '1') href = '/fitness/edit' } catch (_) {}
+/* ── FORGE button with tap-vs-swipe gesture ── */
+function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
+  const startRef = useRef(null)
+  const dxRef = useRef(0)
+  const swipeFiredRef = useRef(false)
+  const [dragX, setDragX] = useState(0)
+  const SWIPE_THRESHOLD = 80
+
+  const handlePointerDown = (e) => {
+    if (disabled) return
+    startRef.current = { x: e.clientX, y: e.clientY }
+    dxRef.current = 0
+    swipeFiredRef.current = false
+    setDragX(0)
+  }
+  const handlePointerMove = (e) => {
+    if (!startRef.current) return
+    const dx = e.clientX - startRef.current.x
+    const dy = e.clientY - startRef.current.y
+    if (Math.abs(dx) > Math.abs(dy)) {
+      const clamped = Math.max(0, Math.min(dx, SWIPE_THRESHOLD * 1.5))
+      dxRef.current = clamped
+      setDragX(clamped)
+    }
+  }
+  const handlePointerUp = () => {
+    if (dxRef.current > SWIPE_THRESHOLD && onSwipe) {
+      swipeFiredRef.current = true
+      onSwipe()
+    }
+    startRef.current = null
+    dxRef.current = 0
+    setDragX(0)
+  }
+  const handleClick = (e) => {
+    if (swipeFiredRef.current) {
+      e.preventDefault(); e.stopPropagation()
+      swipeFiredRef.current = false
+      return
+    }
+    onTap()
+  }
+  const swipeProgress = Math.min(1, dragX / SWIPE_THRESHOLD)
+
   return (
-    <Link
-      href={href}
-      onMouseEnter={() => { setHovered(true); play('button-hover') }}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => play('menu-close')}
-      className="group relative inline-flex items-center"
+    <button
+      ref={forgeRef}
+      type="button"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={() => { startRef.current = null; dxRef.current = 0; swipeFiredRef.current = false; setDragX(0) }}
+      onClick={handleClick}
+      disabled={disabled}
+      className={`
+        relative font-display tracking-[0.25em] uppercase overflow-hidden
+        px-14 py-4 min-h-[56px] min-w-[14rem]
+        text-3xl text-gtl-paper
+        transition-all duration-200 ease-out
+        disabled:opacity-30 disabled:cursor-not-allowed
+        enabled:[@media(hover:hover)]:hover:scale-[1.04] enabled:active:scale-[0.98]
+        enabled:bg-gtl-red-bright bg-gtl-red
+        shadow-[4px_4px_0_#070708]
+        enabled:[@media(hover:hover)]:hover:shadow-[6px_6px_0_#070708]
+        enabled:active:shadow-[2px_2px_0_#070708]
+      `}
+      style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)', touchAction: 'pan-y' }}
     >
+      {/* Swipe-progress brighter overlay scales in from the left */}
       <div
-        className={`
-          absolute inset-0 -inset-x-2 transition-all duration-300 ease-out
-          ${hovered ? 'bg-gtl-red opacity-100' : 'bg-gtl-edge opacity-50'}
-        `}
-        style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
+        className="absolute inset-0 pointer-events-none bg-gtl-red-bright"
+        style={{
+          opacity: swipeProgress,
+          transform: `scaleX(${swipeProgress})`,
+          transformOrigin: 'left center',
+          transition: dragX === 0 ? 'opacity 200ms, transform 200ms' : 'none',
+        }}
         aria-hidden="true"
       />
-      <div className="relative flex items-center gap-3 px-4 py-2">
-        <span
-          className={`
-            font-display text-base leading-none transition-all duration-300
-            ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red translate-x-0'}
-          `}
-        >
-          ◀
-        </span>
-        <span
-          className={`
-            font-mono text-[10px] tracking-[0.3em] uppercase font-bold
-            transition-colors duration-300
-            ${hovered ? 'text-gtl-paper' : 'text-gtl-chalk'}
-          `}
-        >
-          RETREAT
-        </span>
-      </div>
-    </Link>
+      <span
+        className="relative inline-block"
+        style={{ transform: `translateX(${dragX * 0.3}px)`, transition: dragX === 0 ? 'transform 200ms' : 'none' }}
+      >
+        {swipeProgress >= 1 ? 'LIFT NOW' : 'FORGE'}
+      </span>
+    </button>
   )
 }
 
@@ -105,7 +151,7 @@ function RetreatButton({ href = '/fitness/hub' }) {
  * Calls `onCharAdded` whenever a NEW character is typed (not on delete),
  * so the parent can fire the screen shake and sound at the right moment.
  */
-function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAdded, onConfirm, isBranding }) {
+function StampedNameInput({ value, onChange, maxLength, isInitialMount, entranceSkipped, onCharAdded, onConfirm, isBranding, onInputFocus }) {
   const inputRef = useRef(null)
   const charKeysRef = useRef([])
   const { play } = useSound()
@@ -149,9 +195,11 @@ function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAd
     if (inputRef.current) inputRef.current.focus()
   }
 
-  useEffect(() => {
-    if (inputRef.current) inputRef.current.focus()
-  }, [])
+  // No auto-focus on mount. iOS PWA queues a pending focus() call when the
+  // page mounts; the user's first tap *anywhere* on the page during the
+  // gesture-activation window then pops up the keyboard, even taps under the
+  // FORGE button. Keyboard now only opens on a deliberate input-area tap
+  // (handleWrapperClick) or via Enter on a hardware keyboard.
 
   return (
     <div
@@ -160,16 +208,20 @@ function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAd
       role="presentation"
       style={{ overflow: 'visible' }}
     >
-      {/* Hidden real input — captures all keyboard input */}
+      {/* Hidden real input — captures all keyboard input. inputMode + enterKeyHint
+          standardize the iOS keyboard layout (text + Done) across all cycle-name entry. */}
       <input
         ref={inputRef}
         type="text"
         value={value}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
+        onFocus={onInputFocus}
         maxLength={maxLength}
         className="sr-only"
         aria-label="Cycle name"
+        inputMode="text"
+        enterKeyHint="done"
         autoComplete="off"
         autoCorrect="off"
         spellCheck="false"
@@ -178,17 +230,27 @@ function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAd
 
       {/* Visible character display.
           IMPORTANT: overflow visible at every level so the giant scaled
-          characters can extend beyond the container without being clipped. */}
+          characters can extend beyond the container without being clipped.
+          pointer-events: none — during char-stamp animation the spans are
+          scaled to ~20x and cover the whole screen; without this any tap
+          (including under FORGE) bubbles up to the wrapper's onClick →
+          focus → iOS keyboard pops on first gesture. The wrapper still
+          receives taps on its own natural bbox so deliberate input-area
+          taps still focus the input. */}
       <div
-        className="relative flex flex-wrap items-baseline justify-center gap-y-2 min-h-[6rem] px-4"
+        className="relative flex flex-wrap items-baseline justify-center gap-y-2 min-h-[2.5rem] md:min-h-[6rem] px-4 pointer-events-none"
         style={{ overflow: 'visible' }}
       >
         {value.split('').map((char, i) => (
           <span
             key={isBranding ? `brand-${i}` : charKeysRef.current[i]}
             className={`
-              inline-block font-display text-6xl md:text-7xl lg:text-8xl leading-none
-              ${isBranding ? 'animate-brand-letter' : 'text-gtl-chalk animate-char-stamp'}
+              inline-block font-display text-4xl md:text-7xl lg:text-8xl leading-none
+              ${isBranding
+                ? 'animate-brand-letter'
+                : entranceSkipped
+                  ? 'text-gtl-chalk'        /* class-based skip: drop animate-char-stamp so the keyframe doesn't run */
+                  : 'text-gtl-chalk animate-char-stamp'}
             `}
             style={{
               animationDelay: isBranding
@@ -207,7 +269,7 @@ function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAd
         {/* Blinking cursor — hidden during branding */}
         {!isBranding && (
           <span
-            className="inline-block w-1.5 md:w-2 h-16 md:h-20 bg-gtl-red-bright animate-cursor-blink ml-1 self-center"
+            className="inline-block w-1.5 md:w-2 h-10 md:h-20 bg-gtl-red-bright animate-cursor-blink ml-1 self-end"
             aria-hidden="true"
           />
         )}
@@ -219,9 +281,35 @@ function StampedNameInput({ value, onChange, maxLength, isInitialMount, onCharAd
 export default function NewCycleNamePage() {
   useProfileGuard()
   const router = useRouter()
-  const [name, setName] = useState('')
-  const nameRef = useRef('')
+  let backHref = '/fitness/hub'
+  try { if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit' } catch (_) {}
+  // Initialize name SYNCHRONOUSLY on first render so the cascade text is on
+  // screen frame-1 (no flash of empty content). Editing flow still needs the
+  // localStorage lookup; useState initializer reads it on the client only
+  // (typeof window check) — server render falls back to empty so hydration
+  // matches.
+  const [name, setName] = useState(() => {
+    if (typeof window === 'undefined') return ''
+    try {
+      const editingId = window.localStorage.getItem(pk('editing-cycle-id'))
+      const savedName = window.localStorage.getItem(pk('cycle-name'))
+      if (editingId && savedName && savedName.trim().length > 0) return savedName.trim()
+    } catch (_) {}
+    return pickRandomName()
+  })
+  const nameRef = useRef(name)
   useEffect(() => { nameRef.current = name }, [name])
+
+  // Ref + focus handler for scrolling FORGE into view when the iOS keyboard opens.
+  // The hidden input is sr-only at (0,0) so iOS doesn't auto-scroll on focus the way
+  // it does for visible inputs (e.g. WHO ARE YOU). 300ms lets the keyboard begin its
+  // slide-up animation; then we scroll FORGE to the vertical center of the viewport.
+  const forgeButtonRef = useRef(null)
+  const handleInputFocus = () => {
+    setTimeout(() => {
+      forgeButtonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    }, 300)
+  }
   useEffect(() => {
     try { if (localStorage.getItem('gtl-back-to-edit') !== '1') return } catch (_) { return }
     const handleKey = (e) => {
@@ -249,27 +337,62 @@ export default function NewCycleNamePage() {
     return () => window.removeEventListener('keydown', handleKey)
   }, [router])
   const [isInitialMount, setIsInitialMount] = useState(true)
+  const [entranceSkipped, setEntranceSkipped] = useState(false)
+  const initialMountTimerRef = useRef(null)
   const [isBranding, setIsBranding] = useState(false)
   const [isFireActive, setIsFireActive] = useState(false)
+  const [quickHeistActive, setQuickHeistActive] = useState(false)
+  const [quickForgeRunning, setQuickForgeRunning] = useState(false)
   const mainRef = useRef(null)
   const { play } = useSound()
+  // Synchronous flag set on first FORGE tap so rapid follow-up taps short-circuit
+  // to skipNow before React commits isBranding.
+  const brandingRef = useRef(false)
+  // Latches once skipNow fires so FireTransition.onComplete + the brand→fire
+  // setTimeout don't double-route after we've already navigated.
+  const skippedRef = useRef(false)
+  // Holds the brand→fire timeout so skipNow can clear it.
+  const fireKickoffTimerRef = useRef(null)
+  const NEXT_TARGET = '/fitness/new/muscles'
 
-  // Pre-fill with the cycle's existing name when editing, otherwise random
+  const skipNow = () => {
+    if (skippedRef.current) return
+    skippedRef.current = true
+    if (fireKickoffTimerRef.current) clearTimeout(fireKickoffTimerRef.current)
+    router.push(NEXT_TARGET)
+  }
+
+  // Auto-finish the initial char-stamp cascade (initial.length * 35ms stagger
+  // + ~500ms tail). Held in a ref so the entrance-skip handler can clear it.
   useEffect(() => {
-    let initial
-    try {
-      const editingId = localStorage.getItem(pk('editing-cycle-id'))
-      const savedName = localStorage.getItem(pk('cycle-name'))
-      initial = editingId && savedName && savedName.trim().length > 0
-        ? savedName.trim()
-        : pickRandomName()
-    } catch (_) {
-      initial = pickRandomName()
-    }
-    setName(initial)
-    const t = setTimeout(() => setIsInitialMount(false), initial.length * 35 + 500)
-    return () => clearTimeout(t)
+    initialMountTimerRef.current = setTimeout(
+      () => setIsInitialMount(false),
+      nameRef.current.length * 35 + 500
+    )
+    return () => clearTimeout(initialMountTimerRef.current)
   }, [])
+
+  // Skip-the-entrance: any pointerdown / touchstart during the initial
+  // char-stamp cascade snaps the characters to settled state. Excludes
+  // RetreatButton so retreat still navigates back. The class-based skip
+  // (drop animate-char-stamp from each span via entranceSkipped prop) is
+  // what makes the snap actually take effect — overriding inline animation
+  // didn't reliably stop the in-flight Tailwind keyframe.
+  useEffect(() => {
+    if (!isInitialMount) return
+    const handler = (e) => {
+      if (e.target?.closest?.('[data-retreat]')) return
+      setEntranceSkipped(true)
+      setIsInitialMount(false)
+      if (initialMountTimerRef.current) clearTimeout(initialMountTimerRef.current)
+    }
+    window.addEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
+  }, [isInitialMount])
 
   /**
    * triggerBrandConfirm — fired when the user presses Enter on a non-empty
@@ -278,8 +401,11 @@ export default function NewCycleNamePage() {
    * stub destination after the brand has cooled.
    */
   const triggerBrandConfirm = () => {
-    if (isBranding) return
+    // Already in brand or fire phase → this rapid follow-up tap skips the
+    // remaining cooldown + transition and routes straight to /fitness/new/muscles.
+    if (brandingRef.current) { skipNow(); return }
     if (name.trim().length === 0) return
+    brandingRef.current = true
     setIsBranding(true)
     try { localStorage.setItem(pk('cycle-name'), name.trim()) } catch (_) {}
     play('brand-confirm')
@@ -303,7 +429,7 @@ export default function NewCycleNamePage() {
     }
     // After the brand cools, fire the fire transition. It then navigates.
     const brandDuration = name.length * 20 + 1650
-    setTimeout(() => {
+    fireKickoffTimerRef.current = setTimeout(() => {
       setIsFireActive(true)
     }, brandDuration)
   }
@@ -339,8 +465,27 @@ export default function NewCycleNamePage() {
 
   /** Called from FireTransition when its sequence peaks — navigate now. */
   const handleFireComplete = () => {
-    router.push('/fitness/new/muscles')
+    if (skippedRef.current) return
+    router.push(NEXT_TARGET)
   }
+
+  // Skip-the-cascade: once the user has committed (brand or fire), the next
+  // pointer/touch input anywhere routes to /fitness/new/muscles immediately.
+  // Excludes RetreatButton (data-retreat) so retreat goes back instead of
+  // fast-forwarding. pointerdown + touchstart for iOS PWA reliability.
+  useEffect(() => {
+    if (!isBranding && !isFireActive) return
+    const handler = (e) => {
+      if (e.target?.closest?.('[data-retreat]')) return
+      skipNow()
+    }
+    window.addEventListener('pointerdown', handler, { capture: true })
+    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', handler, { capture: true })
+      window.removeEventListener('touchstart',  handler, { capture: true })
+    }
+  }, [isBranding, isFireActive])
 
   /**
    * triggerImpact — fired by the input whenever a new character is added.
@@ -412,11 +557,13 @@ export default function NewCycleNamePage() {
         }}
       />
 
-      {/* Kanji watermark — 名 ("name") top-right */}
+      {/* Kanji watermark — 名 ("name") top-right. Top rooted at safe-area floor so it
+          never clips into the iOS Dynamic Island camera area. */}
       <div
-        className="absolute -top-12 -right-16 pointer-events-none select-none animate-flicker"
+        className="absolute -right-16 pointer-events-none select-none animate-flicker"
         aria-hidden="true"
         style={{
+          top: 'calc(env(safe-area-inset-top, 0px) - 48px)',
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '46rem',
           lineHeight: '0.8',
@@ -445,13 +592,14 @@ export default function NewCycleNamePage() {
         </p>
       </div>
 
+      {/* Content wrapper — atmospheric layers paint full-bleed (incl. safe area). */}
+      <div className="relative z-10 flex-1 flex flex-col">
       {/* Top nav row */}
-      <nav className="relative z-10 flex items-center justify-between px-8 py-6">
-        <RetreatButton />
-        <div className="hidden md:block font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-          PALACE / FITNESS / NEW CYCLE / NAME
-        </div>
-      </nav>
+      <nav
+        className="relative flex items-center justify-between pl-0 pr-8 pb-6"
+        style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
+      >
+        <RetreatButton href={backHref} />      </nav>
 
       {/* Main content area */}
       <section className="relative z-10 px-8 pt-12 pb-20 max-w-6xl mx-auto" style={{ overflow: 'visible' }}>
@@ -459,12 +607,12 @@ export default function NewCycleNamePage() {
         <div className="mb-12 text-center">
           <div className="inline-flex items-center gap-4 mb-6">
             <div className="h-0.5 w-20 bg-gtl-red" />
-            <span className="font-mono text-xs tracking-[0.4em] uppercase text-gtl-red font-bold">
+            <span className="font-matisse text-xs tracking-[0.4em] uppercase text-gtl-red font-bold">
               STEP / 01 / NAME
             </span>
             <div className="h-0.5 w-20 bg-gtl-red" />
           </div>
-          <h1 className="font-display text-6xl md:text-7xl lg:text-8xl text-gtl-chalk leading-none -rotate-1">
+          <h1 className="font-matisse text-6xl md:text-7xl lg:text-8xl text-gtl-chalk leading-none -rotate-1">
             NAME
             <span className="text-gtl-red gtl-headline-shadow-soft inline-block rotate-2 ml-4">
               YOUR CYCLE
@@ -487,9 +635,11 @@ export default function NewCycleNamePage() {
             onChange={setName}
             maxLength={MAX_LEN}
             isInitialMount={isInitialMount}
+            entranceSkipped={entranceSkipped}
             onCharAdded={triggerImpact}
             onConfirm={triggerBrandConfirm}
             isBranding={isBranding}
+            onInputFocus={handleInputFocus}
           />
 
           {/* The slot/engraving rail beneath the text — thicker and wider.
@@ -526,20 +676,33 @@ export default function NewCycleNamePage() {
           </span>
         </div>
 
-        {/* Enter-to-brand hint — only visible when idle and there's a name */}
-        {!isBranding && name.trim().length > 0 && (
-          <div className="mt-10 flex items-center justify-center gap-3">
-            <div className="h-px w-10 bg-gtl-red/60" />
-            <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-ash">
-              PRESS
-            </span>
-            <span className="inline-flex items-center justify-center min-w-[3rem] px-2 py-1 border border-gtl-red text-gtl-red-bright font-mono text-[10px] tracking-[0.2em] font-bold">
-              ENTER
-            </span>
-            <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-ash">
-              TO FORGE
-            </span>
-            <div className="h-px w-10 bg-gtl-red/60" />
+        {/* Forge button + Enter hint — visible once the user typed something. The
+            button is the primary path (a chunky tap target with the GTL red-bright
+            slab); the keyboard hint stays as a secondary affordance for desktop +
+            iOS users who want to commit straight from the soft keyboard. */}
+        {!isBranding && (
+          <div className="mt-6 flex flex-col items-center">
+            <ForgeButton
+              forgeRef={forgeButtonRef}
+              disabled={name.trim().length === 0}
+              onTap={triggerBrandConfirm}
+              onSwipe={() => {
+                if (name.trim().length === 0) return
+                // Quick-forge path: persist + flag + HeistTransition (red slash)
+                // to muscles. No FireTransition.
+                try {
+                  localStorage.setItem(pk('cycle-name'), name.trim())
+                  localStorage.setItem('gtl-quick-forge', '1')
+                } catch (_) {}
+                setQuickForgeRunning(true)
+                setQuickHeistActive(true)
+              }}
+            />
+            <div className="mt-2 flex items-center gap-3 font-mono text-[8px] tracking-[0.25em] uppercase text-gtl-ash/80">
+              <span>TAP TO FORGE</span>
+              <span className="text-gtl-red">·</span>
+              <span>SWIPE TO LIFT NOW →</span>
+            </div>
           </div>
         )}
       </section>
@@ -547,14 +710,19 @@ export default function NewCycleNamePage() {
       {/* Footer slash */}
       <div className="absolute bottom-6 left-0 right-0 z-10 flex items-center gap-4 px-8">
         <div className="h-px flex-1 bg-gtl-edge" />
-        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
+        <div className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
           GRITTED TEETH LIFESTYLE / FITNESS PALACE / NAMING
         </div>
         <div className="h-px flex-1 bg-gtl-edge" />
       </div>
 
+      </div>
       {/* Fire transition overlay — plays after brand cools, then navigates */}
       <FireTransition active={isFireActive} onComplete={handleFireComplete} />
+      {/* First hop on the quick-forge swipe — uses the same HeistTransition the
+          home page uses (default 'GRIT THOSE TEETH' red-slash overlay). */}
+      <HeistTransition active={quickHeistActive} onComplete={() => router.push(NEXT_TARGET)} />
+      <SpeedLines active={quickForgeRunning} />
     </main>
   )
 }

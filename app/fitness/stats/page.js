@@ -11,6 +11,7 @@ import Link from 'next/link'
 import { useProfileGuard } from '../../../lib/useProfileGuard'
 import { pk } from '../../../lib/storage'
 import { useSound } from '../../../lib/useSound'
+import RetreatButton from '../../../components/RetreatButton'
 
 // 5 body regions — each star point represents one
 const BODY_REGIONS = [
@@ -547,7 +548,7 @@ function BodyStarChart({ regionXP }) {
   const ghostPath = buildGhostPath()
 
   return (
-    <div className="relative mx-auto" style={{ width: '100%', maxWidth: `${VW}px`, height: `${VH}px`, perspective: '500px', transform: 'translateX(24px)' }}>
+    <div className="relative mx-auto" style={{ width: '100%', maxWidth: `${VW}px`, height: `${VH}px`, perspective: '500px', transform: 'translateX(14px)' }}>
     <div className="absolute inset-0" style={{ transform: 'rotateX(30deg) rotateY(20deg)', transformOrigin: 'center center', transformStyle: 'preserve-3d' }}>
       <svg
         className="absolute inset-0 w-full h-full"
@@ -604,37 +605,6 @@ function StatBox({ label, value, sub }) {
   )
 }
 
-function RetreatButton() {
-  const { play } = useSound()
-  const [hovered, setHovered] = useState(false)
-  return (
-    <Link
-      href="/fitness/hub"
-      onMouseEnter={() => { setHovered(true); play('button-hover') }}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => play('menu-close')}
-      className="group relative inline-flex items-center"
-    >
-      <div
-        className={`absolute inset-0 -inset-x-2 transition-all duration-300 ease-out
-          ${hovered ? 'bg-gtl-red opacity-100' : 'bg-gtl-edge opacity-50'}`}
-        style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
-        aria-hidden="true"
-      />
-      <div className="relative flex items-center gap-3 px-4 py-2">
-        <span className={`font-display text-base leading-none transition-all duration-300
-          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red translate-x-0'}`}>
-          ◀
-        </span>
-        <span className={`font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300
-          ${hovered ? 'text-gtl-paper' : 'text-gtl-chalk'}`}>
-          RETREAT
-        </span>
-      </div>
-    </Link>
-  )
-}
-
 export default function StatsPage() {
   useProfileGuard()
   const { play } = useSound()
@@ -668,11 +638,13 @@ export default function StatsPage() {
         }}
       />
 
-      {/* Kanji watermark — 記 ("record") */}
+      {/* Kanji watermark — 記 ("record"). Top rooted at safe-area floor so it never
+          clips into the iOS Dynamic Island camera area. */}
       <div
-        className="absolute -top-8 -right-8 pointer-events-none select-none animate-flicker"
+        className="absolute -right-8 pointer-events-none select-none animate-flicker"
         aria-hidden="true"
         style={{
+          top: 'calc(env(safe-area-inset-top, 0px) - 32px)',
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '36rem',
           lineHeight: '0.8',
@@ -684,27 +656,29 @@ export default function StatsPage() {
         記
       </div>
 
+      {/* Content wrapper — atmospheric layers paint full-bleed (incl. safe area). */}
+      <div className="relative z-10 flex-1 flex flex-col">
       {/* Nav */}
-      <nav className="relative z-10 flex items-center justify-between px-8 py-6">
-        <RetreatButton />
-        <div className="hidden md:block font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-          PALACE / FITNESS / WAR RECORD
-        </div>
+      <nav
+        className="relative flex items-center justify-between pl-0 pr-8 pb-6"
+        style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
+      >
+        <RetreatButton href="/fitness/hub" />
       </nav>
 
       {/* Main content */}
-      <section className="relative z-10 px-6 md:px-8 pt-8 pb-24 max-w-4xl mx-auto">
+      <section className="relative z-10 px-6 md:px-8 pt-3 md:pt-8 pb-12 md:pb-24 max-w-4xl mx-auto">
 
         {/* Headline */}
-        <div className="mb-10">
-          <div className="flex items-center gap-4 mb-3">
+        <div className="mb-5 md:mb-10">
+          <div className="flex items-center gap-4 mb-2 md:mb-3">
             <div className="h-px w-16 bg-gtl-red" />
             <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-red">
               OPERATIVE FILE
             </span>
           </div>
           <div className="flex items-end justify-between gap-4">
-            <h1 className="font-display text-[4.5rem] md:text-[7rem] leading-[0.9] text-gtl-chalk -rotate-1">
+            <h1 className="font-matisse text-[3rem] md:text-[7rem] leading-[0.9] text-gtl-chalk -rotate-1">
               WAR
               <br />
               <span className="text-gtl-red gtl-headline-shadow-soft inline-block rotate-1">
@@ -718,7 +692,7 @@ export default function StatsPage() {
               className="relative shrink-0 mb-2 font-mono text-[9px] tracking-[0.3em] uppercase font-bold px-4 py-2.5 text-gtl-paper bg-gtl-red hover:bg-gtl-red-bright border border-gtl-red-bright transition-colors duration-150"
               style={{ clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)' }}
             >
-              COMBAT<br />LOG ▶
+              COMBAT<br />LOG ▶︎
             </button>
           </div>
         </div>
@@ -739,10 +713,10 @@ export default function StatsPage() {
         ) : (
           <>
             {/* ── Level + XP bar ──────────────────────────────────── */}
-            <div className="mb-10">
-              <div className="flex items-baseline justify-between mb-3">
+            <div className="mb-5 md:mb-10">
+              <div className="flex items-baseline justify-between mb-2 md:mb-3">
                 <div className="flex items-baseline gap-4">
-                  <span className="font-display text-7xl md:text-8xl leading-none text-gtl-red">
+                  <span className="font-display text-5xl md:text-8xl leading-none text-gtl-red">
                     {level}
                   </span>
                   <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-ash">
@@ -764,7 +738,7 @@ export default function StatsPage() {
             </div>
 
             {/* ── Key stats ───────────────────────────────────────── */}
-            <div className="grid grid-cols-3 gap-3 mb-10">
+            <div className="grid grid-cols-3 gap-3 mb-5 md:mb-10">
               <StatBox label="CYCLES FORGED" value={stats.cycles} />
               <StatBox label="DAYS COMPLETED" value={stats.daysCompleted} />
               <StatBox label="COMPLETION RATE" value={`${completionPct}%`} />
@@ -772,8 +746,8 @@ export default function StatsPage() {
 
             {/* ── Top muscles — P5 social stats layout ────────────── */}
             {stats.regionXP.some(x => x > 0) && (
-              <div className="mb-10">
-                <div className="flex items-center gap-4 mb-6">
+              <div className="mb-5 md:mb-10">
+                <div className="flex items-center gap-4 mb-3 md:mb-6">
                   <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-gtl-red font-bold">
                     TOP TARGETS
                   </span>
@@ -849,7 +823,7 @@ export default function StatsPage() {
         )}
 
         {/* Footer */}
-        <div className="mt-16 flex items-center gap-4">
+        <div className="mt-8 md:mt-16 flex items-center gap-4">
           <div className="h-px flex-1 bg-gtl-edge" />
           <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
             GRITTED TEETH LIFESTYLE / WAR RECORD
@@ -857,6 +831,7 @@ export default function StatsPage() {
           <div className="h-px flex-1 bg-gtl-edge" />
         </div>
       </section>
+      </div>
     </main>
     </>
   )

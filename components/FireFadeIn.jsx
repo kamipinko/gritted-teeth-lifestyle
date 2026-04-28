@@ -14,9 +14,18 @@
 import { useEffect, useState } from 'react'
 
 export default function FireFadeIn({ duration = 800 }) {
-  const [active, setActive] = useState(true)
+  // Quick-forge chain (FORGE swipe) suppresses the destination-side fire wall
+  // because those pages cut to red slashes instead. Summary's default
+  // ETCH-CYCLE flow keeps the fire wall on /fitness/active for visual continuity
+  // — so we ONLY check gtl-quick-forge here, not gtl-deep-launch.
+  const isQuickForge = (() => {
+    if (typeof window === 'undefined') return false
+    try { return localStorage.getItem('gtl-quick-forge') === '1' } catch (_) { return false }
+  })()
+  const [active, setActive] = useState(isQuickForge ? 'done' : true)
 
   useEffect(() => {
+    if (active === 'done') return
     // Trigger fade after a single frame so the initial paint is full fire
     const t = setTimeout(() => setActive(false), 50)
     const t2 = setTimeout(() => {
@@ -25,6 +34,7 @@ export default function FireFadeIn({ duration = 800 }) {
       setActive('done')
     }, duration + 200)
     return () => { clearTimeout(t); clearTimeout(t2) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [duration])
 
   if (active === 'done') return null

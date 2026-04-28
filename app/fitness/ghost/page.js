@@ -15,6 +15,7 @@ import { useProfileGuard } from '../../../lib/useProfileGuard'
 import { pk } from '../../../lib/storage'
 import FireFadeIn from '../../../components/FireFadeIn'
 import FireTransition from '../../../components/FireTransition'
+import RetreatButton from '../../../components/RetreatButton'
 
 const MUSCLE_LABELS = {
   chest: 'CHEST', back: 'BACK', shoulders: 'SHOULDERS',
@@ -34,33 +35,6 @@ function formatDateShort(iso) {
 
 const SLAB_ROTATIONS = ['-1.2deg','0.9deg','-0.7deg','1.4deg','-1deg','0.6deg','-1.5deg','1.1deg']
 
-function RetreatButton() {
-  const { play } = useSound()
-  const [hovered, setHovered] = useState(false)
-  return (
-    <Link
-      href="/fitness/hub"
-      onMouseEnter={() => { setHovered(true); play('button-hover') }}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => play('menu-close')}
-      className="group relative inline-flex items-center"
-    >
-      <div
-        className={`absolute inset-0 -inset-x-2 transition-all duration-300 ease-out
-          ${hovered ? 'bg-gtl-red opacity-100' : 'bg-gtl-edge opacity-50'}`}
-        style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
-        aria-hidden="true"
-      />
-      <div className="relative flex items-center gap-3 px-4 py-2">
-        <span className={`font-display text-base leading-none transition-all duration-300
-          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red'}`}>◀</span>
-        <span className={`font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300
-          ${hovered ? 'text-gtl-paper' : 'text-gtl-chalk'}`}>RETREAT</span>
-      </div>
-    </Link>
-  )
-}
-
 function MuscleTag({ id, index }) {
   const rot = SLAB_ROTATIONS[index % SLAB_ROTATIONS.length]
   return (
@@ -77,7 +51,6 @@ function MuscleTag({ id, index }) {
     </div>
   )
 }
-
 
 function CheckSlam({ part = 'face' }) {
   return (
@@ -666,11 +639,13 @@ export default function GhostCyclePage() {
         style={{ background: 'linear-gradient(135deg, rgba(30,30,80,0.18) 0%, transparent 45%, rgba(20,20,60,0.28) 100%)' }}
       />
 
-      {/* Kanji watermark — 幽 (ghost/spirit) */}
+      {/* Kanji watermark — 幽 (ghost/spirit). Top rooted at safe-area floor so it
+          never clips into the iOS Dynamic Island camera area. */}
       <div
-        className="absolute -top-16 -right-24 pointer-events-none select-none"
+        className="absolute -right-24 pointer-events-none select-none"
         aria-hidden="true"
         style={{
+          top: 'calc(env(safe-area-inset-top, 0px) - 64px)',
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
           fontSize: '52rem', lineHeight: '0.8',
           color: '#6060a0', opacity: 0.045, fontWeight: 900,
@@ -680,12 +655,8 @@ export default function GhostCyclePage() {
       </div>
 
       {/* Nav */}
-      <nav className="relative z-10 shrink-0 flex items-center justify-between px-8 py-5">
-        <RetreatButton />
-        <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-          PALACE / FITNESS / GHOST CYCLE
-        </div>
-      </nav>
+      <nav className="relative z-10 shrink-0 flex items-center justify-between pl-0 pr-8 py-5">
+        <RetreatButton href="/fitness/hub" />      </nav>
 
       {/* Ghost mode banner */}
       <div className="relative z-10 mx-8 mb-4">
@@ -712,7 +683,7 @@ export default function GhostCyclePage() {
             GHOST TRAIN
           </span>
         </div>
-        <h1 className="font-display text-5xl text-gtl-chalk leading-none -rotate-1">
+        <h1 className="font-matisse text-5xl text-gtl-chalk leading-none -rotate-1">
           CHOOSE
           <span className="inline-block rotate-1 ml-3"
             style={{ color: '#6060a0', textShadow: '3px 3px 0 #1a1a3e' }}>YOUR CYCLE</span>

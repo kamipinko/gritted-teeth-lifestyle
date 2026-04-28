@@ -15,6 +15,9 @@ import { useProfileGuard } from '../../../../lib/useProfileGuard'
 import { pk } from '../../../../lib/storage'
 import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
+import SlashWipe from '../../../../components/SlashWipe'
+import SpeedLines from '../../../../components/SpeedLines'
+import RetreatButton from '../../../../components/RetreatButton'
 
 const MONTH_NAMES = [
   'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
@@ -46,7 +49,7 @@ const MONTH_KANJI = [
 
 const CELL_CLIP = 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)'
 const PARA_CLIP = 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)'
-const ROW_H = 95
+const ROW_H = 75
 
 // Build a 5-row × 7-col grid. Overflow days from would-be row 6 wrap into
 // row 1's leading empty slots.
@@ -78,32 +81,6 @@ function buildGrid(year, month) {
   return { grid: [...row1, ...raw.slice(7, 35)], wrapped: wrappedDays }
 }
 
-function RetreatButton() {
-  const { play } = useSound()
-  const [hovered, setHovered] = useState(false)
-  let backHref = '/fitness/new/muscles'
-  try { if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit' } catch (_) {}
-  return (
-    <Link
-      href={backHref}
-      onMouseEnter={() => { setHovered(true); play('button-hover') }}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => play('menu-close')}
-      className="group relative inline-flex items-center shrink-0"
-    >
-      <div
-        className={`absolute inset-0 -inset-x-1 transition-all duration-300 ease-out
-          ${hovered ? 'bg-gtl-red opacity-100' : 'bg-gtl-edge opacity-50'}`}
-        style={{ clipPath: PARA_CLIP }}
-        aria-hidden="true"
-      />
-      <div className="relative flex items-center gap-2 px-3 py-1.5">
-        <span className={`font-display text-sm leading-none transition-all duration-300
-          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red'}`}>◀</span>
-      </div>
-    </Link>
-  )
-}
 
 function MonthNavButton({ dir, onClick }) {
   const { play } = useSound()
@@ -119,7 +96,7 @@ function MonthNavButton({ dir, onClick }) {
       aria-label={dir === 'prev' ? 'Previous month' : 'Next month'}
     >
       <span className="font-display text-base leading-none text-gtl-red">
-        {dir === 'prev' ? '◀' : '▶'}
+        {dir === 'prev' ? '◀︎' : '▶︎'}
       </span>
     </button>
   )
@@ -130,7 +107,7 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex items-center justify-between px-3 py-2.5 border transition-colors duration-150
+      className={`relative flex items-center justify-between px-3 py-1.5 min-h-[46px] border transition-colors duration-150
         ${active
           ? 'bg-gtl-red border-gtl-red-bright shadow-red-glow'
           : 'bg-gtl-ink border-gtl-edge'}`}
@@ -298,6 +275,8 @@ export default function SchedulePage() {
   useProfileGuard()
   const router = useRouter()
   const { play } = useSound()
+  let backHref = '/fitness/new/muscles'
+  try { if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit' } catch (_) {}
 
   const [today] = useState(() => new Date())
   const [displayDate, setDisplayDate] = useState(() => {
@@ -309,6 +288,8 @@ export default function SchedulePage() {
   const [selectedDays, setSelectedDays] = useState(new Set())
   const [assignments,  setAssignments]  = useState({})
   const [fireActive,   setFireActive]   = useState(false)
+  const [quickHeistActive, setQuickHeistActive] = useState(false)
+  const [quickForgeRunning, setQuickForgeRunning] = useState(false)
   const dragRef = useRef(false) // true during swipe-select
   const gridRef = useRef(null)
 
@@ -502,6 +483,52 @@ export default function SchedulePage() {
     ? Math.round((new Date(lastSelectedKey + 'T00:00:00Z') - new Date(firstSelectedKey + 'T00:00:00Z')) / 86400000) + 1
     : 0
 
+  // Quick-forge auto-progression: build 6-day cycle (today + 5 future, last is
+  // rest), all training days assigned all muscles, then auto-press CARVE.
+  useEffect(() => {
+    let isQuickForge = false
+    try { isQuickForge = localStorage.getItem('gtl-quick-forge') === '1' } catch (_) {}
+    if (!isQuickForge) return
+    setQuickForgeRunning(true)
+    let cancelled = false
+    const t = setTimeout(() => {
+      if (cancelled) return
+      const allMuscles = MUSCLE_ORDER
+      const today = new Date()
+      const days = []
+      for (let i = 0; i < 6; i++) {
+        const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)
+        const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+        days.push(iso)
+      }
+      const newSelected = new Set(days)
+      const newAssignments = {}
+      // First 5 days = all muscles; last day = rest (no muscles).
+      for (let i = 0; i < days.length - 1; i++) {
+        newAssignments[days[i]] = new Set(allMuscles)
+      }
+      newAssignments[days[days.length - 1]] = new Set()
+      setSelectedDays(newSelected)
+      setAssignments(newAssignments)
+      // Persist + HeistTransition (red slash) to summary. No FireTransition.
+      const t2 = setTimeout(() => {
+        if (cancelled) return
+        try {
+          localStorage.setItem(pk('training-days'), JSON.stringify(days))
+          const serialized = {}
+          for (const [iso, set] of Object.entries(newAssignments)) {
+            if (set.size > 0) serialized[iso] = [...set]
+          }
+          localStorage.setItem(pk('daily-plan'), JSON.stringify(serialized))
+        } catch (_) {}
+        setQuickHeistActive(true)
+      }, 600)
+      return () => clearTimeout(t2)
+    }, 700)
+    return () => { cancelled = true; clearTimeout(t) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleCarve = () => {
     if (!carveEnabled) return
     play('card-confirm')
@@ -547,7 +574,7 @@ export default function SchedulePage() {
 
   // ── Render ──────────────────────────────────────────────────────────────
   return (
-    <main className="relative h-screen flex flex-col overflow-hidden bg-gtl-void">
+    <main className="relative h-[100dvh] flex flex-col overflow-hidden bg-gtl-void">
       {/* Kanji stamp animation */}
       <style>{`
         @keyframes kanji-stamp {
@@ -580,22 +607,19 @@ export default function SchedulePage() {
       <div className="absolute inset-0 pointer-events-none"
         style={{ background: 'linear-gradient(135deg, rgba(122,14,20,0.25) 0%, transparent 40%, transparent 60%, rgba(74,10,14,0.35) 100%)' }} />
 
-      {/* Kanji watermark */}
-      <div className="absolute -top-8 -right-20 pointer-events-none select-none animate-flicker" aria-hidden="true"
-        style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '46rem', lineHeight: '0.8', color: '#ffffff', opacity: 0.04, fontWeight: 900 }}>
-        暦
-      </div>
-      <div className="absolute -top-24 -left-8 font-display leading-none text-gtl-red/[0.05] select-none pointer-events-none"
-        style={{ fontSize: '28rem' }} aria-hidden="true">
-        03
-      </div>
-
+      {/* Content wrapper — atmospheric layers paint full-bleed (incl. safe area). */}
+      <div className="relative z-10 flex-1 flex flex-col overflow-hidden">
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <nav className="relative z-10 flex items-center gap-3 px-4 h-12 border-b border-gtl-edge/40 shrink-0">
-        <RetreatButton />
+      <nav
+        className="relative flex items-center justify-center gap-4 px-4 pb-1 border-b border-gtl-edge/40 shrink-0"
+        style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}
+      >
+        {/* RetreatButton self-positions fixed top-left (canonical component);
+            the prev/label/next centered group below is naturally symmetric. */}
+        <RetreatButton href={backHref} />
         <MonthNavButton dir="prev" onClick={prevMonth} />
-        <div className="flex-1 min-w-0 flex items-baseline gap-2 justify-center">
-          <span className="font-display text-xl leading-none text-gtl-chalk tracking-tight truncate">
+        <div className="flex items-baseline gap-2">
+          <span className="font-display text-xl leading-none text-gtl-chalk tracking-tight">
             {MONTH_NAMES[month]}
           </span>
           <span className="font-mono text-[10px] tracking-[0.3em] text-gtl-red font-bold">
@@ -606,13 +630,13 @@ export default function SchedulePage() {
       </nav>
 
       {/* ── Calendar ────────────────────────────────────────────────────── */}
-      <section className="relative z-10 px-3 pt-1 pb-0 shrink-0">
+      <section className="relative z-10 px-3 pt-0 pb-0 shrink-0">
         {/* Day-of-week header */}
         <div className="grid grid-cols-7 gap-1 mb-1">
           {DAY_LABELS.map((label, i) => (
             <div
               key={label}
-              className={`py-0.5 text-center font-mono text-[9px] tracking-[0.2em] uppercase
+              className={`py-0.5 text-center font-mono text-[14px] tracking-wide font-bold uppercase
                 ${i === 0 || i === 6 ? 'text-gtl-red/80' : 'text-gtl-ash'}`}
             >
               {label}
@@ -785,53 +809,54 @@ export default function SchedulePage() {
         </div>
       </section>
 
-      {/* ── Logo (empty state) / Muscle grid ─────────────────────────── */}
-      <div className="relative z-10 flex-1 flex flex-col overflow-hidden">
-        {/* Red accent line */}
-        <div className="h-[2px] bg-gtl-red shrink-0" />
+      {/* Red accent line */}
+      <div className="h-[2px] bg-gtl-red shrink-0" />
 
-        {/* Logo — visible when no days selected */}
-        {!sheetOpen && (
-          <div className="flex-1 flex items-center justify-center opacity-30">
-            <img
-              src="/logo.png"
-              alt="Gritted Teeth Lifestyle"
-              className="-rotate-6"
-              style={{ width: 226, height: 226, borderRadius: '50%', objectFit: 'cover' }}
+      {/* Logo — visible when no days selected */}
+      {!sheetOpen && (
+        <div className="flex-1 flex items-center justify-center opacity-30 overflow-hidden">
+          <img
+            src="/logo.png"
+            alt="Gritted Teeth Lifestyle"
+            className="-rotate-6"
+            style={{ width: 226, height: 226, borderRadius: '50%', objectFit: 'cover' }}
+          />
+        </div>
+      )}
+
+      {/* Muscle grid — fills remaining viewport, scrolls internally if needed.
+          Calendar above is shrink-0 (always full 5 rows visible, never scrolls). */}
+      {sheetOpen && (
+        <div className="flex-1 overflow-y-auto px-3 pt-0 pb-1">
+          <div className="grid grid-cols-2 grid-rows-6 gap-1" style={{ overflow: 'visible' }}>
+            {SHEET_MUSCLES.map((m) => (
+              <SheetMuscleButton
+                key={m.id}
+                kanji={m.kanji}
+                label={m.label}
+                active={batchMuscleState(m.id)}
+                onClick={() => toggleMuscle(m.id)}
+              />
+            ))}
+            <SheetCarveButton
+              count={cycleDays}
+              enabled={carveEnabled}
+              onFire={handleCarve}
+              onHover={() => play('button-hover')}
+              onSlash={() => play(Math.random() < 0.2 ? 'slash-alt' : 'slash')}
             />
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Muscle grid — slides in when days selected */}
-        {sheetOpen && (
-          <div className="px-3 pt-1 pb-1">
-            <div className="grid grid-cols-2 grid-rows-6 gap-1" style={{ overflow: 'visible' }}>
-              {SHEET_MUSCLES.map((m) => (
-                <SheetMuscleButton
-                  key={m.id}
-                  kanji={m.kanji}
-                  label={m.label}
-                  active={batchMuscleState(m.id)}
-                  onClick={() => toggleMuscle(m.id)}
-                />
-              ))}
-              <SheetCarveButton
-                count={cycleDays}
-                enabled={carveEnabled}
-                onFire={handleCarve}
-                onHover={() => play('button-hover')}
-                onSlash={() => play(Math.random() < 0.2 ? 'slash-alt' : 'slash')}
-              />
-            </div>
-          </div>
-        )}
       </div>
-
       <FireFadeIn duration={900} />
       <FireTransition
         active={fireActive}
         onComplete={() => router.push('/fitness/new/summary')}
       />
+      <SlashWipe active={quickHeistActive} onComplete={() => router.push('/fitness/new/summary')} />
+      <SpeedLines active={quickForgeRunning} />
     </main>
   )
 }

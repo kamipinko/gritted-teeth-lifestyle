@@ -11,33 +11,7 @@ import { useSound } from '../../../lib/useSound'
 import { useProfileGuard } from '../../../lib/useProfileGuard'
 import { pk } from '../../../lib/storage'
 import FireFadeIn from '../../../components/FireFadeIn'
-
-function RetreatButton() {
-  const { play } = useSound()
-  const [hovered, setHovered] = useState(false)
-  return (
-    <Link
-      href="/fitness/load"
-      onMouseEnter={() => { setHovered(true); play('button-hover') }}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => play('menu-close')}
-      className="group relative inline-flex items-center"
-    >
-      <div
-        className={`absolute inset-0 -inset-x-2 transition-all duration-300 ease-out
-          ${hovered ? 'bg-gtl-red opacity-100' : 'bg-gtl-edge opacity-50'}`}
-        style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
-        aria-hidden="true"
-      />
-      <div className="relative flex items-center gap-3 px-4 py-2">
-        <span className={`font-display text-base leading-none transition-all duration-300
-          ${hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red'}`}>◀</span>
-        <span className={`font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300
-          ${hovered ? 'text-gtl-paper' : 'text-gtl-chalk'}`}>RETREAT</span>
-      </div>
-    </Link>
-  )
-}
+import RetreatButton from '../../../components/RetreatButton'
 
 function EditNavButton({ number, label, caption, href }) {
   const { play } = useSound()
@@ -131,7 +105,7 @@ function EditNavButton({ number, label, caption, href }) {
             transition: 'color 150ms, transform 150ms',
           }}
         >
-          ▶
+          ▶︎
         </div>
       </div>
     </Link>
@@ -162,20 +136,23 @@ export default function EditCyclePage() {
       <div className="absolute inset-0 pointer-events-none"
         style={{ background: 'linear-gradient(160deg, rgba(80,10,10,0.12) 0%, transparent 50%, rgba(20,20,20,0.3) 100%)' }} />
 
-      {/* Kanji watermark — 改 (reform/edit) */}
-      <div className="absolute -top-8 -right-16 pointer-events-none select-none" aria-hidden="true"
-        style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '48rem', lineHeight: '0.8', color: '#d4181f', opacity: 0.04, fontWeight: 900 }}>
+      {/* Kanji watermark — 改 (reform/edit). Top rooted at safe-area floor so it never
+          clips into the iOS Dynamic Island camera area. */}
+      <div className="absolute -right-16 pointer-events-none select-none" aria-hidden="true"
+        style={{ top: 'calc(env(safe-area-inset-top, 0px) - 32px)', fontFamily: '"Noto Serif JP", "Yu Mincho", serif', fontSize: '48rem', lineHeight: '0.8', color: '#d4181f', opacity: 0.04, fontWeight: 900 }}>
         改
       </div>
 
+      {/* Content wrapper — atmospheric layers paint full-bleed (incl. safe area);
+          wrapper holds UI flow with iOS top-inset padding. */}
+      <div className="relative z-10 flex-1 flex flex-col">
       {/* Nav */}
-      <nav className="relative z-10 shrink-0 flex items-center gap-4 px-8 py-3">
-        <RetreatButton />
-        <div className="w-px self-stretch bg-gtl-edge" style={{ transform: 'skewX(-12deg)' }} />
-        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
-          PALACE / FITNESS / EDIT CYCLE
-        </div>
-      </nav>
+      <nav
+        className="relative shrink-0 flex items-center gap-4 pl-0 pr-8 pb-3"
+        style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+      >
+        <RetreatButton href="/fitness/load" />
+        <div className="w-px self-stretch bg-gtl-edge" style={{ transform: 'skewX(-12deg)' }} />      </nav>
 
       <div className="relative z-10 mx-8 mb-6 h-[2px] shrink-0"
            style={{ background: '#d4181f', transform: 'skewX(-6deg)', transformOrigin: 'left center' }} />
@@ -241,6 +218,7 @@ export default function EditCyclePage() {
         </div>
       </div>
 
+      </div>
       <FireFadeIn duration={700} />
     </main>
   )

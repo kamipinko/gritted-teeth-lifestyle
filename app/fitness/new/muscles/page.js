@@ -22,6 +22,9 @@ import { useProfileGuard } from '../../../../lib/useProfileGuard'
 import { pk } from '../../../../lib/storage'
 import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
+import SlashWipe from '../../../../components/SlashWipe'
+import SpeedLines from '../../../../components/SpeedLines'
+import RetreatButton from '../../../../components/RetreatButton'
 
 // R3F is client-only and touches `window`; dynamic import with ssr: false
 // avoids hydration errors.
@@ -65,45 +68,6 @@ const MODEL_OPTIONS = [
   { id: 'gohan',    label: 'GOHAN',     subtitle: 'TEEN'         },
 ]
 
-function RetreatButton({ href = '/fitness/new' }) {
-  const { play } = useSound()
-  const [hovered, setHovered] = useState(false)
-  try { if (localStorage.getItem('gtl-back-to-edit') === '1') href = '/fitness/edit' } catch (_) {}
-  return (
-    <Link
-      href={href}
-      onMouseEnter={() => { setHovered(true); play('button-hover') }}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => play('menu-close')}
-      className="group relative inline-flex items-center"
-    >
-      <div
-        className={`
-          absolute inset-0 -inset-x-2 transition-all duration-300 ease-out
-          ${hovered ? 'bg-gtl-red opacity-100' : 'bg-gtl-edge opacity-50'}
-        `}
-        style={{ clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)' }}
-        aria-hidden="true"
-      />
-      <div className="relative flex items-center gap-3 px-4 py-2">
-        <span
-          className={`font-display text-base leading-none transition-all duration-300 ${
-            hovered ? 'text-gtl-paper -translate-x-1' : 'text-gtl-red translate-x-0'
-          }`}
-        >
-          ◀
-        </span>
-        <span
-          className={`font-mono text-[10px] tracking-[0.3em] uppercase font-bold transition-colors duration-300 ${
-            hovered ? 'text-gtl-paper' : 'text-gtl-chalk'
-          }`}
-        >
-          RETREAT
-        </span>
-      </div>
-    </Link>
-  )
-}
 
 /**
  * A single row in the right-side muscle list.
@@ -509,11 +473,15 @@ function MobileForgeStamp({ count, onFire }) {
 
 export default function MusclesPage() {
   useProfileGuard()
+  let backHref = '/fitness/new'
+  try { if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit' } catch (_) {}
   const [selected, setSelected] = useState(() => new Set())
   const [focusedGroup, setFocusedGroup] = useState(null)
   const [modelKey, setModelKey] = useState('goku')
   const [stampRevision, setStampRevision] = useState(0)
   const [fireActive, setFireActive] = useState(false)
+  const [quickHeistActive, setQuickHeistActive] = useState(false)
+  const [quickForgeRunning, setQuickForgeRunning] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [mobileIgnitionRevision, setMobileIgnitionRevision] = useState(0)
   const [shockwaveKey, setShockwaveKey] = useState(0)
@@ -625,44 +593,47 @@ export default function MusclesPage() {
 
   const count = selected.size
 
+  // Keep a live ref to selectAll so the quick-forge timer invokes the LATEST
+  // closure (one with isMobile=true after the mobile-detection effect resolves).
+  const selectAllRef = useRef(selectAll)
+  useEffect(() => { selectAllRef.current = selectAll })
+
+  // Quick-forge auto-progression: when arriving with the gtl-quick-forge flag,
+  // press ALL → wait for the full mobile ignition cascade → press HONE. Triggers
+  // only once isMobile is true so the mobile-path animation fires (shockwave +
+  // staggered pill ignition), not the silent desktop path. Flag survives for
+  // the next pages in the chain (branded, summary).
+  const quickForgeFiredRef = useRef(false)
+  useEffect(() => {
+    if (!isMobile) return
+    if (quickForgeFiredRef.current) return
+    let isQuickForge = false
+    try { isQuickForge = localStorage.getItem('gtl-quick-forge') === '1' } catch (_) {}
+    if (!isQuickForge) return
+    quickForgeFiredRef.current = true
+    setQuickForgeRunning(true)
+    let cancelled = false
+    const t1 = setTimeout(() => { if (!cancelled) selectAllRef.current?.() }, 600)
+    // Mobile cascade: 11 pills × 120ms stagger + 200ms init = 1520ms after
+    // selectAll fires. Plus 600ms pre-delay = ~2120ms total. Small buffer.
+    const t2 = setTimeout(() => {
+      if (cancelled) return
+      const allIds = MUSCLE_GROUPS.map(g => g.id)
+      try { localStorage.setItem(pk('muscle-targets'), JSON.stringify(allIds)) } catch (_) {}
+      setQuickHeistActive(true)
+    }, 2400)
+    return () => { cancelled = true; clearTimeout(t1); clearTimeout(t2) }
+  }, [isMobile, router])
+
   return (
     <main ref={mainRef} className={`relative overflow-hidden bg-gtl-void ${isMobile ? 'h-[100dvh] flex flex-col' : 'min-h-screen'}`}>
-      {/* Background atmospherics */}
-      <div className="absolute inset-0 gtl-noise" />
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'linear-gradient(135deg, rgba(122,14,20,0.30) 0%, transparent 40%, transparent 60%, rgba(74,10,14,0.40) 100%)',
-        }}
-      />
-
-      {/* Kanji watermark — 肉 ("flesh/muscle") */}
-      <div
-        className="absolute -top-12 -left-16 pointer-events-none select-none animate-flicker"
-        aria-hidden="true"
-        style={{
-          fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-          fontSize: '46rem',
-          lineHeight: '0.8',
-          color: '#ffffff',
-          opacity: 0.045,
-          fontWeight: 900,
-        }}
-      >
-        肉
-      </div>
-
-      {/* Top nav — responsive */}
+{/* Top nav — responsive */}
       <nav
-        className={`relative z-20 shrink-0 flex items-center justify-between ${isMobile ? 'px-4 pb-2' : 'px-8 py-6'}`}
+        className={`${isMobile ? 'absolute top-0 left-0 right-0' : 'relative shrink-0'} z-20 flex items-center justify-between ${isMobile ? 'pl-0 pr-4 pb-2' : 'pl-0 pr-8 py-6'}`}
         style={isMobile ? { paddingTop: 'max(0.75rem, env(safe-area-inset-top))' } : undefined}
       >
-        <RetreatButton />
-        <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke">
-          {isMobile ? 'TARGETS' : 'PALACE / FITNESS / NEW CYCLE / TARGETS'}
-        </div>
-      </nav>
+        <RetreatButton href={backHref} />
+        </nav>
 
       {/* ── MOBILE LAYOUT — gacha style: canvas fills screen, pills float on sides ── */}
       {isMobile && (
@@ -717,7 +688,10 @@ export default function MusclesPage() {
           </div>
 
           {/* Left column — upper body */}
-          <div className="absolute left-1.5 top-0 bottom-0 z-20 flex flex-col justify-between pt-3 pb-24 pointer-events-none">
+          <div
+            className="absolute left-1.5 bottom-0 z-20 flex flex-col justify-between pb-40 pointer-events-none"
+            style={{ top: 'calc(env(safe-area-inset-top, 0px) + 56px)' }}
+          >
             {LEFT_MUSCLES.map(id => {
               const group = MUSCLE_GROUPS.find(g => g.id === id)
               return (
@@ -729,7 +703,10 @@ export default function MusclesPage() {
           </div>
 
           {/* Right column — core + lower */}
-          <div className="absolute right-1.5 top-0 bottom-0 z-20 flex flex-col justify-between pt-3 pb-24 pointer-events-none">
+          <div
+            className="absolute right-1.5 bottom-0 z-20 flex flex-col justify-between pb-40 pointer-events-none"
+            style={{ top: 'calc(env(safe-area-inset-top, 0px) + 56px)' }}
+          >
             {RIGHT_MUSCLES.map(id => {
               const group = MUSCLE_GROUPS.find(g => g.id === id)
               return (
@@ -760,12 +737,12 @@ export default function MusclesPage() {
               </div>
               <div className="flex flex-col gap-1 mb-0.5">
                 <button type="button" onClick={selectAll}
-                  className="font-mono text-[8px] tracking-[0.2em] uppercase text-gtl-ash border border-gtl-edge px-2 py-0.5 active:text-gtl-red active:border-gtl-red transition-colors"
+                  className="font-mono text-[12px] tracking-[0.2em] uppercase font-bold text-gtl-chalk border border-gtl-red px-3 py-1.5 active:text-gtl-red active:border-gtl-red-bright transition-colors"
                   style={{ touchAction: 'manipulation' }}>
                   ALL
                 </button>
                 <button type="button" onClick={clearAll}
-                  className="font-mono text-[8px] tracking-[0.2em] uppercase text-gtl-ash border border-gtl-edge px-2 py-0.5 active:text-gtl-red active:border-gtl-red transition-colors"
+                  className="font-mono text-[12px] tracking-[0.2em] uppercase font-bold text-gtl-chalk border border-gtl-red px-3 py-1.5 active:text-gtl-red active:border-gtl-red-bright transition-colors"
                   style={{ touchAction: 'manipulation' }}>
                   NONE
                 </button>
@@ -795,7 +772,7 @@ export default function MusclesPage() {
           </span>
           <div className="h-0.5 w-16 bg-gtl-red" />
         </div>
-        <h1 className="font-display text-6xl md:text-7xl text-gtl-chalk leading-none -rotate-1">
+        <h1 className="font-matisse text-6xl md:text-7xl text-gtl-chalk leading-none -rotate-1">
           MARK YOUR
           <span className="text-gtl-red gtl-headline-shadow-soft inline-block rotate-2 ml-4">
             TARGETS
@@ -979,7 +956,7 @@ export default function MusclesPage() {
       {/* Footer slash */}
       <div className="absolute bottom-6 left-0 right-0 z-10 flex items-center gap-4 px-8">
         <div className="h-px flex-1 bg-gtl-edge" />
-        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
+        <div className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
           GRITTED TEETH LIFESTYLE / FITNESS PALACE / TARGETING
         </div>
         <div className="h-px flex-1 bg-gtl-edge" />
@@ -993,6 +970,9 @@ export default function MusclesPage() {
         active={fireActive}
         onComplete={() => router.push('/fitness/new/branded')}
       />
+      {/* Red slash wipe — quick-forge swipe path only (no title text) */}
+      <SlashWipe active={quickHeistActive} onComplete={() => router.push('/fitness/new/branded')} />
+      <SpeedLines active={quickForgeRunning} />
 
       {/* Fire fade-in — picks up where FireTransition left off so the
           source-to-destination cut feels continuous. */}

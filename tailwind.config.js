@@ -68,6 +68,10 @@ module.exports = {
         // Numerals & stat readouts — monospace for that "instrument panel"
         // feel and so numbers don't shift width as they tick.
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+        // Matisse — locally hosted Japanese display serif (Fontworks Inc).
+        // Used for English page titles, breadcrumb labels, and decorative
+        // background text. NOT for buttons. License caveat in globals.css.
+        matisse: ['"FOT-Matisse Pro EB"', '"Noto Serif JP"', 'serif'],
       },
       boxShadow: {
         // Aggressive layered shadows. P5 cards always feel like they're sitting

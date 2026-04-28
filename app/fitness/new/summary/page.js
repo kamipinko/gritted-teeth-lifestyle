@@ -13,6 +13,8 @@ import { useProfileGuard } from '../../../../lib/useProfileGuard'
 import { pk } from '../../../../lib/storage'
 import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
+import RetreatButton from '../../../../components/RetreatButton'
+import SpeedLines from '../../../../components/SpeedLines'
 
 const MUSCLE_LABELS = {
   chest: 'CHEST', back: 'BACK', shoulders: 'SHOULDERS',
@@ -2599,27 +2601,13 @@ function BeginButton({ onFire, onHover, onTriggerFlicker, flickering = false, la
   )
 }
 
-function RetreatButton() {
-  const { play } = useSound()
-  let backHref = '/fitness/new/branded'
-  try { if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit' } catch (_) {}
-  return (
-    <Link
-      href={backHref}
-      onMouseEnter={() => play('button-hover')}
-      onClick={() => play('menu-close')}
-      className="group inline-flex items-center gap-1.5 font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-smoke/70 hover:text-gtl-red transition-colors duration-200"
-    >
-      <span className="text-[11px] leading-none transition-transform duration-200 group-hover:-translate-x-0.5">◀</span>
-      <span>RETREAT</span>
-    </Link>
-  )
-}
 
 export default function SummaryPage() {
   useProfileGuard()
   const router = useRouter()
   const { play } = useSound()
+  let backHref = '/fitness/new/branded'
+  try { if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit' } catch (_) {}
   useEffect(() => {
     try { if (localStorage.getItem('gtl-back-to-edit') !== '1') return } catch (_) { return }
     const handleKey = (e) => {
@@ -2635,6 +2623,10 @@ export default function SummaryPage() {
   const [days,        setDays]       = useState([])
   const [dailyPlan,   setDailyPlan]  = useState({})
   const [fireActive,  setFireActive] = useState(false)
+  // FireTransition's onComplete normally routes to /fitness/load. On the
+  // quick-forge chain we want /fitness/active so the deep-launch effect
+  // there continues to the first set's weight popup.
+  const fireDestRef = useRef('/fitness/load')
   const [stampVisible, setStampVisible] = useState(false)
   const [stampLanded,  setStampLanded]  = useState(false)
   // Per-day flame/hot/cooled state arrays — sized to days.length so both CycleBlade
@@ -2706,6 +2698,39 @@ export default function SummaryPage() {
     setWeekdayLetterCooled(prev  => prev.length === N * 3 ? prev : Array(N * 3).fill(false))
   }, [days.length])
 
+  // Quick-forge auto-progression: ONLY on summary, run the full default
+  // ETCH CYCLE flow (handleBegin) — flame animation, fire transition. Land on
+  // /fitness/load with the just-forged cycle pre-selected (ACTIVATE popup
+  // visible, ready). User decides whether to lift or look around.
+  const quickForgeFiredRef = useRef(false)
+  const [quickForgeRunning, setQuickForgeRunning] = useState(false)
+  useEffect(() => {
+    if (quickForgeFiredRef.current) return
+    if (!days.length) return  // Wait for storage hydration
+    let isQuickForge = false
+    try { isQuickForge = localStorage.getItem('gtl-quick-forge') === '1' } catch (_) {}
+    if (!isQuickForge) return
+    quickForgeFiredRef.current = true
+    setQuickForgeRunning(true)
+    let cancelled = false
+    const t = setTimeout(() => {
+      if (cancelled) return
+      try {
+        localStorage.removeItem('gtl-quick-forge')
+        // /fitness/load reads this on mount, auto-selects the matching cycle,
+        // then clears the flag. The cycle id is set by handleBegin's
+        // localStorage.setItem(pk('cycles'), [newCycle, ...]) — newCycle.id
+        // is `Date.now().toString()` so we mark "use the most-recent cycle".
+        localStorage.setItem('gtl-just-forged', '1')
+      } catch (_) {}
+      fireDestRef.current = '/fitness/load'
+      handleBeginRef.current?.()
+    }, 800)
+    return () => { cancelled = true; clearTimeout(t) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [days])
+
+  const handleBeginRef = useRef(null)
   const handleBegin = () => {
     play('card-confirm')
     try {
@@ -2999,6 +3024,10 @@ export default function SummaryPage() {
     setTimeout(() => setFireActive(true), fireActiveAt)
   }
 
+  // Keep handleBeginRef in sync so the quick-forge useEffect can invoke
+  // handleBegin without depending on it as a render-time closure.
+  useEffect(() => { handleBeginRef.current = handleBegin })
+
   const cols = days.length <= 5 ? days.length
              : days.length <= 10 ? Math.ceil(days.length / 2)
              : Math.ceil(days.length / 3)
@@ -3046,14 +3075,8 @@ export default function SummaryPage() {
       <div className="absolute inset-0 pointer-events-none"
         style={{ background: 'linear-gradient(160deg, rgba(122,14,20,0.18) 0%, transparent 45%, rgba(74,10,14,0.28) 100%)' }} />
 
-      {/* ── Nav bar ── */}
-      <section className="relative z-10">
-        <div className="relative px-8 pt-6 pb-2">
-          <div className="flex items-center gap-4">
-            <RetreatButton />
-          </div>
-        </div>
-      </section>
+      {/* ── Retreat button (fixed top-left, safe-area aware via canonical component) ── */}
+      <RetreatButton href={backHref} />
 
       {/* ── BLADE (1–6) / OUROBOROS (7) / DRILL (8–13) / FALLBACK (14) / SCROLL (15+) ── */}
       {days.length > 0 && days.length < 7 && (
@@ -3575,7 +3598,8 @@ export default function SummaryPage() {
       })()}
 
       <FireFadeIn duration={900} />
-      <FireTransition active={fireActive} onComplete={() => router.push('/fitness/load')} />
+      <FireTransition active={fireActive} onComplete={() => router.push(fireDestRef.current)} />
+      <SpeedLines active={quickForgeRunning && !fireActive} />
     </main>
   )
 }

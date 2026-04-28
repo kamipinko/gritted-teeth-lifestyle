@@ -7,17 +7,40 @@
 /* ----- Fonts ----- */
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Big+Shoulders+Display:wght@700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Shippori+Mincho:wght@400;500;600;700;800&display=swap');
 
+/* FOT-Matisse Pro EB — locally hosted Japanese display font (Fontworks Inc.).
+ * License caveat: this is a commercial typeface acquired via fontsgeek.com
+ * without verified licensing. OK for dev / personal use; SWAP TO A LICENSED
+ * ALTERNATIVE before any public/commercial release. Use class .font-matisse
+ * to apply. */
+@font-face {
+  font-family: 'FOT-Matisse Pro EB';
+  src: url('/fonts/FOT-Matisse-Pro-EB.otf') format('opentype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ----- Base ----- */
 html, body {
-  background-color: #070708;
+  /* Final-defense bg: dark red, NEVER black. If any fixed/clipped element or
+   * stacking-context oddity lets the html/body show through (e.g. iOS PWA
+   * safe-area gaps, transition seams), the user sees dark red atmosphere
+   * instead of stark black. */
+  background-color: #280609;
   color: #f1eee5;
   font-family: 'Space Grotesk', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Explicit height chain so children with min-height:100% measure right.
+   * iOS PWA standalone mode computes viewport units (vh/dvh/svh) inconsistently;
+   * html with height:100% gets the real viewport from WebKit directly. */
+  height: 100%;
+  /* Fallback min-height for older browsers that don't honor height:100% on html */
+  min-height: 100vh;
   /* Prevent iOS rubber-band bounce from pulling content out of view */
   overscroll-behavior: none;
 }
@@ -247,9 +270,16 @@ html, body {
   }
 }
 
-/* iOS PWA: ensure inputs are tappable + selectable even inside transformed parents */
+/* iOS: tap-target friendliness for clickable controls. touch-action:
+ * manipulation removes the 300ms tap delay and prevents double-tap-zoom from
+ * interfering. Intentionally NOT applied to input/textarea — that hint
+ * suppresses the gesture iOS uses to summon the soft keyboard. */
+a, button, [role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(212, 24, 31, 0.15);
+}
+
 input, textarea {
   -webkit-user-select: text;
   user-select: text;
-  touch-action: manipulation;
 }
