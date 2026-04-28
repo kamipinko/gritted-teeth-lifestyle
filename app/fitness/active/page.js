@@ -1880,13 +1880,15 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
               type="button"
               onClick={handleClose}
               aria-label="Back"
-              className="group inline-flex items-center px-3 py-3 outline-none scale-95 origin-left
+              className="group inline-flex items-center gap-3 px-4 py-2 outline-none
                 focus-visible:outline-2 focus-visible:outline-gtl-red"
               style={{ touchAction: 'manipulation' }}
             >
-              {/* Day-focus back: chevrons brighten on hover but DON'T translate
-                  — UNLOG sits opposite via justify-between, so any translate
-                  would visually shift this button. Color change only. */}
+              {/* Day-focus back: same wrapper footprint as the old ◀︎ BACK
+                  button (inline-flex / gap-3 / px-4 / py-2) so the chevrons
+                  appear in the same on-screen position. Chevrons brighten on
+                  hover but DON'T translate — UNLOG sits opposite via
+                  justify-between, so any translate would visually shift it. */}
               <span className="flex items-center gap-0.5 leading-none font-display text-2xl select-none">
                 <span aria-hidden="true" className="text-gtl-red opacity-40 transition-colors duration-200 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright">◀︎</span>
                 <span aria-hidden="true" className="text-gtl-red opacity-70 transition-colors duration-200 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:text-gtl-red-bright">◀︎</span>
