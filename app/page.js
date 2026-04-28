@@ -151,6 +151,12 @@ function CallingCardReveal({ kind }) {
       <div
         style={{
           width: '100%', maxWidth: '20rem',
+          // Card is non-interactive in this overlay context — taps pass
+          // through to the radial-gradient backdrop, where the window-level
+          // pointerdown skip listener catches them. Otherwise the inner
+          // CallingCard <button> swallows the tap and triggers its
+          // setLaunching() animation while we're trying to route away.
+          pointerEvents: 'none',
           animation: 'card-spin-throw 750ms cubic-bezier(0.16, 1, 0.3, 1) forwards',
         }}
       >

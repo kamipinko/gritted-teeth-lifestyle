@@ -645,7 +645,7 @@ export default function StatsPage() {
         aria-hidden="true"
         style={{
           top: 'calc(env(safe-area-inset-top, 0px) - 32px)',
-          fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
+          fontFamily: '"FOT-Matisse Pro EB", "Noto Serif JP", "Yu Mincho", serif',
           fontSize: '36rem',
           lineHeight: '0.8',
           color: '#ffffff',

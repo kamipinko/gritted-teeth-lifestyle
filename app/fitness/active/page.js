@@ -2507,7 +2507,7 @@ export default function ActiveCyclePage() {
         aria-hidden="true"
         style={{
           top: 'calc(env(safe-area-inset-top, 0px) - 64px)',
-          fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
+          fontFamily: '"FOT-Matisse Pro EB", "Noto Serif JP", "Yu Mincho", serif',
           fontSize: '52rem', lineHeight: '0.8',
           color: '#d4181f', opacity: 0.045, fontWeight: 900,
         }}
