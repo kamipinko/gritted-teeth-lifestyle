@@ -21,6 +21,7 @@ import { useProfileGuard } from '../../../lib/useProfileGuard'
 import { pk } from '../../../lib/storage'
 import FireTransition from '../../../components/FireTransition'
 import HeistTransition from '../../../components/HeistTransition'
+import SpeedLines from '../../../components/SpeedLines'
 import RetreatButton from '../../../components/RetreatButton'
 
 const MAX_LEN = 40
@@ -314,6 +315,7 @@ export default function NewCycleNamePage() {
   const [isBranding, setIsBranding] = useState(false)
   const [isFireActive, setIsFireActive] = useState(false)
   const [quickHeistActive, setQuickHeistActive] = useState(false)
+  const [quickForgeRunning, setQuickForgeRunning] = useState(false)
   const mainRef = useRef(null)
   const { play } = useSound()
   // Synchronous flag set on first FORGE tap so rapid follow-up taps short-circuit
@@ -649,6 +651,7 @@ export default function NewCycleNamePage() {
                   localStorage.setItem(pk('cycle-name'), name.trim())
                   localStorage.setItem('gtl-quick-forge', '1')
                 } catch (_) {}
+                setQuickForgeRunning(true)
                 setQuickHeistActive(true)
               }}
             />
@@ -676,6 +679,7 @@ export default function NewCycleNamePage() {
       {/* First hop on the quick-forge swipe — uses the same HeistTransition the
           home page uses (default 'GRIT THOSE TEETH' red-slash overlay). */}
       <HeistTransition active={quickHeistActive} onComplete={() => router.push(NEXT_TARGET)} />
+      <SpeedLines active={quickForgeRunning} />
     </main>
   )
 }
