@@ -642,6 +642,19 @@ export default function GhostCyclePage() {
 
       {/* Kanji watermark — 幽 (ghost/spirit). Top rooted at safe-area floor so it
           never clips into the iOS Dynamic Island camera area. */}
+      <div
+        className="absolute -right-24 pointer-events-none select-none"
+        aria-hidden="true"
+        style={{
+          top: 'calc(env(safe-area-inset-top, 0px) - 64px)',
+          fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
+          fontSize: '52rem', lineHeight: '0.8',
+          color: '#6060a0', opacity: 0.045, fontWeight: 900,
+        }}
+      >
+        幽
+      </div>
+
       {/* Nav */}
       <nav className="relative z-10 shrink-0 flex items-center justify-between pl-0 pr-8 py-5">
         <RetreatButton href="/fitness/hub" />

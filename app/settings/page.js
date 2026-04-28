@@ -201,6 +201,22 @@ export default function SettingsPage() {
         }}
       />
 
+      <div
+        className="absolute -right-8 pointer-events-none select-none animate-flicker"
+        aria-hidden="true"
+        style={{
+          top: 'calc(env(safe-area-inset-top, 0px) - 48px)',
+          fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
+          fontSize: '40rem',
+          lineHeight: '0.8',
+          color: '#ffffff',
+          opacity: 0.04,
+          fontWeight: 900,
+        }}
+      >
+        設
+      </div>
+
       <div className="relative z-10 flex-1 flex flex-col">
         <nav
           className="relative shrink-0 flex items-center justify-between pl-0 pr-8 pb-6"
