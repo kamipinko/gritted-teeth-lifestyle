@@ -645,7 +645,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       onClick={handleClick}
       className="fixed z-50 group block outline-none active:scale-[0.98] transition-transform overflow-hidden"
       style={{
-        top: '466px',
+        top: '479px',
         left: '32px',
         right: '32px',
         touchAction: 'pan-y',
