@@ -6,14 +6,57 @@ import { useSound } from '../../lib/useSound'
 import HeistTransition from '../../components/HeistTransition'
 import RetreatButton from '../../components/RetreatButton'
 
-function ProfileChip({ name, onSelect }) {
+function ProfileChip({ name, onSelect, onSwipeSelect }) {
   const { play } = useSound()
+  // Pointer-tracking refs for swipe-vs-tap discrimination. Swipe-right past
+  // the threshold = onSwipeSelect (deep-launch straight to first-set weight
+  // popup). Tap = onSelect (normal nav to /fitness/hub).
+  const startRef = useRef(null)
+  const swipedRef = useRef(false)
+  const [dragX, setDragX] = useState(0)
+  const SWIPE_THRESHOLD = 60
+
+  const handlePointerDown = (e) => {
+    startRef.current = { x: e.clientX, y: e.clientY }
+    swipedRef.current = false
+    setDragX(0)
+  }
+  const handlePointerMove = (e) => {
+    if (!startRef.current) return
+    const dx = e.clientX - startRef.current.x
+    const dy = e.clientY - startRef.current.y
+    // Only follow horizontal-dominant motion to the right.
+    if (Math.abs(dx) > Math.abs(dy) && dx > 0) {
+      setDragX(Math.min(dx, SWIPE_THRESHOLD * 1.5))
+      if (dx > SWIPE_THRESHOLD) swipedRef.current = true
+    }
+  }
+  const handlePointerUp = () => {
+    if (swipedRef.current && onSwipeSelect) {
+      play('card-confirm')
+      onSwipeSelect(name)
+    }
+    startRef.current = null
+    setDragX(0)
+  }
+  const handleClick = (e) => {
+    // Suppress click when the gesture resolved as a swipe.
+    if (swipedRef.current) { e.preventDefault(); e.stopPropagation(); return }
+    play('option-select')
+    onSelect(name)
+  }
+  const swipeProgress = Math.min(1, dragX / SWIPE_THRESHOLD)
+
   return (
     <button
       type="button"
-      onClick={() => { play('option-select'); onSelect(name) }}
-      className="relative group outline-none text-left"
-      style={{ touchAction: 'manipulation' }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={() => { startRef.current = null; swipedRef.current = false; setDragX(0) }}
+      onClick={handleClick}
+      className="relative group outline-none text-left overflow-hidden"
+      style={{ touchAction: 'pan-y' }}
     >
       {/* Hover effects gated on (hover: hover) so iOS doesn't sticky-hover on first tap. */}
       <div
@@ -21,11 +64,35 @@ function ProfileChip({ name, onSelect }) {
         style={{ clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)' }}
         aria-hidden="true"
       />
-      <div className="relative px-6 py-3 flex items-center gap-3">
+      {/* Swipe-progress fill — slides in from left as the user drags right. Reaches
+          full red at the threshold to telegraph that the swipe is armed. */}
+      <div
+        className="absolute inset-0 pointer-events-none bg-gtl-red"
+        style={{
+          clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)',
+          opacity: swipeProgress * 0.85,
+          transform: `scaleX(${swipeProgress})`,
+          transformOrigin: 'left center',
+          transition: dragX === 0 ? 'opacity 200ms, transform 200ms' : 'none',
+        }}
+        aria-hidden="true"
+      />
+      <div
+        className="relative px-6 py-3 flex items-center gap-3"
+        style={{ transform: `translateX(${dragX * 0.3}px)`, transition: dragX === 0 ? 'transform 200ms' : 'none' }}
+      >
         <span className="font-display text-2xl leading-none transition-colors duration-200 text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper">
           {name.toUpperCase()}
         </span>
         <span className="font-display text-base leading-none transition-all duration-200 text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper [@media(hover:hover)]:group-hover:translate-x-1">➤︎</span>
+        {/* Swipe hint — appears on the right, fades in as user drags */}
+        <span
+          className="ml-auto font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-paper leading-none whitespace-nowrap pointer-events-none"
+          style={{ opacity: swipeProgress }}
+          aria-hidden="true"
+        >
+          SKIP →
+        </span>
       </div>
     </button>
   )
@@ -90,6 +157,19 @@ export default function ProfilePage() {
       localStorage.setItem('gtl-active-profile', name)
     } catch (_) {}
     setTransitioning(true)
+  }
+
+  // Swipe-select on a profile chip → deep-launch straight through hub/load/active
+  // to the first set's weight popup. Skips HeistTransition entirely. Only works
+  // if the profile already has an active cycle (training-days populated under pk).
+  const swipeSelectProfile = (name) => {
+    if (transitioningRef.current) return
+    transitioningRef.current = true
+    try {
+      localStorage.setItem('gtl-active-profile', name)
+      localStorage.setItem('gtl-deep-launch', '1')
+    } catch (_) {}
+    router.push('/fitness/active')
   }
 
   const handleTransitionComplete = () => {
@@ -261,7 +341,7 @@ export default function ProfilePage() {
             </div>
             <div className="flex flex-col gap-3">
               {profiles.map(name => (
-                <ProfileChip key={name} name={name} onSelect={selectProfile} />
+                <ProfileChip key={name} name={name} onSelect={selectProfile} onSwipeSelect={swipeSelectProfile} />
               ))}
             </div>
           </div>
