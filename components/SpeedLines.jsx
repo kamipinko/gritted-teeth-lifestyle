@@ -44,19 +44,24 @@ export default function SpeedLines({ active }) {
   }, [active])
 
   // Generate the full line pool once. Each line gets a random variant, top%,
-  // duration (0.5-1.4s), and delay (0-2s) so they overlap and feel chaotic
-  // like the original GSAP version.
+  // duration, and a NEGATIVE delay so it starts mid-cycle at a random phase —
+  // steady distribution from t=0 (no initial mount spike where all lines queue
+  // up to fly at once).
   const lines = useMemo(() => {
     const rand = mulberry32(31415926)
     const out = []
     for (let i = 0; i < LINE_COUNT; i++) {
       const variantIdx = Math.floor(rand() * VARIANTS.length)
+      const dur = 0.5 + rand() * 0.9     // seconds, 0.5-1.4
       out.push({
         i,
         v: VARIANTS[variantIdx],
-        top: rand() * 100,            // % of viewport height
-        dur: 0.5 + rand() * 0.9,      // seconds
-        delay: rand() * 2.0,          // seconds
+        top: rand() * 100,                // % of viewport height
+        dur,
+        // Negative delay: line is pre-rolled to a random point within its own
+        // cycle. So mounting at t=0, lines are already distributed across the
+        // full screen, no front-loaded density spike.
+        delay: -rand() * dur,
       })
     }
     return out

@@ -699,6 +699,8 @@ function RepsPopup({ exerciseName, initialReps, rowRect, onClose, onSave }) {
 }
 
 /* ── Weight setter popup — same drama as RepsPopup, opens first ── */
+const PLATE_QUICK_PICKS = [45, 95, 135, 185, 225, 275, 315]
+
 function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) {
   const { play } = useSound()
   const [weight, setWeight]         = useState(initialWeight)
@@ -708,6 +710,7 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
   const [numDir, setNumDir]         = useState('up')
   const [slamming, setSlamming]     = useState(false)
   const [setPressed, setSetPressed] = useState(false)
+  const [flashChip, setFlashChip]   = useState(null)
 
   const POPUP_WIDTH  = 380
   const POPUP_HEIGHT = 560
@@ -722,18 +725,54 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
   const flameScale   = Math.min(0.25 + weight * 0.013, 3.0)
   const flameOpacity = Math.min(0.3 + weight * 0.007, 1.0)
 
-  const increment = () => {
-    setWeight((n) => n + 5)
+  // Functional setters so timer-driven calls don't see a stale `weight` closure.
+  const bumpUp = (step = 5) => {
+    setWeight((n) => n + step)
     setNumDir('up')
     setNumKey((k) => k + 1)
   }
-
-  const decrement = () => {
-    if (weight <= 0) return
-    play('button-hover')
-    setWeight((n) => Math.max(0, n - 5))
+  const bumpDown = (step = 5) => {
+    setWeight((n) => Math.max(0, n - step))
     setNumDir('down')
     setNumKey((k) => k + 1)
+  }
+
+  // Long-press auto-repeat with acceleration.
+  // Tap = +5/-5. Hold for >400ms starts a repeat at 80ms. After 1.5s the step
+  // grows to 10; after 3s to 25 — so a long hold ramps from +5 to +10 to +25
+  // every 80ms, taking 0→315 in roughly 4 seconds without any tapping.
+  const holdTimerRef = useRef(null)
+  const repeatIntervalRef = useRef(null)
+  const holdStartRef = useRef(0)
+
+  const stopHold = () => {
+    if (holdTimerRef.current) { clearTimeout(holdTimerRef.current); holdTimerRef.current = null }
+    if (repeatIntervalRef.current) { clearInterval(repeatIntervalRef.current); repeatIntervalRef.current = null }
+  }
+  const startHold = (dir) => {
+    stopHold()
+    const fn = dir === 'up' ? bumpUp : bumpDown
+    fn(5)
+    holdStartRef.current = performance.now()
+    holdTimerRef.current = setTimeout(() => {
+      repeatIntervalRef.current = setInterval(() => {
+        const held = performance.now() - holdStartRef.current
+        let step = 5
+        if (held > 3000) step = 25
+        else if (held > 1500) step = 10
+        fn(step)
+      }, 80)
+    }, 400)
+  }
+  useEffect(() => () => stopHold(), [])
+
+  const setQuick = (val) => {
+    play('option-select')
+    setNumDir(val >= weight ? 'up' : 'down')
+    setNumKey((k) => k + 1)
+    setWeight(val)
+    setFlashChip(val)
+    setTimeout(() => setFlashChip(null), 220)
   }
 
   const handleSetWeight = () => {
@@ -746,8 +785,8 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
   useEffect(() => {
     const handler = (e) => {
       if (e.key === 'Escape')    { onSave(weight); onClose() }
-      if (e.key === 'ArrowUp')   { e.preventDefault(); increment() }
-      if (e.key === 'ArrowDown') { e.preventDefault(); decrement() }
+      if (e.key === 'ArrowUp')   { e.preventDefault(); bumpUp(5) }
+      if (e.key === 'ArrowDown') { e.preventDefault(); bumpDown(5) }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
@@ -809,12 +848,14 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
               <div className="absolute inset-x-4 top-0" style={{ height: '50%', background: 'radial-gradient(ellipse 40% 60% at 50% 90%, #fff7a0 0%, #ffe000 50%, transparent 100%)', borderRadius: '50% 50% 30% 30% / 60% 60% 40% 40%', animation: 'flame-tip 0.5s ease-in-out infinite', transformOrigin: 'center bottom' }} />
             </div>
             <button type="button"
-              onMouseDown={() => setPressUp(true)}
-              onMouseUp={() => { setPressUp(false); increment() }}
-              onMouseLeave={() => setPressUp(false)}
+              onPointerDown={() => { setPressUp(true); startHold('up') }}
+              onPointerUp={() => { setPressUp(false); stopHold() }}
+              onPointerCancel={() => { setPressUp(false); stopHold() }}
+              onPointerLeave={() => { setPressUp(false); stopHold() }}
               onMouseEnter={() => play('button-hover')}
               className="relative cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-red"
-              aria-label="Increase weight">
+              style={{ touchAction: 'manipulation' }}
+              aria-label="Increase weight (hold for fast)">
               <div className="absolute inset-0 bg-gtl-red-deep" style={{ clipPath: 'polygon(12% 0%, 88% 0%, 100% 100%, 0% 100%)', transform: pressUp ? 'translate(0,0)' : 'translate(4px, 4px)', transition: 'transform 60ms ease-out' }} aria-hidden="true" />
               <div className="relative px-10 py-3" style={{ clipPath: 'polygon(12% 0%, 88% 0%, 100% 100%, 0% 100%)', background: pressUp ? '#ff2a36' : '#d4181f', transform: pressUp ? 'translate(4px, 4px)' : 'translate(0,0)', transition: 'transform 60ms ease-out, background 60ms' }}>
                 <div className="font-display text-gtl-paper leading-none" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}>▲</div>
@@ -837,20 +878,56 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
 
           {/* DOWN */}
           <button type="button"
-            onMouseDown={() => setPressDown(true)}
-            onMouseUp={() => { setPressDown(false); decrement() }}
-            onMouseLeave={() => setPressDown(false)}
+            onPointerDown={() => { if (weight === 0) return; setPressDown(true); startHold('down') }}
+            onPointerUp={() => { setPressDown(false); stopHold() }}
+            onPointerCancel={() => { setPressDown(false); stopHold() }}
+            onPointerLeave={() => { setPressDown(false); stopHold() }}
             onMouseEnter={() => weight > 0 && play('button-hover')}
             className="relative cursor-pointer select-none outline-none mt-2 focus-visible:outline-2 focus-visible:outline-gtl-red"
-            aria-label="Decrease weight" disabled={weight === 0}>
+            style={{ touchAction: 'manipulation' }}
+            aria-label="Decrease weight (hold for fast)" disabled={weight === 0}>
             <div className="absolute inset-0" style={{ clipPath: 'polygon(0% 0%, 100% 0%, 88% 100%, 12% 100%)', background: weight === 0 ? '#1a1a1e' : '#8a0e13', transform: pressDown ? 'translate(0,0)' : 'translate(4px, 4px)', transition: 'transform 60ms ease-out' }} aria-hidden="true" />
             <div className="relative px-10 py-3" style={{ clipPath: 'polygon(0% 0%, 100% 0%, 88% 100%, 12% 100%)', background: weight === 0 ? '#1a1a1e' : pressDown ? '#ff2a36' : '#d4181f', transform: pressDown ? 'translate(4px, 4px)' : 'translate(0,0)', transition: 'transform 60ms ease-out, background 60ms' }}>
               <div className="font-display leading-none" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', color: weight === 0 ? '#3a3a42' : '#ffffff' }}>▼</div>
             </div>
           </button>
 
+          {/* Plate-math quick picks — tap to jump straight to bar/95/135/185/...
+              45 reads as "BAR" because most people think in terms of "bar-only"
+              for that weight rather than the number itself. */}
+          <div className="relative w-full flex flex-wrap justify-center gap-3 mt-6 mb-2">
+            {PLATE_QUICK_PICKS.map((w) => {
+              const active = weight === w
+              const flashing = flashChip === w
+              return (
+                <button key={w} type="button"
+                  onPointerDown={() => setQuick(w)}
+                  className="relative outline-none focus-visible:outline-2 focus-visible:outline-gtl-red"
+                  style={{ touchAction: 'manipulation' }}
+                  aria-label={`Set weight to ${w} pounds`}>
+                  <div className="absolute inset-0 bg-gtl-red-deep"
+                    style={{ clipPath: 'polygon(12% 0%, 100% 0%, 88% 100%, 0% 100%)', transform: 'translate(3px, 3px)' }}
+                    aria-hidden="true" />
+                  <div
+                    className="relative font-display tracking-tight px-5 py-2 text-2xl leading-none transition-all duration-100"
+                    style={{
+                      clipPath: 'polygon(12% 0%, 100% 0%, 88% 100%, 0% 100%)',
+                      background: flashing ? '#ff2a36' : active ? '#d4181f' : '#1a1a1e',
+                      color: active || flashing ? '#ffffff' : '#c8c8c8',
+                      border: '1px solid ' + (active ? '#ff2a36' : '#3a3a42'),
+                      minWidth: '3.5rem',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {w === 45 ? 'BAR' : w}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+
           {/* SET WEIGHT */}
-          <div className="relative w-full mt-8">
+          <div className="relative w-full mt-4">
             {weight > 0 && (
               <div className="absolute -inset-1 pointer-events-none"
                 style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)', animation: 'set-reps-glow 1.8s ease-in-out infinite' }}
