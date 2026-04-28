@@ -435,25 +435,27 @@ export default function FitnessPage() {
           </p>
         </div>
 
-        {/* Two options — staggered grid */}
+        {/* Two options — LOAD first so its tap target overlays the profile-chip
+            slot from /fitness (chip y≈444 lands inside LOAD card y=272–530). Quick-nav
+            muscle memory. */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
           <div className="md:translate-y-0">
             <CycleOption
               number="01"
-              label="NEW CYCLE"
-              caption="Begin from zero. Define the climb. Forge a fresh program."
-              href="/fitness/new"
-              variant="primary"
+              label="LOAD CYCLE"
+              caption="Resume an active program. Continue where you left off."
+              href="/fitness/load"
+              variant="secondary"
               onClick={handleSelect}
             />
           </div>
           <div className="md:translate-y-12">
             <CycleOption
               number="02"
-              label="LOAD CYCLE"
-              caption="Resume an active program. Continue where you left off."
-              href="/fitness/load"
-              variant="secondary"
+              label="NEW CYCLE"
+              caption="Begin from zero. Define the climb. Forge a fresh program."
+              href="/fitness/new"
+              variant="primary"
               onClick={handleSelect}
             />
           </div>
