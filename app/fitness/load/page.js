@@ -603,6 +603,90 @@ function CycleCard({ cycle, index, selected, onSelect }) {
   )
 }
 
+/* ── Quick-nav ACTIVATE popup with tap-vs-swipe gesture ── */
+function ActivatePopup({ cycle, onTap, onSwipe }) {
+  const startRef = useRef(null)
+  const swipedRef = useRef(false)
+  const [dragX, setDragX] = useState(0)
+  const SWIPE_THRESHOLD = 80
+
+  const handlePointerDown = (e) => {
+    startRef.current = { x: e.clientX, y: e.clientY }
+    swipedRef.current = false
+    setDragX(0)
+  }
+  const handlePointerMove = (e) => {
+    if (!startRef.current) return
+    const dx = e.clientX - startRef.current.x
+    const dy = e.clientY - startRef.current.y
+    if (Math.abs(dx) > Math.abs(dy) && dx > 0) {
+      setDragX(Math.min(dx, SWIPE_THRESHOLD * 1.5))
+      if (dx > SWIPE_THRESHOLD) swipedRef.current = true
+    }
+  }
+  const handlePointerUp = () => {
+    if (swipedRef.current && onSwipe) onSwipe(cycle)
+    startRef.current = null
+    setDragX(0)
+  }
+  const handleClick = (e) => {
+    if (swipedRef.current) { e.preventDefault(); e.stopPropagation(); return }
+    onTap(cycle)
+  }
+  const swipeProgress = Math.min(1, dragX / SWIPE_THRESHOLD)
+
+  return (
+    <button
+      type="button"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={() => { startRef.current = null; swipedRef.current = false; setDragX(0) }}
+      onClick={handleClick}
+      className="fixed z-50 group block outline-none active:scale-[0.98] transition-transform overflow-hidden"
+      style={{
+        top: '466px',
+        left: '32px',
+        right: '32px',
+        touchAction: 'pan-y',
+        animation: 'activate-popup-rise 320ms cubic-bezier(0.18, 1, 0.36, 1) both',
+      }}
+    >
+      {/* Base red fill */}
+      <div
+        className="absolute inset-0 bg-gtl-red transition-colors group-active:bg-gtl-red-bright"
+        style={{
+          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+          boxShadow: '0 4px 28px rgba(212, 24, 31, 0.55)',
+        }}
+        aria-hidden="true"
+      />
+      {/* Swipe-progress brighter fill — slides in from left, tells the user the
+          gesture is armed once it covers the full button. */}
+      <div
+        className="absolute inset-0 pointer-events-none bg-gtl-red-bright"
+        style={{
+          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+          opacity: swipeProgress,
+          transform: `scaleX(${swipeProgress})`,
+          transformOrigin: 'left center',
+          transition: dragX === 0 ? 'opacity 200ms, transform 200ms' : 'none',
+        }}
+        aria-hidden="true"
+      />
+      <div
+        className="relative flex items-center justify-center px-6 py-4 gap-3"
+        style={{ transform: `translateX(${dragX * 0.3}px)`, transition: dragX === 0 ? 'transform 200ms' : 'none' }}
+      >
+        <span className="font-display text-2xl text-gtl-paper leading-none tracking-tight">
+          {swipeProgress >= 1 ? 'LIFT NOW' : 'ACTIVATE'}
+        </span>
+        <span className="font-display text-xl text-gtl-paper leading-none">➤︎</span>
+      </div>
+    </button>
+  )
+}
+
 /* ── ACTIVATE slab button ── */
 function ActivateButton({ onActivate }) {
   const [pressed, setPressed] = useState(false)
@@ -855,16 +939,18 @@ export default function LoadCyclePage() {
     } catch (_) {}
   }
 
-  const handleActivate = (cycle) => {
+  const handleActivate = (cycle, { deepLaunch = false } = {}) => {
     // Already firing → this rapid second tap is a skip.
     if (fireActiveRef.current) { skipNow(); return }
     fireActiveRef.current = true
     loadCycleIntoStorage(cycle)
     try { localStorage.removeItem(pk('editing-cycle-id')) } catch (_) {}
-    // Deep-launch flag — tells the next pages in the chain to auto-progress
-    // straight to the first set's weight popup (today → first muscle → first
-    // exercise S1). Cleared once consumed.
-    try { localStorage.setItem('gtl-deep-launch', '1') } catch (_) {}
+    // Deep-launch flag — only set on swipe-activate; tap-activate just lands
+    // on /fitness/active normally. When set, the chain auto-progresses to
+    // today → first muscle → first exercise S1 weight popup.
+    if (deepLaunch) {
+      try { localStorage.setItem('gtl-deep-launch', '1') } catch (_) {}
+    }
     fireDestRef.current = '/fitness/active'  // sync for the listener
     setFireDest('/fitness/active')
     setFireActive(true)
@@ -1004,34 +1090,30 @@ export default function LoadCyclePage() {
         }
       `}</style>
       {selectedCycle && (
-        <button
-          key={selectedCycle.id}
-          type="button"
-          onClick={() => { play('card-confirm'); handleActivate(selectedCycle) }}
-          className="fixed z-50 group block outline-none active:scale-[0.98] transition-transform"
-          style={{
-            top: '466px',
-            left: '32px',
-            right: '32px',
-            touchAction: 'manipulation',
-            animation: 'activate-popup-rise 320ms cubic-bezier(0.18, 1, 0.36, 1) both',
-          }}
-        >
+        <>
+          <ActivatePopup
+            key={selectedCycle.id}
+            cycle={selectedCycle}
+            onTap={(c) => { play('card-confirm'); handleActivate(c) }}
+            onSwipe={(c) => { play('card-confirm'); handleActivate(c, { deepLaunch: true }) }}
+          />
+          {/* Gesture hint — sits just below the ACTIVATE popup. */}
           <div
-            className="absolute inset-0 bg-gtl-red transition-colors group-active:bg-gtl-red-bright"
+            className="fixed z-50 flex items-center gap-3 font-mono text-[8px] tracking-[0.25em] uppercase text-gtl-ash/80 pointer-events-none"
             style={{
-              clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
-              boxShadow: '0 4px 28px rgba(212, 24, 31, 0.55)',
+              top: '530px',
+              left: '32px',
+              right: '32px',
+              justifyContent: 'center',
+              animation: 'activate-popup-rise 320ms 100ms cubic-bezier(0.18, 1, 0.36, 1) both',
             }}
             aria-hidden="true"
-          />
-          <div className="relative flex items-center justify-center px-6 py-4 gap-3">
-            <span className="font-display text-2xl text-gtl-paper leading-none tracking-tight">
-              ACTIVATE
-            </span>
-            <span className="font-display text-xl text-gtl-paper leading-none">➤︎</span>
+          >
+            <span>TAP TO ACTIVATE</span>
+            <span className="text-gtl-red">·</span>
+            <span>SWIPE TO LIFT NOW →</span>
           </div>
-        </button>
+        </>
       )}
 
       {/* Sticky bottom bar — appears when a cycle is selected (now without ACTIVATE) */}
