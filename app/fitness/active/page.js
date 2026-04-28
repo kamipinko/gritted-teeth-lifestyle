@@ -1885,10 +1885,11 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
               style={{ transform: 'skewX(-6deg)', transformOrigin: 'left center' }}
             />
 
-            {/* Muscle slabs or REST */}
+            {/* Muscle slabs or REST. muscles[0] is rendered separately as the
+                BEGIN HERE quick-nav hero at y=466, so skip index 0 here. */}
             {hasWork ? (
               <div className="flex flex-wrap gap-x-4 gap-y-3">
-                {muscles.map((id, i) => {
+                {muscles.slice(1).map((id, i) => {
                   const rot = SLAB_ROTATIONS[i % SLAB_ROTATIONS.length]
                   return (
                     <MuscleSlab
@@ -2392,11 +2393,6 @@ export default function ActiveCyclePage() {
 
   const plannedSessions = days.filter((iso) => (dailyPlan[iso] || []).length > 0).length
 
-  const cols = days.length <= 4 ? days.length
-             : days.length <= 8 ? Math.ceil(days.length / 2)
-             : Math.ceil(days.length / 3)
-  const rows = Math.ceil(days.length / cols)
-
   // Quick-nav TODAY hero: closest day to today's date — sits at y=466 to continue
   // the muscle-memory tap chain (chip → LOAD card → ACTIVATE → TODAY hero).
   const todayIsoStr = (() => {
@@ -2420,6 +2416,13 @@ export default function ActiveCyclePage() {
   const heroMon = heroDate ? MONTH_SHORT[heroDate.getMonth()] : ''
   const heroMuscles = heroIso ? (dailyPlan[heroIso] || []) : []
   const heroLabel = heroIsToday ? 'TODAY' : heroIsPast ? 'LAST TRAINING' : 'NEXT TRAINING'
+
+  // Day grid below the hero shows the OTHER days only (heroIso is filtered out).
+  const gridCount = heroIso ? Math.max(0, days.length - 1) : days.length
+  const cols = gridCount <= 4 ? Math.max(1, gridCount)
+             : gridCount <= 8 ? Math.ceil(gridCount / 2)
+             : Math.ceil(gridCount / 3)
+  const rows = Math.max(1, Math.ceil(gridCount / cols))
 
   return (
     <main className="relative h-[100dvh] flex flex-col overflow-hidden bg-gtl-void">
@@ -2548,11 +2551,11 @@ export default function ActiveCyclePage() {
           <div
             className="grid gap-2 flex-1 min-h-0"
             style={{
-              gridTemplateColumns: `repeat(${Math.min(cols, days.length)}, 1fr)`,
+              gridTemplateColumns: `repeat(${Math.min(cols, Math.max(1, gridCount))}, 1fr)`,
               gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
             }}
           >
-            {days.map((iso, i) => (
+            {days.filter((iso) => iso !== heroIso).map((iso, i) => (
               <DayCard
                 key={iso}
                 iso={iso}
