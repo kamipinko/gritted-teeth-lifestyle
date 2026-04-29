@@ -16,9 +16,9 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
   const dxRef = useRef(0)
   const swipeFiredRef = useRef(false)
   const [dragX, setDragX] = useState(0)
-  // Full traversal — gap between bead centers = 2 * (175 - 28) = 294px,
-  // beads pinned near button edges via calc(50% - 175px).
-  const SWIPE_THRESHOLD = 294
+  // Full traversal — gap between bead centers = 2 * (160 - 28) = 264px,
+  // beads pinned via calc(50% - 160px) (safe on small phone viewports).
+  const SWIPE_THRESHOLD = 264
 
   const handlePointerDown = (e) => {
     startRef.current = { x: e.clientX, y: e.clientY }
@@ -92,7 +92,7 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
           <div
             className="absolute pointer-events-none"
             style={{
-              left: 'calc(50% - 175px)',
+              left: 'calc(50% - 160px)',
               top: '50%',
               width: '56px',
               height: '56px',
@@ -110,7 +110,7 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
           <div
             className="absolute pointer-events-none"
             style={{
-              right: 'calc(50% - 175px)',
+              right: 'calc(50% - 160px)',
               top: '50%',
               width: '56px',
               height: '56px',
