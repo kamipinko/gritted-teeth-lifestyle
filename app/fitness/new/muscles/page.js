@@ -474,7 +474,12 @@ function MobileForgeStamp({ count, onFire }) {
 export default function MusclesPage() {
   useProfileGuard()
   let backHref = '/fitness/new'
-  try { if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit' } catch (_) {}
+  try {
+    if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit'
+    // Swipe-forge bails the user back to NAME YOUR CYCLE in one tap rather
+    // than walking the chain backward step-by-step.
+    else if (localStorage.getItem('gtl-quick-forge') === '1') backHref = '/fitness/new'
+  } catch (_) {}
   const [selected, setSelected] = useState(() => new Set())
   const [focusedGroup, setFocusedGroup] = useState(null)
   const [modelKey, setModelKey] = useState('goku')
