@@ -12,7 +12,6 @@ import Link from 'next/link'
 import { useSound } from '../../../lib/useSound'
 import { useProfileGuard } from '../../../lib/useProfileGuard'
 import { pk } from '../../../lib/storage'
-import FireFadeIn from '../../../components/FireFadeIn'
 import RetreatButton from '../../../components/RetreatButton'
 
 const MUSCLE_LABELS = {
@@ -3222,7 +3221,6 @@ export default function ActiveCyclePage() {
         </button>
       </>)}
 
-      <FireFadeIn duration={900} />
     </main>
   )
 }
