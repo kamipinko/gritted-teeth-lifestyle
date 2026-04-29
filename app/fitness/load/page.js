@@ -678,7 +678,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
         on a positive (rightward) swipe, all the way to where the ink half
         sits. Stays put on a leftward swipe. */}
     <div
-      className="fixed z-[51] pointer-events-none"
+      className="fixed z-[52] pointer-events-none"
       style={{
         top: '486px',
         left: 'calc(50% - 128px)',
