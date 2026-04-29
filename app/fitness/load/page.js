@@ -571,6 +571,9 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
   const dxRef = useRef(0)
   const swipeFiredRef = useRef(false)
   const [dragX, setDragX] = useState(0)
+  // Shockwave ring counter — increments on each successful swipe so the
+  // ring element remounts and re-runs the keyframe.
+  const [ringKey, setRingKey] = useState(0)
   // Full traversal distance — the swiped bead travels all the way across to
   // the other side. Gap between bead centers = 2 * (175 - 28) = 294, fixed
   // by calc(50% - 175px) on each side. Threshold matches the gap so 1:1
@@ -599,6 +602,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
   const handlePointerUp = () => {
     if (Math.abs(dxRef.current) >= SWIPE_THRESHOLD && onSwipe) {
       swipeFiredRef.current = true
+      setRingKey((k) => k + 1)
       onSwipe(cycle)
     }
     startRef.current = null
@@ -625,6 +629,11 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       @keyframes yy-pulse-right {
         0%, 100% { transform: translateX(0)    scale(1);    filter: drop-shadow(0 0 0    rgba(7,7,8,0)); }
         50%      { transform: translateX(-7px) scale(1.06); filter: drop-shadow(0 0 8px rgba(0,0,0,0.85)); }
+      }
+      @keyframes logo-ring {
+        0%   { transform: translate(-50%, -50%) scale(0.5); opacity: 0;   }
+        12%  { opacity: 0.95; }
+        100% { transform: translate(-50%, -50%) scale(7);   opacity: 0;   }
       }
     `}</style>
     <button
@@ -721,6 +730,27 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
         </>
       )
     })()}
+    {/* Shockwave ring — radiates from the button center on a successful
+        swipe. Re-keyed on each fire so the keyframe replays from the start.
+        The keyframe's transform: translate(-50%, -50%) centers it on the
+        anchor point set by left/top. */}
+    {ringKey > 0 && (
+      <div
+        key={ringKey}
+        className="fixed z-[53] pointer-events-none rounded-full"
+        style={{
+          top: `${486 + 28}px`,
+          left: '50%',
+          width: '56px',
+          height: '56px',
+          border: '4px solid #ff2a36',
+          opacity: 0,
+          animation: 'logo-ring 700ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards',
+          filter: 'drop-shadow(0 0 8px rgba(255,42,54,0.8))',
+        }}
+        aria-hidden="true"
+      />
+    )}
     </>
   )
 }
