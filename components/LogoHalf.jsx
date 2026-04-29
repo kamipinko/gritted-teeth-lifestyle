@@ -29,9 +29,9 @@ export function LogoStencil({ size = 44 }) {
 }
 
 export function LogoTarget({ size = 44 }) {
-  // Slightly smaller than the stencil's bounding box so the black disc tucks
-  // in cleanly under the stencil's red border ring instead of poking past it.
-  const inner = Math.round(size * 0.92)
+  // 97% of the bounding box (was 92%, bumped 5% per design spec) so the
+  // black disc sits flush behind the stencil's red border ring.
+  const inner = Math.round(size * 0.97)
   return (
     <div
       style={{
