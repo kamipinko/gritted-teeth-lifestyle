@@ -16,6 +16,7 @@ import { pk } from '../../../lib/storage'
 import FireFadeIn from '../../../components/FireFadeIn'
 import FireTransition from '../../../components/FireTransition'
 import RetreatButton from '../../../components/RetreatButton'
+import { LogoStencil, LogoTarget } from '../../../components/LogoHalf'
 
 const MUSCLE_LABELS = {
   chest: 'CHEST', back: 'BACK', shoulders: 'SHOULDERS',
@@ -563,34 +564,7 @@ function CycleCard({ cycle, index, selected, onSelect }) {
   )
 }
 
-/* ── GTL logo halves shaped like yin-yang teardrops. Each half is a piece
-   of /logo.png clipped to a teardrop path: outer half-circle on one side,
-   S-curve through (25,75) and (75,25) on the other. When the two halves
-   overlay at the same coords (after a full swipe), they interlock into a
-   complete circle showing the full logo. ── */
-function LogoHalf({ side, size = 56 }) {
-  const cid = `logo-half-${side}`
-  // Teardrop path. Same S-curve sub-arcs for both sides — only the outer
-  // semicircle differs (sweep flag).
-  const clipD = side === 'left'
-    ? 'M 50,0 A 50,50 0 0,0 50,100 A 25,25 0 0,1 50,50 A 25,25 0 0,0 50,0 Z'
-    : 'M 50,0 A 50,50 0 0,1 50,100 A 25,25 0 0,1 50,50 A 25,25 0 0,0 50,0 Z'
-  return (
-    <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true" style={{ display: 'block', overflow: 'visible' }}>
-      <defs>
-        <clipPath id={cid}>
-          <path d={clipD}/>
-        </clipPath>
-      </defs>
-      <image
-        href="/logo.png"
-        x="0" y="0" width="100" height="100"
-        clipPath={`url(#${cid})`}
-        preserveAspectRatio="xMidYMid slice"
-      />
-    </svg>
-  )
-}
+/* LogoHalf moved to components/LogoHalf.jsx (shared across all swipe buttons). */
 
 /* ── Quick-nav ACTIVATE popup with tap-vs-swipe gesture ── */
 function ActivatePopup({ cycle, onTap, onSwipe }) {
@@ -717,7 +691,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       }}
       aria-hidden="true"
     >
-      <LogoHalf side="left" size={56} />
+      <LogoStencil size={56} />
     </div>
 
     {/* Ink teardrop — pinned 100px right of viewport center. Travels LEFT
@@ -737,7 +711,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       }}
       aria-hidden="true"
     >
-      <LogoHalf side="right" size={56} />
+      <LogoTarget size={56} />
     </div>
     </>
   )
