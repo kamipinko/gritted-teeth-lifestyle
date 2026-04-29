@@ -572,11 +572,11 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
   const dxRef = useRef(0)
   const swipeFiredRef = useRef(false)
   const [dragX, setDragX] = useState(0)
-  // Full traversal distance — the swiped half travels all the way across to
-  // the other half's slot. Gap between bead centers (≈200px) is the same on
-  // any reasonable phone width because the halves are positioned symmetrically
-  // around the viewport center via calc(50% - X).
-  const SWIPE_THRESHOLD = 200
+  // Full traversal distance — the swiped bead travels all the way across to
+  // the other side. Gap between bead centers = 2 * (175 - 28) = 294, fixed
+  // by calc(50% - 175px) on each side. Threshold matches the gap so 1:1
+  // finger drag fully docks the bead at the other end.
+  const SWIPE_THRESHOLD = 294
 
   const handlePointerDown = (e) => {
     startRef.current = { x: e.clientX, y: e.clientY }
@@ -678,10 +678,10 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
         on a positive (rightward) swipe, all the way to where the ink half
         sits. Stays put on a leftward swipe. */}
     {(() => {
-      // Rolling factor: rotation degrees per pixel of horizontal travel for a
-      // wheel of diameter `size` rolling without slipping along the surface.
-      // 360deg per circumference (π·size), so deg/px = 360/(π·size).
-      const rollFactor = 360 / (Math.PI * 56)
+      // Rolling factor tuned so the bead completes EXACTLY one full rotation
+      // over a full swipe and lands upright at fusion (logo readable at the
+      // dock point). 360° / threshold = deg per px.
+      const rollFactor = 360 / SWIPE_THRESHOLD
       const stencilTx = Math.max(0, dragX)
       const targetTx  = Math.min(0, dragX)
       return (
@@ -690,7 +690,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
           className="fixed z-[52] pointer-events-none"
           style={{
             top: '486px',
-            left: 'calc(50% - 128px)',
+            left: 'calc(50% - 175px)',
             width: '56px',
             height: '56px',
             transform: `translateX(${stencilTx}px) rotate(${stencilTx * rollFactor}deg)`,
@@ -707,7 +707,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
           className="fixed z-[51] pointer-events-none"
           style={{
             top: '486px',
-            right: 'calc(50% - 128px)',
+            right: 'calc(50% - 175px)',
             width: '56px',
             height: '56px',
             transform: `translateX(${targetTx}px) rotate(${targetTx * rollFactor}deg)`,

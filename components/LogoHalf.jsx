@@ -29,9 +29,11 @@ export function LogoStencil({ size = 44 }) {
 }
 
 export function LogoTarget({ size = 44 }) {
-  // Slightly smaller than the stencil's bounding box so the black disc tucks
-  // in cleanly under the stencil's red border ring instead of poking past it.
-  const inner = Math.round(size * 0.92)
+  // Slightly LARGER than the stencil's bounding box so the black disc covers
+  // the entire transparent inner area (the perimeter red text in the stencil
+  // sits at the very edge of the bounding box; a target smaller than the box
+  // leaves a sliver of red button background showing through near the edges).
+  const inner = Math.round(size * 1.08)
   return (
     <div
       style={{
@@ -48,7 +50,6 @@ export function LogoTarget({ size = 44 }) {
           height: `${inner}px`,
           borderRadius: '50%',
           background: '#070708',
-          boxShadow: '0 0 10px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,80,90,0.25)',
         }}
       />
     </div>

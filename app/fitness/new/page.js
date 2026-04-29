@@ -58,9 +58,9 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
   const dxRef = useRef(0)
   const swipeFiredRef = useRef(false)
   const [dragX, setDragX] = useState(0)
-  // Full traversal — matches the 120px gap between logo halves on opposite
-  // sides of the button. Either swipe direction fires.
-  const SWIPE_THRESHOLD = 120
+  // Full traversal — gap between bead centers = 294px, beads pinned at
+  // calc(50% - 175px) on each side near the button ends.
+  const SWIPE_THRESHOLD = 294
 
   const handlePointerDown = (e) => {
     if (disabled) return
@@ -99,6 +99,17 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
   const swipeProgress = Math.min(1, Math.abs(dragX) / SWIPE_THRESHOLD)
 
   return (
+    <>
+    <style>{`
+      @keyframes yy-pulse-left {
+        0%, 100% { transform: translateX(0)   scale(1);    filter: drop-shadow(0 0 0    rgba(240,232,216,0)); }
+        50%      { transform: translateX(7px) scale(1.06); filter: drop-shadow(0 0 8px rgba(240,232,216,0.7)); }
+      }
+      @keyframes yy-pulse-right {
+        0%, 100% { transform: translateX(0)    scale(1);    filter: drop-shadow(0 0 0    rgba(7,7,8,0)); }
+        50%      { transform: translateX(-7px) scale(1.06); filter: drop-shadow(0 0 8px rgba(0,0,0,0.85)); }
+      }
+    `}</style>
     <button
       ref={forgeRef}
       type="button"
@@ -110,7 +121,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
       disabled={disabled}
       className={`
         relative font-display tracking-[0.25em] uppercase overflow-visible
-        px-24 py-4 min-h-[56px] w-full max-w-[28rem]
+        px-24 py-5 min-h-[56px] block w-full -mx-5
         text-3xl text-gtl-paper
         transition-all duration-200 ease-out
         disabled:opacity-30 disabled:cursor-not-allowed
@@ -120,7 +131,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
         enabled:[@media(hover:hover)]:hover:shadow-[6px_6px_0_#070708]
         enabled:active:shadow-[2px_2px_0_#070708]
       `}
-      style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)', touchAction: 'pan-y' }}
+      style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)', touchAction: 'pan-y', width: 'calc(100% + 40px)' }}
     >
       <span className="relative inline-block">
         {swipeProgress >= 1 ? 'LIFT NOW' : 'FORGE'}
@@ -128,7 +139,8 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
       {/* Logo halves on opposite sides. Swipe in either direction pulls one
           across to the other's slot to fuse. */}
       {(() => {
-        const rollFactor = 360 / (Math.PI * 40)
+        // One full rotation across a full swipe — lands upright at fusion.
+        const rollFactor = 360 / SWIPE_THRESHOLD
         const stencilTx = Math.max(0, dragX)
         const targetTx  = Math.min(0, dragX)
         return (
@@ -136,41 +148,44 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
           <div
             className="absolute pointer-events-none"
             style={{
-              left: 'calc(50% - 80px)',
+              left: 'calc(50% - 175px)',
               top: '50%',
-              width: '40px',
-              height: '40px',
-              marginTop: '-20px',
+              width: '56px',
+              height: '56px',
+              marginTop: '-28px',
               transform: `translateX(${stencilTx}px) rotate(${stencilTx * rollFactor}deg)`,
               opacity: 0.9 + swipeProgress * 0.1,
               transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
+              animation: dragX === 0 ? 'yy-pulse-left 1.5s ease-in-out infinite' : 'none',
               zIndex: 2,
             }}
             aria-hidden="true"
           >
-            <LogoStencil size={40}/>
+            <LogoStencil size={56}/>
           </div>
           <div
             className="absolute pointer-events-none"
             style={{
-              right: 'calc(50% - 80px)',
+              right: 'calc(50% - 175px)',
               top: '50%',
-              width: '40px',
-              height: '40px',
-              marginTop: '-20px',
+              width: '56px',
+              height: '56px',
+              marginTop: '-28px',
               transform: `translateX(${targetTx}px) rotate(${targetTx * rollFactor}deg)`,
               opacity: 0.9 + swipeProgress * 0.1,
               transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
+              animation: dragX === 0 ? 'yy-pulse-right 1.5s ease-in-out infinite' : 'none',
               zIndex: 1,
             }}
             aria-hidden="true"
           >
-            <LogoTarget size={40}/>
+            <LogoTarget size={56}/>
           </div>
           </>
         )
       })()}
     </button>
+    </>
   )
 }
 
