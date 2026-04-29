@@ -941,15 +941,15 @@ export default function LoadCyclePage() {
       if (raw) {
         const parsed = JSON.parse(raw)
         setCycles(parsed)
-        // Quick-forge landing: auto-select the most-recent cycle (the one the
-        // user just forged) so the ACTIVATE popup appears immediately. Clear
-        // the flag so this only fires once.
-        try {
-          if (localStorage.getItem('gtl-just-forged') === '1' && parsed.length > 0) {
-            setSelectedId(parsed[0].id)
-            localStorage.removeItem('gtl-just-forged')
-          }
-        } catch (_) {}
+        // Auto-select the most-recent cycle on landing so the ACTIVATE popup
+        // appears immediately. "Most recent" = highest createdAt timestamp;
+        // falls back to the first entry if any cycle is missing createdAt.
+        if (parsed.length > 0) {
+          const mostRecent = parsed.reduce((best, c) =>
+            (!best || (c.createdAt || 0) > (best.createdAt || 0)) ? c : best, null)
+          if (mostRecent) setSelectedId(mostRecent.id)
+        }
+        try { localStorage.removeItem('gtl-just-forged') } catch (_) {}
       }
     } catch (_) {}
     setReady(true)
