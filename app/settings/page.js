@@ -81,7 +81,8 @@ function VolumeSlider({ value, onChange, onPreview }) {
         onChange={(e) => onChange(parseInt(e.target.value, 10) / 100)}
         onMouseUp={onPreview}
         onTouchEnd={onPreview}
-        className="w-full accent-gtl-red"
+        className="w-full accent-gtl-red py-3"
+        style={{ touchAction: 'pan-x' }}
         aria-label="SFX volume"
       />
     </div>
@@ -204,7 +205,8 @@ export default function SettingsPage() {
         clearInterval(window.__gtlBgMusicFadeInterval)
         window.__gtlBgMusicFadeInterval = null
       }
-      const target = BGM_BASE_VOL * Math.max(0, Math.min(1, v))
+      const c = Math.max(0, Math.min(1, v))
+      const target = BGM_BASE_VOL * c * c
       const gain = getBgmGainNode()
       if (gain) gain.gain.value = target
       else window.__gtlBgMusic.volume = target
@@ -390,7 +392,8 @@ export default function SettingsPage() {
                     step="1"
                     value={Math.round(bgmVolume * 100)}
                     onChange={(e) => handleBgmVolume(parseInt(e.target.value, 10) / 100)}
-                    className="w-full accent-gtl-red"
+                    className="w-full accent-gtl-red py-3"
+                    style={{ touchAction: 'pan-x' }}
                     aria-label="BGM volume"
                   />
                 </div>

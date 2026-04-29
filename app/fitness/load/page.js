@@ -638,8 +638,8 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       className="fixed z-50 group block outline-none active:scale-[0.98] transition-transform overflow-hidden"
       style={{
         top: '479px',
-        left: '32px',
-        right: '32px',
+        left: '12px',
+        right: '12px',
         touchAction: 'pan-y',
         animation: 'activate-popup-rise 320ms cubic-bezier(0.18, 1, 0.36, 1) both',
       }}
@@ -1149,8 +1149,8 @@ export default function LoadCyclePage() {
             className="fixed z-50 flex items-center gap-3 font-mono text-[8px] tracking-[0.25em] uppercase text-gtl-ash/80 pointer-events-none"
             style={{
               top: '530px',
-              left: '32px',
-              right: '32px',
+              left: '12px',
+              right: '12px',
               justifyContent: 'center',
               animation: 'activate-popup-rise 320ms 100ms cubic-bezier(0.18, 1, 0.36, 1) both',
             }}
