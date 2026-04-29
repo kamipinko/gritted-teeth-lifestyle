@@ -563,29 +563,43 @@ function CycleCard({ cycle, index, selected, onSelect }) {
   )
 }
 
-/* ── Yin-yang icon. Classic black+chalk palette so the two halves read as
-   photographic negatives of each other. Rendered as a full disc and clipped
-   to a half via CSS clip-path on the wrapper. Same SVG, two views. ── */
-function YinYangIcon({ size = 56, idSuffix = '' }) {
-  const cid = `yy-clip-${idSuffix}`
-  const CHALK = '#f0e8d8'
-  const INK   = '#070708'
+/* ── Yin-yang teardrops. Each half is a SINGLE PATH that traces the
+   teardrop's natural curved boundary (outer half-circle on one side, the
+   S-curve on the other). When the two teardrop SVGs overlay at the same
+   coords, they interlock into a complete yin-yang circle. No clip-path —
+   the curve IS the shape. ── */
+const CHALK = '#f0e8d8'
+const INK   = '#070708'
+
+function YinYangChalkHalf({ size = 56 }) {
+  // Chalk teardrop: outer LEFT half-circle + S-curve back through (25,75) and
+  // (75,25). The chalk's head bulges into the upper-right; the ink's head
+  // pinches into the lower-left.
   return (
-    <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true" style={{ display: 'block' }}>
-      <defs>
-        <clipPath id={cid}>
-          <circle cx="50" cy="50" r="49"/>
-        </clipPath>
-      </defs>
-      <g clipPath={`url(#${cid})`}>
-        <rect x="0"  y="0" width="50" height="100" fill={CHALK}/>
-        <rect x="50" y="0" width="50" height="100" fill={INK}/>
-        <circle cx="50" cy="25" r="25" fill={INK}/>
-        <circle cx="50" cy="75" r="25" fill={CHALK}/>
-        <circle cx="37.5" cy="25" r="6.5" fill={CHALK}/>
-        <circle cx="62.5" cy="75" r="6.5" fill={INK}/>
-      </g>
-      <circle cx="50" cy="50" r="48" fill="none" stroke={INK} strokeWidth="2"/>
+    <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true" style={{ display: 'block', overflow: 'visible' }}>
+      <path
+        d="M 50,0 A 50,50 0 0,0 50,100 A 25,25 0 0,1 50,50 A 25,25 0 0,0 50,0 Z"
+        fill={CHALK}
+        stroke={INK}
+        strokeWidth="2"
+      />
+      <circle cx="75" cy="25" r="6.5" fill={INK}/>
+    </svg>
+  )
+}
+
+function YinYangInkHalf({ size = 56 }) {
+  // Ink teardrop: outer RIGHT half-circle + same S-curve back. Ink's head
+  // bulges into the lower-left; chalk's head pinches into the upper-right.
+  return (
+    <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true" style={{ display: 'block', overflow: 'visible' }}>
+      <path
+        d="M 50,0 A 50,50 0 0,1 50,100 A 25,25 0 0,1 50,50 A 25,25 0 0,0 50,0 Z"
+        fill={INK}
+        stroke={CHALK}
+        strokeWidth="2"
+      />
+      <circle cx="25" cy="75" r="6.5" fill={CHALK}/>
     </svg>
   )
 }
@@ -691,9 +705,9 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       </div>
     </button>
 
-    {/* Left half (chalk side) — sits inside the button's interior. Slides
-        right toward the right half as the user drags. Pulses outward at idle
-        to telegraph 'pull me toward the other.' Pointer-events:none so the
+    {/* Chalk teardrop — sits inside the button's interior. Slides right
+        toward the ink teardrop as the user drags. Pulses outward at idle to
+        telegraph 'pull me toward the other.' Pointer-events:none so the
         underlying button still captures all taps. */}
     <div
       className="fixed z-[51] pointer-events-none"
@@ -702,19 +716,18 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
         right: '150px',
         width: '56px',
         height: '56px',
-        clipPath: 'inset(0 50% 0 0)',
         transform: `translateX(${dragX}px)`,
-        opacity: 0.7 + swipeProgress * 0.3,
+        opacity: 0.85 + swipeProgress * 0.15,
         transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
         animation: dragX === 0 ? 'yy-pulse-left 1.5s ease-in-out infinite' : 'none',
       }}
       aria-hidden="true"
     >
-      <YinYangIcon size={56} idSuffix="left" />
+      <YinYangChalkHalf size={56} />
     </div>
 
-    {/* Right half (ink side) — also inside the button, near its right edge.
-        Pulses inward at idle, telegraphing 'come dock here.' */}
+    {/* Ink teardrop — fixed at the button's right interior. Pulses inward at
+        idle, telegraphing 'come dock here.' */}
     <div
       className="fixed z-[51] pointer-events-none"
       style={{
@@ -722,14 +735,13 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
         right: '50px',
         width: '56px',
         height: '56px',
-        clipPath: 'inset(0 0 0 50%)',
-        opacity: 0.7 + swipeProgress * 0.3,
+        opacity: 0.85 + swipeProgress * 0.15,
         transition: 'opacity 100ms',
         animation: dragX === 0 ? 'yy-pulse-right 1.5s ease-in-out infinite' : 'none',
       }}
       aria-hidden="true"
     >
-      <YinYangIcon size={56} idSuffix="right" />
+      <YinYangInkHalf size={56} />
     </div>
     </>
   )
