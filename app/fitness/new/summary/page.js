@@ -11,7 +11,6 @@ import Link from 'next/link'
 import { useSound } from '../../../../lib/useSound'
 import { useProfileGuard } from '../../../../lib/useProfileGuard'
 import { pk } from '../../../../lib/storage'
-import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
 import RetreatButton from '../../../../components/RetreatButton'
 import SpeedLines from '../../../../components/SpeedLines'
@@ -3632,7 +3631,6 @@ export default function SummaryPage() {
         )
       })()}
 
-      <FireFadeIn duration={900} />
       <FireTransition
         active={fireActive}
         onComplete={() => { if (!skippedRef.current) router.push(fireDestRef.current) }}

@@ -20,7 +20,6 @@ import dynamic from 'next/dynamic'
 import { useSound } from '../../../../lib/useSound'
 import { useProfileGuard } from '../../../../lib/useProfileGuard'
 import { pk } from '../../../../lib/storage'
-import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
 import SlashWipe from '../../../../components/SlashWipe'
 import SpeedLines from '../../../../components/SpeedLines'
@@ -1003,10 +1002,6 @@ export default function MusclesPage() {
         onComplete={() => { if (!skippedRef.current) router.push(NEXT_TARGET) }}
       />
       <SpeedLines active={quickForgeRunning} />
-
-      {/* Fire fade-in — picks up where FireTransition left off so the
-          source-to-destination cut feels continuous. */}
-      <FireFadeIn duration={900} />
     </main>
   )
 }
