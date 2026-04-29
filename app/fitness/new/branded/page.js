@@ -13,7 +13,6 @@ import { useRouter } from 'next/navigation'
 import { useSound } from '../../../../lib/useSound'
 import { useProfileGuard } from '../../../../lib/useProfileGuard'
 import { pk } from '../../../../lib/storage'
-import FireFadeIn from '../../../../components/FireFadeIn'
 import FireTransition from '../../../../components/FireTransition'
 import SlashWipe from '../../../../components/SlashWipe'
 import SpeedLines from '../../../../components/SpeedLines'
@@ -896,7 +895,6 @@ export default function SchedulePage() {
       )}
 
       </div>
-      <FireFadeIn duration={900} />
       <FireTransition
         active={fireActive}
         onComplete={() => { if (!skippedRef.current) router.push(NEXT_TARGET) }}
