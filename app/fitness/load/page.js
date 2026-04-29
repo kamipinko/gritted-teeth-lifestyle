@@ -563,49 +563,30 @@ function CycleCard({ cycle, index, selected, onSelect }) {
   )
 }
 
-/* ── Yin-yang teardrops. Each half is a SINGLE PATH that traces the
-   teardrop's natural curved boundary (outer half-circle on one side, the
-   S-curve on the other). When the two teardrop SVGs overlay at the same
-   coords, they interlock into a complete yin-yang circle. No clip-path —
-   the curve IS the shape. Yakiire palette: bright flame red + ink. Eye
-   dots get a thin chalk halo so they're crisply defined when the halves
-   are fused (otherwise they read as smudges against the surrounding bulb). ── */
-const RED   = '#ff2a36'  // gtl-red-bright — flame, pops against the button's base red
-const INK   = '#070708'
-const CHALK = '#f0e8d8'  // halo color around the eye dots
-
-function YinYangRedHalf({ size = 56 }) {
-  // Red teardrop: outer LEFT half-circle + S-curve back through (25,75) and
-  // (75,25). The red half's head bulges into the upper-right; the ink head
-  // pinches into the lower-left. Eye dot sits in the CENTER of the upper-right
-  // bulge (62.5, 25), not at its apex — so it stays fully inside the teardrop.
+/* ── GTL logo halves. Each half is the LEFT or RIGHT half-disc of the
+   /logo.png brand emblem, clipped via SVG clipPath. When the two halves
+   overlay at the same coords (after a full swipe), they interlock into the
+   complete logo. ── */
+function LogoHalf({ side, size = 56 }) {
+  const cid = `logo-half-${side}`
+  // Half-disc path: outer arc (left or right semicircle) + straight diameter.
+  // sweep=0 traces the LEFT semicircle from top to bottom; sweep=1 the RIGHT.
+  const clipD = side === 'left'
+    ? 'M 50,0 A 50,50 0 0,0 50,100 L 50,0 Z'
+    : 'M 50,0 A 50,50 0 0,1 50,100 L 50,0 Z'
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true" style={{ display: 'block', overflow: 'visible' }}>
-      <path
-        d="M 50,0 A 50,50 0 0,0 50,100 A 25,25 0 0,1 50,50 A 25,25 0 0,0 50,0 Z"
-        fill={RED}
-        stroke={INK}
-        strokeWidth="2"
+      <defs>
+        <clipPath id={cid}>
+          <path d={clipD}/>
+        </clipPath>
+      </defs>
+      <image
+        href="/logo.png"
+        x="0" y="0" width="100" height="100"
+        clipPath={`url(#${cid})`}
+        preserveAspectRatio="xMidYMid slice"
       />
-      {/* Solid eye dot in the canonical red+black palette — no chalk halo. */}
-      <circle cx="62.5" cy="25" r="10" fill={INK}/>
-    </svg>
-  )
-}
-
-function YinYangInkHalf({ size = 56 }) {
-  // Ink teardrop: outer RIGHT half-circle + same S-curve back. Ink's head
-  // bulges into the lower-left; the red head pinches into the upper-right.
-  // Eye dot at the center of the lower-left bulge (37.5, 75).
-  return (
-    <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true" style={{ display: 'block', overflow: 'visible' }}>
-      <path
-        d="M 50,0 A 50,50 0 0,1 50,100 A 25,25 0 0,1 50,50 A 25,25 0 0,0 50,0 Z"
-        fill={INK}
-        stroke={RED}
-        strokeWidth="2"
-      />
-      <circle cx="37.5" cy="75" r="10" fill={RED}/>
     </svg>
   )
 }
@@ -735,7 +716,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       }}
       aria-hidden="true"
     >
-      <YinYangRedHalf size={56} />
+      <LogoHalf side="left" size={56} />
     </div>
 
     {/* Ink teardrop — pinned 100px right of viewport center. Travels LEFT
@@ -755,7 +736,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       }}
       aria-hidden="true"
     >
-      <YinYangInkHalf size={56} />
+      <LogoHalf side="right" size={56} />
     </div>
     </>
   )
