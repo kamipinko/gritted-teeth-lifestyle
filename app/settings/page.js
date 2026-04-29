@@ -3,7 +3,17 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import RetreatButton from '../../components/RetreatButton'
 import { useSound } from '../../lib/useSound'
-import { BGM_TRACKS, BGM_TRACK_KEY, getCurrentBgmTrack, getBgmTracksByGenre } from '../../lib/bgmTracks'
+import {
+  BGM_TRACKS,
+  BGM_TRACK_KEY,
+  BGM_VOLUME_KEY,
+  BGM_RANDOM_ON_LAUNCH_KEY,
+  BGM_BASE_VOL,
+  getCurrentBgmTrack,
+  getBgmTracksByGenre,
+  getBgmTargetVol,
+  getRandomTrackId,
+} from '../../lib/bgmTracks'
 
 const KEY_SFX_VOLUME   = 'gtl-sfx-volume'
 const KEY_BG_MUSIC_ON  = 'gtl-bg-music-on'
@@ -125,19 +135,28 @@ export default function SettingsPage() {
   const [bgMusicOn, setBgMusicOn] = useState(true)
   const [hapticsOn, setHapticsOn] = useState(true)
   const [bgmTrackId, setBgmTrackId] = useState(null)
+  const [bgmVolume, setBgmVolume] = useState(1)
+  const [randomOnLaunch, setRandomOnLaunch] = useState(false)
 
   useEffect(() => {
     setActiveProfile(typeof window !== 'undefined' ? (localStorage.getItem('gtl-active-profile') || null) : null)
     setSfxVolume(readNumber(KEY_SFX_VOLUME, 1))
     setBgMusicOn(readFlag(KEY_BG_MUSIC_ON, true))
     setHapticsOn(readFlag(KEY_HAPTICS_ON, true))
-    setBgmTrackId(getCurrentBgmTrack().id)
+    setBgmVolume(readNumber(BGM_VOLUME_KEY, 1))
+    setRandomOnLaunch(readFlag(BGM_RANDOM_ON_LAUNCH_KEY, false))
+    // Picker active state should reflect what's actually playing — if the
+    // singleton was launched in random-on-launch mode, that picked id lives
+    // on window.__gtlBgMusicTrackId rather than localStorage.
+    const liveId = (typeof window !== 'undefined' && window.__gtlBgMusicTrackId) || getCurrentBgmTrack().id
+    setBgmTrackId(liveId)
     setReady(true)
   }, [])
 
   // Shared "play this audio element from the top with the standard fade-in"
   // helper — used by both the BGM toggle and the track picker so the audio
-  // ramp shape is identical.
+  // ramp shape is identical. Reads getBgmTargetVol() so the slider's value
+  // is honoured on every fade.
   const playBgmFromTop = (a) => {
     if (typeof window === 'undefined' || !a) return
     if (window.__gtlBgMusicFadeInterval) {
@@ -151,7 +170,8 @@ export default function SettingsPage() {
         try { a.load(); a.play().catch(() => {}) } catch {}
       })
     }
-    const TARGET_VOL = 0.04
+    const TARGET_VOL = getBgmTargetVol()
+    if (TARGET_VOL <= 0) return
     const FADE_MS = 1500
     const steps = FADE_MS / 50
     const increment = TARGET_VOL / steps
@@ -163,6 +183,32 @@ export default function SettingsPage() {
         window.__gtlBgMusicFadeInterval = null
       }
     }, 50)
+  }
+
+  const handleBgmVolume = (v) => {
+    setBgmVolume(v)
+    writeRaw(BGM_VOLUME_KEY, String(v))
+    // Live update — if BGM is currently audible, retarget the live audio
+    // immediately so the slider feels responsive. Cancel any in-flight fade
+    // so it can't ramp back up over the new value.
+    if (typeof window !== 'undefined' && window.__gtlBgMusic && bgMusicOn && !window.__gtlBgMusic.paused) {
+      if (window.__gtlBgMusicFadeInterval) {
+        clearInterval(window.__gtlBgMusicFadeInterval)
+        window.__gtlBgMusicFadeInterval = null
+      }
+      window.__gtlBgMusic.volume = BGM_BASE_VOL * Math.max(0, Math.min(1, v))
+    }
+  }
+
+  const handleRandomize = () => {
+    const nextId = getRandomTrackId(bgmTrackId)
+    handleBgmTrackPick(nextId)
+  }
+
+  const handleRandomOnLaunch = (next) => {
+    setRandomOnLaunch(next)
+    writeRaw(BGM_RANDOM_ON_LAUNCH_KEY, next ? '1' : '0')
+    play(next ? 'option-select' : 'menu-close')
   }
 
   const handleSfxVolume = (v) => {
@@ -320,6 +366,24 @@ export default function SettingsPage() {
             </div>
             <div className="flex flex-col gap-3">
               {ready && <VolumeSlider value={sfxVolume} onChange={handleSfxVolume} onPreview={previewSfx} />}
+              {ready && (
+                <div className="bg-gtl-surface border border-gtl-edge px-5 py-4" style={{ clipPath: 'polygon(2% 0%, 100% 0%, 98% 100%, 0% 100%)' }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-mono text-[11px] tracking-[0.3em] uppercase font-bold text-gtl-chalk">BGM VOLUME</span>
+                    <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-red">{Math.round(bgmVolume * 100)}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={Math.round(bgmVolume * 100)}
+                    onChange={(e) => handleBgmVolume(parseInt(e.target.value, 10) / 100)}
+                    className="w-full accent-gtl-red"
+                    aria-label="BGM volume"
+                  />
+                </div>
+              )}
               {ready && <Toggle label="BACKGROUND MUSIC" value={bgMusicOn} onChange={handleBgMusic} />}
             </div>
           </div>
@@ -334,6 +398,24 @@ export default function SettingsPage() {
             <p className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-ash mb-3">
               TAP A TRACK TO SWITCH · TAP THE ACTIVE ONE TO RESTART
             </p>
+            {ready && (
+              <div className="flex flex-col gap-3 mb-4">
+                <button
+                  type="button"
+                  onClick={handleRandomize}
+                  className="group w-full flex items-center justify-between gap-4 px-5 py-4 bg-gtl-surface border border-gtl-edge [@media(hover:hover)]:hover:border-gtl-red transition-colors duration-200 outline-none"
+                  style={{ clipPath: 'polygon(2% 0%, 100% 0%, 98% 100%, 0% 100%)' }}
+                >
+                  <span className="font-mono text-[11px] tracking-[0.3em] uppercase font-bold text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper transition-colors duration-200">
+                    RANDOMIZE NOW
+                  </span>
+                  <span aria-hidden="true" className="font-display text-base leading-none text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper transition-colors duration-200">
+                    ⤮
+                  </span>
+                </button>
+                <Toggle label="RANDOM ON LAUNCH" value={randomOnLaunch} onChange={handleRandomOnLaunch} />
+              </div>
+            )}
             <div className="flex flex-col gap-5">
               {ready && getBgmTracksByGenre().map(({ genre, tracks }) => (
                 <div key={genre} className="flex flex-col gap-2">
