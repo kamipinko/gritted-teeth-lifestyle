@@ -899,7 +899,7 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ animation: slamming ? 'weight-slam-exit 500ms cubic-bezier(0.4,0,1,1) forwards' : 'weight-in 500ms cubic-bezier(0.18,1.2,0.35,1) forwards' }}>
-        <div className="relative w-full flex flex-col items-center pl-12 pr-20 py-10 bg-gtl-ink"
+        <div className="relative w-full flex flex-col items-center pl-12 pr-24 py-10 bg-gtl-ink"
           style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)' }}>
           <div className="absolute inset-0 gtl-noise pointer-events-none opacity-60" />
           <div className="absolute inset-0 bg-gtl-red-deep -z-10"
@@ -914,12 +914,12 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
           <div
             style={{
               position: 'absolute',
-              right: '10px',
+              right: '8px',
               top: '50%',
               transform: 'translateY(-50%)',
               display: 'flex',
               flexDirection: 'column-reverse',
-              gap: '8px',
+              gap: '10px',
               zIndex: 10,
             }}
           >
@@ -933,16 +933,16 @@ function WeightPopup({ exerciseName, initialWeight, rowRect, onClose, onSave }) 
                   style={{ touchAction: 'manipulation' }}
                   aria-label={`Set weight to ${w} pounds`}>
                   <div className="absolute inset-0 bg-gtl-red-deep"
-                    style={{ clipPath: 'polygon(12% 0%, 100% 0%, 88% 100%, 0% 100%)', transform: 'translate(2px, 2px)' }}
+                    style={{ clipPath: 'polygon(12% 0%, 100% 0%, 88% 100%, 0% 100%)', transform: 'translate(3px, 3px)' }}
                     aria-hidden="true" />
                   <div
-                    className="relative font-display tracking-tight px-2 py-1 text-base leading-none transition-all duration-100"
+                    className="relative font-display tracking-tight px-3 py-2 text-xl leading-none transition-all duration-100"
                     style={{
                       clipPath: 'polygon(12% 0%, 100% 0%, 88% 100%, 0% 100%)',
                       background: flashing ? '#ff2a36' : active ? '#d4181f' : '#1a1a1e',
                       color: active || flashing ? '#ffffff' : '#c8c8c8',
                       border: '1px solid ' + (active ? '#ff2a36' : '#3a3a42'),
-                      minWidth: '3rem',
+                      minWidth: '4rem',
                       textAlign: 'center',
                     }}
                   >

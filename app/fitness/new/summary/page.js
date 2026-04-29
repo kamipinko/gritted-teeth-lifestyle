@@ -2623,22 +2623,10 @@ export default function SummaryPage() {
   const [days,        setDays]       = useState([])
   const [dailyPlan,   setDailyPlan]  = useState({})
   const [fireActive,  setFireActive] = useState(false)
-  // Tap during the inscription engulf cascade snaps every weekday-flame-engulf
-  // span to its settled state via a global animation-duration override.
-  const [engulfSkipped, setEngulfSkipped] = useState(false)
-  useEffect(() => {
-    if (engulfSkipped) return
-    const handler = (e) => {
-      if (e.target?.closest?.('[data-retreat]')) return
-      setEngulfSkipped(true)
-    }
-    window.addEventListener('pointerdown', handler, { capture: true })
-    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
-    return () => {
-      window.removeEventListener('pointerdown', handler, { capture: true })
-      window.removeEventListener('touchstart',  handler, { capture: true })
-    }
-  }, [engulfSkipped])
+  // Inscription engulf / yakiire cascade is intentionally unskippable on the
+  // tap-ETCH path — the 4-phase yakiire (ignite → zoom → hot-hold → cool-down)
+  // is the cinematic centerpiece. Swipe-forge auto-progresses past summary so
+  // it never sees the cascade either way.
   // FireTransition's onComplete normally routes to /fitness/load. On the
   // quick-forge chain we want /fitness/active so the deep-launch effect
   // there continues to the first set's weight popup.
@@ -3641,18 +3629,6 @@ export default function SummaryPage() {
         )
       })()}
 
-      {/* Skip the inscription engulf cascade on first tap — collapses the
-          per-element --engulf-dur CSS var + caps any animation duration so
-          every weekday-flame-engulf span snaps to its 'forwards' end state. */}
-      {engulfSkipped && (
-        <style>{`
-          .weekday-flame-engulf {
-            --engulf-dur: 1ms !important;
-            animation-duration: 1ms !important;
-            animation-delay: 0ms !important;
-          }
-        `}</style>
-      )}
       <FireFadeIn duration={900} />
       <FireTransition
         active={fireActive}

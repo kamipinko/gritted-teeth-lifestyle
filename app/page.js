@@ -5,7 +5,7 @@ import CallingCard from '../components/CallingCard'
 import HeistTransition from '../components/HeistTransition'
 import GateScreen from '../components/GateScreen'
 import { useSound } from '../lib/useSound'
-import { getCurrentBgmTrack } from '../lib/bgmTracks'
+import { getCurrentBgmTrack, getBgmTargetVol } from '../lib/bgmTracks'
 
 // Pre-create the Audio element at module load with preload='auto' so it's ready
 // when the user gestures. iOS PWA standalone mode rejects audio.play() if the
@@ -104,11 +104,11 @@ function startBgMusic() {
     })
   }
 
-  // Fade in volume to TARGET_VOL over FADE_MS.
-  const TARGET_VOL = 0.04
+  // Fade in volume to user-configured target over FADE_MS.
+  const TARGET_VOL = getBgmTargetVol()
   const FADE_MS = 1500
   const steps = FADE_MS / 50
-  const increment = TARGET_VOL / steps
+  const increment = (TARGET_VOL || 0.0001) / steps
   const interval = setInterval(() => {
     const next = Math.min(TARGET_VOL, bgMusicAudio.volume + increment)
     bgMusicAudio.volume = next
