@@ -236,6 +236,40 @@ export default function SettingsPage() {
     play(next ? 'option-select' : 'menu-close')
   }
 
+  // Reset the app preferences (volumes, toggles, BGM track) to their factory
+  // defaults. Profile data (cycles, lifts, EXP) is untouched — that lives
+  // under gtl-{profile}-* and is owned by the DANGER ZONE buttons.
+  const resetSettingsDefaults = () => {
+    if (typeof window === 'undefined') return
+    const keys = [
+      KEY_SFX_VOLUME,
+      KEY_BG_MUSIC_ON,
+      KEY_HAPTICS_ON,
+      BGM_VOLUME_KEY,
+      'gtl-bgm-track',
+      'gtl-bgm-random-on-launch',
+    ]
+    for (const k of keys) {
+      try { localStorage.removeItem(k) } catch {}
+    }
+    setSfxVolume(1)
+    setBgMusicOn(true)
+    setHapticsOn(true)
+    setBgmVolume(1)
+    const live = getCurrentBgmTrack()
+    setBgmTrackTitle(live?.title || null)
+    // Live BGM volume retarget to default (BGM_BASE_VOL × 1² = BGM_BASE_VOL).
+    if (window.__gtlBgMusic && !window.__gtlBgMusic.paused) {
+      if (window.__gtlBgMusicFadeInterval) {
+        clearInterval(window.__gtlBgMusicFadeInterval)
+        window.__gtlBgMusicFadeInterval = null
+      }
+      const gain = getBgmGainNode()
+      if (gain) gain.gain.value = BGM_BASE_VOL
+      else window.__gtlBgMusic.volume = BGM_BASE_VOL
+    }
+  }
+
   // Wipe all keys scoped to the active profile (`gtl-${profile}-*`).
   const resetActiveProfileData = () => {
     if (typeof window === 'undefined') return
@@ -388,6 +422,22 @@ export default function SettingsPage() {
               <div className="h-px flex-1 bg-gtl-edge" />
             </div>
             {ready && <Toggle label="VIBRATION" value={hapticsOn} onChange={handleHaptics} />}
+          </div>
+
+          {/* DEFAULTS — preferences-only reset. Doesn't touch profile data. */}
+          <div className="mb-8">
+            <div className="flex items-center gap-4 mb-3">
+              <div className="h-px w-8 bg-gtl-edge" />
+              <span className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">DEFAULTS</span>
+              <div className="h-px flex-1 bg-gtl-edge" />
+            </div>
+            {ready && (
+              <DangerButton
+                label="RESET TO DEFAULTS"
+                armedLabel="TAP AGAIN — RESETS VOLUME / TRACK / TOGGLES"
+                onConfirm={resetSettingsDefaults}
+              />
+            )}
           </div>
 
           {/* DANGER */}
