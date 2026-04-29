@@ -678,10 +678,10 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
         on a positive (rightward) swipe, all the way to where the ink half
         sits. Stays put on a leftward swipe. */}
     {(() => {
-      // Rolling factor: rotation degrees per pixel of horizontal travel for a
-      // wheel of diameter `size` rolling without slipping along the surface.
-      // 360deg per circumference (π·size), so deg/px = 360/(π·size).
-      const rollFactor = 360 / (Math.PI * 56)
+      // Rolling factor tuned so the bead completes EXACTLY one full rotation
+      // over a full swipe and lands upright at fusion (logo readable at the
+      // dock point). 360° / threshold = deg per px.
+      const rollFactor = 360 / SWIPE_THRESHOLD
       const stencilTx = Math.max(0, dragX)
       const targetTx  = Math.min(0, dragX)
       return (

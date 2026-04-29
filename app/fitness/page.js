@@ -84,7 +84,8 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
       {/* Stencil + target on opposite sides. Whichever side gets pulled rolls
           (wheel-style, no slipping) all the way to the other side and docks. */}
       {(() => {
-        const rollFactor = 360 / (Math.PI * 56)
+        // One full rotation across a full swipe — lands upright at fusion.
+        const rollFactor = 360 / SWIPE_THRESHOLD
         const stencilTx = Math.max(0, dragX)
         const targetTx  = Math.min(0, dragX)
         return (

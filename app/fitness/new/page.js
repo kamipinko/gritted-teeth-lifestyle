@@ -128,7 +128,8 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
       {/* Logo halves on opposite sides. Swipe in either direction pulls one
           across to the other's slot to fuse. */}
       {(() => {
-        const rollFactor = 360 / (Math.PI * 56)
+        // One full rotation across a full swipe — lands upright at fusion.
+        const rollFactor = 360 / SWIPE_THRESHOLD
         const stencilTx = Math.max(0, dragX)
         const targetTx  = Math.min(0, dragX)
         return (
