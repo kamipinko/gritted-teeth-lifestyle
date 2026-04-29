@@ -58,9 +58,9 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
   const dxRef = useRef(0)
   const swipeFiredRef = useRef(false)
   const [dragX, setDragX] = useState(0)
-  // Full traversal — matches the 200px gap between bead centers, same as
-  // ActivatePopup on /fitness/load.
-  const SWIPE_THRESHOLD = 200
+  // Full traversal — gap between bead centers = 294px, beads pinned at
+  // calc(50% - 175px) on each side near the button ends.
+  const SWIPE_THRESHOLD = 294
 
   const handlePointerDown = (e) => {
     if (disabled) return
@@ -137,7 +137,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
           <div
             className="absolute pointer-events-none"
             style={{
-              left: 'calc(50% - 128px)',
+              left: 'calc(50% - 175px)',
               top: '50%',
               width: '56px',
               height: '56px',
@@ -154,7 +154,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
           <div
             className="absolute pointer-events-none"
             style={{
-              right: 'calc(50% - 128px)',
+              right: 'calc(50% - 175px)',
               top: '50%',
               width: '56px',
               height: '56px',

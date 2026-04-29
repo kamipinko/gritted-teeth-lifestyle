@@ -16,10 +16,9 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
   const dxRef = useRef(0)
   const swipeFiredRef = useRef(false)
   const [dragX, setDragX] = useState(0)
-  // Full traversal distance — matches the 200px gap between the stencil at
-  // calc(50% - 128px) on the left and the target on the right (200px between
-  // bead centers, same as ActivatePopup on /fitness/load).
-  const SWIPE_THRESHOLD = 200
+  // Full traversal — gap between bead centers = 2 * (175 - 28) = 294px,
+  // beads pinned near button edges via calc(50% - 175px).
+  const SWIPE_THRESHOLD = 294
 
   const handlePointerDown = (e) => {
     startRef.current = { x: e.clientX, y: e.clientY }
@@ -93,7 +92,7 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
           <div
             className="absolute pointer-events-none"
             style={{
-              left: 'calc(50% - 128px)',
+              left: 'calc(50% - 175px)',
               top: '50%',
               width: '56px',
               height: '56px',
@@ -110,7 +109,7 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
           <div
             className="absolute pointer-events-none"
             style={{
-              right: 'calc(50% - 128px)',
+              right: 'calc(50% - 175px)',
               top: '50%',
               width: '56px',
               height: '56px',
