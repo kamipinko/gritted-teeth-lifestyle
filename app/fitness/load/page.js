@@ -587,7 +587,10 @@ function YinYangRedHalf({ size = 56 }) {
         stroke={INK}
         strokeWidth="2"
       />
-      <circle cx="62.5" cy="25" r="7" fill={INK} stroke={CHALK} strokeWidth="1.5"/>
+      {/* Halo + dot. Two stacked circles instead of stroke — at 56px display
+          a 1.5 stroke in a 100-unit viewBox is sub-pixel and disappears. */}
+      <circle cx="62.5" cy="25" r="10" fill={CHALK}/>
+      <circle cx="62.5" cy="25" r="7"  fill={INK}/>
     </svg>
   )
 }
@@ -604,7 +607,8 @@ function YinYangInkHalf({ size = 56 }) {
         stroke={RED}
         strokeWidth="2"
       />
-      <circle cx="37.5" cy="75" r="7" fill={RED} stroke={CHALK} strokeWidth="1.5"/>
+      <circle cx="37.5" cy="75" r="10" fill={CHALK}/>
+      <circle cx="37.5" cy="75" r="7"  fill={RED}/>
     </svg>
   )
 }
