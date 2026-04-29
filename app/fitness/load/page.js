@@ -563,29 +563,30 @@ function CycleCard({ cycle, index, selected, onSelect }) {
   )
 }
 
-/* ── Yin-yang icon. Classic black+chalk palette so the two halves read as
-   photographic negatives of each other. Rendered as a full disc and clipped
-   to a half via CSS clip-path on the wrapper. Same SVG, two views. ── */
-function YinYangIcon({ size = 56, idSuffix = '' }) {
-  const cid = `yy-clip-${idSuffix}`
-  const CHALK = '#f0e8d8'
-  const INK   = '#070708'
+/* ── GTL logo halves. Each half is the LEFT or RIGHT half-disc of the
+   /logo.png brand emblem, clipped via SVG clipPath. When the two halves
+   overlay at the same coords (after a full swipe), they interlock into the
+   complete logo. ── */
+function LogoHalf({ side, size = 56 }) {
+  const cid = `logo-half-${side}`
+  // Half-disc path: outer arc (left or right semicircle) + straight diameter.
+  // sweep=0 traces the LEFT semicircle from top to bottom; sweep=1 the RIGHT.
+  const clipD = side === 'left'
+    ? 'M 50,0 A 50,50 0 0,0 50,100 L 50,0 Z'
+    : 'M 50,0 A 50,50 0 0,1 50,100 L 50,0 Z'
   return (
-    <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true" style={{ display: 'block' }}>
+    <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true" style={{ display: 'block', overflow: 'visible' }}>
       <defs>
         <clipPath id={cid}>
-          <circle cx="50" cy="50" r="49"/>
+          <path d={clipD}/>
         </clipPath>
       </defs>
-      <g clipPath={`url(#${cid})`}>
-        <rect x="0"  y="0" width="50" height="100" fill={CHALK}/>
-        <rect x="50" y="0" width="50" height="100" fill={INK}/>
-        <circle cx="50" cy="25" r="25" fill={INK}/>
-        <circle cx="50" cy="75" r="25" fill={CHALK}/>
-        <circle cx="37.5" cy="25" r="6.5" fill={CHALK}/>
-        <circle cx="62.5" cy="75" r="6.5" fill={INK}/>
-      </g>
-      <circle cx="50" cy="50" r="48" fill="none" stroke={INK} strokeWidth="2"/>
+      <image
+        href="/logo.png"
+        x="0" y="0" width="100" height="100"
+        clipPath={`url(#${cid})`}
+        preserveAspectRatio="xMidYMid slice"
+      />
     </svg>
   )
 }
@@ -596,7 +597,11 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
   const dxRef = useRef(0)
   const swipeFiredRef = useRef(false)
   const [dragX, setDragX] = useState(0)
-  const SWIPE_THRESHOLD = 100
+  // Full traversal distance — the swiped half travels all the way across to
+  // the other half's slot. Gap between bead centers (≈200px) is the same on
+  // any reasonable phone width because the halves are positioned symmetrically
+  // around the viewport center via calc(50% - X).
+  const SWIPE_THRESHOLD = 200
 
   const handlePointerDown = (e) => {
     startRef.current = { x: e.clientX, y: e.clientY }
@@ -609,13 +614,16 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
     const dx = e.clientX - startRef.current.x
     const dy = e.clientY - startRef.current.y
     if (Math.abs(dx) > Math.abs(dy)) {
-      const clamped = Math.max(0, Math.min(dx, SWIPE_THRESHOLD * 1.5))
+      // SIGNED clamp: positive = right swipe (red travels right to ink),
+      // negative = left swipe (ink travels left to red). Hard cap at ±threshold
+      // so neither half can overshoot the other's slot.
+      const clamped = Math.max(-SWIPE_THRESHOLD, Math.min(dx, SWIPE_THRESHOLD))
       dxRef.current = clamped
       setDragX(clamped)
     }
   }
   const handlePointerUp = () => {
-    if (dxRef.current > SWIPE_THRESHOLD && onSwipe) {
+    if (Math.abs(dxRef.current) >= SWIPE_THRESHOLD && onSwipe) {
       swipeFiredRef.current = true
       onSwipe(cycle)
     }
@@ -631,7 +639,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
     }
     onTap(cycle)
   }
-  const swipeProgress = Math.min(1, dragX / SWIPE_THRESHOLD)
+  const swipeProgress = Math.min(1, Math.abs(dragX) / SWIPE_THRESHOLD)
 
   return (
     <>
@@ -691,45 +699,44 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       </div>
     </button>
 
-    {/* Left half (chalk side) — sits inside the button's interior. Slides
-        right toward the right half as the user drags. Pulses outward at idle
-        to telegraph 'pull me toward the other.' Pointer-events:none so the
-        underlying button still captures all taps. */}
+    {/* Red teardrop — pinned 100px left of viewport center. Travels RIGHT
+        on a positive (rightward) swipe, all the way to where the ink half
+        sits. Stays put on a leftward swipe. */}
     <div
       className="fixed z-[51] pointer-events-none"
       style={{
         top: '486px',
-        right: '150px',
+        left: 'calc(50% - 128px)',
         width: '56px',
         height: '56px',
-        clipPath: 'inset(0 50% 0 0)',
-        transform: `translateX(${dragX}px)`,
-        opacity: 0.7 + swipeProgress * 0.3,
+        transform: `translateX(${Math.max(0, dragX)}px)`,
+        opacity: 0.85 + swipeProgress * 0.15,
         transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
         animation: dragX === 0 ? 'yy-pulse-left 1.5s ease-in-out infinite' : 'none',
       }}
       aria-hidden="true"
     >
-      <YinYangIcon size={56} idSuffix="left" />
+      <LogoHalf side="left" size={56} />
     </div>
 
-    {/* Right half (ink side) — also inside the button, near its right edge.
-        Pulses inward at idle, telegraphing 'come dock here.' */}
+    {/* Ink teardrop — pinned 100px right of viewport center. Travels LEFT
+        on a negative (leftward) swipe, all the way to the red half. Stays
+        put on a rightward swipe. */}
     <div
       className="fixed z-[51] pointer-events-none"
       style={{
         top: '486px',
-        right: '50px',
+        right: 'calc(50% - 128px)',
         width: '56px',
         height: '56px',
-        clipPath: 'inset(0 0 0 50%)',
-        opacity: 0.7 + swipeProgress * 0.3,
-        transition: 'opacity 100ms',
+        transform: `translateX(${Math.min(0, dragX)}px)`,
+        opacity: 0.85 + swipeProgress * 0.15,
+        transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
         animation: dragX === 0 ? 'yy-pulse-right 1.5s ease-in-out infinite' : 'none',
       }}
       aria-hidden="true"
     >
-      <YinYangIcon size={56} idSuffix="right" />
+      <LogoHalf side="right" size={56} />
     </div>
     </>
   )

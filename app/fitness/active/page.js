@@ -1824,6 +1824,12 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
     try { return localStorage.getItem(pk(`done-${cycleId}-${iso}`)) === 'true' } catch { return false }
   })
 
+  const handleClose = useCallback(() => {
+    play('menu-close')
+    setClosing(true)
+    setTimeout(onClose, 350)
+  }, [onClose, play])
+
   const stampCloseTimerRef = useRef(null)
   const handleStamp = () => {
     if (stamped) return
@@ -1883,12 +1889,6 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
   const originY = originRect
     ? `${originRect.top + originRect.height / 2}px`
     : '50vh'
-
-  const handleClose = useCallback(() => {
-    play('menu-close')
-    setClosing(true)
-    setTimeout(onClose, 350)
-  }, [onClose, play])
 
   // Deep-launch: continue the auto-progression chain from /fitness/load ACTIVATE.
   // After zoom-in lands, auto-open the first muscle's exercise panel — which
