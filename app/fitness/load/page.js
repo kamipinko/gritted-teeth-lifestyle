@@ -563,10 +563,13 @@ function CycleCard({ cycle, index, selected, onSelect }) {
   )
 }
 
-/* ── Yin-yang icon. Rendered as a full circle and clipped to a half via CSS
-   clip-path on the wrapper. Same SVG, two views. ── */
-function YinYangIcon({ size = 36, idSuffix = '' }) {
+/* ── Yin-yang icon. Classic black+chalk palette so the two halves read as
+   photographic negatives of each other. Rendered as a full disc and clipped
+   to a half via CSS clip-path on the wrapper. Same SVG, two views. ── */
+function YinYangIcon({ size = 56, idSuffix = '' }) {
   const cid = `yy-clip-${idSuffix}`
+  const CHALK = '#f0e8d8'
+  const INK   = '#070708'
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true" style={{ display: 'block' }}>
       <defs>
@@ -575,14 +578,14 @@ function YinYangIcon({ size = 36, idSuffix = '' }) {
         </clipPath>
       </defs>
       <g clipPath={`url(#${cid})`}>
-        <rect x="0"  y="0" width="50" height="100" fill="#d4181f"/>
-        <rect x="50" y="0" width="50" height="100" fill="#070708"/>
-        <circle cx="50" cy="25" r="25" fill="#070708"/>
-        <circle cx="50" cy="75" r="25" fill="#d4181f"/>
-        <circle cx="37.5" cy="25" r="6" fill="#d4181f"/>
-        <circle cx="62.5" cy="75" r="6" fill="#070708"/>
+        <rect x="0"  y="0" width="50" height="100" fill={CHALK}/>
+        <rect x="50" y="0" width="50" height="100" fill={INK}/>
+        <circle cx="50" cy="25" r="25" fill={INK}/>
+        <circle cx="50" cy="75" r="25" fill={CHALK}/>
+        <circle cx="37.5" cy="25" r="6.5" fill={CHALK}/>
+        <circle cx="62.5" cy="75" r="6.5" fill={INK}/>
       </g>
-      <circle cx="50" cy="50" r="48" fill="none" stroke="rgba(0,0,0,0.85)" strokeWidth="1.5"/>
+      <circle cx="50" cy="50" r="48" fill="none" stroke={INK} strokeWidth="2"/>
     </svg>
   )
 }
@@ -634,12 +637,12 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
     <>
     <style>{`
       @keyframes yy-pulse-left {
-        0%, 100% { transform: translateX(0); }
-        50%      { transform: translateX(5px); }
+        0%, 100% { transform: translateX(0)   scale(1);    filter: drop-shadow(0 0 0    rgba(240,232,216,0)); }
+        50%      { transform: translateX(7px) scale(1.06); filter: drop-shadow(0 0 8px rgba(240,232,216,0.7)); }
       }
       @keyframes yy-pulse-right {
-        0%, 100% { transform: translateX(0); }
-        50%      { transform: translateX(-3px); }
+        0%, 100% { transform: translateX(0)    scale(1);    filter: drop-shadow(0 0 0    rgba(7,7,8,0)); }
+        50%      { transform: translateX(-7px) scale(1.06); filter: drop-shadow(0 0 8px rgba(0,0,0,0.85)); }
       }
     `}</style>
     <button
@@ -688,50 +691,45 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       </div>
     </button>
 
-    {/* Left half of the yin-yang — embedded near the right interior of the
-        button, slides right toward the socket as the user drags. Pulses at
-        idle to telegraph the gesture. Pointer-events:none so the underlying
-        button still captures all taps. */}
+    {/* Left half (chalk side) — sits inside the button's interior. Slides
+        right toward the right half as the user drags. Pulses outward at idle
+        to telegraph 'pull me toward the other.' Pointer-events:none so the
+        underlying button still captures all taps. */}
     <div
       className="fixed z-[51] pointer-events-none"
       style={{
-        top: '496px',
-        right: '108px',
-        width: '36px',
-        height: '36px',
+        top: '486px',
+        right: '150px',
+        width: '56px',
+        height: '56px',
         clipPath: 'inset(0 50% 0 0)',
         transform: `translateX(${dragX}px)`,
-        opacity: 0.55 + swipeProgress * 0.45,
-        filter: swipeProgress >= 0.95
-          ? 'drop-shadow(0 0 10px rgba(255,80,90,0.95))'
-          : `drop-shadow(0 0 ${swipeProgress * 6}px rgba(212,24,31,${swipeProgress * 0.6}))`,
+        opacity: 0.7 + swipeProgress * 0.3,
         transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
         animation: dragX === 0 ? 'yy-pulse-left 1.5s ease-in-out infinite' : 'none',
       }}
       aria-hidden="true"
     >
-      <YinYangIcon size={36} idSuffix="left" />
+      <YinYangIcon size={56} idSuffix="left" />
     </div>
 
-    {/* Right half — pinned socket at the screen edge. Pulses inward at idle. */}
+    {/* Right half (ink side) — also inside the button, near its right edge.
+        Pulses inward at idle, telegraphing 'come dock here.' */}
     <div
       className="fixed z-[51] pointer-events-none"
       style={{
-        top: '496px',
-        right: '8px',
-        width: '36px',
-        height: '36px',
+        top: '486px',
+        right: '50px',
+        width: '56px',
+        height: '56px',
         clipPath: 'inset(0 0 0 50%)',
-        opacity: 0.55 + swipeProgress * 0.45,
-        filter: swipeProgress >= 0.95
-          ? 'drop-shadow(0 0 10px rgba(255,80,90,0.95))'
-          : 'none',
+        opacity: 0.7 + swipeProgress * 0.3,
         transition: 'opacity 100ms',
         animation: dragX === 0 ? 'yy-pulse-right 1.5s ease-in-out infinite' : 'none',
       }}
       aria-hidden="true"
     >
-      <YinYangIcon size={36} idSuffix="right" />
+      <YinYangIcon size={56} idSuffix="right" />
     </div>
     </>
   )
