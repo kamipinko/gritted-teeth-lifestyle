@@ -610,7 +610,11 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
   const dxRef = useRef(0)
   const swipeFiredRef = useRef(false)
   const [dragX, setDragX] = useState(0)
-  const SWIPE_THRESHOLD = 100
+  // Full traversal distance — the swiped half travels all the way across to
+  // the other half's slot. Gap between bead centers (≈200px) is the same on
+  // any reasonable phone width because the halves are positioned symmetrically
+  // around the viewport center via calc(50% - X).
+  const SWIPE_THRESHOLD = 200
 
   const handlePointerDown = (e) => {
     startRef.current = { x: e.clientX, y: e.clientY }
@@ -623,16 +627,16 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
     const dx = e.clientX - startRef.current.x
     const dy = e.clientY - startRef.current.y
     if (Math.abs(dx) > Math.abs(dy)) {
-      // Either-direction swipe: track magnitude, not signed direction. Cap
-      // at SWIPE_THRESHOLD so the halves stop dead at fusion (no over-swipe
-      // past center).
-      const clamped = Math.min(Math.abs(dx), SWIPE_THRESHOLD)
+      // SIGNED clamp: positive = right swipe (red travels right to ink),
+      // negative = left swipe (ink travels left to red). Hard cap at ±threshold
+      // so neither half can overshoot the other's slot.
+      const clamped = Math.max(-SWIPE_THRESHOLD, Math.min(dx, SWIPE_THRESHOLD))
       dxRef.current = clamped
       setDragX(clamped)
     }
   }
   const handlePointerUp = () => {
-    if (dxRef.current > SWIPE_THRESHOLD && onSwipe) {
+    if (Math.abs(dxRef.current) >= SWIPE_THRESHOLD && onSwipe) {
       swipeFiredRef.current = true
       onSwipe(cycle)
     }
@@ -648,7 +652,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
     }
     onTap(cycle)
   }
-  const swipeProgress = Math.min(1, dragX / SWIPE_THRESHOLD)
+  const swipeProgress = Math.min(1, Math.abs(dragX) / SWIPE_THRESHOLD)
 
   return (
     <>
@@ -708,17 +712,17 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       </div>
     </button>
 
-    {/* Chalk teardrop — pinned to the LEFT interior of the button. Slides
-        RIGHT toward center as the user drags (either direction). Pulses
-        rightward at idle to telegraph 'pull me toward the other.' */}
+    {/* Red teardrop — pinned 100px left of viewport center. Travels RIGHT
+        on a positive (rightward) swipe, all the way to where the ink half
+        sits. Stays put on a leftward swipe. */}
     <div
       className="fixed z-[51] pointer-events-none"
       style={{
         top: '486px',
-        left: '67px',
+        left: 'calc(50% - 128px)',
         width: '56px',
         height: '56px',
-        transform: `translateX(${dragX}px)`,
+        transform: `translateX(${Math.max(0, dragX)}px)`,
         opacity: 0.85 + swipeProgress * 0.15,
         transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
         animation: dragX === 0 ? 'yy-pulse-left 1.5s ease-in-out infinite' : 'none',
@@ -728,16 +732,17 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       <YinYangRedHalf size={56} />
     </div>
 
-    {/* Ink teardrop — pinned to the RIGHT interior of the button. Slides
-        LEFT toward center as the user drags. Pulses leftward at idle. */}
+    {/* Ink teardrop — pinned 100px right of viewport center. Travels LEFT
+        on a negative (leftward) swipe, all the way to the red half. Stays
+        put on a rightward swipe. */}
     <div
       className="fixed z-[51] pointer-events-none"
       style={{
         top: '486px',
-        right: '67px',
+        right: 'calc(50% - 128px)',
         width: '56px',
         height: '56px',
-        transform: `translateX(${-dragX}px)`,
+        transform: `translateX(${Math.min(0, dragX)}px)`,
         opacity: 0.85 + swipeProgress * 0.15,
         transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
         animation: dragX === 0 ? 'yy-pulse-right 1.5s ease-in-out infinite' : 'none',
