@@ -16,7 +16,7 @@ import { pk } from '../../../lib/storage'
 import FireFadeIn from '../../../components/FireFadeIn'
 import FireTransition from '../../../components/FireTransition'
 import RetreatButton from '../../../components/RetreatButton'
-import LogoHalf from '../../../components/LogoHalf'
+import { LogoStencil, LogoTarget } from '../../../components/LogoHalf'
 
 const MUSCLE_LABELS = {
   chest: 'CHEST', back: 'BACK', shoulders: 'SHOULDERS',
@@ -691,7 +691,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       }}
       aria-hidden="true"
     >
-      <LogoHalf side="left" size={56} />
+      <LogoStencil size={56} />
     </div>
 
     {/* Ink teardrop — pinned 100px right of viewport center. Travels LEFT
@@ -711,7 +711,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       }}
       aria-hidden="true"
     >
-      <LogoHalf side="right" size={56} />
+      <LogoTarget size={56} />
     </div>
     </>
   )

@@ -23,7 +23,7 @@ import FireTransition from '../../../components/FireTransition'
 import HeistTransition from '../../../components/HeistTransition'
 import SpeedLines from '../../../components/SpeedLines'
 import RetreatButton from '../../../components/RetreatButton'
-import LogoHalf from '../../../components/LogoHalf'
+import { LogoStencil, LogoTarget } from '../../../components/LogoHalf'
 
 const MAX_LEN = 40
 
@@ -142,7 +142,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
         }}
         aria-hidden="true"
       >
-        <LogoHalf side="left" size={40}/>
+        <LogoStencil size={40}/>
       </div>
       <div
         className="absolute pointer-events-none"
@@ -159,7 +159,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
         }}
         aria-hidden="true"
       >
-        <LogoHalf side="right" size={40}/>
+        <LogoTarget size={40}/>
       </div>
     </button>
   )

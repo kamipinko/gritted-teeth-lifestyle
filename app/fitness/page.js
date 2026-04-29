@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useSound } from '../../lib/useSound'
 import HeistTransition from '../../components/HeistTransition'
 import RetreatButton from '../../components/RetreatButton'
-import LogoHalf from '../../components/LogoHalf'
+import { LogoStencil, LogoTarget } from '../../components/LogoHalf'
 
 function ProfileChip({ name, onSelect, onSwipeSelect }) {
   const { play } = useSound()
@@ -97,7 +97,7 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
         }}
         aria-hidden="true"
       >
-        <LogoHalf side="left" size={40}/>
+        <LogoStencil size={40}/>
       </div>
       <div
         className="absolute pointer-events-none"
@@ -114,7 +114,7 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
         }}
         aria-hidden="true"
       >
-        <LogoHalf side="right" size={40}/>
+        <LogoTarget size={40}/>
       </div>
     </button>
   )
