@@ -79,8 +79,9 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
         style={{ clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)' }}
         aria-hidden="true"
       />
-      <div className="relative px-7 py-5 flex items-center">
-        <span className="font-display text-3xl leading-none transition-colors duration-200 text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper">
+      <div className="relative px-7 py-5 flex items-center justify-center">
+        <span className="font-display text-3xl leading-none transition-colors duration-200 text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper truncate"
+              style={{ maxWidth: 'calc(100% - 144px)' }}>
           {name.toUpperCase()}
         </span>
       </div>
