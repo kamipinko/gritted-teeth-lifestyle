@@ -122,20 +122,6 @@ function CycleOption({
         OPTION / {number}
       </div>
 
-      {/* Big number stamp — PRIMARY only. SECONDARY (LOAD CYCLE) drops it. */}
-      {isPrimary && (
-        <div
-          className={`
-            absolute top-3 left-6 font-display leading-none select-none
-            transition-all duration-500 ease-out
-            ${hovered ? 'text-[10rem]' : 'text-[8rem]'}
-            ${hovered ? 'text-gtl-paper/30' : 'text-gtl-paper/15'}
-          `}
-          aria-hidden="true"
-        >
-          {number}
-        </div>
-      )}
 
       {/* Content */}
       <div className="relative h-full flex flex-col justify-end p-8 pt-16">
