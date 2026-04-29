@@ -14,7 +14,7 @@ import { useSound } from '../../../lib/useSound'
 import { useProfileGuard } from '../../../lib/useProfileGuard'
 import { pk } from '../../../lib/storage'
 import FireFadeIn from '../../../components/FireFadeIn'
-import FireTransition from '../../../components/FireTransition'
+import HeistTransition from '../../../components/HeistTransition'
 import RetreatButton from '../../../components/RetreatButton'
 import { LogoStencil, LogoTarget } from '../../../components/LogoHalf'
 
@@ -1203,7 +1203,9 @@ export default function LoadCyclePage() {
 
       </div>
       <FireFadeIn duration={900} />
-      <FireTransition
+      {/* Outgoing transition on ACTIVATE / REVIEW EDIT — red diagonal slashes
+          (matches the home-page exit cascade) instead of the fire-wall FireTransition. */}
+      <HeistTransition
         active={fireActive}
         onComplete={() => {
           if (skippedRef.current) return
