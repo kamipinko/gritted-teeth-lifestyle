@@ -12,7 +12,6 @@ import Link from 'next/link'
 import { useSound } from '../../../lib/useSound'
 import { useProfileGuard } from '../../../lib/useProfileGuard'
 import { pk } from '../../../lib/storage'
-import FireFadeIn from '../../../components/FireFadeIn'
 import RetreatButton from '../../../components/RetreatButton'
 
 const MUSCLE_LABELS = {
@@ -1831,16 +1830,23 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
   }, [onClose, play])
 
   const stampCloseTimerRef = useRef(null)
+  // `justStamped` only flips on this session's handleStamp call — separate
+  // from `stamped` (which initializes true for already-completed days from
+  // localStorage). Without this, the post-stamp skip listener would install
+  // on mount for any already-done day and close DayFocus on the user's first
+  // tap (e.g. tapping a muscle to open ExercisePanel).
+  const [justStamped, setJustStamped] = useState(false)
   const handleStamp = () => {
     if (stamped) return
     play('option-select')
     try { localStorage.setItem(pk(`done-${cycleId}-${iso}`), 'true') } catch (_) {}
     setStamped(true)
+    setJustStamped(true)
     stampCloseTimerRef.current = setTimeout(() => handleClose(), 900)
   }
-  // Tap during the post-stamp 900ms wait → close immediately.
+  // Tap during THIS session's post-stamp 900ms wait → close immediately.
   useEffect(() => {
-    if (!stamped || closing) return
+    if (!justStamped || closing) return
     const handler = () => {
       if (stampCloseTimerRef.current) clearTimeout(stampCloseTimerRef.current)
       handleClose()
@@ -1851,7 +1857,7 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
       window.removeEventListener('pointerdown', handler, { capture: true })
       window.removeEventListener('touchstart',  handler, { capture: true })
     }
-  }, [stamped, closing, handleClose])
+  }, [justStamped, closing, handleClose])
 
   const handleUnlogMuscle = (muscleId) => {
     play('menu-close')
@@ -3192,6 +3198,7 @@ export default function ActiveCyclePage() {
             top: '466px',
             left: '32px',
             right: '32px',
+            touchAction: 'manipulation',
             animation: 'activate-popup-rise 320ms cubic-bezier(0.18, 1, 0.36, 1) both',
           }}
         >
@@ -3222,7 +3229,6 @@ export default function ActiveCyclePage() {
         </button>
       </>)}
 
-      <FireFadeIn duration={900} />
     </main>
   )
 }
