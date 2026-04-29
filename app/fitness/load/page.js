@@ -563,17 +563,18 @@ function CycleCard({ cycle, index, selected, onSelect }) {
   )
 }
 
-/* ── GTL logo halves. Each half is the LEFT or RIGHT half-disc of the
-   /logo.png brand emblem, clipped via SVG clipPath. When the two halves
-   overlay at the same coords (after a full swipe), they interlock into the
-   complete logo. ── */
+/* ── GTL logo halves shaped like yin-yang teardrops. Each half is a piece
+   of /logo.png clipped to a teardrop path: outer half-circle on one side,
+   S-curve through (25,75) and (75,25) on the other. When the two halves
+   overlay at the same coords (after a full swipe), they interlock into a
+   complete circle showing the full logo. ── */
 function LogoHalf({ side, size = 56 }) {
   const cid = `logo-half-${side}`
-  // Half-disc path: outer arc (left or right semicircle) + straight diameter.
-  // sweep=0 traces the LEFT semicircle from top to bottom; sweep=1 the RIGHT.
+  // Teardrop path. Same S-curve sub-arcs for both sides — only the outer
+  // semicircle differs (sweep flag).
   const clipD = side === 'left'
-    ? 'M 50,0 A 50,50 0 0,0 50,100 L 50,0 Z'
-    : 'M 50,0 A 50,50 0 0,1 50,100 L 50,0 Z'
+    ? 'M 50,0 A 50,50 0 0,0 50,100 A 25,25 0 0,1 50,50 A 25,25 0 0,0 50,0 Z'
+    : 'M 50,0 A 50,50 0 0,1 50,100 A 25,25 0 0,1 50,50 A 25,25 0 0,0 50,0 Z'
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true" style={{ display: 'block', overflow: 'visible' }}>
       <defs>
