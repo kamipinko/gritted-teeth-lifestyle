@@ -76,23 +76,28 @@ function CycleOption({
         aria-hidden="true"
       />
 
-      {/* Card background — clipped polygon */}
+      {/* Card background — clipped polygon. SECONDARY (LOAD CYCLE) is now a
+          dark outline-style mirror of PRIMARY: ink bg with a red border
+          (rendered via the layer below at idle opacity). */}
       <div
         className={`
           absolute inset-0 gtl-clip-card transition-all duration-300
           ${isPrimary
             ? (hovered ? 'bg-gtl-red-bright' : 'bg-gtl-red')
-            : (hovered ? 'bg-gtl-ivory' : 'bg-gtl-paper')}
+            : (hovered ? 'bg-gtl-surface' : 'bg-gtl-ink')}
           ${hovered ? 'shadow-red-glow' : ''}
         `}
       />
 
-      {/* Hover red border layer — a second clipped polygon slightly larger */}
+      {/* Red border layer — visible at idle for SECONDARY (the outline look),
+          hidden at idle for PRIMARY (becomes the hover glow ring). */}
       <div
         className={`
           absolute -inset-1 gtl-clip-card pointer-events-none
           transition-opacity duration-300
-          ${hovered ? 'opacity-100' : 'opacity-0'}
+          ${isPrimary
+            ? (hovered ? 'opacity-100' : 'opacity-0')
+            : (hovered ? 'opacity-100' : 'opacity-70')}
         `}
         style={{
           background: 'linear-gradient(135deg, #ff2a36 0%, #d4181f 100%)',
@@ -111,7 +116,7 @@ function CycleOption({
           transition-colors duration-300
           ${isPrimary
             ? (hovered ? 'text-gtl-paper' : 'text-gtl-paper/70')
-            : (hovered ? 'text-gtl-red' : 'text-gtl-ink/60')}
+            : (hovered ? 'text-gtl-red-bright' : 'text-gtl-red/70')}
         `}
       >
         OPTION / {number}
@@ -125,7 +130,7 @@ function CycleOption({
           ${hovered ? 'text-[10rem]' : 'text-[8rem]'}
           ${isPrimary
             ? (hovered ? 'text-gtl-paper/30' : 'text-gtl-paper/15')
-            : (hovered ? 'text-gtl-red/25' : 'text-gtl-ink/10')}
+            : (hovered ? 'text-gtl-red/30' : 'text-gtl-red/15')}
         `}
         aria-hidden="true"
       >
@@ -149,7 +154,7 @@ function CycleOption({
             font-display text-6xl leading-none mb-2
             transition-all duration-300 ease-out
             ${hovered ? '-rotate-2 translate-x-1' : '-rotate-1'}
-            ${isPrimary ? 'text-gtl-paper' : 'text-gtl-ink'}
+            ${isPrimary ? 'text-gtl-paper' : 'text-gtl-red'}
           `}
         >
           {label}
@@ -158,7 +163,7 @@ function CycleOption({
         <p
           className={`
             font-mono text-[10px] tracking-[0.25em] uppercase mt-3 max-w-[60%]
-            ${isPrimary ? 'text-gtl-paper/80' : 'text-gtl-ink/70'}
+            ${isPrimary ? 'text-gtl-paper/80' : 'text-gtl-chalk/70'}
           `}
         >
           {caption}
