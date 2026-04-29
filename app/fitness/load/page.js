@@ -623,7 +623,9 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
     const dx = e.clientX - startRef.current.x
     const dy = e.clientY - startRef.current.y
     if (Math.abs(dx) > Math.abs(dy)) {
-      const clamped = Math.max(0, Math.min(dx, SWIPE_THRESHOLD * 1.5))
+      // Cap at SWIPE_THRESHOLD exactly — no over-swipe past fusion. The
+      // chalk teardrop stops moving the moment it lands on the ink.
+      const clamped = Math.max(0, Math.min(dx, SWIPE_THRESHOLD))
       dxRef.current = clamped
       setDragX(clamped)
     }
