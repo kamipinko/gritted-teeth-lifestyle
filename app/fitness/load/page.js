@@ -1089,25 +1089,7 @@ export default function LoadCyclePage() {
       >
         <RetreatButton href="/fitness/hub" />      </nav>
 
-      {/* Headline */}
-      <div className="relative z-10 px-8 pb-6">
-        <div className="flex items-center gap-4 mb-2">
-          <div className="h-0.5 w-12 bg-gtl-red" />
-          <span className="font-matisse text-[10px] tracking-[0.4em] uppercase text-gtl-red font-bold">
-            WAR RECORD
-          </span>
-        </div>
-        <h1 className="font-matisse text-5xl text-gtl-chalk leading-none -rotate-1">
-          YOUR
-          <span className="text-gtl-red gtl-headline-shadow-soft inline-block rotate-1 ml-3">CYCLES</span>
-        </h1>
-      </div>
-
-      {/* Red slash divider */}
-      <div
-        className="relative z-10 mx-8 mb-10 h-[2px] bg-gtl-red"
-        style={{ transform: 'skewX(-6deg)', transformOrigin: 'left center' }}
-      />
+      {/* Headline removed — cycle cards now sit just below the nav. */}
 
       {/* Cycle list */}
       <section
