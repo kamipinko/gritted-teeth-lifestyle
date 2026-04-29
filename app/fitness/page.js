@@ -16,8 +16,10 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
   const dxRef = useRef(0)
   const swipeFiredRef = useRef(false)
   const [dragX, setDragX] = useState(0)
-  // Full traversal distance — matches the 120px gap between logo halves.
-  const SWIPE_THRESHOLD = 120
+  // Full traversal distance — matches the 200px gap between the stencil at
+  // calc(50% - 128px) on the left and the target on the right (200px between
+  // bead centers, same as ActivatePopup on /fitness/load).
+  const SWIPE_THRESHOLD = 200
 
   const handlePointerDown = (e) => {
     startRef.current = { x: e.clientX, y: e.clientY }
@@ -66,8 +68,8 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
       onPointerUp={handlePointerUp}
       onPointerCancel={() => { startRef.current = null; dxRef.current = 0; swipeFiredRef.current = false; setDragX(0) }}
       onClick={handleClick}
-      className="relative group block w-full outline-none text-left overflow-hidden"
-      style={{ touchAction: 'pan-y' }}
+      className="relative group block w-full -mx-5 outline-none text-left overflow-hidden"
+      style={{ touchAction: 'pan-y', width: 'calc(100% + 40px)' }}
     >
       <div
         className="absolute inset-0 pointer-events-none transition-all duration-200 bg-gtl-surface border border-gtl-edge [@media(hover:hover)]:group-hover:bg-gtl-red [@media(hover:hover)]:group-hover:border-transparent"
@@ -82,7 +84,7 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
       {/* Stencil + target on opposite sides. Whichever side gets pulled rolls
           (wheel-style, no slipping) all the way to the other side and docks. */}
       {(() => {
-        const rollFactor = 360 / (Math.PI * 40)
+        const rollFactor = 360 / (Math.PI * 56)
         const stencilTx = Math.max(0, dragX)
         const targetTx  = Math.min(0, dragX)
         return (
@@ -90,11 +92,11 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
           <div
             className="absolute pointer-events-none"
             style={{
-              left: 'calc(50% - 80px)',
+              left: 'calc(50% - 128px)',
               top: '50%',
-              width: '40px',
-              height: '40px',
-              marginTop: '-20px',
+              width: '56px',
+              height: '56px',
+              marginTop: '-28px',
               transform: `translateX(${stencilTx}px) rotate(${stencilTx * rollFactor}deg)`,
               opacity: 0.85 + swipeProgress * 0.15,
               transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
@@ -102,16 +104,16 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
             }}
             aria-hidden="true"
           >
-            <LogoStencil size={40}/>
+            <LogoStencil size={56}/>
           </div>
           <div
             className="absolute pointer-events-none"
             style={{
-              right: 'calc(50% - 80px)',
+              right: 'calc(50% - 128px)',
               top: '50%',
-              width: '40px',
-              height: '40px',
-              marginTop: '-20px',
+              width: '56px',
+              height: '56px',
+              marginTop: '-28px',
               transform: `translateX(${targetTx}px) rotate(${targetTx * rollFactor}deg)`,
               opacity: 0.85 + swipeProgress * 0.15,
               transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
@@ -119,7 +121,7 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
             }}
             aria-hidden="true"
           >
-            <LogoTarget size={40}/>
+            <LogoTarget size={56}/>
           </div>
           </>
         )
