@@ -16,6 +16,7 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
   const dxRef = useRef(0)
   const swipeFiredRef = useRef(false)
   const [dragX, setDragX] = useState(0)
+  const [ringKey, setRingKey] = useState(0)
   // Full traversal — gap between bead centers = 2 * (160 - 28) = 264px,
   // beads pinned via calc(50% - 160px) (safe on small phone viewports).
   const SWIPE_THRESHOLD = 264
@@ -41,6 +42,7 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
     const completed = Math.abs(dxRef.current) >= SWIPE_THRESHOLD
     if (completed && onSwipeSelect) {
       swipeFiredRef.current = true
+      setRingKey((k) => k + 1)
       play('card-confirm')
       onSwipeSelect(name)
     }
@@ -128,6 +130,25 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
           </>
         )
       })()}
+      {/* Shockwave ring on successful swipe — radiates from button center. */}
+      {ringKey > 0 && (
+        <div
+          key={ringKey}
+          className="absolute pointer-events-none rounded-full"
+          style={{
+            top: '50%',
+            left: '50%',
+            width: '56px',
+            height: '56px',
+            border: '4px solid #ff2a36',
+            opacity: 0,
+            animation: 'logo-ring 700ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards',
+            filter: 'drop-shadow(0 0 8px rgba(255,42,54,0.8))',
+            zIndex: 3,
+          }}
+          aria-hidden="true"
+        />
+      )}
     </button>
   )
 }
@@ -241,6 +262,11 @@ export default function ProfilePage() {
       @keyframes yy-pulse-right {
         0%, 100% { transform: translateX(0)    scale(1);    filter: drop-shadow(0 0 0    rgba(7,7,8,0)); }
         50%      { transform: translateX(-7px) scale(1.06); filter: drop-shadow(0 0 8px rgba(0,0,0,0.85)); }
+      }
+      @keyframes logo-ring {
+        0%   { transform: translate(-50%, -50%) scale(0.5); opacity: 0;   }
+        12%  { opacity: 0.95; }
+        100% { transform: translate(-50%, -50%) scale(7);   opacity: 0;   }
       }
     `}</style>
     <main className="relative min-h-screen bg-gtl-void flex flex-col overflow-hidden">
