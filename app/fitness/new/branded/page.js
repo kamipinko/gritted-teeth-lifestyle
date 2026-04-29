@@ -297,7 +297,10 @@ export default function SchedulePage() {
   const router = useRouter()
   const { play } = useSound()
   let backHref = '/fitness/new/muscles'
-  try { if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit' } catch (_) {}
+  try {
+    if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit'
+    else if (localStorage.getItem('gtl-quick-forge') === '1') backHref = '/fitness/new'
+  } catch (_) {}
 
   const [today] = useState(() => new Date())
   const [displayDate, setDisplayDate] = useState(() => {

@@ -2607,7 +2607,10 @@ export default function SummaryPage() {
   const router = useRouter()
   const { play } = useSound()
   let backHref = '/fitness/new/branded'
-  try { if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit' } catch (_) {}
+  try {
+    if (localStorage.getItem('gtl-back-to-edit') === '1') backHref = '/fitness/edit'
+    else if (localStorage.getItem('gtl-quick-forge') === '1') backHref = '/fitness/new'
+  } catch (_) {}
   useEffect(() => {
     try { if (localStorage.getItem('gtl-back-to-edit') !== '1') return } catch (_) { return }
     const handleKey = (e) => {
