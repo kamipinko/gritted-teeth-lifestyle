@@ -567,14 +567,18 @@ function CycleCard({ cycle, index, selected, onSelect }) {
    teardrop's natural curved boundary (outer half-circle on one side, the
    S-curve on the other). When the two teardrop SVGs overlay at the same
    coords, they interlock into a complete yin-yang circle. No clip-path —
-   the curve IS the shape. Yakiire palette: bright flame red + ink. ── */
-const RED = '#ff2a36'  // gtl-red-bright — flame, pops against the button's base red
-const INK = '#070708'
+   the curve IS the shape. Yakiire palette: bright flame red + ink. Eye
+   dots get a thin chalk halo so they're crisply defined when the halves
+   are fused (otherwise they read as smudges against the surrounding bulb). ── */
+const RED   = '#ff2a36'  // gtl-red-bright — flame, pops against the button's base red
+const INK   = '#070708'
+const CHALK = '#f0e8d8'  // halo color around the eye dots
 
 function YinYangRedHalf({ size = 56 }) {
   // Red teardrop: outer LEFT half-circle + S-curve back through (25,75) and
   // (75,25). The red half's head bulges into the upper-right; the ink head
-  // pinches into the lower-left.
+  // pinches into the lower-left. Eye dot sits in the CENTER of the upper-right
+  // bulge (62.5, 25), not at its apex — so it stays fully inside the teardrop.
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true" style={{ display: 'block', overflow: 'visible' }}>
       <path
@@ -583,7 +587,7 @@ function YinYangRedHalf({ size = 56 }) {
         stroke={INK}
         strokeWidth="2"
       />
-      <circle cx="75" cy="25" r="6.5" fill={INK}/>
+      <circle cx="62.5" cy="25" r="7" fill={INK} stroke={CHALK} strokeWidth="1.5"/>
     </svg>
   )
 }
@@ -591,6 +595,7 @@ function YinYangRedHalf({ size = 56 }) {
 function YinYangInkHalf({ size = 56 }) {
   // Ink teardrop: outer RIGHT half-circle + same S-curve back. Ink's head
   // bulges into the lower-left; the red head pinches into the upper-right.
+  // Eye dot at the center of the lower-left bulge (37.5, 75).
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true" style={{ display: 'block', overflow: 'visible' }}>
       <path
@@ -599,7 +604,7 @@ function YinYangInkHalf({ size = 56 }) {
         stroke={RED}
         strokeWidth="2"
       />
-      <circle cx="25" cy="75" r="6.5" fill={RED}/>
+      <circle cx="37.5" cy="75" r="7" fill={RED} stroke={CHALK} strokeWidth="1.5"/>
     </svg>
   )
 }
