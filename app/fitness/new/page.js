@@ -99,6 +99,17 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
   const swipeProgress = Math.min(1, Math.abs(dragX) / SWIPE_THRESHOLD)
 
   return (
+    <>
+    <style>{`
+      @keyframes yy-pulse-left {
+        0%, 100% { transform: translateX(0)   scale(1);    filter: drop-shadow(0 0 0    rgba(240,232,216,0)); }
+        50%      { transform: translateX(7px) scale(1.06); filter: drop-shadow(0 0 8px rgba(240,232,216,0.7)); }
+      }
+      @keyframes yy-pulse-right {
+        0%, 100% { transform: translateX(0)    scale(1);    filter: drop-shadow(0 0 0    rgba(7,7,8,0)); }
+        50%      { transform: translateX(-7px) scale(1.06); filter: drop-shadow(0 0 8px rgba(0,0,0,0.85)); }
+      }
+    `}</style>
     <button
       ref={forgeRef}
       type="button"
@@ -145,6 +156,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
               transform: `translateX(${stencilTx}px) rotate(${stencilTx * rollFactor}deg)`,
               opacity: 0.9 + swipeProgress * 0.1,
               transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
+              animation: dragX === 0 ? 'yy-pulse-left 1.5s ease-in-out infinite' : 'none',
               zIndex: 2,
             }}
             aria-hidden="true"
@@ -162,6 +174,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
               transform: `translateX(${targetTx}px) rotate(${targetTx * rollFactor}deg)`,
               opacity: 0.9 + swipeProgress * 0.1,
               transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
+              animation: dragX === 0 ? 'yy-pulse-right 1.5s ease-in-out infinite' : 'none',
               zIndex: 1,
             }}
             aria-hidden="true"
@@ -172,6 +185,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
         )
       })()}
     </button>
+    </>
   )
 }
 
