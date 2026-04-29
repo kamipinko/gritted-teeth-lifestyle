@@ -13,6 +13,8 @@ import {
   getBgmTracksByGenre,
   getBgmTargetVol,
   getRandomTrackId,
+  getBgmGainNode,
+  resumeBgmCtx,
 } from '../../lib/bgmTracks'
 
 const KEY_SFX_VOLUME   = 'gtl-sfx-volume'
@@ -163,7 +165,10 @@ export default function SettingsPage() {
       clearInterval(window.__gtlBgMusicFadeInterval)
       window.__gtlBgMusicFadeInterval = null
     }
-    a.volume = 0
+    const gain = getBgmGainNode()
+    if (gain) gain.gain.value = 0
+    else a.volume = 0
+    resumeBgmCtx()
     const p = a.play()
     if (p && typeof p.catch === 'function') {
       p.catch(() => {
@@ -176,8 +181,10 @@ export default function SettingsPage() {
     const steps = FADE_MS / 50
     const increment = TARGET_VOL / steps
     window.__gtlBgMusicFadeInterval = setInterval(() => {
-      const v = Math.min(TARGET_VOL, a.volume + increment)
-      a.volume = v
+      const cur = gain ? gain.gain.value : a.volume
+      const v = Math.min(TARGET_VOL, cur + increment)
+      if (gain) gain.gain.value = v
+      else a.volume = v
       if (v >= TARGET_VOL) {
         clearInterval(window.__gtlBgMusicFadeInterval)
         window.__gtlBgMusicFadeInterval = null
@@ -188,15 +195,19 @@ export default function SettingsPage() {
   const handleBgmVolume = (v) => {
     setBgmVolume(v)
     writeRaw(BGM_VOLUME_KEY, String(v))
-    // Live update — if BGM is currently audible, retarget the live audio
-    // immediately so the slider feels responsive. Cancel any in-flight fade
-    // so it can't ramp back up over the new value.
+    // Live update — if BGM is currently audible, retarget immediately so the
+    // slider feels responsive. Cancel any in-flight fade so it can't ramp
+    // back up over the new value. Prefer the GainNode (works on iOS); fall
+    // back to audio.volume only if the Web Audio graph couldn't be built.
     if (typeof window !== 'undefined' && window.__gtlBgMusic && bgMusicOn && !window.__gtlBgMusic.paused) {
       if (window.__gtlBgMusicFadeInterval) {
         clearInterval(window.__gtlBgMusicFadeInterval)
         window.__gtlBgMusicFadeInterval = null
       }
-      window.__gtlBgMusic.volume = BGM_BASE_VOL * Math.max(0, Math.min(1, v))
+      const target = BGM_BASE_VOL * Math.max(0, Math.min(1, v))
+      const gain = getBgmGainNode()
+      if (gain) gain.gain.value = target
+      else window.__gtlBgMusic.volume = target
     }
   }
 

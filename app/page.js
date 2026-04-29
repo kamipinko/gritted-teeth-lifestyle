@@ -5,7 +5,7 @@ import CallingCard from '../components/CallingCard'
 import HeistTransition from '../components/HeistTransition'
 import GateScreen from '../components/GateScreen'
 import { useSound } from '../lib/useSound'
-import { getCurrentBgmTrack, getBgmTargetVol } from '../lib/bgmTracks'
+import { getCurrentBgmTrack, getBgmTargetVol, getBgmGainNode, resumeBgmCtx } from '../lib/bgmTracks'
 
 // Pre-create the Audio element at module load with preload='auto' so it's ready
 // when the user gestures. iOS PWA standalone mode rejects audio.play() if the
@@ -81,37 +81,40 @@ function startBgMusic() {
   // don't leak audible BGM after a fresh launch with the flag off.
   try {
     if (window.localStorage.getItem('gtl-bg-music-on') === '0') {
-      try { bgMusicAudio.pause(); bgMusicAudio.currentTime = 0; bgMusicAudio.volume = 0 } catch {}
+      try { bgMusicAudio.pause(); bgMusicAudio.currentTime = 0 } catch {}
+      const offGain = getBgmGainNode()
+      if (offGain) offGain.gain.value = 0
       return
     }
   } catch {}
-  // Trust the audio element's own state: if it's already playing (because a
-  // previous mount started it and the module-level singleton is still alive),
-  // don't kick another play() and don't re-run the fade interval.
   if (!bgMusicAudio.paused) return
 
-  // Kick off play() inside the user-gesture call stack (caller is GateScreen.handleClick
-  // or handleTouchEnd's swipe path — both synchronous to the user tap/swipe).
+  // Bind the audio element to the Web Audio graph (creates the gain node on
+  // first call) and zero the gain so we ramp up cleanly. Resume the context
+  // — this call must happen inside a user gesture, which it is (caller is
+  // GateScreen.handleClick / handleTouchEnd, both synchronous to the tap).
+  const gain = getBgmGainNode()
+  if (gain) gain.gain.value = 0
+  resumeBgmCtx()
+
   const playPromise = bgMusicAudio.play()
   if (playPromise && typeof playPromise.catch === 'function') {
     playPromise.catch(() => {
-      // If iOS rejects (e.g. element wasn't loaded enough), give it a second
-      // chance: load() then retry play() on next tick. NOT inside user gesture
-      // anymore, but iOS has marked the element as "user-activated" by the
-      // first attempt, so the retry usually succeeds.
       bgMusicAudio.load()
       bgMusicAudio.play().catch(() => {})
     })
   }
 
-  // Fade in volume to user-configured target over FADE_MS.
+  // Fade gain (or audio.volume as fallback) up to user-configured target.
   const TARGET_VOL = getBgmTargetVol()
   const FADE_MS = 1500
   const steps = FADE_MS / 50
   const increment = (TARGET_VOL || 0.0001) / steps
   const interval = setInterval(() => {
-    const next = Math.min(TARGET_VOL, bgMusicAudio.volume + increment)
-    bgMusicAudio.volume = next
+    const cur = gain ? gain.gain.value : bgMusicAudio.volume
+    const next = Math.min(TARGET_VOL, cur + increment)
+    if (gain) gain.gain.value = next
+    else bgMusicAudio.volume = next
     if (next >= TARGET_VOL) clearInterval(interval)
   }, 50)
 }
