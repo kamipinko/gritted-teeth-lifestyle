@@ -93,7 +93,7 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
           transform: `translateX(${Math.max(0, dragX)}px)`,
           opacity: 0.85 + swipeProgress * 0.15,
           transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
-          zIndex: 1,
+          zIndex: 2,
         }}
         aria-hidden="true"
       >
