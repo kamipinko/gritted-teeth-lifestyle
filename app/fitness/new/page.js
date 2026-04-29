@@ -127,40 +127,49 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
       </span>
       {/* Logo halves on opposite sides. Swipe in either direction pulls one
           across to the other's slot to fuse. */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          left: 'calc(50% - 80px)',
-          top: '50%',
-          width: '40px',
-          height: '40px',
-          marginTop: '-20px',
-          transform: `translateX(${Math.max(0, dragX)}px)`,
-          opacity: 0.9 + swipeProgress * 0.1,
-          transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
-          zIndex: 2,
-        }}
-        aria-hidden="true"
-      >
-        <LogoStencil size={40}/>
-      </div>
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          right: 'calc(50% - 80px)',
-          top: '50%',
-          width: '40px',
-          height: '40px',
-          marginTop: '-20px',
-          transform: `translateX(${Math.min(0, dragX)}px)`,
-          opacity: 0.9 + swipeProgress * 0.1,
-          transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
-          zIndex: 1,
-        }}
-        aria-hidden="true"
-      >
-        <LogoTarget size={40}/>
-      </div>
+      {(() => {
+        const rollFactor = 360 / (Math.PI * 40)
+        const stencilTx = Math.max(0, dragX)
+        const targetTx  = Math.min(0, dragX)
+        return (
+          <>
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              left: 'calc(50% - 80px)',
+              top: '50%',
+              width: '40px',
+              height: '40px',
+              marginTop: '-20px',
+              transform: `translateX(${stencilTx}px) rotate(${stencilTx * rollFactor}deg)`,
+              opacity: 0.9 + swipeProgress * 0.1,
+              transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
+              zIndex: 2,
+            }}
+            aria-hidden="true"
+          >
+            <LogoStencil size={40}/>
+          </div>
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              right: 'calc(50% - 80px)',
+              top: '50%',
+              width: '40px',
+              height: '40px',
+              marginTop: '-20px',
+              transform: `translateX(${targetTx}px) rotate(${targetTx * rollFactor}deg)`,
+              opacity: 0.9 + swipeProgress * 0.1,
+              transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
+              zIndex: 1,
+            }}
+            aria-hidden="true"
+          >
+            <LogoTarget size={40}/>
+          </div>
+          </>
+        )
+      })()}
     </button>
   )
 }

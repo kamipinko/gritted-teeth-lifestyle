@@ -677,42 +677,51 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
     {/* Red teardrop — pinned 100px left of viewport center. Travels RIGHT
         on a positive (rightward) swipe, all the way to where the ink half
         sits. Stays put on a leftward swipe. */}
-    <div
-      className="fixed z-[52] pointer-events-none"
-      style={{
-        top: '486px',
-        left: 'calc(50% - 128px)',
-        width: '56px',
-        height: '56px',
-        transform: `translateX(${Math.max(0, dragX)}px)`,
-        opacity: 0.85 + swipeProgress * 0.15,
-        transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
-        animation: dragX === 0 ? 'yy-pulse-left 1.5s ease-in-out infinite' : 'none',
-      }}
-      aria-hidden="true"
-    >
-      <LogoStencil size={56} />
-    </div>
+    {(() => {
+      // Rolling factor: rotation degrees per pixel of horizontal travel for a
+      // wheel of diameter `size` rolling without slipping along the surface.
+      // 360deg per circumference (π·size), so deg/px = 360/(π·size).
+      const rollFactor = 360 / (Math.PI * 56)
+      const stencilTx = Math.max(0, dragX)
+      const targetTx  = Math.min(0, dragX)
+      return (
+        <>
+        <div
+          className="fixed z-[52] pointer-events-none"
+          style={{
+            top: '486px',
+            left: 'calc(50% - 128px)',
+            width: '56px',
+            height: '56px',
+            transform: `translateX(${stencilTx}px) rotate(${stencilTx * rollFactor}deg)`,
+            opacity: 0.85 + swipeProgress * 0.15,
+            transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
+            animation: dragX === 0 ? 'yy-pulse-left 1.5s ease-in-out infinite' : 'none',
+          }}
+          aria-hidden="true"
+        >
+          <LogoStencil size={56} />
+        </div>
 
-    {/* Ink teardrop — pinned 100px right of viewport center. Travels LEFT
-        on a negative (leftward) swipe, all the way to the red half. Stays
-        put on a rightward swipe. */}
-    <div
-      className="fixed z-[51] pointer-events-none"
-      style={{
-        top: '486px',
-        right: 'calc(50% - 128px)',
-        width: '56px',
-        height: '56px',
-        transform: `translateX(${Math.min(0, dragX)}px)`,
-        opacity: 0.85 + swipeProgress * 0.15,
-        transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
-        animation: dragX === 0 ? 'yy-pulse-right 1.5s ease-in-out infinite' : 'none',
-      }}
-      aria-hidden="true"
-    >
-      <LogoTarget size={56} />
-    </div>
+        <div
+          className="fixed z-[51] pointer-events-none"
+          style={{
+            top: '486px',
+            right: 'calc(50% - 128px)',
+            width: '56px',
+            height: '56px',
+            transform: `translateX(${targetTx}px) rotate(${targetTx * rollFactor}deg)`,
+            opacity: 0.85 + swipeProgress * 0.15,
+            transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
+            animation: dragX === 0 ? 'yy-pulse-right 1.5s ease-in-out infinite' : 'none',
+          }}
+          aria-hidden="true"
+        >
+          <LogoTarget size={56} />
+        </div>
+        </>
+      )
+    })()}
     </>
   )
 }
