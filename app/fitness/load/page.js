@@ -572,8 +572,11 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
   const swipeFiredRef = useRef(false)
   const [dragX, setDragX] = useState(0)
   // Shockwave ring counter — increments on each successful swipe so the
-  // ring element remounts and re-runs the keyframe.
+  // ring element remounts and re-runs the keyframe. ringSide tracks where
+  // the swipe ended (right swipe → fusion at right bead, etc.) so the
+  // shockwave radiates from the docked logo, not the button center.
   const [ringKey, setRingKey] = useState(0)
+  const [ringSide, setRingSide] = useState('right')
   // Full traversal distance — the swiped bead travels all the way across to
   // the other side. Gap between bead centers = 2 * (175 - 28) = 294, fixed
   // by calc(50% - 175px) on each side. Threshold matches the gap so 1:1
@@ -602,6 +605,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
   const handlePointerUp = () => {
     if (Math.abs(dxRef.current) >= SWIPE_THRESHOLD && onSwipe) {
       swipeFiredRef.current = true
+      setRingSide(dxRef.current > 0 ? 'right' : 'left')
       setRingKey((k) => k + 1)
       onSwipe(cycle)
     }
@@ -630,11 +634,6 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
         0%, 100% { transform: translateX(0)    scale(1);    filter: drop-shadow(0 0 0    rgba(7,7,8,0)); }
         50%      { transform: translateX(-7px) scale(1.06); filter: drop-shadow(0 0 8px rgba(0,0,0,0.85)); }
       }
-      @keyframes logo-ring {
-        0%   { transform: translate(-50%, -50%) scale(0.5); opacity: 0;   }
-        12%  { opacity: 0.95; }
-        100% { transform: translate(-50%, -50%) scale(7);   opacity: 0;   }
-      }
     `}</style>
     <button
       type="button"
@@ -643,7 +642,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       onPointerUp={handlePointerUp}
       onPointerCancel={() => { startRef.current = null; dxRef.current = 0; swipeFiredRef.current = false; setDragX(0) }}
       onClick={handleClick}
-      className="fixed z-50 group block outline-none active:scale-[0.98] transition-transform overflow-hidden"
+      className="fixed z-50 group block outline-none active:scale-[0.98] transition-transform overflow-visible"
       style={{
         top: '479px',
         left: '12px',
@@ -730,23 +729,24 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
         </>
       )
     })()}
-    {/* Shockwave ring — radiates from the button center on a successful
-        swipe. Re-keyed on each fire so the keyframe replays from the start.
-        The keyframe's transform: translate(-50%, -50%) centers it on the
-        anchor point set by left/top. */}
+    {/* Shockwave ring — radiates from the docked logo on a successful swipe.
+        Reuses the global @keyframes shockwave (the same one fired by the
+        muscle-target ALL button). Positioned at whichever bead stayed put
+        (right side on a rightward swipe, left side on a leftward swipe). */}
     {ringKey > 0 && (
       <div
         key={ringKey}
         className="fixed z-[53] pointer-events-none rounded-full"
         style={{
-          top: `${486 + 28}px`,
-          left: '50%',
+          top: '486px',
+          ...(ringSide === 'right'
+            ? { right: 'calc(50% - 175px)' }
+            : { left:  'calc(50% - 175px)' }),
           width: '56px',
           height: '56px',
-          border: '4px solid #ff2a36',
-          opacity: 0,
-          animation: 'logo-ring 700ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards',
-          filter: 'drop-shadow(0 0 8px rgba(255,42,54,0.8))',
+          borderStyle: 'solid',
+          borderColor: '#d4181f',
+          animation: 'shockwave 900ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards',
         }}
         aria-hidden="true"
       />
@@ -1089,25 +1089,7 @@ export default function LoadCyclePage() {
       >
         <RetreatButton href="/fitness/hub" />      </nav>
 
-      {/* Headline */}
-      <div className="relative z-10 px-8 pb-6">
-        <div className="flex items-center gap-4 mb-2">
-          <div className="h-0.5 w-12 bg-gtl-red" />
-          <span className="font-matisse text-[10px] tracking-[0.4em] uppercase text-gtl-red font-bold">
-            WAR RECORD
-          </span>
-        </div>
-        <h1 className="font-matisse text-5xl text-gtl-chalk leading-none -rotate-1">
-          YOUR
-          <span className="text-gtl-red gtl-headline-shadow-soft inline-block rotate-1 ml-3">CYCLES</span>
-        </h1>
-      </div>
-
-      {/* Red slash divider */}
-      <div
-        className="relative z-10 mx-8 mb-10 h-[2px] bg-gtl-red"
-        style={{ transform: 'skewX(-6deg)', transformOrigin: 'left center' }}
-      />
+      {/* Headline removed — cycle cards now sit just below the nav. */}
 
       {/* Cycle list */}
       <section

@@ -59,6 +59,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
   const swipeFiredRef = useRef(false)
   const [dragX, setDragX] = useState(0)
   const [ringKey, setRingKey] = useState(0)
+  const [ringSide, setRingSide] = useState('right')
   // Full traversal — gap between bead centers = 294px, beads pinned at
   // calc(50% - 175px) on each side near the button ends.
   const SWIPE_THRESHOLD = 294
@@ -83,6 +84,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
   const handlePointerUp = () => {
     if (Math.abs(dxRef.current) >= SWIPE_THRESHOLD && onSwipe) {
       swipeFiredRef.current = true
+      setRingSide(dxRef.current > 0 ? 'right' : 'left')
       setRingKey((k) => k + 1)
       onSwipe()
     }
@@ -110,11 +112,6 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
       @keyframes yy-pulse-right {
         0%, 100% { transform: translateX(0)    scale(1);    filter: drop-shadow(0 0 0    rgba(7,7,8,0)); }
         50%      { transform: translateX(-7px) scale(1.06); filter: drop-shadow(0 0 8px rgba(0,0,0,0.85)); }
-      }
-      @keyframes logo-ring {
-        0%   { transform: translate(-50%, -50%) scale(0.5); opacity: 0;   }
-        12%  { opacity: 0.95; }
-        100% { transform: translate(-50%, -50%) scale(7);   opacity: 0;   }
       }
     `}</style>
     <button
@@ -191,20 +188,24 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
           </>
         )
       })()}
-      {/* Shockwave ring on successful swipe — radiates from button center. */}
+      {/* Shockwave ring on successful swipe — radiates from the docked logo
+          (whichever side the swipe finished on). Uses the global @keyframes
+          shockwave (matches the muscle-target ALL button). */}
       {ringKey > 0 && (
         <div
           key={ringKey}
           className="absolute pointer-events-none rounded-full"
           style={{
             top: '50%',
-            left: '50%',
+            marginTop: '-28px',
+            ...(ringSide === 'right'
+              ? { right: 'calc(50% - 175px)' }
+              : { left:  'calc(50% - 175px)' }),
             width: '56px',
             height: '56px',
-            border: '4px solid #ff2a36',
-            opacity: 0,
-            animation: 'logo-ring 700ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards',
-            filter: 'drop-shadow(0 0 8px rgba(255,42,54,0.8))',
+            borderStyle: 'solid',
+            borderColor: '#d4181f',
+            animation: 'shockwave 900ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards',
             zIndex: 3,
           }}
           aria-hidden="true"
