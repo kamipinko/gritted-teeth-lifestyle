@@ -2966,16 +2966,21 @@ export default function SummaryPage() {
       }
       lastPairCooledAt = 3200 + (colCount - 1) * 500
     } else {
-      // ── Reverse-linear cascade (matches per-anchor cascade order N → 1) ──
-      //   Flame: 50ms per letter, Zoom: 50ms per letter, Cooled: 75ms per letter.
-      //   Within each weekday, letters fire L=2 → L=0 (matching the cluster's
-      //   reverse-everywhere pattern). Anchors fire from N down to 1.
+      // ── Per-letter weekday cascade ──
+      //   Within each weekday, letters fire L=2 → L=0.
+      //   The PER-ANCHOR ORDER is silhouette-dependent:
+      //     - Blade (1-6 days, katana): reverse N → 1 — matches the spine layout
+      //       so the cascade reads tip-to-hilt (the "middle-out" feel).
+      //     - All other silhouettes (Ouroboros, Drill, Infinity): plain 1 → N
+      //       forward — looks correct on circles / spirals / loops where reverse
+      //       reads as "starts from a random side".
+      const isBlade = N >= 1 && N <= 6
       const letterStaggerOffsetFast   = (_dayIdx, L) => (2 - L) * 50
       const letterStaggerOffsetCooled = (_dayIdx, L) => (2 - L) * 75
       const letterStaggerOffsetSlow   = (_dayIdx, L) => (2 - L) * 50
 
       const WEEKDAY_PAIRS = Array.from({ length: N }, (_, step) => ({
-        days: [N - 1 - step],
+        days: [isBlade ? (N - 1 - step) : step],
         flame:  900  + step * 50,
         zoom:   3000 + step * 50,
         cooled: 3650 + step * 75,
