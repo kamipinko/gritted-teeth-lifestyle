@@ -50,7 +50,6 @@ export function LogoTarget({ size = 44 }) {
           height: `${inner}px`,
           borderRadius: '50%',
           background: '#070708',
-          boxShadow: '0 0 10px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,80,90,0.25)',
         }}
       />
     </div>
