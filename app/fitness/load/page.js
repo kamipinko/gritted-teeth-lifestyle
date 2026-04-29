@@ -567,19 +567,19 @@ function CycleCard({ cycle, index, selected, onSelect }) {
    teardrop's natural curved boundary (outer half-circle on one side, the
    S-curve on the other). When the two teardrop SVGs overlay at the same
    coords, they interlock into a complete yin-yang circle. No clip-path —
-   the curve IS the shape. ── */
-const CHALK = '#f0e8d8'
-const INK   = '#070708'
+   the curve IS the shape. Yakiire palette: bright flame red + ink. ── */
+const RED = '#ff2a36'  // gtl-red-bright — flame, pops against the button's base red
+const INK = '#070708'
 
-function YinYangChalkHalf({ size = 56 }) {
-  // Chalk teardrop: outer LEFT half-circle + S-curve back through (25,75) and
-  // (75,25). The chalk's head bulges into the upper-right; the ink's head
+function YinYangRedHalf({ size = 56 }) {
+  // Red teardrop: outer LEFT half-circle + S-curve back through (25,75) and
+  // (75,25). The red half's head bulges into the upper-right; the ink head
   // pinches into the lower-left.
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true" style={{ display: 'block', overflow: 'visible' }}>
       <path
         d="M 50,0 A 50,50 0 0,0 50,100 A 25,25 0 0,1 50,50 A 25,25 0 0,0 50,0 Z"
-        fill={CHALK}
+        fill={RED}
         stroke={INK}
         strokeWidth="2"
       />
@@ -590,16 +590,16 @@ function YinYangChalkHalf({ size = 56 }) {
 
 function YinYangInkHalf({ size = 56 }) {
   // Ink teardrop: outer RIGHT half-circle + same S-curve back. Ink's head
-  // bulges into the lower-left; chalk's head pinches into the upper-right.
+  // bulges into the lower-left; the red head pinches into the upper-right.
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true" style={{ display: 'block', overflow: 'visible' }}>
       <path
         d="M 50,0 A 50,50 0 0,1 50,100 A 25,25 0 0,1 50,50 A 25,25 0 0,0 50,0 Z"
         fill={INK}
-        stroke={CHALK}
+        stroke={RED}
         strokeWidth="2"
       />
-      <circle cx="25" cy="75" r="6.5" fill={CHALK}/>
+      <circle cx="25" cy="75" r="6.5" fill={RED}/>
     </svg>
   )
 }
@@ -725,7 +725,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       }}
       aria-hidden="true"
     >
-      <YinYangChalkHalf size={56} />
+      <YinYangRedHalf size={56} />
     </div>
 
     {/* Ink teardrop — pinned to the RIGHT interior of the button. Slides
