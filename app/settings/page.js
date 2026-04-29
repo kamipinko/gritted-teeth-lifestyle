@@ -354,16 +354,10 @@ export default function SettingsPage() {
                         style={{ clipPath: 'polygon(2% 0%, 100% 0%, 98% 100%, 0% 100%)' }}
                         aria-pressed={active}
                       >
-                        <div className="flex flex-col items-start gap-1 min-w-0">
-                          <span className={`font-display text-xl leading-none truncate
-                            ${active ? 'text-gtl-paper' : 'text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper'}`}>
-                            {track.title}
-                          </span>
-                          <span className={`font-mono text-[9px] tracking-[0.3em] uppercase truncate
-                            ${active ? 'text-gtl-paper/70' : 'text-gtl-ash'}`}>
-                            {track.subtitle}
-                          </span>
-                        </div>
+                        <span className={`font-display text-xl leading-none truncate
+                          ${active ? 'text-gtl-paper' : 'text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper'}`}>
+                          {track.title}
+                        </span>
                         <span aria-hidden="true" className={`font-display text-base leading-none shrink-0
                           ${active ? 'text-gtl-paper' : 'text-gtl-red'}`}>
                           {active ? '◆' : '➤︎'}
