@@ -35,19 +35,18 @@ export function LogoTarget({ size = 44 }) {
   // leaves a sliver of red button background showing through near the edges).
   const inner = Math.round(size * 1.08)
   return (
-    <div
-      style={{
-        width: `${size}px`,
-        height: `${size}px`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
+    <div style={{ position: 'relative', width: `${size}px`, height: `${size}px` }}>
+      {/* Inner disc absolutely centered. Avoids flex-shrink stretching it
+          into a tall oval when inner > size on the main axis. */}
       <div
         style={{
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
           width: `${inner}px`,
           height: `${inner}px`,
+          marginLeft: `${-inner / 2}px`,
+          marginTop:  `${-inner / 2}px`,
           borderRadius: '50%',
           background: '#070708',
         }}
