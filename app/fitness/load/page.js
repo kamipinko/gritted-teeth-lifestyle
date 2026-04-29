@@ -623,9 +623,10 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
     const dx = e.clientX - startRef.current.x
     const dy = e.clientY - startRef.current.y
     if (Math.abs(dx) > Math.abs(dy)) {
-      // Cap at SWIPE_THRESHOLD exactly — no over-swipe past fusion. The
-      // chalk teardrop stops moving the moment it lands on the ink.
-      const clamped = Math.max(0, Math.min(dx, SWIPE_THRESHOLD))
+      // Either-direction swipe: track magnitude, not signed direction. Cap
+      // at SWIPE_THRESHOLD so the halves stop dead at fusion (no over-swipe
+      // past center).
+      const clamped = Math.min(Math.abs(dx), SWIPE_THRESHOLD)
       dxRef.current = clamped
       setDragX(clamped)
     }
@@ -707,15 +708,14 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       </div>
     </button>
 
-    {/* Chalk teardrop — sits inside the button's interior. Slides right
-        toward the ink teardrop as the user drags. Pulses outward at idle to
-        telegraph 'pull me toward the other.' Pointer-events:none so the
-        underlying button still captures all taps. */}
+    {/* Chalk teardrop — pinned to the LEFT interior of the button. Slides
+        RIGHT toward center as the user drags (either direction). Pulses
+        rightward at idle to telegraph 'pull me toward the other.' */}
     <div
       className="fixed z-[51] pointer-events-none"
       style={{
         top: '486px',
-        right: '150px',
+        left: '67px',
         width: '56px',
         height: '56px',
         transform: `translateX(${dragX}px)`,
@@ -728,17 +728,18 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       <YinYangChalkHalf size={56} />
     </div>
 
-    {/* Ink teardrop — fixed at the button's right interior. Pulses inward at
-        idle, telegraphing 'come dock here.' */}
+    {/* Ink teardrop — pinned to the RIGHT interior of the button. Slides
+        LEFT toward center as the user drags. Pulses leftward at idle. */}
     <div
       className="fixed z-[51] pointer-events-none"
       style={{
         top: '486px',
-        right: '50px',
+        right: '67px',
         width: '56px',
         height: '56px',
+        transform: `translateX(${-dragX}px)`,
         opacity: 0.85 + swipeProgress * 0.15,
-        transition: 'opacity 100ms',
+        transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
         animation: dragX === 0 ? 'yy-pulse-right 1.5s ease-in-out infinite' : 'none',
       }}
       aria-hidden="true"
