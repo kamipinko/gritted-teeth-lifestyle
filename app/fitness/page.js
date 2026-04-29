@@ -5,18 +5,19 @@ import Link from 'next/link'
 import { useSound } from '../../lib/useSound'
 import HeistTransition from '../../components/HeistTransition'
 import RetreatButton from '../../components/RetreatButton'
+import LogoHalf from '../../components/LogoHalf'
 
 function ProfileChip({ name, onSelect, onSwipeSelect }) {
   const { play } = useSound()
-  // Pointer-tracking refs for swipe-vs-tap discrimination. The decision is
-  // made at pointerUp based on the FINAL dx — not a sticky armed flag — so
-  // pulling back below the threshold cancels the swipe and falls through to
-  // a normal tap.
+  // Pointer-tracking refs for swipe-vs-tap discrimination. Signed dx —
+  // positive = right swipe, negative = left swipe. Either direction at
+  // full traversal triggers swipe-select.
   const startRef = useRef(null)
   const dxRef = useRef(0)
   const swipeFiredRef = useRef(false)
   const [dragX, setDragX] = useState(0)
-  const SWIPE_THRESHOLD = 60
+  // Full traversal distance — matches the 120px gap between logo halves.
+  const SWIPE_THRESHOLD = 120
 
   const handlePointerDown = (e) => {
     startRef.current = { x: e.clientX, y: e.clientY }
@@ -28,16 +29,15 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
     if (!startRef.current) return
     const dx = e.clientX - startRef.current.x
     const dy = e.clientY - startRef.current.y
-    // Only follow horizontal-dominant motion. dx clamped to [0, threshold*1.5]
-    // so visual progress reflects pullback (release below threshold = cancel).
     if (Math.abs(dx) > Math.abs(dy)) {
-      const clamped = Math.max(0, Math.min(dx, SWIPE_THRESHOLD * 1.5))
+      // Signed clamp at ±threshold — neither half overshoots the other's slot.
+      const clamped = Math.max(-SWIPE_THRESHOLD, Math.min(dx, SWIPE_THRESHOLD))
       dxRef.current = clamped
       setDragX(clamped)
     }
   }
   const handlePointerUp = () => {
-    const completed = dxRef.current > SWIPE_THRESHOLD
+    const completed = Math.abs(dxRef.current) >= SWIPE_THRESHOLD
     if (completed && onSwipeSelect) {
       swipeFiredRef.current = true
       play('card-confirm')
@@ -48,7 +48,6 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
     setDragX(0)
   }
   const handleClick = (e) => {
-    // Suppress click only when the gesture actually resolved as a full swipe.
     if (swipeFiredRef.current) {
       e.preventDefault(); e.stopPropagation()
       swipeFiredRef.current = false
@@ -57,7 +56,7 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
     play('option-select')
     onSelect(name)
   }
-  const swipeProgress = Math.min(1, dragX / SWIPE_THRESHOLD)
+  const swipeProgress = Math.min(1, Math.abs(dragX) / SWIPE_THRESHOLD)
 
   return (
     <button
@@ -70,41 +69,52 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
       className="relative group outline-none text-left overflow-hidden"
       style={{ touchAction: 'pan-y' }}
     >
-      {/* Hover effects gated on (hover: hover) so iOS doesn't sticky-hover on first tap. */}
       <div
         className="absolute inset-0 pointer-events-none transition-all duration-200 bg-gtl-surface border border-gtl-edge [@media(hover:hover)]:group-hover:bg-gtl-red [@media(hover:hover)]:group-hover:border-transparent"
         style={{ clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)' }}
         aria-hidden="true"
       />
-      {/* Swipe-progress fill — slides in from left as the user drags right. Reaches
-          full red at the threshold to telegraph that the swipe is armed. */}
-      <div
-        className="absolute inset-0 pointer-events-none bg-gtl-red"
-        style={{
-          clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)',
-          opacity: swipeProgress * 0.85,
-          transform: `scaleX(${swipeProgress})`,
-          transformOrigin: 'left center',
-          transition: dragX === 0 ? 'opacity 200ms, transform 200ms' : 'none',
-        }}
-        aria-hidden="true"
-      />
-      <div
-        className="relative px-7 py-5 flex items-center gap-3"
-        style={{ transform: `translateX(${dragX * 0.3}px)`, transition: dragX === 0 ? 'transform 200ms' : 'none' }}
-      >
+      <div className="relative px-7 py-5 flex items-center">
         <span className="font-display text-3xl leading-none transition-colors duration-200 text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper">
           {name.toUpperCase()}
         </span>
-        <span className="font-display text-xl leading-none transition-all duration-200 text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper [@media(hover:hover)]:group-hover:translate-x-1">➤︎</span>
-        {/* Swipe hint — appears on the right, fades in as user drags */}
-        <span
-          className="ml-auto font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-paper leading-none whitespace-nowrap pointer-events-none"
-          style={{ opacity: swipeProgress }}
-          aria-hidden="true"
-        >
-          SKIP →
-        </span>
+      </div>
+      {/* Logo halves: pinned to opposite sides. Swipe right pulls left half
+          across to right's slot; swipe left pulls right half across to left's
+          slot. Bidirectional, full-traversal, hard cap at threshold. */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          left: 'calc(50% - 80px)',
+          top: '50%',
+          width: '40px',
+          height: '40px',
+          marginTop: '-20px',
+          transform: `translateX(${Math.max(0, dragX)}px)`,
+          opacity: 0.85 + swipeProgress * 0.15,
+          transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
+          zIndex: 1,
+        }}
+        aria-hidden="true"
+      >
+        <LogoHalf side="left" size={40}/>
+      </div>
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          right: 'calc(50% - 80px)',
+          top: '50%',
+          width: '40px',
+          height: '40px',
+          marginTop: '-20px',
+          transform: `translateX(${Math.min(0, dragX)}px)`,
+          opacity: 0.85 + swipeProgress * 0.15,
+          transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
+          zIndex: 1,
+        }}
+        aria-hidden="true"
+      >
+        <LogoHalf side="right" size={40}/>
       </div>
     </button>
   )
