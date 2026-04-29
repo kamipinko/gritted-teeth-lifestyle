@@ -23,6 +23,7 @@ import FireTransition from '../../../components/FireTransition'
 import HeistTransition from '../../../components/HeistTransition'
 import SpeedLines from '../../../components/SpeedLines'
 import RetreatButton from '../../../components/RetreatButton'
+import LogoHalf from '../../../components/LogoHalf'
 
 const MAX_LEN = 40
 
@@ -57,7 +58,9 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
   const dxRef = useRef(0)
   const swipeFiredRef = useRef(false)
   const [dragX, setDragX] = useState(0)
-  const SWIPE_THRESHOLD = 80
+  // Full traversal — matches the 120px gap between logo halves on opposite
+  // sides of the button. Either swipe direction fires.
+  const SWIPE_THRESHOLD = 120
 
   const handlePointerDown = (e) => {
     if (disabled) return
@@ -71,13 +74,13 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
     const dx = e.clientX - startRef.current.x
     const dy = e.clientY - startRef.current.y
     if (Math.abs(dx) > Math.abs(dy)) {
-      const clamped = Math.max(0, Math.min(dx, SWIPE_THRESHOLD * 1.5))
+      const clamped = Math.max(-SWIPE_THRESHOLD, Math.min(dx, SWIPE_THRESHOLD))
       dxRef.current = clamped
       setDragX(clamped)
     }
   }
   const handlePointerUp = () => {
-    if (dxRef.current > SWIPE_THRESHOLD && onSwipe) {
+    if (Math.abs(dxRef.current) >= SWIPE_THRESHOLD && onSwipe) {
       swipeFiredRef.current = true
       onSwipe()
     }
@@ -93,7 +96,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
     }
     onTap()
   }
-  const swipeProgress = Math.min(1, dragX / SWIPE_THRESHOLD)
+  const swipeProgress = Math.min(1, Math.abs(dragX) / SWIPE_THRESHOLD)
 
   return (
     <button
@@ -106,7 +109,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
       onClick={handleClick}
       disabled={disabled}
       className={`
-        relative font-display tracking-[0.25em] uppercase overflow-hidden
+        relative font-display tracking-[0.25em] uppercase overflow-visible
         px-20 py-4 min-h-[56px] min-w-[20rem]
         text-3xl text-gtl-paper
         transition-all duration-200 ease-out
@@ -119,23 +122,45 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
       `}
       style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)', touchAction: 'pan-y' }}
     >
-      {/* Swipe-progress brighter overlay scales in from the left */}
-      <div
-        className="absolute inset-0 pointer-events-none bg-gtl-red-bright"
-        style={{
-          opacity: swipeProgress,
-          transform: `scaleX(${swipeProgress})`,
-          transformOrigin: 'left center',
-          transition: dragX === 0 ? 'opacity 200ms, transform 200ms' : 'none',
-        }}
-        aria-hidden="true"
-      />
-      <span
-        className="relative inline-block"
-        style={{ transform: `translateX(${dragX * 0.3}px)`, transition: dragX === 0 ? 'transform 200ms' : 'none' }}
-      >
+      <span className="relative inline-block">
         {swipeProgress >= 1 ? 'LIFT NOW' : 'FORGE'}
       </span>
+      {/* Logo halves on opposite sides. Swipe in either direction pulls one
+          across to the other's slot to fuse. */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          left: 'calc(50% - 80px)',
+          top: '50%',
+          width: '40px',
+          height: '40px',
+          marginTop: '-20px',
+          transform: `translateX(${Math.max(0, dragX)}px)`,
+          opacity: 0.9 + swipeProgress * 0.1,
+          transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
+          zIndex: 1,
+        }}
+        aria-hidden="true"
+      >
+        <LogoHalf side="left" size={40}/>
+      </div>
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          right: 'calc(50% - 80px)',
+          top: '50%',
+          width: '40px',
+          height: '40px',
+          marginTop: '-20px',
+          transform: `translateX(${Math.min(0, dragX)}px)`,
+          opacity: 0.9 + swipeProgress * 0.1,
+          transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
+          zIndex: 1,
+        }}
+        aria-hidden="true"
+      >
+        <LogoHalf side="right" size={40}/>
+      </div>
     </button>
   )
 }

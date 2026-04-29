@@ -16,6 +16,7 @@ import { pk } from '../../../lib/storage'
 import FireFadeIn from '../../../components/FireFadeIn'
 import FireTransition from '../../../components/FireTransition'
 import RetreatButton from '../../../components/RetreatButton'
+import LogoHalf from '../../../components/LogoHalf'
 
 const MUSCLE_LABELS = {
   chest: 'CHEST', back: 'BACK', shoulders: 'SHOULDERS',
@@ -563,33 +564,7 @@ function CycleCard({ cycle, index, selected, onSelect }) {
   )
 }
 
-/* ── GTL logo halves. Each half is the LEFT or RIGHT half-disc of the
-   /logo.png brand emblem, clipped via SVG clipPath. When the two halves
-   overlay at the same coords (after a full swipe), they interlock into the
-   complete logo. ── */
-function LogoHalf({ side, size = 56 }) {
-  const cid = `logo-half-${side}`
-  // Half-disc path: outer arc (left or right semicircle) + straight diameter.
-  // sweep=0 traces the LEFT semicircle from top to bottom; sweep=1 the RIGHT.
-  const clipD = side === 'left'
-    ? 'M 50,0 A 50,50 0 0,0 50,100 L 50,0 Z'
-    : 'M 50,0 A 50,50 0 0,1 50,100 L 50,0 Z'
-  return (
-    <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true" style={{ display: 'block', overflow: 'visible' }}>
-      <defs>
-        <clipPath id={cid}>
-          <path d={clipD}/>
-        </clipPath>
-      </defs>
-      <image
-        href="/logo.png"
-        x="0" y="0" width="100" height="100"
-        clipPath={`url(#${cid})`}
-        preserveAspectRatio="xMidYMid slice"
-      />
-    </svg>
-  )
-}
+/* LogoHalf moved to components/LogoHalf.jsx (shared across all swipe buttons). */
 
 /* ── Quick-nav ACTIVATE popup with tap-vs-swipe gesture ── */
 function ActivatePopup({ cycle, onTap, onSwipe }) {
