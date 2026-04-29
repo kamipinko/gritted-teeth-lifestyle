@@ -66,7 +66,7 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
       onPointerUp={handlePointerUp}
       onPointerCancel={() => { startRef.current = null; dxRef.current = 0; swipeFiredRef.current = false; setDragX(0) }}
       onClick={handleClick}
-      className="relative group outline-none text-left overflow-hidden"
+      className="relative group block w-full outline-none text-left overflow-hidden"
       style={{ touchAction: 'pan-y' }}
     >
       <div

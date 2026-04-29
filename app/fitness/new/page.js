@@ -110,7 +110,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
       disabled={disabled}
       className={`
         relative font-display tracking-[0.25em] uppercase overflow-visible
-        px-20 py-4 min-h-[56px] min-w-[20rem]
+        px-24 py-4 min-h-[56px] w-full max-w-[28rem]
         text-3xl text-gtl-paper
         transition-all duration-200 ease-out
         disabled:opacity-30 disabled:cursor-not-allowed
