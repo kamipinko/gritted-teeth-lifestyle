@@ -5,8 +5,10 @@ import Link from 'next/link'
 import RetreatButton from '../../components/RetreatButton'
 import { useSound } from '../../lib/useSound'
 import {
+  BGM_TRACKS,
   BGM_VOLUME_KEY,
   BGM_BASE_VOL,
+  DEFAULT_BGM_TRACK_ID,
   getCurrentBgmTrack,
   getBgmGainNode,
   getBgmTargetVol,
@@ -256,10 +258,25 @@ export default function SettingsPage() {
     setBgMusicOn(true)
     setHapticsOn(true)
     setBgmVolume(1)
-    const live = getCurrentBgmTrack()
-    setBgmTrackTitle(live?.title || null)
-    // Live BGM volume retarget to default (BGM_BASE_VOL × 1² = BGM_BASE_VOL).
-    if (window.__gtlBgMusic && !window.__gtlBgMusic.paused) {
+    const defaultTrack = BGM_TRACKS.find(t => t.id === DEFAULT_BGM_TRACK_ID) || BGM_TRACKS[0]
+    setBgmTrackTitle(defaultTrack?.title || null)
+    // Swap live BGM back to the default track so a random-on-launch session
+    // doesn't keep playing TRACK 7 while the title says TRACK 1. Reuses the
+    // standard pause + reset + src + load + play-from-top sequence.
+    if (window.__gtlBgMusic && defaultTrack && window.__gtlBgMusicTrackId !== defaultTrack.id) {
+      const a = window.__gtlBgMusic
+      if (window.__gtlBgMusicFadeInterval) {
+        clearInterval(window.__gtlBgMusicFadeInterval)
+        window.__gtlBgMusicFadeInterval = null
+      }
+      try { a.pause(); a.currentTime = 0 } catch {}
+      a.src = defaultTrack.src
+      try { a.load() } catch {}
+      window.__gtlBgMusicTrackId = defaultTrack.id
+      // bgMusicOn was just reset to true; play from top.
+      playBgmFromTop(a)
+    } else if (window.__gtlBgMusic && !window.__gtlBgMusic.paused) {
+      // Same track — just retarget volume to default (BGM_BASE_VOL × 1² = BGM_BASE_VOL).
       if (window.__gtlBgMusicFadeInterval) {
         clearInterval(window.__gtlBgMusicFadeInterval)
         window.__gtlBgMusicFadeInterval = null
