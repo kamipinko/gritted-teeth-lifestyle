@@ -2855,7 +2855,12 @@ export default function ActiveCyclePage() {
       <div className="relative z-10 mx-8 mb-1 h-[2px] bg-gtl-red shrink-0"
            style={{ transform: 'skewX(-6deg)', transformOrigin: 'left center' }} />
 
-      {/* ── DAY GRID ── */}
+      {/* ── DAY ROLODEX ──
+          Vertical free-scroll list of all non-hero days. TODAY hero stays
+          where it is above (rendered separately); this section gives the
+          past + future days room to breathe without cramming them into a
+          packed grid. No scroll-snap — user free-scrolls and taps any
+          card to enter that day. */}
       <section className="relative z-10 flex-1 min-h-0 overflow-hidden flex flex-col px-8 pb-2">
 
         <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-ash mb-3 flex items-center gap-4">
@@ -2870,22 +2875,20 @@ export default function ActiveCyclePage() {
           </div>
         ) : (
           <div
-            className="grid gap-2 flex-1 min-h-0"
-            style={{
-              gridTemplateColumns: `repeat(${Math.min(cols, Math.max(1, gridCount))}, 1fr)`,
-              gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
-            }}
+            className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto pb-6"
+            style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' }}
           >
             {days.filter((iso) => iso !== heroIso).map((iso, i) => (
-              <DayCard
-                key={iso}
-                iso={iso}
-                muscles={dailyPlan[iso] || []}
-                index={i}
-                onClick={handleDayClick}
-                doneKey={cardRefreshKey}
-                cycleId={cycleId}
-              />
+              <div key={iso} className="shrink-0" style={{ minHeight: '110px' }}>
+                <DayCard
+                  iso={iso}
+                  muscles={dailyPlan[iso] || []}
+                  index={i}
+                  onClick={handleDayClick}
+                  doneKey={cardRefreshKey}
+                  cycleId={cycleId}
+                />
+              </div>
             ))}
           </div>
         )}
