@@ -60,6 +60,11 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
   const [dragX, setDragX] = useState(0)
   const [ringKey, setRingKey] = useState(0)
   const [ringSide, setRingSide] = useState('right')
+  const [entranceDone, setEntranceDone] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setEntranceDone(true), 900)
+    return () => clearTimeout(t)
+  }, [])
   // Full traversal — gap between bead centers = 294px, beads pinned at
   // calc(50% - 175px) on each side near the button ends.
   const SWIPE_THRESHOLD = 294
@@ -113,6 +118,12 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
         0%, 100% { transform: translateX(0)    scale(1);    filter: drop-shadow(0 0 0    rgba(7,7,8,0)); }
         50%      { transform: translateX(-7px) scale(1.06); filter: drop-shadow(0 0 8px rgba(0,0,0,0.85)); }
       }
+      /* Onboarding: stencil rolls off the target on mount. translateX value
+         matches the FORGE button's SWIPE_THRESHOLD (294px). */
+      @keyframes logo-roll-in-forge {
+        0%   { transform: translateX(294px) rotate(360deg); }
+        100% { transform: translateX(0)     rotate(0deg);   }
+      }
     `}</style>
     <button
       ref={forgeRef}
@@ -160,7 +171,9 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
               transform: `translateX(${stencilTx}px) rotate(${stencilTx * rollFactor}deg)`,
               opacity: 0.9 + swipeProgress * 0.1,
               transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
-              animation: dragX === 0 ? 'yy-pulse-left 1.5s ease-in-out infinite' : 'none',
+              animation: !entranceDone
+                ? 'logo-roll-in-forge 900ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards'
+                : (dragX === 0 ? 'yy-pulse-left 1.5s ease-in-out infinite' : 'none'),
               zIndex: 2,
             }}
             aria-hidden="true"
