@@ -1,19 +1,17 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import RetreatButton from '../../components/RetreatButton'
 import { useSound } from '../../lib/useSound'
 import {
   BGM_TRACKS,
-  BGM_TRACK_KEY,
   BGM_VOLUME_KEY,
-  BGM_RANDOM_ON_LAUNCH_KEY,
   BGM_BASE_VOL,
+  DEFAULT_BGM_TRACK_ID,
   getCurrentBgmTrack,
-  getBgmTracksByGenre,
-  getBgmTargetVol,
-  getRandomTrackId,
   getBgmGainNode,
+  getBgmTargetVol,
   resumeBgmCtx,
 } from '../../lib/bgmTracks'
 
@@ -137,9 +135,8 @@ export default function SettingsPage() {
   const [sfxVolume, setSfxVolume] = useState(1)
   const [bgMusicOn, setBgMusicOn] = useState(true)
   const [hapticsOn, setHapticsOn] = useState(true)
-  const [bgmTrackId, setBgmTrackId] = useState(null)
+  const [bgmTrackTitle, setBgmTrackTitle] = useState(null)
   const [bgmVolume, setBgmVolume] = useState(1)
-  const [randomOnLaunch, setRandomOnLaunch] = useState(false)
 
   useEffect(() => {
     setActiveProfile(typeof window !== 'undefined' ? (localStorage.getItem('gtl-active-profile') || null) : null)
@@ -147,12 +144,10 @@ export default function SettingsPage() {
     setBgMusicOn(readFlag(KEY_BG_MUSIC_ON, true))
     setHapticsOn(readFlag(KEY_HAPTICS_ON, true))
     setBgmVolume(readNumber(BGM_VOLUME_KEY, 1))
-    setRandomOnLaunch(readFlag(BGM_RANDOM_ON_LAUNCH_KEY, false))
-    // Picker active state should reflect what's actually playing — if the
-    // singleton was launched in random-on-launch mode, that picked id lives
-    // on window.__gtlBgMusicTrackId rather than localStorage.
-    const liveId = (typeof window !== 'undefined' && window.__gtlBgMusicTrackId) || getCurrentBgmTrack().id
-    setBgmTrackId(liveId)
+    // Title only — used by the "BGM TRACK → /settings/music" entry to show
+    // a hint of what's currently selected.
+    const live = getCurrentBgmTrack()
+    setBgmTrackTitle(live?.title || null)
     setReady(true)
   }, [])
 
@@ -213,17 +208,6 @@ export default function SettingsPage() {
     }
   }
 
-  const handleRandomize = () => {
-    const nextId = getRandomTrackId(bgmTrackId)
-    handleBgmTrackPick(nextId)
-  }
-
-  const handleRandomOnLaunch = (next) => {
-    setRandomOnLaunch(next)
-    writeRaw(BGM_RANDOM_ON_LAUNCH_KEY, next ? '1' : '0')
-    play(next ? 'option-select' : 'menu-close')
-  }
-
   const handleSfxVolume = (v) => {
     setSfxVolume(v)
     writeRaw(KEY_SFX_VOLUME, String(v))
@@ -245,37 +229,6 @@ export default function SettingsPage() {
     play(next ? 'option-select' : 'menu-close')
   }
 
-  const handleBgmTrackPick = (trackId) => {
-    if (trackId === bgmTrackId) {
-      // Re-tapping the active chip re-starts it from the top (preview).
-      play('option-select')
-      if (typeof window !== 'undefined' && window.__gtlBgMusic && bgMusicOn) {
-        playBgmFromTop(window.__gtlBgMusic)
-      }
-      return
-    }
-    setBgmTrackId(trackId)
-    writeRaw(BGM_TRACK_KEY, trackId)
-    const track = BGM_TRACKS.find(t => t.id === trackId)
-    if (!track) return
-    if (typeof window !== 'undefined' && window.__gtlBgMusic) {
-      const a = window.__gtlBgMusic
-      // Cut any prior fade so the swap can't be overwritten by a stale tick.
-      if (window.__gtlBgMusicFadeInterval) {
-        clearInterval(window.__gtlBgMusicFadeInterval)
-        window.__gtlBgMusicFadeInterval = null
-      }
-      try { a.pause(); a.currentTime = 0 } catch {}
-      // Swap source. setting src triggers an implicit load() but we call it
-      // explicitly so iOS PWA reliably refreshes the buffer.
-      a.src = track.src
-      try { a.load() } catch {}
-      window.__gtlBgMusicTrackId = track.id
-      if (bgMusicOn) playBgmFromTop(a)
-    }
-    play('option-select')
-  }
-
   const handleHaptics = (next) => {
     setHapticsOn(next)
     writeRaw(KEY_HAPTICS_ON, next ? '1' : '0')
@@ -283,6 +236,55 @@ export default function SettingsPage() {
       try { navigator.vibrate(40) } catch {}
     }
     play(next ? 'option-select' : 'menu-close')
+  }
+
+  // Reset the app preferences (volumes, toggles, BGM track) to their factory
+  // defaults. Profile data (cycles, lifts, EXP) is untouched — that lives
+  // under gtl-{profile}-* and is owned by the DANGER ZONE buttons.
+  const resetSettingsDefaults = () => {
+    if (typeof window === 'undefined') return
+    const keys = [
+      KEY_SFX_VOLUME,
+      KEY_BG_MUSIC_ON,
+      KEY_HAPTICS_ON,
+      BGM_VOLUME_KEY,
+      'gtl-bgm-track',
+      'gtl-bgm-random-on-launch',
+    ]
+    for (const k of keys) {
+      try { localStorage.removeItem(k) } catch {}
+    }
+    setSfxVolume(1)
+    setBgMusicOn(true)
+    setHapticsOn(true)
+    setBgmVolume(1)
+    const defaultTrack = BGM_TRACKS.find(t => t.id === DEFAULT_BGM_TRACK_ID) || BGM_TRACKS[0]
+    setBgmTrackTitle(defaultTrack?.title || null)
+    // Swap live BGM back to the default track so a random-on-launch session
+    // doesn't keep playing TRACK 7 while the title says TRACK 1. Reuses the
+    // standard pause + reset + src + load + play-from-top sequence.
+    if (window.__gtlBgMusic && defaultTrack && window.__gtlBgMusicTrackId !== defaultTrack.id) {
+      const a = window.__gtlBgMusic
+      if (window.__gtlBgMusicFadeInterval) {
+        clearInterval(window.__gtlBgMusicFadeInterval)
+        window.__gtlBgMusicFadeInterval = null
+      }
+      try { a.pause(); a.currentTime = 0 } catch {}
+      a.src = defaultTrack.src
+      try { a.load() } catch {}
+      window.__gtlBgMusicTrackId = defaultTrack.id
+      // bgMusicOn was just reset to true; play from top.
+      playBgmFromTop(a)
+    } else if (window.__gtlBgMusic && !window.__gtlBgMusic.paused) {
+      // Same track — just retarget volume to default (BGM_BASE_VOL × 1² = BGM_BASE_VOL).
+      if (window.__gtlBgMusicFadeInterval) {
+        clearInterval(window.__gtlBgMusicFadeInterval)
+        window.__gtlBgMusicFadeInterval = null
+      }
+      const gain = getBgmGainNode()
+      if (gain) gain.gain.value = BGM_BASE_VOL
+      else window.__gtlBgMusic.volume = BGM_BASE_VOL
+    }
   }
 
   // Wipe all keys scoped to the active profile (`gtl-${profile}-*`).
@@ -402,69 +404,32 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* BGM TRACK PICKER */}
-          <div className="mb-8">
-            <div className="flex items-center gap-4 mb-3">
-              <div className="h-px w-8 bg-gtl-edge" />
-              <span className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">BGM TRACK</span>
-              <div className="h-px flex-1 bg-gtl-edge" />
-            </div>
-            <p className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-ash mb-3">
-              TAP A TRACK TO SWITCH · TAP THE ACTIVE ONE TO RESTART
-            </p>
-            {ready && (
-              <div className="flex flex-col gap-3 mb-4">
-                <button
-                  type="button"
-                  onClick={handleRandomize}
-                  className="group w-full flex items-center justify-between gap-4 px-5 py-4 bg-gtl-surface border border-gtl-edge [@media(hover:hover)]:hover:border-gtl-red transition-colors duration-200 outline-none"
-                  style={{ clipPath: 'polygon(2% 0%, 100% 0%, 98% 100%, 0% 100%)' }}
-                >
+          {/* BGM TRACK — link to subpage so the giant track list doesn't
+              dominate this page. */}
+          {ready && (
+            <div className="mb-8">
+              <Link
+                href="/settings/music"
+                onClick={() => play('menu-open')}
+                className="group w-full flex items-center justify-between gap-4 px-5 py-4 bg-gtl-surface border border-gtl-edge [@media(hover:hover)]:hover:border-gtl-red transition-colors duration-200 outline-none"
+                style={{ clipPath: 'polygon(2% 0%, 100% 0%, 98% 100%, 0% 100%)' }}
+              >
+                <span className="flex flex-col items-start gap-1 min-w-0">
                   <span className="font-mono text-[11px] tracking-[0.3em] uppercase font-bold text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper transition-colors duration-200">
-                    RANDOMIZE NOW
+                    BGM TRACK
                   </span>
-                  <span aria-hidden="true" className="font-display text-base leading-none text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper transition-colors duration-200">
-                    ⤮
-                  </span>
-                </button>
-                <Toggle label="RANDOM ON LAUNCH" value={randomOnLaunch} onChange={handleRandomOnLaunch} />
-              </div>
-            )}
-            <div className="flex flex-col gap-5">
-              {ready && getBgmTracksByGenre().map(({ genre, tracks }) => (
-                <div key={genre} className="flex flex-col gap-2">
-                  <div className="flex items-center gap-3 mb-1">
-                    <div className="h-px w-4 bg-gtl-red/60" />
-                    <span className="font-mono text-[8px] tracking-[0.45em] uppercase text-gtl-red/80">{genre}</span>
-                    <div className="h-px flex-1 bg-gtl-edge" />
-                  </div>
-                  {tracks.map(track => {
-                    const active = track.id === bgmTrackId
-                    return (
-                      <button
-                        key={track.id}
-                        type="button"
-                        onClick={() => handleBgmTrackPick(track.id)}
-                        className={`group w-full flex items-center justify-between gap-4 px-5 py-4 border transition-colors duration-200 outline-none
-                          ${active ? 'bg-gtl-red border-transparent' : 'bg-gtl-surface border-gtl-edge [@media(hover:hover)]:hover:border-gtl-red'}`}
-                        style={{ clipPath: 'polygon(2% 0%, 100% 0%, 98% 100%, 0% 100%)' }}
-                        aria-pressed={active}
-                      >
-                        <span className={`font-display text-xl leading-none truncate
-                          ${active ? 'text-gtl-paper' : 'text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper'}`}>
-                          {track.title}
-                        </span>
-                        <span aria-hidden="true" className={`font-display text-base leading-none shrink-0
-                          ${active ? 'text-gtl-paper' : 'text-gtl-red'}`}>
-                          {active ? '◆' : '➤︎'}
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
-              ))}
+                  {bgmTrackTitle && (
+                    <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-ash">
+                      {bgmTrackTitle}
+                    </span>
+                  )}
+                </span>
+                <span aria-hidden="true" className="font-display text-base leading-none text-gtl-red [@media(hover:hover)]:group-hover:text-gtl-paper transition-colors duration-200">
+                  ➤︎
+                </span>
+              </Link>
             </div>
-          </div>
+          )}
 
           {/* HAPTICS */}
           <div className="mb-8">
@@ -474,6 +439,22 @@ export default function SettingsPage() {
               <div className="h-px flex-1 bg-gtl-edge" />
             </div>
             {ready && <Toggle label="VIBRATION" value={hapticsOn} onChange={handleHaptics} />}
+          </div>
+
+          {/* DEFAULTS — preferences-only reset. Doesn't touch profile data. */}
+          <div className="mb-8">
+            <div className="flex items-center gap-4 mb-3">
+              <div className="h-px w-8 bg-gtl-edge" />
+              <span className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">DEFAULTS</span>
+              <div className="h-px flex-1 bg-gtl-edge" />
+            </div>
+            {ready && (
+              <DangerButton
+                label="RESET TO DEFAULTS"
+                armedLabel="TAP AGAIN — RESETS VOLUME / TRACK / TOGGLES"
+                onConfirm={resetSettingsDefaults}
+              />
+            )}
           </div>
 
           {/* DANGER */}

@@ -577,6 +577,14 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
   // shockwave radiates from the docked logo, not the button center.
   const [ringKey, setRingKey] = useState(0)
   const [ringSide, setRingSide] = useState('right')
+  // Entrance: stencil starts fused with target (right slot) and rolls left
+  // to its idle slot, demonstrating to first-time users that the gesture
+  // is the inverse — they need to pull the stencil BACK over the target.
+  const [entranceDone, setEntranceDone] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setEntranceDone(true), 900)
+    return () => clearTimeout(t)
+  }, [])
   // Full traversal distance — the swiped bead travels all the way across to
   // the other side. Gap between bead centers = 2 * (175 - 28) = 294, fixed
   // by calc(50% - 175px) on each side. Threshold matches the gap so 1:1
@@ -633,6 +641,13 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       @keyframes yy-pulse-right {
         0%, 100% { transform: translateX(0)    scale(1);    filter: drop-shadow(0 0 0    rgba(7,7,8,0)); }
         50%      { transform: translateX(-7px) scale(1.06); filter: drop-shadow(0 0 8px rgba(0,0,0,0.85)); }
+      }
+      /* Onboarding: stencil rolls OFF the target on mount. Starts at the
+         fused position (translateX(294)) and rolls back to idle (0), one
+         full CCW revolution along the way. Teaches the inverse gesture. */
+      @keyframes logo-roll-in {
+        0%   { transform: translateX(294px) rotate(360deg); }
+        100% { transform: translateX(0)     rotate(0deg);   }
       }
     `}</style>
     <button
@@ -703,7 +718,9 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
             transform: `translateX(${stencilTx}px) rotate(${stencilTx * rollFactor}deg)`,
             opacity: 0.85 + swipeProgress * 0.15,
             transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
-            animation: dragX === 0 ? 'yy-pulse-left 1.5s ease-in-out infinite' : 'none',
+            animation: !entranceDone
+              ? 'logo-roll-in 900ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards'
+              : (dragX === 0 ? 'yy-pulse-left 1.5s ease-in-out infinite' : 'none'),
           }}
           aria-hidden="true"
         >
