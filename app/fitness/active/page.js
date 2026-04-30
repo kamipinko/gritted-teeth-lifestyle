@@ -67,6 +67,81 @@ function MuscleChip({ id, index, total }) {
   )
 }
 
+/* ── Day button — matches the TODAY hero's red-clip-path style. Used in the
+ *  vertical rolodex to make every day visually consistent with the hero
+ *  button. Done days dim to a dark surface bg with a strikethrough date so
+ *  they read as past-completed without standing out as much as live days.
+ */
+function DayButton({ iso, muscles, todayIso, onClick, doneKey, cycleId }) {
+  const { play } = useSound()
+  const [done, setDone] = useState(false)
+
+  useEffect(() => {
+    try { setDone(localStorage.getItem(pk(`done-${cycleId}-${iso}`)) === 'true') } catch {}
+  }, [iso, doneKey, cycleId])
+
+  const date    = parseDate(iso)
+  const dayName = DAY_SHORT[date.getDay()]
+  const dayNum  = date.getDate()
+  const mon     = MONTH_SHORT[date.getMonth()]
+
+  const isToday = iso === todayIso
+  const isPast  = iso < todayIso
+  const label   = isToday ? 'TODAY' : done ? 'DONE' : isPast ? 'MISSED' : 'UPCOMING'
+
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        const rect = e.currentTarget.getBoundingClientRect()
+        play('option-select')
+        onClick(iso, rect)
+      }}
+      className="relative block w-full outline-none active:scale-[0.98] transition-transform"
+      style={{ touchAction: 'manipulation' }}
+      aria-label={`${label} — ${DAY_FULL[date.getDay()]} ${dayNum} ${MONTH_FULL[date.getMonth()]}`}
+    >
+      <div
+        className={`absolute inset-0 transition-colors ${done ? 'bg-gtl-surface' : 'bg-gtl-red'}`}
+        style={{
+          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+          boxShadow: done
+            ? '0 4px 16px rgba(7,7,8,0.45)'
+            : '0 4px 28px rgba(212, 24, 31, 0.55)',
+          border: done ? '1px solid #2a2a30' : 'none',
+        }}
+        aria-hidden="true"
+      />
+      <div className="relative flex items-center justify-between px-6 py-3 gap-3">
+        <div className="flex flex-col items-start min-w-0">
+          <span className={`font-mono text-[9px] tracking-[0.3em] uppercase leading-none
+            ${done ? 'text-gtl-ash' : 'text-gtl-paper/80'}`}>
+            {label}
+          </span>
+          <span className={`font-display text-2xl leading-none mt-1 truncate
+            ${done ? 'text-gtl-chalk' : 'text-gtl-paper'}`}
+            style={done ? { textDecoration: 'line-through', textDecorationColor: '#7a0e14' } : undefined}>
+            {dayName} · {mon} {dayNum}
+          </span>
+          {muscles.length > 0 ? (
+            <span className={`font-mono text-[9px] tracking-[0.2em] uppercase leading-none mt-1 truncate
+              ${done ? 'text-gtl-smoke' : 'text-gtl-paper/70'}`}>
+              {muscles.map(m => MUSCLE_LABELS[m] || m).join(' · ')}
+            </span>
+          ) : (
+            <span className={`font-mono text-[9px] tracking-[0.3em] uppercase leading-none mt-1
+              ${done ? 'text-gtl-smoke' : 'text-gtl-paper/60'}`}>
+              REST
+            </span>
+          )}
+        </div>
+        <span className={`font-display text-2xl leading-none shrink-0
+          ${done ? 'text-gtl-ash' : 'text-gtl-paper'}`}>➤︎</span>
+      </div>
+    </button>
+  )
+}
+
 /* ── Overview day card — clickable, zooms into focus view ── */
 function DayCard({ iso, muscles, index, onClick, doneKey, cycleId }) {
   const { play } = useSound()
@@ -2875,15 +2950,21 @@ export default function ActiveCyclePage() {
           </div>
         ) : (
           <div
-            className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto pb-6"
-            style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' }}
+            className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto pb-6 pt-2"
+            style={{
+              touchAction: 'pan-y',
+              WebkitOverflowScrolling: 'touch',
+              // Soft fade at the top + bottom edges so cards "roll off" the wheel.
+              maskImage: 'linear-gradient(to bottom, transparent 0%, black 6%, black 92%, transparent 100%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 6%, black 92%, transparent 100%)',
+            }}
           >
-            {days.filter((iso) => iso !== heroIso).map((iso, i) => (
-              <div key={iso} className="shrink-0" style={{ minHeight: '110px' }}>
-                <DayCard
+            {days.filter((iso) => iso !== heroIso).map((iso) => (
+              <div key={iso} className="shrink-0">
+                <DayButton
                   iso={iso}
                   muscles={dailyPlan[iso] || []}
-                  index={i}
+                  todayIso={todayIsoStr}
                   onClick={handleDayClick}
                   doneKey={cardRefreshKey}
                   cycleId={cycleId}
