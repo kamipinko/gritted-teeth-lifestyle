@@ -98,7 +98,7 @@ function DayButton({ iso, muscles, todayIso, onClick, doneKey, cycleId }) {
         onClick(iso, rect)
       }}
       className="relative block w-full outline-none active:scale-[0.98] transition-transform"
-      style={{ touchAction: 'manipulation' }}
+      style={{ touchAction: 'pan-y' }}
       aria-label={`${label} — ${DAY_FULL[date.getDay()]} ${dayNum} ${MONTH_FULL[date.getMonth()]}`}
     >
       <div
@@ -2995,9 +2995,19 @@ export default function ActiveCyclePage() {
           past + future days room to breathe without cramming them into a
           packed grid. No scroll-snap — user free-scrolls and taps any
           card to enter that day. */}
-      <section className="relative z-10 flex-1 min-h-0 overflow-hidden flex flex-col px-8 pb-2">
+      <section
+        className="relative z-10 px-8 pb-2"
+        style={{
+          flex: '1 1 0%',
+          minHeight: 0,
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+      >
 
-        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-ash mb-3 flex items-center gap-4">
+        <div className="shrink-0 font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-ash mb-3 flex items-center gap-4">
           <span>BATTLE SCHEDULE</span>
           <div className="h-px flex-1 bg-gtl-edge" />
           <span className="text-gtl-red">{days.length} DAY{days.length !== 1 ? 'S' : ''}</span>
@@ -3010,29 +3020,38 @@ export default function ActiveCyclePage() {
         ) : (
           <div
             ref={rolodexRef}
-            className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto pb-[40vh] pt-[40vh]"
+            data-rolodex-container
             style={{
-              touchAction: 'pan-y',
+              flex: '1 1 0%',
+              minHeight: 0,
+              height: '100%',
+              overflowY: 'auto',
               WebkitOverflowScrolling: 'touch',
               overscrollBehaviorY: 'contain',
+              touchAction: 'pan-y',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              // Phantom space above + below so the first/last card can be
+              // scrolled to the active y=466 line.
+              paddingTop: '40vh',
+              paddingBottom: '40vh',
             }}
           >
             {days.map((iso) => (
               <div
                 key={iso}
-                className="shrink-0"
                 data-rolodex-iso={iso}
                 style={{
+                  flexShrink: 0,
                   minHeight: '92px',
                   // --rolodex-t is updated by the scroll listener (1 at the
-                  // active y=466 row, falls off with distance). Centered card
-                  // gets full opacity + scale; off-center cards dim and
-                  // shrink for the wheel feel.
+                  // active y=466 line, 0 at the edges). Opacity-only effect
+                  // on the wrapper — no transform/filter to avoid creating
+                  // GPU-composite layers that can swallow iOS PWA scroll
+                  // capture inside an overflow-y container.
                   opacity: 'calc(0.45 + 0.55 * var(--rolodex-t, 0))',
-                  transform: 'scale(calc(0.88 + 0.12 * var(--rolodex-t, 0)))',
-                  transformOrigin: 'center',
-                  filter: 'brightness(calc(0.7 + 0.3 * var(--rolodex-t, 0)))',
-                  transition: 'opacity 80ms linear, transform 80ms linear, filter 80ms linear',
+                  transition: 'opacity 100ms linear',
                 }}
               >
                 <DayButton

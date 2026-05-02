@@ -23,9 +23,9 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
     const t = setTimeout(() => setEntranceDone(true), 1300)
     return () => clearTimeout(t)
   }, [])
-  // Full traversal — gap between bead centers = 2 * (160 - 28) = 264px,
-  // beads pinned via calc(50% - 160px) (safe on small phone viewports).
-  const SWIPE_THRESHOLD = 264
+  // Full traversal — gap between bead centers = 2 * (175 - 28) = 294px,
+  // beads pinned via calc(50% - 175px). Matches ActivatePopup spacing.
+  const SWIPE_THRESHOLD = 294
 
   const handlePointerDown = (e) => {
     startRef.current = { x: e.clientX, y: e.clientY }
@@ -102,7 +102,7 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
           <div
             className="absolute pointer-events-none"
             style={{
-              left: 'calc(50% - 160px)',
+              left: 'calc(50% - 175px)',
               top: '50%',
               width: '56px',
               height: '56px',
@@ -122,7 +122,7 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
           <div
             className="absolute pointer-events-none"
             style={{
-              right: 'calc(50% - 160px)',
+              right: 'calc(50% - 175px)',
               top: '50%',
               width: '56px',
               height: '56px',
@@ -130,7 +130,8 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
               transform: `translateX(${targetTx}px) rotate(${targetTx * rollFactor}deg)`,
               opacity: 0.85 + swipeProgress * 0.15,
               transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
-              animation: dragX === 0 ? 'yy-pulse-right 1.5s ease-in-out infinite' : 'none',
+              // Gated on entranceDone too so it stays in phase with the stencil pulse.
+              animation: (entranceDone && dragX === 0) ? 'yy-pulse-right 1.5s ease-in-out infinite' : 'none',
               zIndex: 1,
             }}
             aria-hidden="true"
@@ -151,8 +152,8 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
             top: '50%',
             marginTop: '-28px',
             ...(ringSide === 'right'
-              ? { right: 'calc(50% - 160px)' }
-              : { left:  'calc(50% - 160px)' }),
+              ? { right: 'calc(50% - 175px)' }
+              : { left:  'calc(50% - 175px)' }),
             width: '56px',
             height: '56px',
             borderStyle: 'solid',
@@ -277,10 +278,10 @@ export default function ProfilePage() {
         0%, 100% { transform: translateX(0)    scale(1);    filter: drop-shadow(0 0 0    rgba(7,7,8,0)); }
         50%      { transform: translateX(-7px) scale(1.06); filter: drop-shadow(0 0 8px rgba(0,0,0,0.85)); }
       }
-      /* Onboarding: stencil rolls off the target on mount. translateX value
-         matches the chip's SWIPE_THRESHOLD (264px). */
+      /* Onboarding: stencil rolls off the target on mount. translateX
+         matches SWIPE_THRESHOLD (294px). */
       @keyframes logo-roll-in-profile {
-        0%   { transform: translateX(264px) rotate(360deg); }
+        0%   { transform: translateX(294px) rotate(360deg); }
         100% { transform: translateX(0)     rotate(0deg);   }
       }
     `}</style>
