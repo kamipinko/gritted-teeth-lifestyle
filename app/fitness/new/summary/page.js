@@ -629,6 +629,12 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                                 fontSize: '45px',
                                 fontWeight: 700,
                                 fill: '#ff6600',
+                                /* Override the class's transform-box: fill-box (which
+                                   iOS PWA can't resolve on <text>). Inline transform-box
+                                   + transform-origin in absolute SVG coords pins the
+                                   scale's fixed point to the text anchor. */
+                                transformBox: 'view-box',
+                                transformOrigin: `${x}px ${labelY}px`,
                               }}
                             >
                               {ch}
