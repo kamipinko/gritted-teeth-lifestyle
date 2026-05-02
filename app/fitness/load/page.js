@@ -772,88 +772,11 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
   )
 }
 
-/* ── ACTIVATE slab button ── */
-function ActivateButton({ onActivate }) {
-  const [pressed, setPressed] = useState(false)
-  const [hovered, setHovered] = useState(false)
-  return (
-    <button
-      type="button"
-      onMouseDown={() => setPressed(true)}
-      onMouseUp={() => { setPressed(false); onActivate() }}
-      onMouseLeave={() => { setPressed(false); setHovered(false) }}
-      onMouseEnter={() => setHovered(true)}
-      className="relative cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-red"
-      style={{ transform: 'rotate(-0.6deg)' }}
-    >
-      <div
-        className="absolute inset-0 bg-gtl-red-deep"
-        style={{
-          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
-          transform: pressed ? 'translate(0,0)' : 'translate(5px, 5px)',
-          transition: 'transform 80ms ease-out',
-        }}
-        aria-hidden="true"
-      />
-      <div
-        className="relative px-10 py-4"
-        style={{
-          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
-          background: pressed ? '#ff2a36' : hovered ? '#e01e25' : '#d4181f',
-          transform: pressed ? 'translate(5px, 5px)' : 'translate(0,0)',
-          transition: 'transform 80ms ease-out, background 80ms ease-out',
-        }}
-      >
-        <div className="font-display text-2xl text-gtl-paper leading-none tracking-tight">ACTIVATE</div>
-      </div>
-    </button>
-  )
-}
-
-/* ── REVIEW / EDIT secondary button ── */
-function ReviewButton({ onReview }) {
-  const [pressed, setPressed] = useState(false)
-  const [hovered, setHovered] = useState(false)
-  return (
-    <button
-      type="button"
-      onMouseDown={() => setPressed(true)}
-      onMouseUp={() => { setPressed(false); onReview() }}
-      onMouseLeave={() => { setPressed(false); setHovered(false) }}
-      onMouseEnter={() => setHovered(true)}
-      className="relative cursor-pointer select-none outline-none focus-visible:outline-2 focus-visible:outline-gtl-red"
-      style={{ transform: 'rotate(0.5deg)' }}
-    >
-      <div
-        className="absolute inset-0 bg-gtl-edge"
-        style={{
-          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
-          transform: pressed ? 'translate(0,0)' : 'translate(5px, 5px)',
-          transition: 'transform 80ms ease-out',
-        }}
-        aria-hidden="true"
-      />
-      <div
-        className="relative px-10 py-4"
-        style={{
-          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
-          background: pressed ? '#2a2a30' : hovered ? '#222226' : '#1a1a1e',
-          border: `1px solid ${hovered ? '#d4181f' : '#3a3a42'}`,
-          transform: pressed ? 'translate(5px, 5px)' : 'translate(0,0)',
-          transition: 'transform 80ms ease-out, background 80ms ease-out, border-color 200ms',
-        }}
-      >
-        <div className={`font-display text-2xl leading-none tracking-tight transition-colors duration-200
-          ${hovered ? 'text-gtl-red' : 'text-gtl-ash'}`}>
-          REVIEW / EDIT
-        </div>
-      </div>
-    </button>
-  )
-}
-
-/* ── Sticky bottom action bar ── */
-function BottomBar({ cycle, onActivate, onReview, onDelete }) {
+/* ── Subordinate control band — sits directly below ACTIVATE, matches its
+   width (left/right 12px), and carries the gesture hint + REVIEW + DELETE
+   as a single cohesive panel. ACTIVATE is the hero; this band hosts the
+   secondary controls without competing visually. ── */
+function BottomBar({ cycle, onReview, onDelete }) {
   const { play } = useSound()
   const [deleteStage, setDeleteStage] = useState(0) // 0 idle · 1 first confirm · 2 cancel confirm
 
@@ -864,61 +787,66 @@ function BottomBar({ cycle, onActivate, onReview, onDelete }) {
 
   return (
     <div
-      className="fixed left-0 right-0 z-50"
-      style={{ top: '549px', background: 'rgba(7,7,8,0.97)', borderTop: '2px solid #d4181f' }}
+      className="fixed z-50"
+      style={{
+        top: '549px',
+        left: '12px',
+        right: '12px',
+        background: 'rgba(7,7,8,0.94)',
+        border: '1px solid #d4181f',
+        boxShadow: '0 4px 18px rgba(0,0,0,0.55)',
+      }}
     >
-      {/* Skewed red accent line */}
-      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gtl-red pointer-events-none"
-           style={{ transform: 'skewX(-4deg)', transformOrigin: 'left center' }} />
-
-      <div className="px-8 py-5 flex items-center gap-8 flex-wrap">
-
-        {/* Selected cycle label */}
-        <div className="flex flex-col">
-          <div className="font-mono text-[8px] tracking-[0.4em] uppercase text-gtl-smoke mb-0.5">SELECTED</div>
-          <div className="font-display text-xl text-gtl-chalk leading-none" style={{ transform: 'rotate(-0.5deg)' }}>
-            {cycle.name}
-          </div>
+      <div className="px-7 py-3 flex flex-col gap-2.5">
+        {/* Gesture hint — caption row at the top of the band, explaining the
+            two interactions on the ACTIVATE slab above. */}
+        <div className="flex items-center justify-center gap-3 font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-ash/85">
+          <span>TAP TO ACTIVATE</span>
+          <span className="text-gtl-red">·</span>
+          <span>SWIPE TO LIFT NOW →</span>
         </div>
 
-        {/* Vertical divider */}
-        <div className="w-px h-10 bg-gtl-edge self-center" style={{ transform: 'skewX(-12deg)' }} />
+        {/* Thin red rule separating hint from secondary actions */}
+        <div className="h-px bg-gtl-red/40" aria-hidden="true" />
 
-        {/* ACTIVATE moved to a fixed-position quick-nav popup at y=438 (matches
-            profile-chip slot on /fitness for tap-tap-tap muscle memory). */}
+        {/* Actions row — REVIEW + DELETE, both as text links so they read as
+            a balanced pair instead of "primary slab + danger link." */}
+        <div className="flex items-center justify-between min-h-[24px]">
+          <button
+            type="button"
+            onClick={() => { play('option-select'); onReview(cycle) }}
+            className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-paper hover:text-gtl-red transition-colors"
+          >
+            REVIEW / EDIT
+          </button>
 
-        {/* REVIEW / EDIT */}
-        <ReviewButton onReview={() => { play('option-select'); onReview(cycle) }} />
-
-        {/* DELETE flow */}
-        <div className="flex items-center gap-4 ml-auto">
           {deleteStage === 0 && (
             <button
               type="button"
               onClick={() => { play('button-hover'); setDeleteStage(1) }}
-              className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-smoke hover:text-gtl-red transition-colors"
+              className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-smoke hover:text-gtl-red transition-colors"
             >
               DELETE
             </button>
           )}
 
           {deleteStage === 1 && (
-            <div className="flex flex-col gap-1.5 items-end">
-              <span className="font-mono text-[9px] tracking-[0.25em] uppercase text-gtl-red">
-                ARE YOU SURE YOU WANT TO ERASE THIS CYCLE?
+            <div className="flex flex-col gap-1 items-end">
+              <span className="font-mono text-[8px] tracking-[0.25em] uppercase text-gtl-red">
+                ERASE THIS CYCLE?
               </span>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => { play('menu-close'); onDelete(cycle.id) }}
-                  className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-red hover:text-gtl-red-bright transition-colors"
+                  className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-red hover:text-gtl-red-bright transition-colors"
                 >
-                  YES, ERASE IT
+                  YES, ERASE
                 </button>
                 <button
                   type="button"
                   onClick={() => { play('button-hover'); setDeleteStage(2) }}
-                  className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-ash hover:text-gtl-chalk transition-colors"
+                  className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-ash hover:text-gtl-chalk transition-colors"
                 >
                   CANCEL
                 </button>
@@ -927,30 +855,29 @@ function BottomBar({ cycle, onActivate, onReview, onDelete }) {
           )}
 
           {deleteStage === 2 && (
-            <div className="flex flex-col gap-1.5 items-end">
-              <span className="font-mono text-[9px] tracking-[0.25em] uppercase text-gtl-smoke">
-                JUST MAKING SURE YOUR THUMB DIDN'T SLIP — DO YOU STILL WANT TO CANCEL?
+            <div className="flex flex-col gap-1 items-end">
+              <span className="font-mono text-[8px] tracking-[0.25em] uppercase text-gtl-smoke">
+                THUMB DIDN'T SLIP?
               </span>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => { play('button-hover'); setDeleteStage(0) }}
-                  className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-ash hover:text-gtl-chalk transition-colors"
+                  className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-ash hover:text-gtl-chalk transition-colors"
                 >
-                  YES, KEEP IT SAFE
+                  KEEP IT
                 </button>
                 <button
                   type="button"
                   onClick={() => { play('menu-close'); onDelete(cycle.id) }}
-                  className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-red hover:text-gtl-red-bright transition-colors"
+                  className="font-mono text-[10px] tracking-[0.3em] uppercase text-gtl-red hover:text-gtl-red-bright transition-colors"
                 >
-                  ACTUALLY, DELETE IT
+                  DELETE
                 </button>
               </div>
             </div>
           )}
         </div>
-
       </div>
     </div>
   )
@@ -1172,29 +1099,13 @@ export default function LoadCyclePage() {
             onTap={(c) => { play('card-confirm'); handleActivate(c) }}
             onSwipe={(c) => { play('card-confirm'); handleActivate(c, { deepLaunch: true }) }}
           />
-          {/* Gesture hint — sits just below the ACTIVATE popup. */}
-          <div
-            className="fixed z-50 flex items-center gap-3 font-mono text-[8px] tracking-[0.25em] uppercase text-gtl-ash/80 pointer-events-none"
-            style={{
-              top: '530px',
-              left: '12px',
-              right: '12px',
-              justifyContent: 'center',
-              animation: 'activate-popup-rise 320ms 100ms cubic-bezier(0.18, 1, 0.36, 1) both',
-            }}
-            aria-hidden="true"
-          >
-            <span>TAP TO ACTIVATE</span>
-            <span className="text-gtl-red">·</span>
-            <span>SWIPE TO LIFT NOW →</span>
-          </div>
         </>
       )}
 
-      {/* Sticky bottom bar — appears when a cycle is selected (now without ACTIVATE) */}
+      {/* Subordinate control band — sits below ACTIVATE, carries the
+          gesture hint + REVIEW + DELETE in a unified panel. */}
       <BottomBar
         cycle={selectedCycle}
-        onActivate={handleActivate}
         onReview={handleReview}
         onDelete={handleDelete}
       />
