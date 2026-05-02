@@ -65,9 +65,9 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
     const t = setTimeout(() => setEntranceDone(true), 1300)
     return () => clearTimeout(t)
   }, [])
-  // Full traversal — gap between bead centers = 264px, beads pinned via
-  // calc(50% - 160px). Unified across all three swipe buttons.
-  const SWIPE_THRESHOLD = 264
+  // Full traversal — gap between bead centers = 294px, beads pinned at
+  // calc(50% - 175px) on each side near the button ends.
+  const SWIPE_THRESHOLD = 294
 
   const handlePointerDown = (e) => {
     if (disabled) return
@@ -118,10 +118,10 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
         0%, 100% { transform: translateX(0)    scale(1);    filter: drop-shadow(0 0 0    rgba(7,7,8,0)); }
         50%      { transform: translateX(-7px) scale(1.06); filter: drop-shadow(0 0 8px rgba(0,0,0,0.85)); }
       }
-      /* Onboarding: stencil rolls off the target on mount. translateX
-         matches SWIPE_THRESHOLD (264px). */
+      /* Onboarding: stencil rolls off the target on mount. translateX value
+         matches the FORGE button's SWIPE_THRESHOLD (294px). */
       @keyframes logo-roll-in-forge {
-        0%   { transform: translateX(264px) rotate(360deg); }
+        0%   { transform: translateX(294px) rotate(360deg); }
         100% { transform: translateX(0)     rotate(0deg);   }
       }
     `}</style>
@@ -163,13 +163,13 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
           <div
             className="absolute pointer-events-none"
             style={{
-              left: 'calc(50% - 160px)',
+              left: 'calc(50% - 175px)',
               top: '50%',
               width: '56px',
               height: '56px',
               marginTop: '-28px',
               transform: `translateX(${stencilTx}px) rotate(${stencilTx * rollFactor}deg)`,
-              opacity: 0.85 + swipeProgress * 0.15,
+              opacity: 0.9 + swipeProgress * 0.1,
               transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
               animation: !entranceDone
                 ? 'logo-roll-in-forge 1300ms cubic-bezier(0.85, 0, 0.15, 1) forwards'
@@ -183,13 +183,13 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
           <div
             className="absolute pointer-events-none"
             style={{
-              right: 'calc(50% - 160px)',
+              right: 'calc(50% - 175px)',
               top: '50%',
               width: '56px',
               height: '56px',
               marginTop: '-28px',
               transform: `translateX(${targetTx}px) rotate(${targetTx * rollFactor}deg)`,
-              opacity: 0.85 + swipeProgress * 0.15,
+              opacity: 0.9 + swipeProgress * 0.1,
               transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
               animation: dragX === 0 ? 'yy-pulse-right 1.5s ease-in-out infinite' : 'none',
               zIndex: 1,
@@ -212,8 +212,8 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
             top: '50%',
             marginTop: '-28px',
             ...(ringSide === 'right'
-              ? { right: 'calc(50% - 160px)' }
-              : { left:  'calc(50% - 160px)' }),
+              ? { right: 'calc(50% - 175px)' }
+              : { left:  'calc(50% - 175px)' }),
             width: '56px',
             height: '56px',
             borderStyle: 'solid',
