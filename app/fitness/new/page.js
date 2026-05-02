@@ -172,7 +172,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
               opacity: 0.9 + swipeProgress * 0.1,
               transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
               animation: !entranceDone
-                ? 'logo-roll-in-forge 1300ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards'
+                ? 'logo-roll-in-forge 1300ms cubic-bezier(0.85, 0, 0.15, 1) forwards'
                 : (dragX === 0 ? 'yy-pulse-left 1.5s ease-in-out infinite' : 'none'),
               zIndex: 2,
             }}
