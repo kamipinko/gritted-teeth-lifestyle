@@ -542,9 +542,9 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
                   70%  { transform: scale(1.68); opacity: 0.9; }
                   100% { transform: scale(1.85); opacity: 0; }
                 }
-                /* transform-origin set per-element inline (absolute SVG coords)
-                   so iOS PWA's broken transform-box: fill-box doesn't matter. */
                 .inscription-zoom-burst .zoom-glyph {
+                  transform-box: fill-box;
+                  transform-origin: center;
                   animation: inscription-zoom 340ms ease-out forwards;
                   mix-blend-mode: plus-lighter;
                   filter: drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 16px #ff4400);
@@ -556,14 +556,14 @@ function CycleBlade({ days, dailyPlan, glowingDays = [], glowIntensity = 'off', 
               <g className="inscription-zoom-burst" style={{ mixBlendMode: 'plus-lighter', pointerEvents: 'none' }}>
                 {dayLabels.map((dl, i) => (
                   <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(${dl.angle - 90})`}>
-                    <g className="zoom-glyph" style={{ animationDelay: `${i * 220}ms`, transformOrigin: `${dl.cx}px ${dl.cy}px` }}>
+                    <g className="zoom-glyph" style={{ animationDelay: `${i * 220}ms` }}>
                       {renderDayInscription(dl, { maskFill: '#ff6600' })}
                     </g>
                   </g>
                 ))}
                 {lastDay && (
                   <g transform={`translate(${lastDay.cx},${lastDay.cy}) rotate(${lastDay.angle - 90})`}>
-                    <g className="zoom-glyph" style={{ animationDelay: `${lastIdx * 220}ms`, transformOrigin: `${lastDay.cx}px ${lastDay.cy}px` }}>
+                    <g className="zoom-glyph" style={{ animationDelay: `${lastIdx * 220}ms` }}>
                       <g clipPath="url(#last-day-left)">{renderDayInscription(lastDay, { maskFill: '#ff6600' })}</g>
                     </g>
                   </g>
@@ -1124,7 +1124,7 @@ function CycleDrill({ days, dailyPlan, cycleName = '', glowingDays = [], glowInt
                   const step = (dayLabels.length - 1) - i
                   return (
                   <g key={`zoom-${dl.iso}`} className="zoom-glyph" style={{ animationDelay: `${step * 220}ms`,
-                        transformOrigin: `${dl.cx}px ${dl.cy}px`,
+                        transformBox: 'fill-box', transformOrigin: 'center',
                         animation: `inscription-zoom 340ms ease-out forwards ${step * 220}ms`,
                         mixBlendMode: 'plus-lighter',
                         filter: 'drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 16px #ff4400)',
@@ -1537,7 +1537,7 @@ function CycleOuroboros({ days, dailyPlan, glowingDays = [], glowIntensity = 'of
                 {dayLabels.map((dl, i) => (
                   <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy})`}>
                     <g style={{
-                          transformOrigin: `${dl.cx}px ${dl.cy}px`,
+                          transformBox: 'fill-box', transformOrigin: 'center',
                           animation: `inscription-zoom 340ms ease-out forwards ${i * 220}ms`,
                           mixBlendMode: 'plus-lighter',
                           filter: 'drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 16px #ff4400)',
@@ -2320,7 +2320,7 @@ function CycleInfinity({ days, dailyPlan, glowingDays = [], glowIntensity = 'off
                 {dayLabels.map((dl, i) => (
                   <g key={`zoom-${dl.iso}`} transform={`translate(${dl.cx},${dl.cy}) rotate(90)`}>
                     <g style={{
-                          transformOrigin: `${dl.cx}px ${dl.cy}px`,
+                          transformBox: 'fill-box', transformOrigin: 'center',
                           animation: `inscription-zoom 340ms ease-out forwards ${i * 220}ms`,
                           mixBlendMode: 'plus-lighter',
                           filter: 'drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 16px #ff4400)',
