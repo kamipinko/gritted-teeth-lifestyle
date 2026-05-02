@@ -585,11 +585,10 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
     const t = setTimeout(() => setEntranceDone(true), 1300)
     return () => clearTimeout(t)
   }, [])
-  // Full traversal distance — the swiped bead travels all the way across to
-  // the other side. Gap between bead centers = 2 * (175 - 28) = 294, fixed
-  // by calc(50% - 175px) on each side. Threshold matches the gap so 1:1
-  // finger drag fully docks the bead at the other end.
-  const SWIPE_THRESHOLD = 294
+  // Full traversal — gap between bead centers = 2 * (160 - 28) = 264px,
+  // beads pinned via calc(50% - 160px). Unified across all three swipe
+  // buttons (load / profile / new) so behavior is identical everywhere.
+  const SWIPE_THRESHOLD = 264
 
   const handlePointerDown = (e) => {
     startRef.current = { x: e.clientX, y: e.clientY }
@@ -646,7 +645,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
          fused position (translateX(294)) and rolls back to idle (0), one
          full CCW revolution along the way. Teaches the inverse gesture. */
       @keyframes logo-roll-in {
-        0%   { transform: translateX(294px) rotate(360deg); }
+        0%   { transform: translateX(264px) rotate(360deg); }
         100% { transform: translateX(0)     rotate(0deg);   }
       }
     `}</style>
@@ -712,7 +711,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
           className="fixed z-[52] pointer-events-none"
           style={{
             top: '486px',
-            left: 'calc(50% - 175px)',
+            left: 'calc(50% - 160px)',
             width: '56px',
             height: '56px',
             transform: `translateX(${stencilTx}px) rotate(${stencilTx * rollFactor}deg)`,
@@ -731,7 +730,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
           className="fixed z-[51] pointer-events-none"
           style={{
             top: '486px',
-            right: 'calc(50% - 175px)',
+            right: 'calc(50% - 160px)',
             width: '56px',
             height: '56px',
             transform: `translateX(${targetTx}px) rotate(${targetTx * rollFactor}deg)`,
@@ -757,8 +756,8 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
         style={{
           top: '486px',
           ...(ringSide === 'right'
-            ? { right: 'calc(50% - 175px)' }
-            : { left:  'calc(50% - 175px)' }),
+            ? { right: 'calc(50% - 160px)' }
+            : { left:  'calc(50% - 160px)' }),
           width: '56px',
           height: '56px',
           borderStyle: 'solid',
