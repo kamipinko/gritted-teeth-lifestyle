@@ -2619,6 +2619,8 @@ export default function ActiveCyclePage() {
   const [levelUpAnim, setLevelUpAnim]       = useState(null) // null | { phase, newLevel, sparkles, barRect }
   const xpBarRef                            = useRef(null)
   const barXPRef                            = useRef(0)
+  const rolodexRef                          = useRef(null)
+  const rolodexCenteredRef                  = useRef(false)
 
   useEffect(() => { barXPRef.current = barXP }, [barXP])
 
@@ -2645,6 +2647,63 @@ export default function ActiveCyclePage() {
     } catch (_) {}
     setReady(true)
   }, [])
+
+  // ── Rolodex: scroll-driven prominence + auto-scroll today to y=466 ──
+  // Each rolodex card carries a CSS variable --rolodex-t (0 = far from
+  // center, 1 = at the y=466 active line). The listener walks every card
+  // on each scroll tick and writes its proximity to the active line. CSS
+  // in the rolodex container reads the variable to scale, brighten, and
+  // opacify the centered card. Auto-scroll today into the active spot
+  // once on mount, latched so a re-render doesn't yank the manual scroll.
+  const ACTIVE_VIEWPORT_Y = 466
+  useEffect(() => {
+    if (!ready) return
+    const container = rolodexRef.current
+    if (!container) return
+
+    const update = () => {
+      const cards = container.querySelectorAll('[data-rolodex-iso]')
+      cards.forEach((card) => {
+        const rect = card.getBoundingClientRect()
+        const center = rect.top + rect.height / 2
+        const dist = Math.abs(center - ACTIVE_VIEWPORT_Y)
+        // Falloff window — within 60px of active line = full prominence,
+        // 240px out = dim/shrunk, beyond that pegged at zero.
+        const t = Math.max(0, Math.min(1, 1 - Math.max(0, dist - 60) / 180))
+        card.style.setProperty('--rolodex-t', String(t))
+      })
+    }
+    update()
+    container.addEventListener('scroll', update, { passive: true })
+    const ro = new ResizeObserver(update)
+    ro.observe(container)
+    return () => {
+      container.removeEventListener('scroll', update)
+      ro.disconnect()
+    }
+  }, [ready, days])
+
+  useEffect(() => {
+    if (!ready || rolodexCenteredRef.current) return
+    const container = rolodexRef.current
+    if (!container || days.length === 0) return
+    const todayD = new Date()
+    const m = String(todayD.getMonth() + 1).padStart(2, '0')
+    const dd = String(todayD.getDate()).padStart(2, '0')
+    const todayStr = `${todayD.getFullYear()}-${m}-${dd}`
+    const target = days.reduce((closest, iso) => {
+      const dC = Math.abs(parseDate(closest) - parseDate(todayStr))
+      const dI = Math.abs(parseDate(iso) - parseDate(todayStr))
+      return dI < dC ? iso : closest
+    }, days[0])
+    const node = container.querySelector(`[data-rolodex-iso="${target}"]`)
+    if (!node) return
+    const rect = node.getBoundingClientRect()
+    const cardCenter = rect.top + rect.height / 2
+    const delta = cardCenter - ACTIVE_VIEWPORT_Y
+    container.scrollBy({ top: delta, behavior: 'instant' })
+    rolodexCenteredRef.current = true
+  }, [ready, days])
 
   useEffect(() => {
     if (!days.length) return
@@ -2950,15 +3009,32 @@ export default function ActiveCyclePage() {
           </div>
         ) : (
           <div
-            className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto pb-6 pt-2"
+            ref={rolodexRef}
+            className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto pb-[40vh] pt-[40vh]"
             style={{
               touchAction: 'pan-y',
               WebkitOverflowScrolling: 'touch',
               overscrollBehaviorY: 'contain',
             }}
           >
-            {days.filter((iso) => iso !== heroIso).map((iso) => (
-              <div key={iso} className="shrink-0" style={{ minHeight: '92px' }}>
+            {days.map((iso) => (
+              <div
+                key={iso}
+                className="shrink-0"
+                data-rolodex-iso={iso}
+                style={{
+                  minHeight: '92px',
+                  // --rolodex-t is updated by the scroll listener (1 at the
+                  // active y=466 row, falls off with distance). Centered card
+                  // gets full opacity + scale; off-center cards dim and
+                  // shrink for the wheel feel.
+                  opacity: 'calc(0.45 + 0.55 * var(--rolodex-t, 0))',
+                  transform: 'scale(calc(0.88 + 0.12 * var(--rolodex-t, 0)))',
+                  transformOrigin: 'center',
+                  filter: 'brightness(calc(0.7 + 0.3 * var(--rolodex-t, 0)))',
+                  transition: 'opacity 80ms linear, transform 80ms linear, filter 80ms linear',
+                }}
+              >
                 <DayButton
                   iso={iso}
                   muscles={dailyPlan[iso] || []}
@@ -3255,61 +3331,9 @@ export default function ActiveCyclePage() {
 
       </div>
 
-      {/* Quick-nav TODAY hero — sits at y=466 to continue the tap-tap-tap muscle
-          memory chain (profile chip → LOAD CYCLE card → ACTIVATE popup → TODAY).
-          Whichever day is closest to today's date gets surfaced here. The full
-          day grid below remains as the contextual map. Tap = open day-focus zoom. */}
-      {heroIso && !focusDay && (<>
-        <style>{`
-          @keyframes activate-popup-rise {
-            0%   { opacity: 0; transform: translateY(60px) scale(0.96); }
-            60%  { opacity: 1; transform: translateY(-4px) scale(1.02); }
-            100% { opacity: 1; transform: translateY(0)    scale(1); }
-          }
-        `}</style>
-        <button
-          key={`hero-${heroIso}`}
-          type="button"
-          onClick={(e) => {
-            const rect = e.currentTarget.getBoundingClientRect()
-            play('option-select')
-            handleDayClick(heroIso, rect)
-          }}
-          className="fixed z-30 group block outline-none active:scale-[0.98] transition-transform"
-          style={{
-            top: '466px',
-            left: '32px',
-            right: '32px',
-            touchAction: 'manipulation',
-            animation: 'activate-popup-rise 320ms cubic-bezier(0.18, 1, 0.36, 1) both',
-          }}
-        >
-          <div
-            className="absolute inset-0 bg-gtl-red transition-colors group-active:bg-gtl-red-bright"
-            style={{
-              clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
-              boxShadow: '0 4px 28px rgba(212, 24, 31, 0.55)',
-            }}
-            aria-hidden="true"
-          />
-          <div className="relative flex items-center justify-between px-6 py-3 gap-3">
-            <div className="flex flex-col items-start min-w-0">
-              <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-paper/80 leading-none">
-                {heroLabel}
-              </span>
-              <span className="font-display text-2xl text-gtl-paper leading-none mt-1 truncate">
-                {heroDayName} · {heroMon} {heroDayNum}
-              </span>
-              {heroMuscles.length > 0 && (
-                <span className="font-mono text-[9px] tracking-[0.2em] uppercase text-gtl-paper/70 leading-none mt-1 truncate">
-                  {heroMuscles.map(m => MUSCLE_LABELS[m] || m).join(' · ')}
-                </span>
-              )}
-            </div>
-            <span className="font-display text-2xl text-gtl-paper leading-none shrink-0">➤︎</span>
-          </div>
-        </button>
-      </>)}
+      {/* Floating TODAY hero retired — every day now lives inside the rolodex
+          and the visually-centered card at y=466 is the "active" one (see
+          scroll-driven --rolodex-t logic in the rolodex section above). */}
 
     </main>
   )
