@@ -98,7 +98,7 @@ function DayButton({ iso, muscles, todayIso, onClick, doneKey, cycleId }) {
         onClick(iso, rect)
       }}
       className="relative block w-full outline-none active:scale-[0.98] transition-transform"
-      style={{ touchAction: 'manipulation' }}
+      style={{ touchAction: 'pan-y' }}
       aria-label={`${label} — ${DAY_FULL[date.getDay()]} ${dayNum} ${MONTH_FULL[date.getMonth()]}`}
     >
       <div
