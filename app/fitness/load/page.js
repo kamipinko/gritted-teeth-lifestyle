@@ -687,7 +687,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
         aria-hidden="true"
       />
       <div
-        className="relative flex items-center justify-center px-7 py-5"
+        className="relative flex items-center justify-center px-24 py-5 min-h-[56px]"
         style={{ transform: `translateX(${dragX * 0.25}px)`, transition: dragX === 0 ? 'transform 200ms' : 'none' }}
       >
         <span className="font-display text-3xl text-gtl-paper leading-none tracking-tight">
