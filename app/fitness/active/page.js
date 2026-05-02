@@ -3021,6 +3021,7 @@ export default function ActiveCyclePage() {
           <div
             ref={rolodexRef}
             data-rolodex-container
+            data-scroll-passthrough
             style={{
               flex: '1 1 0%',
               minHeight: 0,
