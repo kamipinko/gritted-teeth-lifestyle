@@ -2995,9 +2995,19 @@ export default function ActiveCyclePage() {
           past + future days room to breathe without cramming them into a
           packed grid. No scroll-snap — user free-scrolls and taps any
           card to enter that day. */}
-      <section className="relative z-10 flex-1 min-h-0 overflow-hidden flex flex-col px-8 pb-2">
+      <section
+        className="relative z-10 px-8 pb-2"
+        style={{
+          flex: '1 1 0%',
+          minHeight: 0,
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+      >
 
-        <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-ash mb-3 flex items-center gap-4">
+        <div className="shrink-0 font-mono text-[9px] tracking-[0.4em] uppercase text-gtl-ash mb-3 flex items-center gap-4">
           <span>BATTLE SCHEDULE</span>
           <div className="h-px flex-1 bg-gtl-edge" />
           <span className="text-gtl-red">{days.length} DAY{days.length !== 1 ? 'S' : ''}</span>
@@ -3010,13 +3020,20 @@ export default function ActiveCyclePage() {
         ) : (
           <div
             ref={rolodexRef}
-            className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto"
+            data-rolodex-container
             style={{
-              touchAction: 'pan-y',
+              flex: '1 1 0%',
+              minHeight: 0,
+              height: '100%',
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
               overscrollBehaviorY: 'contain',
+              touchAction: 'pan-y',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
               // Phantom space above + below so the first/last card can be
-              // scrolled to the active y=466 line. Inline values to avoid
-              // relying on Tailwind arbitrary-vh compilation.
+              // scrolled to the active y=466 line.
               paddingTop: '40vh',
               paddingBottom: '40vh',
             }}
@@ -3024,9 +3041,9 @@ export default function ActiveCyclePage() {
             {days.map((iso) => (
               <div
                 key={iso}
-                className="shrink-0"
                 data-rolodex-iso={iso}
                 style={{
+                  flexShrink: 0,
                   minHeight: '92px',
                   // --rolodex-t is updated by the scroll listener (1 at the
                   // active y=466 line, 0 at the edges). Opacity-only effect
