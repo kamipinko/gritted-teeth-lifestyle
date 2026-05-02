@@ -2619,8 +2619,6 @@ export default function ActiveCyclePage() {
   const [levelUpAnim, setLevelUpAnim]       = useState(null) // null | { phase, newLevel, sparkles, barRect }
   const xpBarRef                            = useRef(null)
   const barXPRef                            = useRef(0)
-  const rolodexRef                          = useRef(null)
-  const rolodexCenteredRef                  = useRef(false)
 
   useEffect(() => { barXPRef.current = barXP }, [barXP])
 
@@ -2647,29 +2645,6 @@ export default function ActiveCyclePage() {
     } catch (_) {}
     setReady(true)
   }, [])
-
-  // Once the rolodex is mounted with days loaded, scroll the today button
-  // (closest day to today, computed below as heroIso) into the vertical
-  // center. Runs once per page load — `rolodexCenteredRef` latches so a
-  // re-render or doneKey bump doesn't reset the user's manual scroll.
-  useEffect(() => {
-    if (!ready || rolodexCenteredRef.current) return
-    if (!rolodexRef.current || days.length === 0) return
-    const todayD = new Date()
-    const m = String(todayD.getMonth() + 1).padStart(2, '0')
-    const dd = String(todayD.getDate()).padStart(2, '0')
-    const todayStr = `${todayD.getFullYear()}-${m}-${dd}`
-    const target = days.reduce((closest, iso) => {
-      const dC = Math.abs(parseDate(closest) - parseDate(todayStr))
-      const dI = Math.abs(parseDate(iso) - parseDate(todayStr))
-      return dI < dC ? iso : closest
-    }, days[0])
-    const node = rolodexRef.current.querySelector(`[data-rolodex-iso="${target}"]`)
-    if (node) {
-      node.scrollIntoView({ block: 'center', behavior: 'instant' })
-      rolodexCenteredRef.current = true
-    }
-  }, [ready, days])
 
   useEffect(() => {
     if (!days.length) return
@@ -2975,7 +2950,6 @@ export default function ActiveCyclePage() {
           </div>
         ) : (
           <div
-            ref={rolodexRef}
             className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto pb-6 pt-2"
             style={{
               touchAction: 'pan-y',
@@ -2983,13 +2957,8 @@ export default function ActiveCyclePage() {
               overscrollBehaviorY: 'contain',
             }}
           >
-            {days.map((iso) => (
-              <div
-                key={iso}
-                className="shrink-0"
-                style={{ minHeight: '92px' }}
-                data-rolodex-iso={iso}
-              >
+            {days.filter((iso) => iso !== heroIso).map((iso) => (
+              <div key={iso} className="shrink-0" style={{ minHeight: '92px' }}>
                 <DayButton
                   iso={iso}
                   muscles={dailyPlan[iso] || []}
@@ -3286,10 +3255,61 @@ export default function ActiveCyclePage() {
 
       </div>
 
-      {/* TODAY hero is no longer rendered as a floating overlay — it now lives
-          inside the rolodex list (see DAY ROLODEX section above) and gets
-          auto-scrolled to center on mount. Removing it from here freed the
-          rolodex from touch-capture by the fixed-position button. */}
+      {/* Quick-nav TODAY hero — sits at y=466 to continue the tap-tap-tap muscle
+          memory chain (profile chip → LOAD CYCLE card → ACTIVATE popup → TODAY).
+          Whichever day is closest to today's date gets surfaced here. The full
+          day grid below remains as the contextual map. Tap = open day-focus zoom. */}
+      {heroIso && !focusDay && (<>
+        <style>{`
+          @keyframes activate-popup-rise {
+            0%   { opacity: 0; transform: translateY(60px) scale(0.96); }
+            60%  { opacity: 1; transform: translateY(-4px) scale(1.02); }
+            100% { opacity: 1; transform: translateY(0)    scale(1); }
+          }
+        `}</style>
+        <button
+          key={`hero-${heroIso}`}
+          type="button"
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect()
+            play('option-select')
+            handleDayClick(heroIso, rect)
+          }}
+          className="fixed z-30 group block outline-none active:scale-[0.98] transition-transform"
+          style={{
+            top: '466px',
+            left: '32px',
+            right: '32px',
+            touchAction: 'manipulation',
+            animation: 'activate-popup-rise 320ms cubic-bezier(0.18, 1, 0.36, 1) both',
+          }}
+        >
+          <div
+            className="absolute inset-0 bg-gtl-red transition-colors group-active:bg-gtl-red-bright"
+            style={{
+              clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+              boxShadow: '0 4px 28px rgba(212, 24, 31, 0.55)',
+            }}
+            aria-hidden="true"
+          />
+          <div className="relative flex items-center justify-between px-6 py-3 gap-3">
+            <div className="flex flex-col items-start min-w-0">
+              <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-paper/80 leading-none">
+                {heroLabel}
+              </span>
+              <span className="font-display text-2xl text-gtl-paper leading-none mt-1 truncate">
+                {heroDayName} · {heroMon} {heroDayNum}
+              </span>
+              {heroMuscles.length > 0 && (
+                <span className="font-mono text-[9px] tracking-[0.2em] uppercase text-gtl-paper/70 leading-none mt-1 truncate">
+                  {heroMuscles.map(m => MUSCLE_LABELS[m] || m).join(' · ')}
+                </span>
+              )}
+            </div>
+            <span className="font-display text-2xl text-gtl-paper leading-none shrink-0">➤︎</span>
+          </div>
+        </button>
+      </>)}
 
     </main>
   )
