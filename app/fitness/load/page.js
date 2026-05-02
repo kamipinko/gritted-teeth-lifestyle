@@ -737,7 +737,12 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
             transform: `translateX(${targetTx}px) rotate(${targetTx * rollFactor}deg)`,
             opacity: 0.85 + swipeProgress * 0.15,
             transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
-            animation: dragX === 0 ? 'yy-pulse-right 1.5s ease-in-out infinite' : 'none',
+            // Gated on entranceDone too — without this, the target pulse
+            // starts at mount while the stencil pulse waits 1300ms for the
+            // roll-in to finish. That 1300ms phase difference is what reads
+            // as 'pulses are slightly off.' Both gate on entranceDone now,
+            // so they begin pulsing in the same render and stay in sync.
+            animation: (entranceDone && dragX === 0) ? 'yy-pulse-right 1.5s ease-in-out infinite' : 'none',
           }}
           aria-hidden="true"
         >

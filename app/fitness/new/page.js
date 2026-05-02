@@ -191,7 +191,8 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
               transform: `translateX(${targetTx}px) rotate(${targetTx * rollFactor}deg)`,
               opacity: 0.9 + swipeProgress * 0.1,
               transition: dragX === 0 ? 'transform 220ms cubic-bezier(0.2,0.8,0.3,1), opacity 200ms' : 'opacity 100ms',
-              animation: dragX === 0 ? 'yy-pulse-right 1.5s ease-in-out infinite' : 'none',
+              // Gated on entranceDone too so it stays in phase with the stencil pulse.
+              animation: (entranceDone && dragX === 0) ? 'yy-pulse-right 1.5s ease-in-out infinite' : 'none',
               zIndex: 1,
             }}
             aria-hidden="true"
