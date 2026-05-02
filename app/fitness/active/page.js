@@ -2954,13 +2954,11 @@ export default function ActiveCyclePage() {
             style={{
               touchAction: 'pan-y',
               WebkitOverflowScrolling: 'touch',
-              // Soft fade at the top + bottom edges so cards "roll off" the wheel.
-              maskImage: 'linear-gradient(to bottom, transparent 0%, black 6%, black 92%, transparent 100%)',
-              WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 6%, black 92%, transparent 100%)',
+              overscrollBehaviorY: 'contain',
             }}
           >
             {days.filter((iso) => iso !== heroIso).map((iso) => (
-              <div key={iso} className="shrink-0">
+              <div key={iso} className="shrink-0" style={{ minHeight: '92px' }}>
                 <DayButton
                   iso={iso}
                   muscles={dailyPlan[iso] || []}
