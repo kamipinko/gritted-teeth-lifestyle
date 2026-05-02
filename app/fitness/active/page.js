@@ -3010,11 +3010,15 @@ export default function ActiveCyclePage() {
         ) : (
           <div
             ref={rolodexRef}
-            className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto pb-[40vh] pt-[40vh]"
+            className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto"
             style={{
               touchAction: 'pan-y',
-              WebkitOverflowScrolling: 'touch',
               overscrollBehaviorY: 'contain',
+              // Phantom space above + below so the first/last card can be
+              // scrolled to the active y=466 line. Inline values to avoid
+              // relying on Tailwind arbitrary-vh compilation.
+              paddingTop: '40vh',
+              paddingBottom: '40vh',
             }}
           >
             {days.map((iso) => (
@@ -3025,14 +3029,12 @@ export default function ActiveCyclePage() {
                 style={{
                   minHeight: '92px',
                   // --rolodex-t is updated by the scroll listener (1 at the
-                  // active y=466 row, falls off with distance). Centered card
-                  // gets full opacity + scale; off-center cards dim and
-                  // shrink for the wheel feel.
+                  // active y=466 line, 0 at the edges). Opacity-only effect
+                  // on the wrapper — no transform/filter to avoid creating
+                  // GPU-composite layers that can swallow iOS PWA scroll
+                  // capture inside an overflow-y container.
                   opacity: 'calc(0.45 + 0.55 * var(--rolodex-t, 0))',
-                  transform: 'scale(calc(0.88 + 0.12 * var(--rolodex-t, 0)))',
-                  transformOrigin: 'center',
-                  filter: 'brightness(calc(0.7 + 0.3 * var(--rolodex-t, 0)))',
-                  transition: 'opacity 80ms linear, transform 80ms linear, filter 80ms linear',
+                  transition: 'opacity 100ms linear',
                 }}
               >
                 <DayButton
