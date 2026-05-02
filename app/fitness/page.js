@@ -76,20 +76,28 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
       onPointerUp={handlePointerUp}
       onPointerCancel={() => { startRef.current = null; dxRef.current = 0; swipeFiredRef.current = false; setDragX(0) }}
       onClick={handleClick}
-      className="relative group block w-full -mx-5 outline-none text-left overflow-visible"
-      style={{ touchAction: 'pan-y', width: 'calc(100% + 40px)' }}
+      className={`
+        relative group flex items-center justify-center
+        font-display tracking-[0.25em] uppercase overflow-visible
+        px-24 py-5 min-h-[56px] block w-full -mx-5
+        text-3xl text-gtl-paper
+        transition-all duration-200 ease-out
+        [@media(hover:hover)]:hover:scale-[1.04] active:scale-[0.98]
+        bg-gtl-red [@media(hover:hover)]:hover:bg-gtl-red-bright
+        shadow-[4px_4px_0_#070708]
+        [@media(hover:hover)]:hover:shadow-[6px_6px_0_#070708]
+        active:shadow-[2px_2px_0_#070708]
+      `}
+      style={{
+        clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)',
+        touchAction: 'pan-y',
+        width: 'calc(100% + 40px)',
+      }}
     >
-      <div
-        className="absolute inset-0 pointer-events-none transition-all duration-200 bg-gtl-surface border border-gtl-edge [@media(hover:hover)]:group-hover:bg-gtl-red [@media(hover:hover)]:group-hover:border-transparent"
-        style={{ clipPath: 'polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)' }}
-        aria-hidden="true"
-      />
-      <div className="relative px-24 py-5 min-h-[56px] flex items-center justify-center">
-        <span className="font-display text-3xl leading-none transition-colors duration-200 text-gtl-chalk [@media(hover:hover)]:group-hover:text-gtl-paper truncate"
-              style={{ maxWidth: 'calc(100% - 144px)' }}>
-          {name.toUpperCase()}
-        </span>
-      </div>
+      <span className="relative inline-block leading-none tracking-tight truncate"
+            style={{ maxWidth: 'calc(100% - 144px)' }}>
+        {name.toUpperCase()}
+      </span>
       {/* Stencil + target on opposite sides. Whichever side gets pulled rolls
           (wheel-style, no slipping) all the way to the other side and docks. */}
       {(() => {

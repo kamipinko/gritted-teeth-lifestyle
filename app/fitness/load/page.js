@@ -657,43 +657,44 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       onPointerUp={handlePointerUp}
       onPointerCancel={() => { startRef.current = null; dxRef.current = 0; swipeFiredRef.current = false; setDragX(0) }}
       onClick={handleClick}
-      className="fixed z-50 group block outline-none active:scale-[0.98] transition-transform overflow-visible"
+      className={`
+        fixed z-50 group flex items-center justify-center
+        font-display tracking-[0.25em] uppercase overflow-visible
+        px-24 py-5 min-h-[56px]
+        text-3xl text-gtl-paper
+        transition-all duration-200 ease-out
+        [@media(hover:hover)]:hover:scale-[1.04] active:scale-[0.98]
+        bg-gtl-red [@media(hover:hover)]:hover:bg-gtl-red-bright
+        shadow-[4px_4px_0_#070708]
+        [@media(hover:hover)]:hover:shadow-[6px_6px_0_#070708]
+        active:shadow-[2px_2px_0_#070708]
+      `}
       style={{
         top: '479px',
         left: '12px',
         right: '12px',
+        clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)',
         touchAction: 'pan-y',
         animation: 'activate-popup-rise 320ms cubic-bezier(0.18, 1, 0.36, 1) both',
       }}
     >
-      {/* Base red fill */}
-      <div
-        className="absolute inset-0 bg-gtl-red transition-colors group-active:bg-gtl-red-bright"
-        style={{
-          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
-          boxShadow: '0 4px 28px rgba(212, 24, 31, 0.55)',
-        }}
-        aria-hidden="true"
-      />
       {/* Subtle red wash that ramps up as the swipe progresses — supplements
           the yin-yang fusion as background feedback. */}
       <div
         className="absolute inset-0 pointer-events-none bg-gtl-red-bright"
         style={{
-          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+          clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)',
           opacity: swipeProgress * 0.45,
           transition: dragX === 0 ? 'opacity 200ms' : 'none',
         }}
         aria-hidden="true"
       />
-      <div
-        className="relative flex items-center justify-center px-24 py-5 min-h-[56px]"
+      <span
+        className="relative inline-block leading-none tracking-tight"
         style={{ transform: `translateX(${dragX * 0.25}px)`, transition: dragX === 0 ? 'transform 200ms' : 'none' }}
       >
-        <span className="font-display text-3xl text-gtl-paper leading-none tracking-tight">
-          {swipeProgress >= 1 ? 'LIFT NOW' : 'ACTIVATE'}
-        </span>
-      </div>
+        {swipeProgress >= 1 ? 'LIFT NOW' : 'ACTIVATE'}
+      </span>
     </button>
 
     {/* Red teardrop — pinned 100px left of viewport center. Travels RIGHT
