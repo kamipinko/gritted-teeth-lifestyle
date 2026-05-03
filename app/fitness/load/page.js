@@ -570,6 +570,12 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
   const startRef = useRef(null)
   const dxRef = useRef(0)
   const swipeFiredRef = useRef(false)
+  // Velocity tracker for flick-detection. Each entry: { t, x } in
+  // (timestamp, clientX). Pruned to a 100ms rolling window on each move.
+  const velocityTrackerRef = useRef([])
+  const VELOCITY_WINDOW_MS = 100
+  const FLICK_VELOCITY = 0.4    // px/ms — minimum speed to count as a flick
+  const FLICK_MIN_DISTANCE = 40 // px — minimum drag before flick can fire
   const [dragX, setDragX] = useState(0)
   // Shockwave ring counter — increments on each successful swipe so the
   // ring element remounts and re-runs the keyframe. ringSide tracks where
@@ -595,6 +601,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
     startRef.current = { x: e.clientX, y: e.clientY }
     dxRef.current = 0
     swipeFiredRef.current = false
+    velocityTrackerRef.current = [{ t: e.timeStamp, x: e.clientX }]
     setDragX(0)
   }
   const handlePointerMove = (e) => {
@@ -602,16 +609,36 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
     const dx = e.clientX - startRef.current.x
     const dy = e.clientY - startRef.current.y
     if (Math.abs(dx) > Math.abs(dy)) {
-      // SIGNED clamp: positive = right swipe (red travels right to ink),
-      // negative = left swipe (ink travels left to red). Hard cap at ±threshold
-      // so neither half can overshoot the other's slot.
+      // SIGNED clamp: positive = right swipe, negative = left swipe.
       const clamped = Math.max(-SWIPE_THRESHOLD, Math.min(dx, SWIPE_THRESHOLD))
       dxRef.current = clamped
       setDragX(clamped)
     }
+    // Sample for flick detection. Push current sample, prune > 100ms old.
+    const tracker = velocityTrackerRef.current
+    tracker.push({ t: e.timeStamp, x: e.clientX })
+    const cutoff = e.timeStamp - VELOCITY_WINDOW_MS
+    while (tracker.length > 0 && tracker[0].t < cutoff) tracker.shift()
   }
   const handlePointerUp = () => {
-    if (Math.abs(dxRef.current) >= SWIPE_THRESHOLD && onSwipe) {
+    // Compute velocity (px/ms) from the rolling window.
+    const tracker = velocityTrackerRef.current
+    let velocity = 0
+    if (tracker.length >= 2) {
+      const oldest = tracker[0]
+      const newest = tracker[tracker.length - 1]
+      const dt = newest.t - oldest.t
+      if (dt > 0) velocity = (newest.x - oldest.x) / dt
+    }
+    const distance = Math.abs(dxRef.current)
+    const dirMatches = dxRef.current === 0 || Math.sign(velocity) === Math.sign(dxRef.current)
+    // Fire if EITHER: full traversal, OR flick (high velocity + min distance
+    // in same direction). Slow + short gesture still doesn't fire.
+    const fired =
+      distance >= SWIPE_THRESHOLD ||
+      (Math.abs(velocity) >= FLICK_VELOCITY && distance >= FLICK_MIN_DISTANCE && dirMatches)
+
+    if (fired && onSwipe) {
       swipeFiredRef.current = true
       setRingSide(dxRef.current > 0 ? 'right' : 'left')
       setRingKey((k) => k + 1)
@@ -619,6 +646,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
     }
     startRef.current = null
     dxRef.current = 0
+    velocityTrackerRef.current = []
     setDragX(0)
   }
   const handleClick = (e) => {
@@ -655,7 +683,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      onPointerCancel={() => { startRef.current = null; dxRef.current = 0; swipeFiredRef.current = false; setDragX(0) }}
+      onPointerCancel={() => { startRef.current = null; dxRef.current = 0; swipeFiredRef.current = false; velocityTrackerRef.current = []; setDragX(0) }}
       onClick={handleClick}
       className={`
         fixed z-50 group flex items-center justify-center

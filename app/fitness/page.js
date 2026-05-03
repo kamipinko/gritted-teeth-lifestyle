@@ -15,6 +15,10 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
   const startRef = useRef(null)
   const dxRef = useRef(0)
   const swipeFiredRef = useRef(false)
+  const velocityTrackerRef = useRef([])
+  const VELOCITY_WINDOW_MS = 100
+  const FLICK_VELOCITY = 0.4    // px/ms
+  const FLICK_MIN_DISTANCE = 40 // px
   const [dragX, setDragX] = useState(0)
   const [ringKey, setRingKey] = useState(0)
   const [ringSide, setRingSide] = useState('right')
@@ -31,6 +35,7 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
     startRef.current = { x: e.clientX, y: e.clientY }
     dxRef.current = 0
     swipeFiredRef.current = false
+    velocityTrackerRef.current = [{ t: e.timeStamp, x: e.clientX }]
     setDragX(0)
   }
   const handlePointerMove = (e) => {
@@ -38,15 +43,31 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
     const dx = e.clientX - startRef.current.x
     const dy = e.clientY - startRef.current.y
     if (Math.abs(dx) > Math.abs(dy)) {
-      // Signed clamp at ±threshold — neither half overshoots the other's slot.
       const clamped = Math.max(-SWIPE_THRESHOLD, Math.min(dx, SWIPE_THRESHOLD))
       dxRef.current = clamped
       setDragX(clamped)
     }
+    const tracker = velocityTrackerRef.current
+    tracker.push({ t: e.timeStamp, x: e.clientX })
+    const cutoff = e.timeStamp - VELOCITY_WINDOW_MS
+    while (tracker.length > 0 && tracker[0].t < cutoff) tracker.shift()
   }
   const handlePointerUp = () => {
-    const completed = Math.abs(dxRef.current) >= SWIPE_THRESHOLD
-    if (completed && onSwipeSelect) {
+    const tracker = velocityTrackerRef.current
+    let velocity = 0
+    if (tracker.length >= 2) {
+      const oldest = tracker[0]
+      const newest = tracker[tracker.length - 1]
+      const dt = newest.t - oldest.t
+      if (dt > 0) velocity = (newest.x - oldest.x) / dt
+    }
+    const distance = Math.abs(dxRef.current)
+    const dirMatches = dxRef.current === 0 || Math.sign(velocity) === Math.sign(dxRef.current)
+    const fired =
+      distance >= SWIPE_THRESHOLD ||
+      (Math.abs(velocity) >= FLICK_VELOCITY && distance >= FLICK_MIN_DISTANCE && dirMatches)
+
+    if (fired && onSwipeSelect) {
       swipeFiredRef.current = true
       setRingSide(dxRef.current > 0 ? 'right' : 'left')
       setRingKey((k) => k + 1)
@@ -55,6 +76,7 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
     }
     startRef.current = null
     dxRef.current = 0
+    velocityTrackerRef.current = []
     setDragX(0)
   }
   const handleClick = (e) => {
@@ -81,7 +103,7 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      onPointerCancel={() => { startRef.current = null; dxRef.current = 0; swipeFiredRef.current = false; setDragX(0) }}
+      onPointerCancel={() => { startRef.current = null; dxRef.current = 0; swipeFiredRef.current = false; velocityTrackerRef.current = []; setDragX(0) }}
       onClick={handleClick}
       className={`
         relative group flex items-center justify-center

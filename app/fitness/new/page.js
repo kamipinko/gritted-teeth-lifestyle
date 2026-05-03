@@ -57,6 +57,10 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
   const startRef = useRef(null)
   const dxRef = useRef(0)
   const swipeFiredRef = useRef(false)
+  const velocityTrackerRef = useRef([])
+  const VELOCITY_WINDOW_MS = 100
+  const FLICK_VELOCITY = 0.4    // px/ms
+  const FLICK_MIN_DISTANCE = 40 // px
   const [dragX, setDragX] = useState(0)
   const [ringKey, setRingKey] = useState(0)
   const [ringSide, setRingSide] = useState('right')
@@ -74,6 +78,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
     startRef.current = { x: e.clientX, y: e.clientY }
     dxRef.current = 0
     swipeFiredRef.current = false
+    velocityTrackerRef.current = [{ t: e.timeStamp, x: e.clientX }]
     setDragX(0)
   }
   const handlePointerMove = (e) => {
@@ -85,9 +90,27 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
       dxRef.current = clamped
       setDragX(clamped)
     }
+    const tracker = velocityTrackerRef.current
+    tracker.push({ t: e.timeStamp, x: e.clientX })
+    const cutoff = e.timeStamp - VELOCITY_WINDOW_MS
+    while (tracker.length > 0 && tracker[0].t < cutoff) tracker.shift()
   }
   const handlePointerUp = () => {
-    if (Math.abs(dxRef.current) >= SWIPE_THRESHOLD && onSwipe) {
+    const tracker = velocityTrackerRef.current
+    let velocity = 0
+    if (tracker.length >= 2) {
+      const oldest = tracker[0]
+      const newest = tracker[tracker.length - 1]
+      const dt = newest.t - oldest.t
+      if (dt > 0) velocity = (newest.x - oldest.x) / dt
+    }
+    const distance = Math.abs(dxRef.current)
+    const dirMatches = dxRef.current === 0 || Math.sign(velocity) === Math.sign(dxRef.current)
+    const fired =
+      distance >= SWIPE_THRESHOLD ||
+      (Math.abs(velocity) >= FLICK_VELOCITY && distance >= FLICK_MIN_DISTANCE && dirMatches)
+
+    if (fired && onSwipe) {
       swipeFiredRef.current = true
       setRingSide(dxRef.current > 0 ? 'right' : 'left')
       setRingKey((k) => k + 1)
@@ -95,6 +118,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
     }
     startRef.current = null
     dxRef.current = 0
+    velocityTrackerRef.current = []
     setDragX(0)
   }
   const handleClick = (e) => {
@@ -135,7 +159,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      onPointerCancel={() => { startRef.current = null; dxRef.current = 0; swipeFiredRef.current = false; setDragX(0) }}
+      onPointerCancel={() => { startRef.current = null; dxRef.current = 0; swipeFiredRef.current = false; velocityTrackerRef.current = []; setDragX(0) }}
       onClick={handleClick}
       disabled={disabled}
       className={`
