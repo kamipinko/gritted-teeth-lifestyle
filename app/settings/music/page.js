@@ -6,6 +6,7 @@ import {
   BGM_TRACKS,
   BGM_TRACK_KEY,
   BGM_RANDOM_ON_LAUNCH_KEY,
+  DEFAULT_BGM_TRACK_ID,
   getCurrentBgmTrack,
   getBgmTracksByGenre,
   getBgmTargetVol,
@@ -133,6 +134,40 @@ export default function BgmMusicPage() {
     setRandomOnLaunch(next)
     writeRaw(BGM_RANDOM_ON_LAUNCH_KEY, next ? '1' : '0')
     play(next ? 'option-select' : 'menu-close')
+
+    if (typeof window === 'undefined' || !window.__gtlBgMusic) return
+    const a = window.__gtlBgMusic
+
+    let nextId
+    if (next) {
+      // Toggling ON → swap to a fresh random track now (excluding the
+      // currently-playing one) so the toggle has visible effect even when
+      // iOS PWA standalone keeps the singleton alive across "relaunches."
+      // Stored gtl-bgm-track preference is NOT overwritten — flipping the
+      // toggle off later restores it.
+      nextId = getRandomTrackId(window.__gtlBgMusicTrackId)
+    } else {
+      // Toggling OFF → revert to the user's stored preference (or default).
+      let storedId
+      try { storedId = window.localStorage.getItem(BGM_TRACK_KEY) } catch {}
+      nextId = (BGM_TRACKS.find(t => t.id === storedId) ||
+                BGM_TRACKS.find(t => t.id === DEFAULT_BGM_TRACK_ID) ||
+                BGM_TRACKS[0]).id
+    }
+    if (nextId === window.__gtlBgMusicTrackId) return
+    const track = BGM_TRACKS.find(t => t.id === nextId)
+    if (!track) return
+
+    if (window.__gtlBgMusicFadeInterval) {
+      clearInterval(window.__gtlBgMusicFadeInterval)
+      window.__gtlBgMusicFadeInterval = null
+    }
+    try { a.pause(); a.currentTime = 0 } catch {}
+    a.src = track.src
+    try { a.load() } catch {}
+    window.__gtlBgMusicTrackId = track.id
+    setBgmTrackId(track.id)
+    if (bgMusicOn) playBgmFromTop(a)
   }
 
   return (
