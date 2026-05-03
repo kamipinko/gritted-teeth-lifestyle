@@ -35,7 +35,10 @@ const STRENGTH_CATEGORY_IDS = new Set([8, 9, 10, 11, 12, 13, 14])  // Arms, Legs
 
 async function fetchAll() {
   const all = []
-  let url = `${WGER_BASE}/exercise/?language=2&status=2&limit=200`
+  // /exerciseinfo/ embeds translations + muscles + equipment as objects, so we
+  // get name + muscle-ids + equipment-ids in a single page. /exercise/ requires
+  // separate joins now and isn't always populated with `name` directly.
+  let url = `${WGER_BASE}/exerciseinfo/?language=2&limit=200`
   while (url) {
     const r = await fetch(url)
     if (!r.ok) throw new Error(`wger fetch failed: ${r.status} ${url}`)
@@ -46,7 +49,20 @@ async function fetchAll() {
   return all
 }
 
+// Prefer top-level `name`; fall back to English translation; then any.
+function pickName(w) {
+  if (w.name) return w.name
+  if (Array.isArray(w.translations)) {
+    const en = w.translations.find(t => t.language === 2 && t.name)
+    if (en?.name) return en.name
+    const any = w.translations.find(t => t.name)
+    if (any?.name) return any.name
+  }
+  return ''
+}
+
 function normalizeName(raw) {
+  if (!raw) return ''
   return raw
     .replace(/<[^>]+>/g, '')        // strip HTML tags
     .replace(/&[a-z]+;/gi, ' ')     // strip HTML entities
@@ -71,9 +87,11 @@ function transform(wgerEntries) {
   const out = []
 
   for (const w of wgerEntries) {
-    if (!STRENGTH_CATEGORY_IDS.has(w.category)) continue
+    // /exerciseinfo/ returns category as { id, name }; /exercise/ as int.
+    const catId = (w.category && typeof w.category === 'object') ? w.category.id : w.category
+    if (!STRENGTH_CATEGORY_IDS.has(catId)) continue
 
-    let id = normalizeName(w.name)
+    let id = normalizeName(pickName(w))
     if (!id) continue
     const count = seen.get(id) || 0
     seen.set(id, count + 1)
