@@ -54,12 +54,21 @@ if (typeof window !== 'undefined' && bgMusicAudio) {
     try {
       if (window.localStorage.getItem('gtl-bg-music-on') === '0') return
     } catch {}
+    // Same-tap race guard: if the click that fired this pointerdown also
+    // routes through startBgMusic (it does on the homepage), the start path
+    // owns the playback — skip the prime entirely so we don't fight it.
+    if (window.__gtlBgMusicStarted) return
     bgMusicAudio.muted = true
     // Belt-and-suspenders: if iOS leaks the muted prime, volume 0 = silent.
     bgMusicAudio.volume = 0
     const p = bgMusicAudio.play()
     if (p && typeof p.then === 'function') {
       p.then(() => {
+        // Async resolution race: startBgMusic may have run while this
+        // promise was pending. If so, leave the audio alone — pausing or
+        // resetting now would silence the playback startBgMusic just took
+        // over, which is the bug we're guarding against.
+        if (window.__gtlBgMusicStarted) return
         bgMusicAudio.pause()
         bgMusicAudio.currentTime = 0
         bgMusicAudio.muted = false
@@ -87,22 +96,46 @@ function startBgMusic() {
       return
     }
   } catch {}
-  if (!bgMusicAudio.paused) return
+  // Already started AND still playing — skip. (Re-mounting the home page
+  // shouldn't re-fade a song mid-loop.) But if we started before and the
+  // audio got paused since (backgrounded tab, etc.), fall through and
+  // restart cleanly.
+  if (window.__gtlBgMusicStarted && !bgMusicAudio.paused) return
+
+  // Latch SYNCHRONOUSLY so primeBgMusic's pending async .then() (same-tap
+  // race) sees the flag and bails out instead of pausing what we're about
+  // to take over.
+  window.__gtlBgMusicStarted = true
+
+  // Restore mute in case prime left it silenced. The prime may still be
+  // mid-flight — its .then() will see the flag above and skip cleanup.
+  bgMusicAudio.muted = false
 
   // Bind the audio element to the Web Audio graph (creates the gain node on
   // first call) and zero the gain so we ramp up cleanly. Resume the context
   // — this call must happen inside a user gesture, which it is (caller is
   // GateScreen.handleClick / handleTouchEnd, both synchronous to the tap).
   const gain = getBgmGainNode()
-  if (gain) gain.gain.value = 0
+  if (gain) {
+    gain.gain.value = 0
+    // Gain owns the volume from here on; element volume must be at 1.
+    bgMusicAudio.volume = 1
+  } else {
+    // No Web Audio support — element volume is the only knob, fade it up.
+    bgMusicAudio.volume = 0
+  }
   resumeBgmCtx()
 
-  const playPromise = bgMusicAudio.play()
-  if (playPromise && typeof playPromise.catch === 'function') {
-    playPromise.catch(() => {
-      bgMusicAudio.load()
-      bgMusicAudio.play().catch(() => {})
-    })
+  // Only call play() if paused — if prime is currently playing (muted), the
+  // gain-node binding above re-routes its output and we just need to fade up.
+  if (bgMusicAudio.paused) {
+    const playPromise = bgMusicAudio.play()
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(() => {
+        bgMusicAudio.load()
+        bgMusicAudio.play().catch(() => {})
+      })
+    }
   }
 
   // Fade gain (or audio.volume as fallback) up to user-configured target.
