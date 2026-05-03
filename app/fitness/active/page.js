@@ -2684,7 +2684,6 @@ export default function ActiveCyclePage() {
   const xpBarRef                            = useRef(null)
   const barXPRef                            = useRef(0)
   const rolodexRef                          = useRef(null)
-  const rolodexCenteredRef                  = useRef(false)
 
   useEffect(() => { barXPRef.current = barXP }, [barXP])
 
@@ -2781,7 +2780,11 @@ export default function ActiveCyclePage() {
   }, [ready, days])
 
   useEffect(() => {
-    if (!ready || rolodexCenteredRef.current) return
+    // Re-center on every "page open" — initial mount, AND every time the
+    // user closes DayFocus (focusDay transitions back to null). Skip when
+    // DayFocus is currently shown so we don't yank the rolodex around
+    // behind the overlay.
+    if (!ready || focusDay) return
     const container = rolodexRef.current
     if (!container || days.length === 0) return
     const todayD = new Date()
@@ -2796,17 +2799,22 @@ export default function ActiveCyclePage() {
     // Wait for two animation frames so the rolodex container's height is
     // finalized (CSS layout settled) before measuring. Land today's TOP
     // edge at viewport y=479 — the exact same y the ACTIVATE button uses.
+    // Safety-net retry at 120ms covers iOS PWA cases where layout settles
+    // after rAF (the scroll listener can also momentarily nudge things).
+    let cancelled = false
     const place = () => {
+      if (cancelled) return
       const node = container.querySelector(`[data-rolodex-iso="${target}"]`)
       if (!node) return
       const rect = node.getBoundingClientRect()
       const delta = rect.top - ACTIVE_TOP_Y
+      if (Math.abs(delta) < 1) return
       container.scrollBy({ top: delta, behavior: 'instant' })
-      rolodexCenteredRef.current = true
     }
     const r1 = requestAnimationFrame(() => requestAnimationFrame(place))
-    return () => cancelAnimationFrame(r1)
-  }, [ready, days])
+    const t1 = setTimeout(place, 120)
+    return () => { cancelled = true; cancelAnimationFrame(r1); clearTimeout(t1) }
+  }, [ready, days, focusDay])
 
   useEffect(() => {
     if (!days.length) return
