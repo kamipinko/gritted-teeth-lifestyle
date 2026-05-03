@@ -2,23 +2,37 @@
 /**
  * SetChip — single attuned-exercise chip rendered inside a DayCell.
  *
- * Long-press (600ms) opens ChipActionMenu with Copy / Delete / Replace.
- * Tap (no long-press) is currently a no-op — the chip is informational
- * inside the calendar; tap-to-edit lives at the day level (DayCell tap
- * opens the picker).
+ * Behaviors:
+ *   - useDraggable from @dnd-kit/core; activation distance 8px so a
+ *     pure tap never accidentally starts a drag.
+ *   - Long-press (550ms, stationary) opens ChipActionMenu with
+ *     Copy / Delete / Replace. If the user moves >5px before 550ms,
+ *     the long-press timer cancels and dnd-kit takes the drag instead.
  *
- * useDraggable wiring lands in Step 6 (Unit 5).
+ * Drag activation, drop targets, and consent prompts (rest-day,
+ * cross-muscle) are wired at the page / DndContext level.
  */
 import { useEffect, useRef, useState } from 'react'
+import { useDraggable } from '@dnd-kit/core'
 import ChipActionMenu from './ChipActionMenu'
 import { duplicateChip, deleteChip } from '../../lib/attunement'
 
 const LONG_PRESS_MS = 550
+const MOVE_CANCEL_PX = 5
 
 export default function SetChip({ chip, cycleId, dayId, compact = false, onReplace }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const timerRef = useRef(null)
+  const startRef = useRef(null)
   const longPressedRef = useRef(false)
+
+  const interactive = !!(cycleId && dayId)
+
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: chip?.id || 'chip-noop',
+    data: { fromDayId: dayId, exerciseId: chip?.exerciseId },
+    disabled: !interactive || menuOpen,
+  })
 
   const clearTimer = () => {
     if (timerRef.current) {
@@ -28,34 +42,33 @@ export default function SetChip({ chip, cycleId, dayId, compact = false, onRepla
   }
 
   useEffect(() => () => clearTimer(), [])
+  useEffect(() => { if (isDragging) clearTimer() }, [isDragging])
 
   if (!chip) return null
   const label = chip.exerciseId || 'untitled'
   const display = compact && label.length > 14 ? label.slice(0, 13) + '…' : label
 
-  // Long-press is opt-in: only wires up when cycleId+dayId are present
-  // (i.e., the chip is rendered inside an editable cell). Read-only
-  // contexts pass neither and fall back to a static render.
-  const interactive = !!(cycleId && dayId)
-
   const handlePointerDown = (e) => {
     if (!interactive) return
-    e.stopPropagation()
     longPressedRef.current = false
+    startRef.current = { x: e.clientX, y: e.clientY }
     clearTimer()
     timerRef.current = setTimeout(() => {
       longPressedRef.current = true
       setMenuOpen(true)
     }, LONG_PRESS_MS)
   }
-  const handlePointerEnd = (e) => {
-    if (!interactive) return
-    e.stopPropagation()
+  const handlePointerMove = (e) => {
+    if (!interactive || !startRef.current) return
+    const dx = e.clientX - startRef.current.x
+    const dy = e.clientY - startRef.current.y
+    if (Math.hypot(dx, dy) > MOVE_CANCEL_PX) clearTimer()
+  }
+  const handlePointerEnd = () => {
     clearTimer()
+    startRef.current = null
   }
   const handleClick = (e) => {
-    // Swallow click after a long-press so a parent DayCell tap doesn't
-    // also fire and open the picker.
     if (longPressedRef.current) {
       e.stopPropagation()
       e.preventDefault()
@@ -63,11 +76,24 @@ export default function SetChip({ chip, cycleId, dayId, compact = false, onRepla
     }
   }
 
+  const dragStyle = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        zIndex: 999,
+        opacity: isDragging ? 0.85 : 1,
+        boxShadow: isDragging ? '4px 4px 0 #070708' : 'none',
+      }
+    : {}
+
   return (
     <>
       <div
+        ref={setNodeRef}
         data-chip-id={chip.id}
-        onPointerDown={handlePointerDown}
+        {...attributes}
+        {...listeners}
+        onPointerDown={(e) => { listeners?.onPointerDown?.(e); handlePointerDown(e) }}
+        onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}
         onPointerLeave={handlePointerEnd}
         onPointerCancel={handlePointerEnd}
@@ -85,8 +111,9 @@ export default function SetChip({ chip, cycleId, dayId, compact = false, onRepla
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-          cursor: interactive ? 'pointer' : 'default',
-          touchAction: 'manipulation',
+          cursor: interactive ? 'grab' : 'default',
+          touchAction: interactive ? 'none' : 'manipulation',
+          ...dragStyle,
         }}
         title={label}
       >
