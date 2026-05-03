@@ -7,136 +7,180 @@ status: draft (mid-brainstorm — resume to finish)
 # GTL Combo EXP Multiplier System
 
 > **Status note**: This is a snapshot of the brainstorm in progress. Many decisions are locked in; some open questions remain. Resume by re-reading this doc, surfacing the **Outstanding Questions** below, and continuing from where we left off.
+>
+> **2026-05-03 update**: replaced the earlier "M_high/M_low per-region multipliers" model with a two-track model (continuous total XP via additive multipliers + discrete star awards per region). See Requirements R2–R3 and R10–R14.
 
 ## Problem Frame
 
-GTL has an existing XP system: per-set XP is computed via `weight × repMult(reps) × reps` (with a flat 1.0× plateau between 5 and 15 reps; bell curves outside). XP allocates to a Total XP counter (player level) and to one of 5 body-region counters (CORE / ARMS / LEGS / FRONT / BACK) via a 1:1 muscle→region map. The stats page already renders a transmutation-circle star chart driven by region XP; the active page already has a per-set XP-fly animation choreography (xp-p, xp-combine-in, xp-fly, xp-bar-pulse).
+GTL has an existing XP system: per-set XP is computed via `weight × repMult(reps) × reps` (with a flat 1.0× plateau between 5 and 15 reps; bell curves outside). XP today allocates to a Total XP counter (player level) and to one of 5 body-region counters (CORE / ARMS / LEGS / FRONT / BACK) via a 1:1 muscle→region map. The stats page already renders a transmutation-circle star chart driven by region XP; the active page already has a per-set XP-fly animation choreography.
 
-The new feature is a **combo-driven multiplier system** that layers on top of the existing per-set XP calc. It introduces named consistency tiers, prestige loops, holiday windows, and a wger-seeded multi-region trickle-down distribution, all expressed through a stack of multipliers applied to the existing base XP.
+The new feature is a **combo-driven multiplier system** that layers on top. It introduces named consistency tiers, prestige loops, holiday windows, wger-seeded multi-region distribution, and **two parallel tracks** for how XP gets credited:
+
+- **Total XP track (continuous)** — additive multipliers, drives the player level.
+- **Region star track (discrete)** — wger weight share buckets into 0/1/2-star awards on the transmutation circle, with rules to enforce a "compound = 2 regions × 1 star, isolation = 1 region × 2 stars" ideal.
 
 ## Requirements
 
-**Multiplier Stack (per logged set)**
-- R1. Base XP per set is unchanged: `base = weight × repMult(reps) × reps` using the existing `repMult` (flat 1.0× between r=5 and r=15, bell curves outside). The new system layers on top of `base`.
-- R2. The full stack, in order: `base × consistency × (compound|isolation per-region multipliers) × prestige × holiday`. Compound and isolation multipliers are per-region (see R10–R12), so the stack is applied per-region after the wger split.
-- R3. The user sees a **single visible XP number** in the per-set popup animation — equal to the **sum** of the per-region allocations after all multipliers. That total also goes to `totalXP` (player level driver) and is split per-region into `regionXP[]`.
+**Base XP (existing, unchanged)**
+- R1. Base XP per set is unchanged: `base = weight × repMult(reps) × reps` using the existing `repMult` (flat 1.0× between r=5 and r=15, bell curves outside). Both new tracks build off this `base`.
+
+**Total XP track (continuous, additive multipliers)**
+- R2. The Total XP added per set = sum of contributions from each active multiplier:
+  ```
+  total_visible_XP =
+      base × consistency_mult
+    + base × (compound_mult OR isolation_mult)
+    + base × holiday_mult       // 0 if no holiday active
+    + base × prestige_mult      // 0 if no prestige bonus
+  ```
+  Inactive multipliers (no holiday today, no prestige badges) contribute 0. Compound's multiplier value is **always larger than** isolation's (so heavy compound work earns more raw total XP than equivalent isolation work).
+- R3. The user sees a **single visible XP number** in the per-set popup animation — equal to the sum above. That number adds to `totalXP` (the existing player-level driver). The popup briefly reveals the breakdown ("+base × 1.3 consistency + base × 1.5 compound = +visible_XP").
+
+**Region star track (discrete, wger-driven)**
+- R10. Each exercise has a region-weight vector derived from wger primary/secondary muscle data, mapped to GTL's 5 regions. Default heuristic: primary muscles get 60% of weight (split evenly across primary muscles), secondary muscles get 40% (split evenly across secondaries). Tunable.
+- R11. Star bands (per region, per set):
+  - `< 30%` wger weight → **0 stars**
+  - `30–59%` → **1 star**
+  - `60%+` → **2 stars**
+- R12. **Compound exercises** apply a cap-and-overflow rule:
+  - Cap each region at **1 star per set** (compound never gives 2 stars to any single region).
+  - If a region's weight share would have earned 2 stars (≥60%), the second star **overflows to the next-highest-weight region**, even if that region's raw share is below 30%.
+  - Tie-breaking for overflow target: prefer narrow zones (ARMS / LEGS) over broad zones (FRONT / BACK / CORE) — TBD, see Outstanding Questions.
+  - Goal: every compound set distributes 2 stars across exactly 2 regions (ideally 1+1).
+- R13. **Isolation exercises** apply a concentrate-on-primary rule:
+  - Only the **highest-weight region** earns stars. All other regions get 0 stars even if they cross the 30% threshold.
+  - That highest region's stars come from its raw share band (60%+ → 2★, 30–59% → 1★).
+  - Goal: every isolation set concentrates stars in 1 region.
+- R14. **Classification (compound vs isolation) is a curated per-exercise property**, not auto-derived. Default rule when curating: if wger weight is 100% in one region (e.g., hip thrust, calf raise, leg extension, bicep curl, tricep extension), classify as **isolation** regardless of secondary muscle count. Otherwise compound. Curator (Jordan) can override.
 
 **Consistency / Combo Identity**
-- R4. **Consistency XP** is a new, separate counter (parallel to Total XP). It accumulates from completing planned sessions on planned days. Its level determines the **Consistency multiplier** value.
-- R5. The combo identity has named tiers: **NOVICE → IRON → STEEL → BLAZE → OVERDRIVE**. Each tier has an associated multiplier value (placeholder: 1.0× / 1.3× / 1.7× / 2.5× / 4.0× — tunable).
-- R6. Within a tier, Consistency XP grows via small per-session ticks (linear ramp), so multiplier increments smoothly inside the tier (e.g., IRON 1.3× → 1.4× → 1.5× → 1.6× before promoting to STEEL).
+- R4. **Consistency XP** is a new, separate counter (parallel to Total XP). It accumulates from completing planned sessions on planned days. Its level determines the **Consistency multiplier** value (R2).
+- R5. The combo identity has named tiers: **NOVICE → IRON → STEEL → BLAZE → OVERDRIVE**. Each tier has an associated multiplier value (placeholder: 1.0 / 1.3 / 1.7 / 2.5 / 4.0 — tunable).
+- R6. Within a tier, Consistency XP grows via small per-session ticks (linear ramp), so multiplier increments smoothly inside the tier.
 - R7. Tier crossings get a P5/Gurren rank-up flourish (kanji, color, animation) when the user enters a new named tier.
 - R8. **Asymmetric break rules:**
   - Missed planned **set** within a session → drop one tick **within current tier** (forgiving — accidents, form breakdown, equipment).
   - Missed planned **day** entirely → drop a full **tier** (or full reset for top tiers — TBD).
 
 **Prestige**
-- R9. When the user holds OVERDRIVE for N sessions, they may "ascend": the multiplier resets to 1.0× / NOVICE, but they keep a permanent **Galaxy-Spiral ribbon**. Ribbons stack — each adds a small permanent baseline-XP bonus (placeholder: +5% per ribbon — tunable). User can prestige indefinitely; bonus compounds.
-
-**Compound & Isolation (Per-Region Multipliers)**
-- R10. Each exercise is classified **compound** or **isolation** (derived from wger primary/secondary muscle data — multi-muscle = compound, single-muscle = isolation; or whatever wger exposes directly).
-- R11. The system has two tunable per-region multiplier values: **M_high** and **M_low** (placeholder: 1.3 and 1.1 — tunable).
-- R12. Application:
-  - For **compound** exercises: broad regions (FRONT / BACK / CORE) receive `× M_high`; narrow regions (ARMS / LEGS) receive `× M_low`.
-  - For **isolation** exercises: narrow regions receive `× M_high`; broad regions receive `× M_low`.
-  - This naturally exaggerates the distribution (broad zones grow faster on compounds; narrow zones grow faster on isolations) without a separate redistribution step.
-
-**Region Distribution (wger-Seeded)**
-- R13. Each exercise's region weights are derived from wger primary/secondary muscle data. wger muscles map to GTL's 5 regions via a one-time mapping table.
-- R14. Primary muscles get higher weight than secondaries (placeholder: 60/40 split, secondaries divided evenly within tier — tunable; the weighting heuristic itself is open).
-- R15. wger licensing: code is AGPLv3 (does not bind us — we don't use their code), data is CC-BY-SA. Compliance: a single attribution line in the settings credits page is sufficient; we do not redistribute the data, so ShareAlike does not bind.
+- R9. When the user holds OVERDRIVE for N sessions, they may "ascend": multiplier resets to 1.0 / NOVICE, but they keep a permanent **Galaxy-Spiral ribbon**. Ribbons stack — each adds a small permanent baseline-XP bonus contribution (placeholder: each ribbon = +0.05× contribution under R2's prestige_mult — tunable).
 
 **Holiday Multiplier**
-- R16. The Holiday multiplier is triggered by **real-world calendar holidays** (hard-coded list in app config — exact list TBD). When active, it multiplies all visible XP for that day. User has no control; it just fires on the date.
+- R16. The Holiday multiplier is triggered by **real-world calendar holidays** (hard-coded list — exact list TBD). When active on a given day, it contributes to total XP per R2. User has no control; it just fires on the date.
+
+**wger Licensing**
+- R15. wger code is AGPLv3 (does not bind us — we don't use their code), data is CC-BY-SA. Compliance: a single attribution line in the **settings credits page** is sufficient. We don't redistribute the data, so ShareAlike doesn't bind.
 
 **Visibility & UI**
 - R17. The active-page nav stays clean — no constant multiplier display. The existing total XP bar is unchanged.
-- R18. After a set is logged, the **per-set XP-fly animation** reveals the multiplier stack momentarily (e.g., "+1080 EXP × 1.3 IRON × 1.3 COMPOUND = +1826 to FRONT" or similar — exact format TBD). Stack is a moment, not a constant.
-- R19. The user infers per-region growth via the existing transmutation-circle star chart on the stats page. The compound/isolation/multiplier dynamics surface visually over time as some star points grow faster than others, not as moment-by-moment numbers.
+- R18. After a set is logged, the **per-set XP-fly animation** reveals the multiplier stack momentarily (e.g., "base 1575 + (×1.3 IRON) + (×1.5 COMPOUND) = +4411 EXP"). Stack is a moment, not a constant.
+- R19. The user infers per-region growth via the existing transmutation-circle star chart on the stats page. The compound/isolation/multiplier dynamics surface visually over time as some star points grow faster than others. Star awards from R11–R13 fire visually on the chart per set.
 
-## Worked Math Examples (using existing repMult)
+## Worked Math Examples
 
-Defaults assumed: Consistency at IRON = ×1.3, M_high = 1.3, M_low = 1.1, Prestige = 1.0×, Holiday = 1.0×.
+Defaults assumed: Consistency at IRON = 1.3, compound_mult = 1.5, isolation_mult = 1.2, prestige = 0, holiday = 0. wger primary/secondary 60/40 split.
 
-**Example 1 — Bench 135 × 10 (compound):**
+**Example 1 — Bench press 135 × 10 (compound)**
 - Base = 135 × repMult(10) × 10 = 135 × 1.0 × 10 = **1350**
-- wger split → FRONT 80% (1080) / ARMS 20% (270)
-- FRONT: 1080 × 1.3 (consistency) × 1.3 (compound→broad M_high) = **1826**
-- ARMS: 270 × 1.3 × 1.1 (compound→narrow M_low) = **386**
-- Visible XP shown: **2212** (= 1826 + 386). Goes to `totalXP`. Region splits go to `regionXP[FRONT]` and `regionXP[ARMS]`.
+- Total XP track: 1350 × 1.3 + 1350 × 1.5 = 1755 + 2025 = **+3780 to totalXP**
+- wger weights aggregate: FRONT 86% / ARMS 13%
+- Region star track (compound, cap+overflow): FRONT capped at 1★ (would have been 2★ at 86%); second star overflows to next-highest = ARMS. Result: **FRONT 1★ + ARMS 1★**
 
-**Example 2 — Bicep curl 60 × 10 (isolation):**
-- Base = 60 × 1.0 × 10 = **600**
-- wger split → ARMS 100% (600)
-- ARMS: 600 × 1.3 (consistency) × 1.3 (isolation→narrow M_high) = **1014**
-- Visible XP shown: **1014**
+**Example 2 — Bicep curl 60 × 5 (isolation)**
+- Base = 60 × repMult(5) × 5 = 60 × 1.0 × 5 = **300**
+- Total XP track: 300 × 1.3 + 300 × 1.2 = 390 + 360 = **+750 to totalXP**
+- wger weights: ARMS 100%
+- Region star track (isolation, concentrate): only highest region (ARMS) earns stars. ARMS at 100% → 2★. Result: **ARMS 2★**
 
-**Example 3 — Squat 225 × 8 (compound, legs-heavy):**
-- Base = 225 × 1.0 × 8 = **1800**
-- wger split → LEGS 84% (1512) / BACK 8% (144) / CORE 8% (144)
-- LEGS: 1512 × 1.3 × 1.1 (compound→narrow M_low) = **2162**
-- BACK: 144 × 1.3 × 1.3 (compound→broad M_high) = **243**
-- CORE: 144 × 1.3 × 1.3 = **243**
-- Visible XP shown: **2648**
+**Example 3 — Deadlift 315 × 5 (compound, naturally splits)**
+- Base = 315 × repMult(5) × 5 = 315 × 1.0 × 5 = **1575**
+- Total XP track: 1575 × 1.3 + 1575 × 1.5 = 2048 + 2363 = **+4411 to totalXP**
+- wger weights: LEGS 50% / BACK 30% / ARMS 10% / CORE 10%
+- Region star track (compound): no region exceeds 60%, so no overflow needed. LEGS 1★ (50% in 30–59 band), BACK 1★ (30%), ARMS 0★ (<30%), CORE 0★ (<30%). Result: **LEGS 1★ + BACK 1★**
 
-The "exasperated distribution" is visible: in #3, BACK and CORE pump faster than they would under simple proportional scaling, even though squats are LEGS-dominant.
+**Example 4 — Hip thrust (curated as isolation)**
+- wger weights: LEGS 100% (all primary + secondary muscles map to LEGS)
+- Curator rule R14: 100% in one region → classify as isolation (overrides default compound assumption).
+- Region star track (isolation, concentrate): LEGS 100% → 2★. Result: **LEGS 2★**
+
+## "Compound = 2×1 stars, Isolation = 1×2 stars" Rule Audit
+
+The cap-and-overflow rule (R12) + concentrate rule (R13) + 100% reclassification rule (R14) collectively force every exercise to satisfy the 2×1 / 1×2 ideal. Audit of canonical lifts:
+
+| Lift | Class | Raw weights | Stars after rules |
+|---|---|---|---|
+| Bench press | compound | FRONT 86 / ARMS 13 | FRONT 1★ + ARMS 1★ ✓ |
+| Squat | compound | LEGS 84 / BACK 8 / CORE 8 | LEGS 1★ + BACK 1★ ✓ (or CORE on tie) |
+| Deadlift | compound | LEGS 50 / BACK 30 / ARMS 10 / CORE 10 | LEGS 1★ + BACK 1★ ✓ |
+| Pull-up | compound | BACK 50 / ARMS 50 | BACK 1★ + ARMS 1★ ✓ |
+| Overhead press | compound | FRONT 73 / ARMS 13 / BACK 13 | FRONT 1★ + (ARMS or BACK) 1★ ✓ |
+| Bent-over row | compound | BACK 84 / ARMS 8 / FRONT 8 | BACK 1★ + ARMS 1★ ✓ |
+| Lunge | compound | LEGS 89 / CORE 13 | LEGS 1★ + CORE 1★ ✓ |
+| Hip thrust | isolation (curated) | LEGS 100 | LEGS 2★ ✓ |
+| Calf raise | isolation (curated) | LEGS 100 | LEGS 2★ ✓ |
+| Bicep curl | isolation | ARMS 100 | ARMS 2★ ✓ |
+| Lateral raise | isolation | FRONT 60 / BACK 40 | FRONT 2★ ✓ |
+| Leg extension | isolation | LEGS 100 | LEGS 2★ ✓ |
 
 ## Scope Boundaries
 
-- The existing `repMult(reps)` curve is unchanged. (The r=5 falls-into-second-branch quirk is a separate concern, not for this brainstorm.)
+- The existing `repMult(reps)` curve is unchanged. (The r=5 plateau quirk is documented; not for this brainstorm.)
 - The Total XP / player-level threshold formula (`15000 + level × 1000`) is unchanged.
-- The 5-region map (CORE / ARMS / LEGS / FRONT / BACK) is unchanged in structure, but each muscle's contribution becomes multi-region per wger.
+- The 5-region map (CORE / ARMS / LEGS / FRONT / BACK) is unchanged in structure.
 - Express forge cycle path is untouched.
-- The wger seed import process is in flight (`scripts/import-wger.js`, `scripts/wgerMap.js` are already on dev as of 2026-05-03).
+- The wger seed import process is in flight (`scripts/import-wger.js`, `scripts/wgerMap.js` already on dev as of 2026-05-03).
 
 ## Key Decisions
 
-- **Combo trigger = completion consistency** — plan adherence is the engine. Complete planned sessions on planned days → combo grows.
+- **Combo trigger = completion consistency** — plan adherence is the engine.
 - **Asymmetric breaking** — set-miss is forgiving (within-tier tick drop), day-miss is harsh (full tier drop or reset).
 - **Layered build curve** — linear ramp within tiers + named tiers + overall exponential-with-cap shape + prestige loop. All four mechanics coexist.
-- **Multiplier stack, in order** — base × consistency × (compound|isolation per-region) × prestige × holiday. Each is tunable independently.
-- **Per-region multipliers, not bias shifts** — compound and isolation each apply M_high and M_low to different region groups. No separate redistribution step. Cleaner formulation than my earlier "shift the weights" approach.
-- **wger-seeded distribution** — each exercise has a region weight vector derived from wger primary/secondary muscle data. No hand-tuning per exercise.
-- **wger attribution in settings credits — sufficient for license compliance.**
-- **Visibility is moment-bound** — per-set popup animation reveals the stack briefly. No constant multiplier UI in the nav. Region splits are discrete; only inferred via star chart growth over time.
+- **Two parallel tracks** — Total XP is continuous and uses additive multipliers; Region stars are discrete and gated by wger weight bands.
+- **Compound mult > isolation mult** in the additive total-XP stack.
+- **Cap + overflow for compound** stars; **concentrate on primary** for isolation stars; **100%-one-region exercises curated as isolation**.
+- **wger-seeded distribution** — each exercise has a region weight vector derived from wger primary/secondary data.
+- **wger attribution in settings credits page — sufficient for license compliance.**
+- **Visibility is moment-bound** — per-set popup animation reveals the breakdown briefly. No constant multiplier UI in the nav.
 
 ## Outstanding Questions
 
 ### Resolve Before Planning
 
-- [Affects R5][User decision] What are the exact tier multiplier values? Placeholder: NOVICE 1.0× / IRON 1.3× / STEEL 1.7× / BLAZE 2.5× / OVERDRIVE 4.0×. These shape the entire feel — go bigger? smaller? more tiers?
-- [Affects R6][User decision] How many sessions per tier? (How long does it take to climb NOVICE → IRON → STEEL → BLAZE → OVERDRIVE?) Determines how often a typical user feels rank-up.
-- [Affects R8][User decision] Missed-day rule: full reset for ALL tiers, or full tier drop only (so OVERDRIVE → BLAZE on first miss, not 1.0× on first miss)? Latter is more forgiving for high-tier users.
+- [Affects R2][User decision] Specific multiplier values: consistency_mult per tier (NOVICE 1.0 / IRON 1.3 / STEEL 1.7 / BLAZE 2.5 / OVERDRIVE 4.0 placeholder), compound_mult (1.5 placeholder), isolation_mult (1.2 placeholder), prestige_mult per ribbon (0.05 placeholder), holiday_mult per holiday (TBD per holiday).
+- [Affects R6][User decision] How many sessions per tier? (How long does it take to climb NOVICE → IRON → STEEL → BLAZE → OVERDRIVE?)
+- [Affects R8][User decision] Missed-day rule: full reset for ALL tiers, or full tier drop only (so OVERDRIVE → BLAZE on first miss, not 1.0× on first miss)?
 - [Affects R8][User decision] Grace days / streak freezes? (Duolingo-style "1 free pass per month") or strict no-grace?
-- [Affects R9][User decision] How many sessions at OVERDRIVE before prestige is available? And does the user have to opt in to ascend, or is it auto?
-- [Affects R9][User decision] Prestige bonus magnitude: +5% per ribbon? Compounding (1.05ⁿ)? Additive (1 + 0.05n)? Capped after N ribbons?
-- [Affects R11][User decision] M_high / M_low values: 1.3 / 1.1 placeholders. Bigger spread (e.g., 1.5 / 1.0)? Smaller? Even reversed for some exercises?
-- [Affects R14][Needs research] wger primary/secondary weighting heuristic. Placeholder: primary 60% / secondary 40% (split evenly). Real fitness science may suggest different ratios. Worth a quick research pass when planning.
-- [Affects R16][User decision] Which calendar holidays trigger? (New Year's Day, Halloween, user's birthday, July 4? Christmas? Thanksgiving? Cultural holidays?) And what multiplier value(s)?
-- [Affects R18][User decision] Exact format of the per-set popup multiplier breakdown. "+1080 EXP × 1.3 IRON × 1.3 COMPOUND = +1826 to FRONT" or simpler? Where does the "to FRONT" part come in (sub-particle that flies into the star chart)?
-- [Affects all][User decision] How does the user **view their current Consistency XP / current tier**? UI surface — settings? stats? a new dedicated "Combat Status" panel? Where does the Galaxy-Spiral ribbon collection display?
+- [Affects R9][User decision] How many sessions at OVERDRIVE before prestige is available? Auto or opt-in?
+- [Affects R12][User decision] Tie-breaking for overflow target when 2+ secondary regions have equal wger weight (squat: BACK 8 / CORE 8 — pick alphabetically? prefer narrow? prefer broad? split a fractional star?).
+- [Affects R14][User decision] Which canonical exercises beyond hip thrust + calf raise should be hand-tagged isolation despite wger listing secondary muscles? (Glute bridge? Hip abduction? Lateral raise?)
+- [Affects R16][User decision] Which calendar holidays trigger? And what holiday_mult value(s) per holiday?
+- [Affects R18][User decision] Exact format of the per-set popup multiplier breakdown text + any per-region star "pop" animation choreography.
+- [Affects all][User decision] Where the user **views their current Consistency XP / current tier** (UI surface — settings? stats? a new dedicated panel?).
 
 ### Deferred to Planning
 
-- [Affects R10][Technical] Does wger expose compound/isolation classification directly, or do we infer from `muscles_primary.length >= 2` or muscle-region span? Implementer to confirm against wger schema.
-- [Affects R13][Technical] Storage shape for per-exercise region weights — bake into `lib/exerciseLibrary.js` at import time, or compute lazily from muscle data?
-- [Affects R18][Technical] Per-region "sub-particle" animation — the existing `xp-p-${i}` animation already creates particles flying to the bar; can multi-region splits piggyback on that with per-region color tints?
-- [Affects R8][Technical] Detection of "missed planned day" — the cycle stores planned days; "missed" = scheduled day passed without `done-{cycleId}-{iso}` flag. Implementation detail.
-- [Affects R16][Technical] Holiday detection — local-machine date check vs server-side? Time zones?
+- [Affects R10][Technical] wger primary/secondary 60/40 weight split is a placeholder. Real fitness science may suggest different ratios. Worth a quick research pass when planning.
+- [Affects R10][Technical] Does wger expose compound/isolation classification directly, or do we need to compute? (Classification is curated per R14 anyway, but wger may give a useful default.)
+- [Affects R13][Technical] Storage shape for per-exercise region weights and classification — bake into `lib/exerciseLibrary.js` at import time, or compute lazily?
+- [Affects R12][Technical] When a compound's overflow target is itself <30% — does the overflow STILL fire and award 1 star to that low-weight region, or is the second star forfeited? (Current spec: overflow fires regardless of receiver's raw share. Confirm.)
+- [Affects R8][Technical] Detection of "missed planned day" — scheduled day passed without `done-{cycleId}-{iso}` flag. Implementation detail.
+- [Affects R16][Technical] Holiday detection — local-machine date check vs server-side?
 
 ## Where We Are in the Conversation
 
 - ✅ Existing XP algo confirmed (base XP via `weight × repMult × reps`, 1:1 muscle→region today)
 - ✅ Multi-region distribution will be derived from wger primary/secondary data
 - ✅ wger licensing understood (settings-credits attribution sufficient)
-- ✅ Multiplier stack order locked: base × consistency × (compound|isolation per-region) × prestige × holiday
-- ✅ Compound/isolation use TWO per-region multipliers (M_high to favored region group, M_low to other), not a separate bias-redistribution step
-- ✅ Visibility model: only the per-set popup animation reveals the stack. Region splits are inferred from star-chart growth.
-- ✅ Math walkthroughs confirmed (bench, bicep curl, squat) using actual `repMult` formula
+- ✅ **Two-track model**: continuous Total XP via additive multipliers; discrete Region stars via wger weight bands
+- ✅ **Compound mult > isolation mult** in the additive total stack
+- ✅ **Star bands**: <30% → 0★, 30–59% → 1★, 60%+ → 2★
+- ✅ **Cap + overflow rule** for compound stars, **concentrate rule** for isolation stars
+- ✅ **Curated classification**: 100%-one-region → isolation by default; curator can override
+- ✅ Math walkthroughs verified (bench, deadlift, bicep curl, hip thrust)
 - ✅ Asymmetric break: missed-set tick drop (forgiving), missed-day tier drop (harsh)
 - ✅ Build curve: layered (linear within tiers + named tiers + exponential-cap shape + prestige loop)
 
-**Next session**: pick up at the Outstanding Questions list. The biggest practical block is the tier multiplier values (R5) and the M_high/M_low values (R11) — once those are locked, planning can proceed. Holiday list (R16) and grace policy (R8) are smaller but still need answers.
+**Next session**: pick up at the Outstanding Questions list. Biggest practical blocks: tier multiplier values (R5/R2), missed-day rule (R8), holiday list (R16), and curator pass for which exercises beyond hip-thrust/calf-raise should be hand-tagged isolation (R14).
 
 ## Next Steps
 
