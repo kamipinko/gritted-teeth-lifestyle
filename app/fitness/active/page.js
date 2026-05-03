@@ -2625,8 +2625,37 @@ export default function ActiveCyclePage() {
   useEffect(() => { barXPRef.current = barXP }, [barXP])
 
   useEffect(() => {
+    // Page-level scroll lock — prevents iOS PWA viewport-pan in any direction.
+    // overflow alone isn't enough on WKWebView; position:fixed + inset:0 +
+    // touch-action:none on the body makes the body a non-scrollable surface.
+    // Children (the rolodex) opt back in via data-scroll-passthrough.
+    const prevHtml = {
+      overflow: document.documentElement.style.overflow,
+    }
+    const prevBody = {
+      overflow: document.body.style.overflow,
+      position: document.body.style.position,
+      inset: document.body.style.inset,
+      width: document.body.style.width,
+      height: document.body.style.height,
+      touchAction: document.body.style.touchAction,
+    }
+    document.documentElement.style.overflow = 'hidden'
     document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
+    document.body.style.position = 'fixed'
+    document.body.style.inset = '0'
+    document.body.style.width = '100%'
+    document.body.style.height = '100%'
+    document.body.style.touchAction = 'none'
+    return () => {
+      document.documentElement.style.overflow = prevHtml.overflow
+      document.body.style.overflow = prevBody.overflow
+      document.body.style.position = prevBody.position
+      document.body.style.inset = prevBody.inset
+      document.body.style.width = prevBody.width
+      document.body.style.height = prevBody.height
+      document.body.style.touchAction = prevBody.touchAction
+    }
   }, [])
 
   useEffect(() => {
@@ -2668,9 +2697,13 @@ export default function ActiveCyclePage() {
         const center = rect.top + rect.height / 2
         const dist = Math.abs(center - ACTIVE_VIEWPORT_Y)
         // Falloff window — within 60px of active line = full prominence,
-        // 240px out = dim/shrunk, beyond that pegged at zero.
+        // 240px out = dim, beyond that pegged at zero.
         const t = Math.max(0, Math.min(1, 1 - Math.max(0, dist - 60) / 180))
         card.style.setProperty('--rolodex-t', String(t))
+        // Mark the card as centered when it's clearly at the active line.
+        // CSS keys off this attribute for the red prominence ring + tap gating.
+        if (t >= 0.9) card.setAttribute('data-rolodex-centered', '')
+        else card.removeAttribute('data-rolodex-centered')
       })
     }
     update()
@@ -2696,13 +2729,24 @@ export default function ActiveCyclePage() {
       const dI = Math.abs(parseDate(iso) - parseDate(todayStr))
       return dI < dC ? iso : closest
     }, days[0])
-    const node = container.querySelector(`[data-rolodex-iso="${target}"]`)
-    if (!node) return
-    const rect = node.getBoundingClientRect()
-    const cardCenter = rect.top + rect.height / 2
-    const delta = cardCenter - ACTIVE_VIEWPORT_Y
-    container.scrollBy({ top: delta, behavior: 'instant' })
-    rolodexCenteredRef.current = true
+    // Wait for two animation frames so the rolodex container's height is
+    // finalized (CSS layout settled) before measuring. Use the container's
+    // actual visible mid-height instead of the hardcoded ACTIVE_VIEWPORT_Y
+    // — the magic number was based on one specific viewport and didn't
+    // adapt to safe-area changes / different device sizes.
+    const center = () => {
+      const node = container.querySelector(`[data-rolodex-iso="${target}"]`)
+      if (!node) return
+      const rect = node.getBoundingClientRect()
+      const containerRect = container.getBoundingClientRect()
+      const containerCenterY = containerRect.top + containerRect.height / 2
+      const cardCenter = rect.top + rect.height / 2
+      const delta = cardCenter - containerCenterY
+      container.scrollBy({ top: delta, behavior: 'instant' })
+      rolodexCenteredRef.current = true
+    }
+    const r1 = requestAnimationFrame(() => requestAnimationFrame(center))
+    return () => cancelAnimationFrame(r1)
   }, [ready, days])
 
   useEffect(() => {
@@ -3030,6 +3074,7 @@ export default function ActiveCyclePage() {
               minHeight: 0,
               height: '100%',
               overflowY: 'auto',
+              overflowX: 'hidden',
               WebkitOverflowScrolling: 'touch',
               overscrollBehaviorY: 'contain',
               touchAction: 'pan-y',
@@ -3037,23 +3082,41 @@ export default function ActiveCyclePage() {
               flexDirection: 'column',
               gap: '12px',
               // Phantom space above + below so the first/last card can be
-              // scrolled to the active y=466 line.
+              // scrolled to the active line.
               paddingTop: '40vh',
               paddingBottom: '40vh',
+              // Scroll-snap: the rolodex locks onto cards instead of
+              // free-scrolling. Each card is a snap target (set on its
+              // wrapper below). 'mandatory' = always lands on a card.
+              scrollSnapType: 'y mandatory',
+              scrollSnapStop: 'always',
             }}
           >
             {days.map((iso) => (
               <div
                 key={iso}
                 data-rolodex-iso={iso}
+                onClickCapture={(e) => {
+                  // Tap-to-select-then-open behavior:
+                  //   centered card → click bubbles → DayButton.onClick fires
+                  //   non-centered card → block, scroll to center it
+                  const wrapper = e.currentTarget
+                  if (!wrapper.hasAttribute('data-rolodex-centered')) {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  }
+                }}
                 style={{
                   flexShrink: 0,
                   minHeight: '92px',
-                  // --rolodex-t is updated by the scroll listener (1 at the
-                  // active y=466 line, 0 at the edges). Opacity-only effect
-                  // on the wrapper — no transform/filter to avoid creating
-                  // GPU-composite layers that can swallow iOS PWA scroll
-                  // capture inside an overflow-y container.
+                  // Snap target: scroll lands with this card centered in the
+                  // viewport. Combined with the container's
+                  // scrollSnapType: 'y mandatory', scroll always rests on a card.
+                  scrollSnapAlign: 'center',
+                  scrollSnapStop: 'always',
+                  // --rolodex-t is updated by the scroll listener.
+                  // 1 at the active line, 0 at the edges.
                   opacity: 'calc(0.45 + 0.55 * var(--rolodex-t, 0))',
                   transition: 'opacity 100ms linear',
                 }}
