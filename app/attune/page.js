@@ -3,10 +3,10 @@
  * /attune — Attune Movements page.
  *
  * Renders the active cycle as a pinch-zoomable calendar of carved
- * day cells. Tap a day → picker (Step 4 / Unit 3). Long-press a chip
- * → action menu (Step 5 / Unit 4). Drag a chip → cross-day move
- * (Step 6 / Unit 5). Auto-attune button + exit guard + onboarding
- * popup land in Step 7 (Unit 6 page-side).
+ * day cells. Tap a day → picker. Long-press a chip → ChipActionMenu
+ * (Copy / Delete / Replace). Drag a chip → cross-day move (Step 6 /
+ * Unit 5). Auto-attune button + exit guard + onboarding popup land
+ * in Step 7 (Unit 6 page-side).
  *
  * Reads carved days + muscle assignments from the existing cycle
  * store (lib/storage.js → pk()-keyed localStorage). Attunement chips
@@ -18,7 +18,8 @@ import { pk } from '../../lib/storage'
 import RetreatButton from '../../components/RetreatButton'
 import CycleCalendar from '../../components/attune/CycleCalendar'
 import PickerSheet from '../../components/attune/PickerSheet'
-import { addChip } from '../../lib/attunement'
+import ReplaceCascadeModal from '../../components/attune/ReplaceCascadeModal'
+import { addChip, replaceExercise } from '../../lib/attunement'
 
 function loadActiveCycle() {
   if (typeof window === 'undefined') return null
@@ -36,7 +37,13 @@ function loadActiveCycle() {
 export default function AttunePage() {
   const router = useRouter()
   const [cycle, setCycle] = useState(null)
+  // Picker for the attune flow (tap a day → pick + multi-day target).
   const [pickerDayId, setPickerDayId] = useState(null)
+  // Replace flow: chip long-press → Replace → opens picker in
+  // mode='replace' against the same source day. After exercise pick,
+  // cascadeContext is set and ReplaceCascadeModal opens.
+  // Shape: { dayId, chipId, fromLabel, newExerciseId? }
+  const [replaceContext, setReplaceContext] = useState(null)
 
   useEffect(() => {
     setCycle(loadActiveCycle())
@@ -44,18 +51,44 @@ export default function AttunePage() {
 
   const handleDayTap = (dayId) => {
     if (!cycle) return
+    if (replaceContext) return  // chip-replace flow owns the picker right now
     const muscles = cycle.dailyPlan?.[dayId] || []
-    if (muscles.length === 0) return  // rest day — no muscle to lock to
+    if (muscles.length === 0) return
     setPickerDayId(dayId)
   }
 
-  const handleConfirm = (selectedDayIds, exerciseId) => {
+  const handleAttuneConfirm = (selectedDayIds, exerciseId) => {
     if (!cycle || !exerciseId) { setPickerDayId(null); return }
     for (const dayId of (selectedDayIds || [pickerDayId])) {
       addChip(cycle.id, dayId, exerciseId)
     }
     setPickerDayId(null)
   }
+
+  // Chip → Replace
+  const handleChipReplace = ({ dayId, chipId, fromLabel }) => {
+    setReplaceContext({ dayId, chipId, fromLabel })
+  }
+
+  // Picker (in replace mode) confirms a new exercise → cascade modal opens.
+  const handleReplacePick = (_dayIds, newExerciseId) => {
+    if (!replaceContext || !newExerciseId) { setReplaceContext(null); return }
+    setReplaceContext((prev) => prev ? { ...prev, newExerciseId } : null)
+  }
+
+  const handleCascadePick = (scope) => {
+    if (!cycle || !replaceContext?.newExerciseId) { setReplaceContext(null); return }
+    replaceExercise(cycle.id, scope, {
+      dayId: replaceContext.dayId,
+      chipId: replaceContext.chipId,
+      newExerciseId: replaceContext.newExerciseId,
+    })
+    setReplaceContext(null)
+  }
+
+  // Decide which picker (if any) is active and what its props look like.
+  const replacePickerOpen = !!(replaceContext && !replaceContext.newExerciseId)
+  const cascadeOpen       = !!(replaceContext && replaceContext.newExerciseId)
 
   return (
     <main
@@ -71,7 +104,6 @@ export default function AttunePage() {
         style={{ background: 'linear-gradient(160deg, rgba(80,10,10,0.10) 0%, transparent 55%, rgba(20,20,20,0.32) 100%)' }} />
 
       <div className="relative z-10 flex flex-col" style={{ flex: 1, minHeight: 0 }}>
-        {/* Nav */}
         <nav
           className="relative shrink-0 flex items-center gap-4 pl-0 pr-8 pb-3"
           style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
@@ -94,17 +126,42 @@ export default function AttunePage() {
         <div className="relative z-10 mx-8 mb-2 h-[2px] shrink-0"
              style={{ background: '#d4181f', transform: 'skewX(-6deg)', transformOrigin: 'left center' }} />
 
-        {/* Calendar surface — flex-1 so it takes the remaining viewport */}
-        <CycleCalendar cycle={cycle} onDayTap={handleDayTap} />
+        <CycleCalendar
+          cycle={cycle}
+          onDayTap={handleDayTap}
+          onChipReplace={handleChipReplace}
+        />
       </div>
 
-      {pickerDayId && (
+      {/* Attune-flow picker */}
+      {pickerDayId && !replaceContext && (
         <PickerSheet
           sourceDayId={pickerDayId}
           mode="attune"
           cycle={cycle}
-          onConfirm={handleConfirm}
+          onConfirm={handleAttuneConfirm}
           onClose={() => setPickerDayId(null)}
+        />
+      )}
+
+      {/* Replace-flow picker (single-day, no multi-day selector) */}
+      {replacePickerOpen && (
+        <PickerSheet
+          sourceDayId={replaceContext.dayId}
+          mode="replace"
+          cycle={cycle}
+          onConfirm={handleReplacePick}
+          onClose={() => setReplaceContext(null)}
+        />
+      )}
+
+      {/* Cascade scope modal (after replace picker confirms) */}
+      {cascadeOpen && (
+        <ReplaceCascadeModal
+          fromLabel={replaceContext.fromLabel}
+          toLabel={replaceContext.newExerciseId}
+          onPick={handleCascadePick}
+          onClose={() => setReplaceContext(null)}
         />
       )}
     </main>

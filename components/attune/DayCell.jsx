@@ -28,6 +28,7 @@ function muscleKanji(muscleId) {
 }
 
 export default function DayCell({
+  cycleId,
   dayId,
   muscles = [],
   chips = [],
@@ -35,6 +36,7 @@ export default function DayCell({
   isRestDay = false,
   tier = 'far',
   onTap,
+  onChipReplace,
 }) {
   const handleClick = () => {
     if (isLocked) return
@@ -102,7 +104,14 @@ export default function DayCell({
       {tier === 'mid' && chips.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 3, pointerEvents: isLocked ? 'none' : 'auto' }}>
           {chips.slice(0, 2).map(chip => (
-            <SetChip key={chip.id} chip={chip} compact />
+            <SetChip
+              key={chip.id}
+              chip={chip}
+              cycleId={isLocked ? null : cycleId}
+              dayId={isLocked ? null : dayId}
+              onReplace={onChipReplace}
+              compact
+            />
           ))}
           {chips.length > 2 && (
             <div style={{ fontSize: '0.65rem', color: '#888', letterSpacing: '0.08em' }}>
@@ -116,7 +125,13 @@ export default function DayCell({
       {tier === 'near' && chips.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, pointerEvents: isLocked ? 'none' : 'auto' }}>
           {chips.map(chip => (
-            <SetChip key={chip.id} chip={chip} />
+            <SetChip
+              key={chip.id}
+              chip={chip}
+              cycleId={isLocked ? null : cycleId}
+              dayId={isLocked ? null : dayId}
+              onReplace={onChipReplace}
+            />
           ))}
         </div>
       )}

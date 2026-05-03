@@ -20,7 +20,7 @@ import { zoomTier } from '../../lib/zoomTier'
  * cycle: { id, days: ISO[], dailyPlan: Record<iso, muscleId[]> }
  * Day is a "rest day" iff dailyPlan[iso] is missing or empty.
  */
-export default function CycleCalendar({ cycle, onDayTap }) {
+export default function CycleCalendar({ cycle, onDayTap, onChipReplace }) {
   const [scale, setScale] = useState(0.6)
   const isChipDragging = useIsChipDragging()
   const wrapperRef = useRef(null)
@@ -78,6 +78,7 @@ export default function CycleCalendar({ cycle, onDayTap }) {
                 muscles={cycle.dailyPlan?.[iso] || []}
                 tier={tier}
                 onTap={onDayTap}
+                onChipReplace={onChipReplace}
               />
             ))}
           </div>
@@ -99,12 +100,13 @@ export default function CycleCalendar({ cycle, onDayTap }) {
   )
 }
 
-function CalendarCell({ cycleId, dayId, muscles, tier, onTap }) {
+function CalendarCell({ cycleId, dayId, muscles, tier, onTap, onChipReplace }) {
   const chips = useChipsForDay(cycleId, dayId)
   const locked = isDayLocked(cycleId, dayId)
   const isRest = !muscles || muscles.length === 0
   return (
     <DayCell
+      cycleId={cycleId}
       dayId={dayId}
       muscles={muscles}
       chips={chips}
@@ -112,6 +114,7 @@ function CalendarCell({ cycleId, dayId, muscles, tier, onTap }) {
       isRestDay={isRest}
       tier={tier}
       onTap={onTap}
+      onChipReplace={onChipReplace}
     />
   )
 }
