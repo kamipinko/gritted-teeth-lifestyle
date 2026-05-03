@@ -145,28 +145,14 @@ function DayButton({ iso, muscles, todayIso, onClick, doneKey, cycleId }) {
             so TODAY card height equals ACTIVATE / ProfileChip / MUSCLE
             (~70px); the centered active line is what tells the user this
             is today, no separate label needed. */}
-        <span className={`font-display text-3xl leading-none truncate tracking-tight
+        <span className={`font-display text-3xl leading-none whitespace-nowrap shrink-0 tracking-tight
           ${done ? 'text-gtl-chalk' : 'text-gtl-paper'}`}
           style={done ? { textDecoration: 'line-through', textDecorationColor: '#7a0e14' } : undefined}>
           {dayName} · {mon} {dayNum}
         </span>
-        {/* Right side: kanji glyphs on every workout day (TODAY + non-TODAY,
-            unified). REST pill on no-muscles days. */}
-        {muscles.length > 0 ? (
-          <div className={`flex items-center gap-1 shrink-0 leading-none
-            ${done ? 'text-gtl-ash/70' : 'text-gtl-paper'}`}
-            style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", serif' }}>
-            {muscles.map((m) => (
-              <span
-                key={m}
-                className="text-3xl leading-none"
-                aria-label={MUSCLE_LABELS[m] || m}
-              >
-                {MUSCLE_KANJI[m] || '?'}
-              </span>
-            ))}
-          </div>
-        ) : (
+        {/* Right side: REST pill only on no-muscles days. Kanji rendering
+            removed for now — was overflowing and pushing the date off-screen. */}
+        {muscles.length === 0 && (
           <span className={`font-mono text-[10px] tracking-[0.3em] uppercase shrink-0 leading-none
             ${done ? 'text-gtl-smoke/60' : 'text-gtl-paper/50'}`}>
             REST
