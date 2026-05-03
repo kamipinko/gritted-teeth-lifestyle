@@ -501,7 +501,16 @@ export default function NewCycleNamePage() {
     if (name.trim().length === 0) return
     brandingRef.current = true
     setIsBranding(true)
-    try { localStorage.setItem(pk('cycle-name'), name.trim()) } catch (_) {}
+    try {
+      localStorage.setItem(pk('cycle-name'), name.trim())
+      // Tap path is the MANUAL forge — clear any leftover gtl-quick-forge
+      // flag from a previous (abandoned) swipe attempt. Without this, the
+      // downstream muscles/branded pages would auto-progress and fire the
+      // speed-lines + heist transition even though the user tapped, not
+      // swiped. Flag is normally cleared on /fitness/new/summary, so it
+      // sticks if the user bails out of the chain earlier.
+      localStorage.removeItem('gtl-quick-forge')
+    } catch (_) {}
     play('brand-confirm')
     // Play a second impact ~400ms in to reinforce the peak of the brand
     setTimeout(() => play('stamp'), 380)
