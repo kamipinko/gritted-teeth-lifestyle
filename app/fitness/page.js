@@ -80,10 +80,11 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
         relative group flex items-center justify-center
         font-display tracking-[0.25em] uppercase overflow-visible
         px-24 py-5 min-h-[56px] block w-full -mx-5
-        text-3xl text-gtl-paper
+        text-3xl text-gtl-chalk [@media(hover:hover)]:hover:text-gtl-paper
         transition-all duration-200 ease-out
         [@media(hover:hover)]:hover:scale-[1.04] active:scale-[0.98]
-        bg-gtl-red [@media(hover:hover)]:hover:bg-gtl-red-bright
+        bg-gtl-surface border border-gtl-edge
+        [@media(hover:hover)]:hover:bg-gtl-red [@media(hover:hover)]:hover:border-transparent
         shadow-[4px_4px_0_#070708]
         [@media(hover:hover)]:hover:shadow-[6px_6px_0_#070708]
         active:shadow-[2px_2px_0_#070708]
