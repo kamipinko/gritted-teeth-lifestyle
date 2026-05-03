@@ -6,6 +6,7 @@ import { useSound } from '../../lib/useSound'
 import HeistTransition from '../../components/HeistTransition'
 import RetreatButton from '../../components/RetreatButton'
 import { LogoStencil, LogoTarget } from '../../components/LogoHalf'
+import { armChain, setInAnimation } from '../../lib/predictiveTap'
 
 function ProfileChip({ name, onSelect, onSwipeSelect }) {
   const { play } = useSound()
@@ -235,6 +236,7 @@ export default function ProfilePage() {
   const skipNow = () => {
     if (skippedRef.current) return
     skippedRef.current = true
+    setInAnimation('profile', false)
     router.push(HUB_TARGET)
   }
 
@@ -264,6 +266,12 @@ export default function ProfilePage() {
     try {
       localStorage.setItem('gtl-active-profile', name)
     } catch (_) {}
+    // Arm the predictive-tap chain. The next 4 taps inside the shared
+    // hit-zone (during transition animations) prefire forward.
+    armChain()
+    // The HeistTransition is about to play — flag the chain in-animation
+    // so a hit-zone tap during the wipe stages a 'hub-load' prefire.
+    setInAnimation('profile', true)
     setTransitioning(true)
   }
 
@@ -281,6 +289,7 @@ export default function ProfilePage() {
   }
 
   const handleTransitionComplete = () => {
+    setInAnimation('profile', false)
     if (skippedRef.current) return
     router.push(HUB_TARGET)
   }
