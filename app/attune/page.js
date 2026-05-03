@@ -33,7 +33,7 @@ import {
   setIsChipDragging, emptyDayCount,
 } from '../../lib/attunement'
 
-const RETREAT_HREF = '/fitness'
+const RETREAT_HREF = '/fitness/new/branded'
 
 function loadActiveCycle() {
   if (typeof window === 'undefined') return null
