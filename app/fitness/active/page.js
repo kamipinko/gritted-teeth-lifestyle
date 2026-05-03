@@ -2796,24 +2796,34 @@ export default function ActiveCyclePage() {
       const dI = Math.abs(parseDate(iso) - parseDate(todayStr))
       return dI < dC ? iso : closest
     }, days[0])
-    // Wait for two animation frames so the rolodex container's height is
-    // finalized (CSS layout settled) before measuring. Land today's TOP
-    // edge at viewport y=479 — the exact same y the ACTIVATE button uses.
-    // Safety-net retry at 120ms covers iOS PWA cases where layout settles
-    // after rAF (the scroll listener can also momentarily nudge things).
+    // Land today's TOP edge at viewport y=479 — the same y ACTIVATE uses.
+    // Direct scrollTop assignment instead of scrollBy: iOS PWA WebKit
+    // intermittently no-ops scrollBy on a flex+overflow container, and
+    // scrollTop= is the only reliable cross-engine path.
+    // Retries on a short cadence cover the common iOS PWA case where the
+    // first frame measures before paddingTop:60vh has laid out fully.
     let cancelled = false
     const place = () => {
-      if (cancelled) return
+      if (cancelled) return false
       const node = container.querySelector(`[data-rolodex-iso="${target}"]`)
-      if (!node) return
+      if (!node) return false
       const rect = node.getBoundingClientRect()
       const delta = rect.top - ACTIVE_TOP_Y
-      if (Math.abs(delta) < 1) return
-      container.scrollBy({ top: delta, behavior: 'instant' })
+      if (Math.abs(delta) < 1) return true
+      container.scrollTop = container.scrollTop + delta
+      return true
     }
-    const r1 = requestAnimationFrame(() => requestAnimationFrame(place))
-    const t1 = setTimeout(place, 120)
-    return () => { cancelled = true; cancelAnimationFrame(r1); clearTimeout(t1) }
+    const handles = []
+    handles.push(requestAnimationFrame(() => {
+      handles.push(requestAnimationFrame(place))
+    }))
+    handles.push(setTimeout(place, 60))
+    handles.push(setTimeout(place, 160))
+    handles.push(setTimeout(place, 320))
+    return () => {
+      cancelled = true
+      handles.forEach(h => { try { cancelAnimationFrame(h) } catch (_) {} ; try { clearTimeout(h) } catch (_) {} })
+    }
   }, [ready, days, focusDay])
 
   useEffect(() => {
