@@ -296,3 +296,22 @@ input, textarea {
   -webkit-user-select: text;
   user-select: text;
 }
+
+/* Active rolodex centered-card prominence. The scroll listener sets
+ * data-rolodex-centered on the wrapper when --rolodex-t >= 0.9. This rule
+ * gives the centered card a red glow ring + slightly elevated z-index so it
+ * reads as "the chosen one." Non-centered cards stay flat. */
+[data-rolodex-iso][data-rolodex-centered] {
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 0 12px rgba(212, 24, 31, 0.55))
+          drop-shadow(0 0 28px rgba(212, 24, 31, 0.25));
+}
+
+/* Non-centered cards: fade slightly more so the contrast vs centered is
+ * obvious at a glance. Combined with the calc-based opacity from
+ * --rolodex-t, this gives a clear visual ladder. */
+[data-rolodex-iso]:not([data-rolodex-centered]) {
+  filter: saturate(0.55);
+  transition: filter 120ms linear;
+}
