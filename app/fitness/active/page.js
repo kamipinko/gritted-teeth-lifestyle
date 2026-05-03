@@ -13,6 +13,8 @@ import { useSound } from '../../../lib/useSound'
 import { useProfileGuard } from '../../../lib/useProfileGuard'
 import { pk } from '../../../lib/storage'
 import RetreatButton from '../../../components/RetreatButton'
+import PickerSheet from '../../../components/attune/PickerSheet'
+import { chipsForDay, addChip } from '../../../lib/attunement'
 
 const MUSCLE_LABELS = {
   chest: 'CHEST', back: 'BACK', shoulders: 'SHOULDERS',
@@ -1914,6 +1916,15 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
   const [closing, setClosing]           = useState(false)
   const [focusMuscle, setFocusMuscle]   = useState(null)
   const [focusMuscleRect, setFocusMuscleRect] = useState(null)
+  // R17/R18 — empty-day picker. When the user lands on a workout day with
+  // zero attuned chips AND at least one assigned muscle, surface the
+  // in-the-moment picker so they can pick an exercise on the spot. If the
+  // day has no muscles, fall through to the existing empty-state UI (don't
+  // open). If the user dismisses without picking, don't re-summon on the
+  // same visit (component-local flag); navigating away + back gets a fresh
+  // re-evaluation since DayFocus remounts.
+  const [pickerOpen, setPickerOpen]           = useState(false)
+  const [pickerDismissed, setPickerDismissed] = useState(false)
   // Entrance skip: first pointerdown/touchstart anywhere during the open
   // animation snaps the day-focus + all child animations to settled state.
   // The injected <style> block re-targets every running animation on the
@@ -1938,6 +1949,18 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
   const month   = MONTH_FULL[date.getMonth()]
   const year    = date.getFullYear()
   const hasWork = muscles.length > 0
+
+  // R17/R18 mount-check: open the in-the-moment picker if this day has
+  // muscles assigned but no chips attuned yet. Skipped if the user
+  // already dismissed the picker on this visit, or if the day has no
+  // muscles (fall back to existing empty-state UI), or if chips already
+  // exist for this day.
+  useEffect(() => {
+    if (pickerDismissed) return
+    if (!hasWork) return
+    if (chipsForDay(cycleId, iso).length > 0) return
+    setPickerOpen(true)
+  }, [cycleId, iso, hasWork, pickerDismissed])
 
   const [allReps, setAllReps]       = useState({})
   const [allWeights, setAllWeights] = useState({})
@@ -2556,6 +2579,28 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
             originRect={focusMuscleRect}
             cycleId={cycleId}
             onClose={() => { setFocusMuscle(null); setFocusMuscleRect(null); setRefreshKey(k => k + 1) }}
+          />
+        )}
+
+        {/* R17/R18 — empty-day in-the-moment picker. Opens automatically on
+            mount when the day has muscles assigned but zero attuned chips.
+            Picking confirms a single chip via attunementStore.addChip and
+            closes; dismissing without picking sets the visit-local flag so
+            it doesn't re-summon. Read-only consumer of attunementStore +
+            PickerSheet — neither module is modified here. */}
+        {pickerOpen && (
+          <PickerSheet
+            sourceDayId={iso}
+            mode="in-the-moment"
+            cycle={{ id: cycleId, dailyPlan: { [iso]: muscles } }}
+            onConfirm={(_targetDayIds, exerciseId) => {
+              addChip(cycleId, iso, exerciseId)
+              setPickerOpen(false)
+            }}
+            onClose={() => {
+              setPickerDismissed(true)
+              setPickerOpen(false)
+            }}
           />
         )}
       </div>
