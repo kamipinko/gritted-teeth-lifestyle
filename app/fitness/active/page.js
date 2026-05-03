@@ -2899,12 +2899,12 @@ export default function ActiveCyclePage() {
   const handleDayClick = (iso, rect) => {
     setFocusRect(rect)
     setFocusDay(iso)
-    // Predictive-tap: TODAY is chain step 4. The day-focus animation
-    // takes ~700ms (380ms BEGIN HERE button delay + 320ms popup-rise),
-    // and a hit-zone tap during that window stages a 'muscle' prefire.
+    // Predictive-tap: TODAY is chain step 4. inAnim stays open until
+    // the chain disarms (on muscle hop) — no timeout. The user can
+    // tap any time after today fires; DayFocus's subscribeStaged
+    // listener consumes 'muscle' the moment it lands.
     if (iso === todayIsoStr) {
       setInAnimation('today', true)
-      setTimeout(() => setInAnimation('today', false), 750)
     }
   }
 

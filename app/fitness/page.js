@@ -242,7 +242,10 @@ export default function ProfilePage() {
   const skipNow = () => {
     if (skippedRef.current) return
     skippedRef.current = true
-    setInAnimation('profile', false)
+    // Don't close the predictive-tap inAnim window — the next page's
+    // consumePrefire will re-assert it with the new currentStep.
+    // Closing here creates a ~30-60ms gap between hops where rapid
+    // taps would silently fall through to reactive-skip-only.
     router.push(HUB_TARGET)
   }
 
@@ -295,7 +298,8 @@ export default function ProfilePage() {
   }
 
   const handleTransitionComplete = () => {
-    setInAnimation('profile', false)
+    // inAnim stays open across the hop — next page's consumePrefire
+    // re-asserts it. See skipNow comment above.
     if (skippedRef.current) return
     router.push(HUB_TARGET)
   }

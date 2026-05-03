@@ -950,7 +950,8 @@ export default function LoadCyclePage() {
   const skipNow = () => {
     if (skippedRef.current) return
     skippedRef.current = true
-    setInAnimation('activate', false)
+    // inAnim stays open across the hop — next page's consumePrefire
+    // re-asserts it.
     router.push(fireDestRef.current)
   }
 
@@ -1179,7 +1180,6 @@ export default function LoadCyclePage() {
       <HeistTransition
         active={fireActive}
         onComplete={() => {
-          setInAnimation('activate', false)
           if (skippedRef.current) return
           router.push(fireDest)
         }}
