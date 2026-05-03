@@ -3156,13 +3156,21 @@ export default function ActiveCyclePage() {
               gap: '12px',
               // Phantom space above + below so the first/last card can be
               // scrolled to the active line.
-              paddingTop: '40vh',
-              paddingBottom: '40vh',
-              // Scroll-snap: the rolodex locks onto cards instead of
-              // free-scrolling. Each card is a snap target (set on its
-              // wrapper below). 'mandatory' = always lands on a card.
-              scrollSnapType: 'y mandatory',
-              scrollSnapStop: 'always',
+              // Bumped 40vh -> 60vh: with the rolodex container starting
+              // ~82px below viewport top (after nav + battle-schedule
+              // header), 40vh of phantom = ~337px = card naturally lands
+              // at ~420 with scrollTop=0, can't scroll BACK to reach
+              // y=479. 60vh gives enough phantom room for the auto-center
+              // scrollBy(top: rect.top - ACTIVE_TOP_Y) to actually
+              // resolve at every common viewport.
+              paddingTop: '60vh',
+              paddingBottom: '60vh',
+              // Snap removed: 'y mandatory' + 'center' was re-aligning
+              // today's card to the SCROLLPORT center independently of
+              // the auto-center math. The prominence listener already
+              // handles "what counts as centered" via the
+              // data-rolodex-centered attribute (within 47px of
+              // ACTIVE_TOP_Y), so snap was redundant.
             }}
           >
             {days.map((iso) => (
@@ -3186,11 +3194,6 @@ export default function ActiveCyclePage() {
                   // adds 40px so total minimum is ~70px, which matches the
                   // ACTIVATE button's rendered height.
                   minHeight: '56px',
-                  // Snap target: scroll lands with this card centered in the
-                  // viewport. Combined with the container's
-                  // scrollSnapType: 'y mandatory', scroll always rests on a card.
-                  scrollSnapAlign: 'center',
-                  scrollSnapStop: 'always',
                   // --rolodex-t is updated by the scroll listener.
                   // 1 at the active line, 0 at the edges.
                   opacity: 'calc(0.45 + 0.55 * var(--rolodex-t, 0))',
