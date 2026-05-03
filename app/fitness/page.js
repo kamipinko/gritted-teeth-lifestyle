@@ -123,9 +123,15 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
       style={{
         clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)',
         touchAction: 'pan-y',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        WebkitTouchCallout: 'none',
       }}
     >
-      <span className="relative inline-block leading-none tracking-tight">
+      <span
+        className="relative inline-block leading-none tracking-tight"
+        style={{ userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none' }}
+      >
         {name.toUpperCase()}
       </span>
       {/* Stencil + target on opposite sides. Whichever side gets pulled rolls
