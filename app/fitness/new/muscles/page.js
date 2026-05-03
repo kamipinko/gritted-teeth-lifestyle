@@ -38,18 +38,23 @@ const MuscleBody = dynamic(() => import('../../../../components/MuscleBody'), {
   ),
 })
 
+// kanji values match the canonical muscle-glyph set in
+// app/fitness/new/branded/page.js — same symbols appear on the active
+// rolodex day cards, so users see one consistent glyph per muscle
+// throughout the app. Region (UPPER/LOWER/ARMS/CORE) field removed —
+// the kanji is the new at-a-glance identifier.
 const MUSCLE_GROUPS = [
-  { id: 'chest',      label: 'CHEST',      region: 'UPPER' },
-  { id: 'shoulders',  label: 'SHOULDERS',  region: 'UPPER' },
-  { id: 'back',       label: 'BACK',       region: 'UPPER' },
-  { id: 'biceps',     label: 'BICEPS',     region: 'ARMS'  },
-  { id: 'triceps',    label: 'TRICEPS',    region: 'ARMS'  },
-  { id: 'forearms',   label: 'FOREARMS',   region: 'ARMS'  },
-  { id: 'abs',        label: 'ABS',        region: 'CORE'  },
-  { id: 'glutes',     label: 'GLUTES',     region: 'LOWER' },
-  { id: 'quads',      label: 'QUADS',      region: 'LOWER' },
-  { id: 'hamstrings', label: 'HAMSTRINGS', region: 'LOWER' },
-  { id: 'calves',     label: 'CALVES',     region: 'LOWER' },
+  { id: 'chest',      label: 'CHEST',      kanji: '胸' },
+  { id: 'shoulders',  label: 'SHOULDERS',  kanji: '肩' },
+  { id: 'back',       label: 'BACK',       kanji: '背' },
+  { id: 'biceps',     label: 'BICEPS',     kanji: '二' },
+  { id: 'triceps',    label: 'TRICEPS',    kanji: '三' },
+  { id: 'forearms',   label: 'FOREARMS',   kanji: '腕' },
+  { id: 'abs',        label: 'ABS',        kanji: '腹' },
+  { id: 'glutes',     label: 'GLUTES',     kanji: '尻' },
+  { id: 'quads',      label: 'QUADS',      kanji: '腿' },
+  { id: 'hamstrings', label: 'HAMSTRINGS', kanji: '裏' },
+  { id: 'calves',     label: 'CALVES',     kanji: '脛' },
 ]
 
 // Left column: upper body | Right column: core + lower
@@ -213,8 +218,15 @@ function MuscleRow({ group, selected, focusedGroup, onToggle, onFocus, stampRevi
         >
           {group.label}
         </div>
-        <div className="font-mono text-[8px] tracking-[0.3em] uppercase text-gtl-smoke mt-0.5">
-          {group.region}
+        <div
+          className="leading-none mt-0.5 text-gtl-smoke"
+          style={{
+            fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
+            fontSize: '14px',
+          }}
+          aria-hidden="true"
+        >
+          {group.kanji}
         </div>
       </div>
 
@@ -419,8 +431,15 @@ function MobileMusclePill({ group, selected, focusedGroup, onToggle, onFocus, ig
         <div className={`font-display text-sm leading-none tracking-wide ${isSelected ? 'text-white' : 'text-gtl-ash'}`}>
           {group.label}
         </div>
-        <div className={`font-mono text-[7px] tracking-[0.25em] uppercase mt-0.5 ${isSelected ? 'text-white/65' : 'text-gtl-smoke'}`}>
-          {group.region}
+        <div
+          className={`leading-none mt-0.5 ${isSelected ? 'text-white/85' : 'text-gtl-smoke'}`}
+          style={{
+            fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
+            fontSize: '13px',
+          }}
+          aria-hidden="true"
+        >
+          {group.kanji}
         </div>
       </button>
     </div>
