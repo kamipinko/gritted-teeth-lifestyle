@@ -106,14 +106,14 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex items-center justify-between px-3 py-1.5 min-h-[46px] border transition-colors duration-150
+      className={`relative flex flex-col items-center justify-center px-2 py-3 min-h-[82px] border transition-colors duration-150
         ${active
           ? 'bg-gtl-red border-gtl-red-bright shadow-red-glow'
           : 'bg-gtl-ink border-gtl-edge'}`}
       style={{ clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)', transform: 'skewX(-2deg)' }}
     >
       <span
-        className={`font-mono text-[12px] tracking-[0.08em] uppercase leading-none font-bold
+        className={`font-mono text-[14px] tracking-[0.08em] uppercase leading-none font-bold mb-1.5
           ${active ? 'text-gtl-paper' : 'text-gtl-chalk'}`}
         style={{ transform: 'skewX(2deg)' }}
       >
@@ -123,7 +123,7 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
         className={`leading-none ${active ? 'text-gtl-paper' : 'text-gtl-chalk/70'}`}
         style={{
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-          fontSize: '1.25rem',
+          fontSize: '2rem',
           fontWeight: 400,
           textShadow: active ? '1px 1px 0 #070708' : 'none',
           transform: 'skewX(2deg)',
@@ -873,7 +873,7 @@ export default function SchedulePage() {
           Calendar above is shrink-0 (always full 5 rows visible, never scrolls). */}
       {sheetOpen && (
         <div className="flex-1 overflow-y-auto px-3 pt-0 pb-1">
-          <div className="grid grid-cols-2 grid-rows-6 gap-1" style={{ overflow: 'visible' }}>
+          <div className="grid grid-cols-3 grid-rows-4 gap-1" style={{ overflow: 'visible' }}>
             {SHEET_MUSCLES.map((m) => (
               <SheetMuscleButton
                 key={m.id}
