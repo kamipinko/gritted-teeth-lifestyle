@@ -6,7 +6,8 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "import:exercises": "node scripts/import-wger.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
