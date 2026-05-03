@@ -15,9 +15,6 @@ Make the calling card dominate the fold on mobile. The nutrition card is a secon
 ### M2. Profiles Page — Touch Targets [DONE 2026-05-02]
 WHO ARE YOU looks great. Make the input and ENTER button wider, taller, more satisfying to tap. Press state on ENTER should feel physical.
 
-### M3. Theatrical Navigation Flashes
-Build a lightweight P5 flash for key navigation moments (name entry → hub, cycle selection, etc.). Lighter than HeistTransition — a half-second color flood or kanji frame. Study `components/HeistTransition.jsx`.
-
 ### M4. Breadcrumb Cleanup
 On mobile only, show just the current page label instead of the full path (e.g. `SCHEDULE` not `PALACE / FITNESS / NEW CYCLE / SCHEDULE`).
 
