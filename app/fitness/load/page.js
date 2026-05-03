@@ -16,6 +16,7 @@ import { pk } from '../../../lib/storage'
 import HeistTransition from '../../../components/HeistTransition'
 import RetreatButton from '../../../components/RetreatButton'
 import { LogoStencil, LogoTarget } from '../../../components/LogoHalf'
+import { consumePrefire, setInAnimation } from '../../../lib/predictiveTap'
 
 const MUSCLE_LABELS = {
   chest: 'CHEST', back: 'BACK', shoulders: 'SHOULDERS',
@@ -949,6 +950,7 @@ export default function LoadCyclePage() {
   const skipNow = () => {
     if (skippedRef.current) return
     skippedRef.current = true
+    setInAnimation('activate', false)
     router.push(fireDestRef.current)
   }
 
@@ -1021,8 +1023,25 @@ export default function LoadCyclePage() {
     }
     fireDestRef.current = '/fitness/active'  // sync for the listener
     setFireDest('/fitness/active')
+    // Predictive-tap chain: ACTIVATE is the in-animation step that
+    // hands off to TODAY on /fitness/active.
+    setInAnimation('activate', true)
     setFireActive(true)
   }
+
+  // Predictive-tap consume: fires once the auto-selected cycle is
+  // available in state (the ActivatePopup has just rendered). If the
+  // prior hop's hit-zone tap staged 'activate', auto-fire handleActivate
+  // on the same cycle the user would have tapped.
+  useEffect(() => {
+    if (!ready) return
+    if (!selectedId) return
+    const cycle = cycles.find((c) => c.id === selectedId)
+    if (!cycle) return
+    const intent = consumePrefire('activate')
+    if (intent) handleActivate(cycle)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, selectedId])
 
   const handleReview = (cycle) => {
     if (fireActiveRef.current) { skipNow(); return }
@@ -1160,6 +1179,7 @@ export default function LoadCyclePage() {
       <HeistTransition
         active={fireActive}
         onComplete={() => {
+          setInAnimation('activate', false)
           if (skippedRef.current) return
           router.push(fireDest)
         }}
