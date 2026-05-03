@@ -46,7 +46,7 @@ export default function AutoAttuneButton({ cycle }) {
           border: '2px solid #ff2a36',
           color: '#fff',
           padding: '0.85rem 1.5rem',
-          fontFamily: '"FOT-Matisse Pro EB", Anton, Impact, sans-serif',
+          fontFamily: 'var(--font-display, Anton, sans-serif)',
           fontSize: '0.9rem',
           letterSpacing: '0.22em',
           textTransform: 'uppercase',

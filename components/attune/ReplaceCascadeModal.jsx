@@ -31,7 +31,7 @@ export default function ReplaceCascadeModal({ fromLabel, toLabel, onPick, onClos
           background: '#1a1a1e',
           border: '2px solid #d4181f',
           padding: '1rem',
-          fontFamily: '"FOT-Matisse Pro EB", Anton, Impact, sans-serif',
+          fontFamily: 'var(--font-display, Anton, sans-serif)',
           color: '#f1eee5',
           display: 'flex', flexDirection: 'column', gap: '0.5rem',
         }}

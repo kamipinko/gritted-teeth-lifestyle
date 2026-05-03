@@ -2,63 +2,57 @@
 /**
  * PickerSheet — exercise picker bottom sheet.
  *
- * mode='attune'        → multi-day target selector visible (Attune page)
+ * mode='attune'        → multi-day target SELECTION lives on the calendar
+ *                        (lifted to the page). The picker just shows the
+ *                        count and confirms one exercise across all
+ *                        currently-selected days. No internal day chips.
  * mode='in-the-moment' → single-day mode (log-set screen, Worker C)
  * mode='replace'       → single-day mode (chip Replace action, Step 5)
  *
- * Picker is muscle-locked to the source day's first muscle. Multi-day
- * target selector (attune mode only) lists every other carved day whose
- * dailyPlan muscle matches the source — toggleable, source pinned.
+ * Picker is muscle-locked to the source day's first muscle.
  *
  * Search uses iOS PWA keyboard recipe: form with action='.' + method,
  * input with inputMode + enterKeyHint. (The global IOSPWAKeyboardFix
  * already handles the el.click() leg of the recipe.)
  *
+ * Backdrop is bottom-anchored only — the calendar above the sheet stays
+ * interactive so the user can tap days to add/remove targets while the
+ * picker stays open.
+ *
  * Props:
- *   sourceDayId  - dayId the picker was opened from
- *   mode         - 'attune' | 'in-the-moment' | 'replace'
- *   cycle        - { id, days, dailyPlan } — required for attune mode's
- *                  multi-day target selector; ignored otherwise
- *   onConfirm    - (selectedDayIds, exerciseId) => void
- *   onClose      - () => void
+ *   sourceDayId      - the source (first) selected day; used for muscle lock
+ *   selectedDayIds   - all currently-selected days (attune mode); the
+ *                      sheet shows the count + applies confirm to all
+ *   mode             - 'attune' | 'in-the-moment' | 'replace'
+ *   cycle            - { id, days, dailyPlan } — needed for muscle lookup
+ *   onConfirm        - (exerciseId) => void
+ *   onClose          - () => void
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { searchExercises } from '../../lib/exerciseLibrary'
 
-export default function PickerSheet({ sourceDayId, mode = 'attune', cycle, onConfirm, onClose }) {
+export default function PickerSheet({
+  sourceDayId,
+  selectedDayIds,
+  mode = 'attune',
+  cycle,
+  onConfirm,
+  onClose,
+}) {
   const [query, setQuery] = useState('')
   const [selectedExerciseId, setSelectedExerciseId] = useState(null)
-  const [selectedDayIds, setSelectedDayIds] = useState(() => sourceDayId ? [sourceDayId] : [])
   const inputRef = useRef(null)
 
-  // Source day's primary muscle — first in dailyPlan[sourceDayId].
   const sourceMuscle = useMemo(() => {
     if (!cycle || !sourceDayId) return null
     const m = cycle?.dailyPlan?.[sourceDayId] || []
     return m[0] || null
   }, [cycle, sourceDayId])
 
-  // Matching-muscle peer days (attune mode only).
-  const peerDays = useMemo(() => {
-    if (mode !== 'attune' || !cycle || !sourceMuscle) return []
-    return (cycle.days || []).filter((iso) => {
-      if (iso === sourceDayId) return false
-      const m = cycle.dailyPlan?.[iso] || []
-      return m.includes(sourceMuscle)
-    })
-  }, [cycle, sourceDayId, sourceMuscle, mode])
-
   const exercises = useMemo(
     () => searchExercises(sourceMuscle, query),
     [sourceMuscle, query],
   )
-
-  // Body scroll lock for the modal lifetime.
-  useEffect(() => {
-    if (typeof document === 'undefined') return
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
-  }, [])
 
   // sr-only input scrollIntoView fallback (per memory:
   // feedback_ios_pwa_sr_only_input_scroll). Not strictly needed since
@@ -73,52 +67,53 @@ export default function PickerSheet({ sourceDayId, mode = 'attune', cycle, onCon
     return () => el.removeEventListener('focus', handler)
   }, [])
 
-  const toggleTargetDay = (dayId) => {
-    if (dayId === sourceDayId) return  // source is pinned
-    setSelectedDayIds((prev) =>
-      prev.includes(dayId) ? prev.filter((d) => d !== dayId) : [...prev, dayId]
-    )
-  }
-
-  const canConfirm = selectedExerciseId != null && selectedDayIds.length > 0
+  const targetCount = mode === 'attune'
+    ? (selectedDayIds?.length || (sourceDayId ? 1 : 0))
+    : (sourceDayId ? 1 : 0)
+  const canConfirm = selectedExerciseId != null && targetCount > 0
 
   const commit = () => {
     if (!canConfirm) return
-    if (onConfirm) onConfirm(selectedDayIds, selectedExerciseId)
+    if (onConfirm) onConfirm(selectedExerciseId)
   }
-
-  const showMultiDay = mode === 'attune' && peerDays.length > 0
 
   return (
     <div
       role="dialog"
-      aria-modal="true"
+      aria-modal="false"
       aria-label="Pick exercise"
       style={{
-        position: 'fixed', inset: 0, zIndex: 100,
-        background: 'rgba(7,7,8,0.78)',
-        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+        // Bottom-anchored sheet ONLY — no full-bleed backdrop. Calendar
+        // above stays tappable so the user can add/remove target days
+        // while the picker is open.
+        position: 'fixed', left: 0, right: 0, bottom: 0,
+        zIndex: 100,
+        display: 'flex', justifyContent: 'center',
+        pointerEvents: 'none',
       }}
-      onClick={() => onClose && onClose()}
     >
       <div
-        onClick={(e) => e.stopPropagation()}
         style={{
+          pointerEvents: 'auto',
           width: '100%', maxWidth: 430,
-          maxHeight: '88vh',
+          maxHeight: '70vh',
           background: '#1a1a1e',
           borderTop: '2px solid #d4181f',
           padding: '1rem 1rem calc(1.5rem + env(safe-area-inset-bottom, 0px))',
-          fontFamily: '"FOT-Matisse Pro EB", Anton, Impact, sans-serif',
+          fontFamily: 'var(--font-display, Anton, sans-serif)',
           color: '#f1eee5',
           display: 'flex', flexDirection: 'column', gap: '0.6rem',
+          boxShadow: '0 -8px 24px rgba(0,0,0,0.6)',
         }}
       >
-        {/* Header — mode + source-day + muscle lock */}
+        {/* Header — mode + muscle lock + selected-day count */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontSize: '0.62rem', letterSpacing: '0.3em', color: '#d4181f' }}>
             PICKER · {mode.toUpperCase()}
             {sourceMuscle && <> · LOCKED: {sourceMuscle.toUpperCase()}</>}
+            {mode === 'attune' && targetCount > 0 && (
+              <> · {targetCount} DAY{targetCount === 1 ? '' : 'S'}</>
+            )}
           </div>
           <button
             type="button"
@@ -134,23 +129,12 @@ export default function PickerSheet({ sourceDayId, mode = 'attune', cycle, onCon
           </button>
         </div>
 
-        {/* Multi-day target selector (attune mode only) */}
-        {showMultiDay && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div style={{ fontSize: '0.55rem', letterSpacing: '0.25em', color: '#888', textTransform: 'uppercase' }}>
-              ALSO ATTUNE TO
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-              <DayChip iso={sourceDayId} pinned active />
-              {peerDays.map((iso) => (
-                <DayChip
-                  key={iso}
-                  iso={iso}
-                  active={selectedDayIds.includes(iso)}
-                  onToggle={() => toggleTargetDay(iso)}
-                />
-              ))}
-            </div>
+        {mode === 'attune' && (
+          <div style={{
+            fontSize: '0.55rem', letterSpacing: '0.25em', color: '#888',
+            textTransform: 'uppercase',
+          }}>
+            tap days on the calendar to add or remove targets
           </div>
         )}
 
@@ -254,37 +238,10 @@ export default function PickerSheet({ sourceDayId, mode = 'attune', cycle, onCon
           }}
         >
           {canConfirm
-            ? `Attune ${selectedDayIds.length > 1 ? `× ${selectedDayIds.length} days` : ''}`
+            ? `Attune ${targetCount > 1 ? `× ${targetCount} days` : ''}`
             : 'Pick an exercise'}
         </button>
       </div>
     </div>
-  )
-}
-
-function DayChip({ iso, pinned = false, active = false, onToggle }) {
-  // Render the iso as MM/DD for compactness.
-  const label = iso ? `${iso.slice(5, 7)}/${iso.slice(8, 10)}` : '—'
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      disabled={pinned}
-      style={{
-        background: active ? '#d4181f' : '#0f0f12',
-        color: active ? '#fff' : '#888',
-        border: `1px solid ${active ? '#ff2a36' : '#2a2a30'}`,
-        padding: '0.3rem 0.5rem',
-        fontFamily: 'inherit',
-        fontSize: '0.65rem',
-        letterSpacing: '0.1em',
-        cursor: pinned ? 'default' : 'pointer',
-        opacity: pinned ? 0.85 : 1,
-      }}
-      aria-pressed={active}
-      aria-label={pinned ? `source day ${label} (pinned)` : `toggle ${label}`}
-    >
-      {label}{pinned && ' ★'}
-    </button>
   )
 }

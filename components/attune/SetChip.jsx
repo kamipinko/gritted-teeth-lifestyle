@@ -103,7 +103,7 @@ export default function SetChip({ chip, cycleId, dayId, compact = false, onRepla
           border: '1px solid #2a2a30',
           borderLeft: '2px solid #d4181f',
           padding: compact ? '3px 6px' : '5px 8px',
-          fontFamily: '"FOT-Matisse Pro EB", monospace',
+          fontFamily: 'var(--font-mono, ui-monospace, "Courier New", monospace)',
           fontSize: compact ? '0.65rem' : '0.75rem',
           letterSpacing: '0.06em',
           color: '#d8d2c2',
