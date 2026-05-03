@@ -30,6 +30,7 @@ function CycleOption({
   href,
   variant = 'primary',
   onClick,
+  dataPredictiveTapTarget,
 }) {
   const { play } = useSound()
   const [hovered, setHovered] = useState(false)
@@ -50,6 +51,7 @@ function CycleOption({
       onClick={handleClick}
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
+      data-predictive-tap-target={dataPredictiveTapTarget}
       // touch-action: manipulation disables the iOS 300ms double-tap-to-zoom
       // delay, which was suppressing rapid follow-up taps on the LOAD CYCLE /
       // NEW CYCLE buttons (so the skip-on-second-tap path never fired).
@@ -480,6 +482,7 @@ export default function FitnessPage() {
               href="/fitness/load"
               variant="secondary"
               onClick={handleSelect}
+              dataPredictiveTapTarget="hub-load"
             />
           </div>
           <div className="md:translate-y-12">
