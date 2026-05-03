@@ -125,6 +125,10 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
         100% { transform: translateX(0)     rotate(0deg);   }
       }
     `}</style>
+    {/* Wrapper hosts the button + the shockwave ring as siblings. Wrapper
+        has no clip-path, so the ring scales outward freely instead of being
+        cropped by the button's parallelogram silhouette. */}
+    <div className="relative block w-full -mx-5" style={{ width: 'calc(100% + 40px)' }}>
     <button
       ref={forgeRef}
       type="button"
@@ -136,7 +140,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
       disabled={disabled}
       className={`
         relative font-display tracking-[0.25em] uppercase overflow-visible
-        px-24 py-5 min-h-[56px] block w-full -mx-5
+        px-24 py-5 min-h-[56px] block w-full
         text-3xl text-gtl-paper
         transition-all duration-200 ease-out
         disabled:opacity-30 disabled:cursor-not-allowed
@@ -146,7 +150,7 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
         enabled:[@media(hover:hover)]:hover:shadow-[6px_6px_0_#070708]
         enabled:active:shadow-[2px_2px_0_#070708]
       `}
-      style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)', touchAction: 'pan-y', width: 'calc(100% + 40px)' }}
+      style={{ clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)', touchAction: 'pan-y' }}
     >
       <span className="relative inline-block">
         {swipeProgress >= 1 ? 'LIFT NOW' : 'FORGE'}
@@ -202,30 +206,30 @@ function ForgeButton({ forgeRef, disabled, onTap, onSwipe }) {
           </>
         )
       })()}
-      {/* Shockwave ring on successful swipe — radiates from the docked logo
-          (whichever side the swipe finished on). Uses the global @keyframes
-          shockwave (matches the muscle-target ALL button). */}
-      {ringKey > 0 && (
-        <div
-          key={ringKey}
-          className="absolute pointer-events-none rounded-full"
-          style={{
-            top: '50%',
-            marginTop: '-28px',
-            ...(ringSide === 'right'
-              ? { right: 'calc(50% - 175px)' }
-              : { left:  'calc(50% - 175px)' }),
-            width: '56px',
-            height: '56px',
-            borderStyle: 'solid',
-            borderColor: '#d4181f',
-            animation: 'shockwave 900ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards',
-            zIndex: 3,
-          }}
-          aria-hidden="true"
-        />
-      )}
     </button>
+    {/* Shockwave ring on successful swipe — sibling of the button so the
+        button's clip-path doesn't crop the expanding ring. */}
+    {ringKey > 0 && (
+      <div
+        key={ringKey}
+        className="absolute pointer-events-none rounded-full"
+        style={{
+          top: '50%',
+          marginTop: '-28px',
+          ...(ringSide === 'right'
+            ? { right: 'calc(50% - 175px)' }
+            : { left:  'calc(50% - 175px)' }),
+          width: '56px',
+          height: '56px',
+          borderStyle: 'solid',
+          borderColor: '#d4181f',
+          animation: 'shockwave 900ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards',
+          zIndex: 3,
+        }}
+        aria-hidden="true"
+      />
+    )}
+    </div>
     </>
   )
 }
