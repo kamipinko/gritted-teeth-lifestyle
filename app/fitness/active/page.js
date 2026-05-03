@@ -15,7 +15,7 @@ import { pk } from '../../../lib/storage'
 import RetreatButton from '../../../components/RetreatButton'
 import PickerSheet from '../../../components/attune/PickerSheet'
 import { chipsForDay, addChip } from '../../../lib/attunement'
-import { consumePrefire, setInAnimation, disarmChain } from '../../../lib/predictiveTap'
+import { consumePrefire, setInAnimation, disarmChain, subscribeStaged } from '../../../lib/predictiveTap'
 
 const MUSCLE_LABELS = {
   chest: 'CHEST', back: 'BACK', shoulders: 'SHOULDERS',
@@ -1933,20 +1933,29 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
     setPickerOpen(true)
   }, [cycleId, iso, hasWork, pickerDismissed])
 
-  // Predictive-tap chain — final hop. If the prior hit-zone tap (during
-  // the today day-focus animation) staged a 'muscle' intent, auto-fire
-  // the BEGIN HERE muscle button as if the user tapped it. Disarms the
-  // chain on success.
+  // Predictive-tap chain — final hop. The 'muscle' intent gets staged
+  // DURING the day-focus zoom-in animation, which begins as DayFocus
+  // mounts. So the user's hit-zone tap usually lands AFTER this
+  // component is already on screen. Try consume immediately (in case
+  // the intent was already staged) AND subscribe to staging events so
+  // a tap mid-animation re-attempts consume.
   useEffect(() => {
     if (!hasWork) return
     if (focusMuscle) return
-    const intent = consumePrefire('muscle')
-    if (intent && muscles[0]) {
-      setFocusMuscle(muscles[0])
-      disarmChain('muscle-fired')
+    const tryConsume = () => {
+      if (focusMuscle) return
+      const intent = consumePrefire('muscle')
+      if (intent && muscles[0]) {
+        setFocusMuscle(muscles[0])
+        disarmChain('muscle-fired')
+      }
     }
+    tryConsume()
+    return subscribeStaged((stepName) => {
+      if (stepName === 'muscle') tryConsume()
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasWork])
+  }, [hasWork, focusMuscle])
 
   const [allReps, setAllReps]       = useState({})
   const [allWeights, setAllWeights] = useState({})
