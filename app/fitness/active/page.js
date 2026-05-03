@@ -110,6 +110,12 @@ function DayButton({ iso, muscles, todayIso, onClick, doneKey, cycleId }) {
   return (
     <button
       type="button"
+      // Predictive-tap chain marker: ONLY the TODAY card carries this
+      // attribute (other days in the rolodex are not the chain target).
+      // Aligns with the y=479 ACTIVE_TOP_Y pinning that mirrors ACTIVATE's
+      // screen rect on /fitness/load — predictive-tap module reads bbox
+      // from this element to match the chain hop.
+      data-predictive-tap-target={isToday ? 'today' : undefined}
       onClick={(e) => {
         const rect = e.currentTarget.getBoundingClientRect()
         play('option-select')
