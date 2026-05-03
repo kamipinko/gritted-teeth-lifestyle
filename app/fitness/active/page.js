@@ -120,15 +120,18 @@ function DayButton({ iso, muscles, todayIso, onClick, doneKey, cycleId }) {
       <div
         className={`absolute inset-0 transition-colors ${done ? 'bg-gtl-surface' : 'bg-gtl-red'}`}
         style={{
-          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+          // Match the ACTIVATE button's clip-path slash exactly.
+          clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)',
+          // Match the ACTIVATE button's offset-block shadow (4px 4px sharp
+          // black) instead of the soft red glow we had before.
           boxShadow: done
-            ? '0 4px 16px rgba(7,7,8,0.45)'
-            : '0 4px 28px rgba(212, 24, 31, 0.55)',
+            ? '2px 2px 0 #070708'
+            : '4px 4px 0 #070708',
           border: done ? '1px solid #2a2a30' : 'none',
         }}
         aria-hidden="true"
       />
-      <div className="relative flex items-center justify-between px-6 py-3 gap-3">
+      <div className="relative flex items-center justify-between px-6 py-5 gap-3 min-h-[56px]">
         <div className="flex flex-col items-start min-w-0">
           {/* Status label only on TODAY (UPCOMING/MISSED/DONE removed for clarity
               — the active line is what tells the user which card is selected). */}
@@ -138,7 +141,7 @@ function DayButton({ iso, muscles, todayIso, onClick, doneKey, cycleId }) {
               {label}
             </span>
           )}
-          <span className={`font-display text-2xl leading-none ${isToday ? 'mt-1' : ''} truncate
+          <span className={`font-display text-3xl leading-none ${isToday ? 'mt-1' : ''} truncate tracking-tight
             ${done ? 'text-gtl-chalk' : 'text-gtl-paper'}`}
             style={done ? { textDecoration: 'line-through', textDecorationColor: '#7a0e14' } : undefined}>
             {dayName} · {mon} {dayNum}
@@ -161,7 +164,7 @@ function DayButton({ iso, muscles, todayIso, onClick, doneKey, cycleId }) {
         {/* Right side of card: kanji on non-TODAY cards (replaces ➤︎ + muscle
             text), arrow on TODAY (still calls "open" out as the action). */}
         {isToday ? (
-          <span className={`font-display text-2xl leading-none shrink-0
+          <span className={`font-display text-3xl leading-none shrink-0
             ${done ? 'text-gtl-ash' : 'text-gtl-paper'}`}>➤︎</span>
         ) : muscles.length > 0 ? (
           <div className={`flex items-center gap-1 shrink-0 leading-none
@@ -170,7 +173,7 @@ function DayButton({ iso, muscles, todayIso, onClick, doneKey, cycleId }) {
             {muscles.map((m) => (
               <span
                 key={m}
-                className="text-2xl leading-none"
+                className="text-3xl leading-none"
                 aria-label={MUSCLE_LABELS[m] || m}
               >
                 {MUSCLE_KANJI[m] || '?'}
@@ -3089,7 +3092,7 @@ export default function ActiveCyclePage() {
           packed grid. No scroll-snap — user free-scrolls and taps any
           card to enter that day. */}
       <section
-        className="relative z-10 px-8 pb-2"
+        className="relative z-10 px-3 pb-2"
         style={{
           flex: '1 1 0%',
           minHeight: 0,
@@ -3155,7 +3158,10 @@ export default function ActiveCyclePage() {
                 }}
                 style={{
                   flexShrink: 0,
-                  minHeight: '92px',
+                  // Match ACTIVATE's min-h-[56px]. The button's interior py-5
+                  // adds 40px so total minimum is ~70px, which matches the
+                  // ACTIVATE button's rendered height.
+                  minHeight: '56px',
                   // Snap target: scroll lands with this card centered in the
                   // viewport. Combined with the container's
                   // scrollSnapType: 'y mandatory', scroll always rests on a card.
