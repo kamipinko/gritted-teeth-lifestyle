@@ -20,6 +20,22 @@ const MUSCLE_LABELS = {
   abs: 'ABS', glutes: 'GLUTES', quads: 'QUADS',
   hamstrings: 'HAMSTRINGS', calves: 'CALVES',
 }
+// Canonical kanji-per-muscle map. Mirrors app/fitness/new/branded/page.js
+// SHEET_MUSCLES list verbatim (11 muscles). Used by the rolodex DayButton
+// to render glyph-only on non-TODAY cards.
+const MUSCLE_KANJI = {
+  chest:      '胸',
+  shoulders:  '肩',
+  back:       '背',
+  forearms:   '腕',
+  quads:      '腿',
+  hamstrings: '裏',
+  calves:     '脛',
+  biceps:     '二',
+  triceps:    '三',
+  glutes:     '尻',
+  abs:        '腹',
+}
 const DAY_FULL   = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY']
 const DAY_SHORT  = ['SUN','MON','TUE','WED','THU','FRI','SAT']
 const MONTH_SHORT = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
@@ -114,29 +130,59 @@ function DayButton({ iso, muscles, todayIso, onClick, doneKey, cycleId }) {
       />
       <div className="relative flex items-center justify-between px-6 py-3 gap-3">
         <div className="flex flex-col items-start min-w-0">
-          <span className={`font-mono text-[9px] tracking-[0.3em] uppercase leading-none
-            ${done ? 'text-gtl-ash' : 'text-gtl-paper/80'}`}>
-            {label}
-          </span>
-          <span className={`font-display text-2xl leading-none mt-1 truncate
+          {/* Status label only on TODAY (UPCOMING/MISSED/DONE removed for clarity
+              — the active line is what tells the user which card is selected). */}
+          {isToday && (
+            <span className={`font-mono text-[9px] tracking-[0.3em] uppercase leading-none
+              ${done ? 'text-gtl-ash' : 'text-gtl-paper/80'}`}>
+              {label}
+            </span>
+          )}
+          <span className={`font-display text-2xl leading-none ${isToday ? 'mt-1' : ''} truncate
             ${done ? 'text-gtl-chalk' : 'text-gtl-paper'}`}
             style={done ? { textDecoration: 'line-through', textDecorationColor: '#7a0e14' } : undefined}>
             {dayName} · {mon} {dayNum}
           </span>
-          {muscles.length > 0 ? (
-            <span className={`font-mono text-[9px] tracking-[0.2em] uppercase leading-none mt-1 truncate
-              ${done ? 'text-gtl-smoke' : 'text-gtl-paper/70'}`}>
-              {muscles.map(m => MUSCLE_LABELS[m] || m).join(' · ')}
-            </span>
-          ) : (
-            <span className={`font-mono text-[9px] tracking-[0.3em] uppercase leading-none mt-1
-              ${done ? 'text-gtl-smoke' : 'text-gtl-paper/60'}`}>
-              REST
-            </span>
-          )}
+          {/* Muscle text on TODAY, kanji-only on every other card. REST stays
+              "REST" label on TODAY, becomes nothing on non-TODAY (no kanji to
+              show). */}
+          {isToday ? (
+            muscles.length > 0 ? (
+              <span className="font-mono text-[9px] tracking-[0.2em] uppercase leading-none mt-1 truncate text-gtl-paper/70">
+                {muscles.map(m => MUSCLE_LABELS[m] || m).join(' · ')}
+              </span>
+            ) : (
+              <span className="font-mono text-[9px] tracking-[0.3em] uppercase leading-none mt-1 text-gtl-paper/60">
+                REST
+              </span>
+            )
+          ) : null}
         </div>
-        <span className={`font-display text-2xl leading-none shrink-0
-          ${done ? 'text-gtl-ash' : 'text-gtl-paper'}`}>➤︎</span>
+        {/* Right side of card: kanji on non-TODAY cards (replaces ➤︎ + muscle
+            text), arrow on TODAY (still calls "open" out as the action). */}
+        {isToday ? (
+          <span className={`font-display text-2xl leading-none shrink-0
+            ${done ? 'text-gtl-ash' : 'text-gtl-paper'}`}>➤︎</span>
+        ) : muscles.length > 0 ? (
+          <div className={`flex items-center gap-1 shrink-0 leading-none
+            ${done ? 'text-gtl-ash/70' : 'text-gtl-paper'}`}
+            style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", serif' }}>
+            {muscles.map((m) => (
+              <span
+                key={m}
+                className="text-2xl leading-none"
+                aria-label={MUSCLE_LABELS[m] || m}
+              >
+                {MUSCLE_KANJI[m] || '?'}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <span className={`font-mono text-[10px] tracking-[0.3em] uppercase shrink-0 leading-none
+            ${done ? 'text-gtl-smoke/60' : 'text-gtl-paper/50'}`}>
+            REST
+          </span>
+        )}
       </div>
     </button>
   )
