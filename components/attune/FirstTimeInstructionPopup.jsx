@@ -49,7 +49,7 @@ export default function FirstTimeInstructionPopup() {
           background: '#1a1a1e',
           border: '2px solid #d4181f',
           padding: '1.25rem 1rem',
-          fontFamily: '"FOT-Matisse Pro EB", Anton, Impact, sans-serif',
+          fontFamily: 'var(--font-display, Anton, sans-serif)',
           color: '#f1eee5',
           display: 'flex', flexDirection: 'column', gap: '1rem',
         }}

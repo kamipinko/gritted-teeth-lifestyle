@@ -33,7 +33,7 @@ import {
   setIsChipDragging, emptyDayCount,
 } from '../../lib/attunement'
 
-const RETREAT_HREF = '/fitness'
+const RETREAT_HREF = '/fitness/new/branded'
 
 function loadActiveCycle() {
   if (typeof window === 'undefined') return null
@@ -73,7 +73,10 @@ function muscleOfExercise(exerciseId, cycle, fromDayId) {
 export default function AttunePage() {
   const router = useRouter()
   const [cycle, setCycle] = useState(null)
-  const [pickerDayId, setPickerDayId] = useState(null)
+  // Lifted attune-target selection — calendar taps mutate this directly.
+  // selectedDayIds[0] is the source (★); muscle-lock applies to subsequent
+  // additions (taps on non-matching-muscle days are ignored).
+  const [selectedDayIds, setSelectedDayIds] = useState([])
   const [replaceContext, setReplaceContext] = useState(null)
   const [dropPrompt, setDropPrompt] = useState(null)
   // Exit guard: { destination } when an attempted navigation is held.
@@ -123,25 +126,47 @@ export default function AttunePage() {
   }, [shouldGuard])
 
   // ── Picker (attune flow) ───────────────────────────────────────────────
+  // Tap toggles selection on the calendar. Picker stays mounted for as
+  // long as at least one day is selected. Muscle lock: additions must
+  // share the source day's muscle.
+  const sourceDayId = selectedDayIds[0] || null
+  const sourceMuscle = sourceDayId
+    ? (cycle?.dailyPlan?.[sourceDayId] || [])[0] || null
+    : null
+
   const handleDayTap = (dayId) => {
     if (!cycle) return
     if (replaceContext) return
     const muscles = cycle.dailyPlan?.[dayId] || []
-    if (muscles.length === 0) return
-    setPickerDayId(dayId)
+    if (muscles.length === 0) return  // rest day — no muscle to lock to
+    setSelectedDayIds((prev) => {
+      if (prev.includes(dayId)) {
+        // Toggle off. If removing the source, the next entry promotes.
+        return prev.filter((d) => d !== dayId)
+      }
+      if (prev.length === 0) return [dayId]
+      // Muscle-lock: only add if this day shares the source's muscle.
+      if (sourceMuscle && !muscles.includes(sourceMuscle)) return prev
+      return [...prev, dayId]
+    })
   }
-  const handleAttuneConfirm = (selectedDayIds, exerciseId) => {
-    if (!cycle || !exerciseId) { setPickerDayId(null); return }
-    for (const dayId of (selectedDayIds || [pickerDayId])) {
+
+  const handleAttuneConfirm = (exerciseId) => {
+    if (!cycle || !exerciseId || selectedDayIds.length === 0) {
+      setSelectedDayIds([])
+      return
+    }
+    for (const dayId of selectedDayIds) {
       addChip(cycle.id, dayId, exerciseId)
     }
-    setPickerDayId(null)
+    setSelectedDayIds([])
   }
+  const handlePickerClose = () => setSelectedDayIds([])
 
   // ── Chip → Replace ─────────────────────────────────────────────────────
   const handleChipReplace = ({ dayId, chipId, fromLabel }) =>
     setReplaceContext({ dayId, chipId, fromLabel })
-  const handleReplacePick = (_dayIds, newExerciseId) => {
+  const handleReplacePick = (newExerciseId) => {
     if (!replaceContext || !newExerciseId) { setReplaceContext(null); return }
     setReplaceContext((prev) => prev ? { ...prev, newExerciseId } : null)
   }
@@ -283,18 +308,21 @@ export default function AttunePage() {
               cycle={cycle}
               onDayTap={handleDayTap}
               onChipReplace={handleChipReplace}
+              selectedDayIds={selectedDayIds}
+              sourceDayId={sourceDayId}
             />
             <AutoAttuneButton cycle={cycle} />
           </div>
         </div>
 
-        {pickerDayId && !replaceContext && (
+        {sourceDayId && !replaceContext && (
           <PickerSheet
-            sourceDayId={pickerDayId}
+            sourceDayId={sourceDayId}
+            selectedDayIds={selectedDayIds}
             mode="attune"
             cycle={cycle}
             onConfirm={handleAttuneConfirm}
-            onClose={() => setPickerDayId(null)}
+            onClose={handlePickerClose}
           />
         )}
 

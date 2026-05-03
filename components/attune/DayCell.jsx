@@ -34,6 +34,8 @@ export default function DayCell({
   chips = [],
   isLocked = false,
   isRestDay = false,
+  isSelected = false,
+  isSource = false,
   tier = 'far',
   onTap,
   onChipReplace,
@@ -53,22 +55,23 @@ export default function DayCell({
     : (isRestDay ? '休' : '·')
 
   const dimmedStyle = isLocked ? { opacity: 0.42 } : {}
-  const overOutline = isOver
-    ? (isLocked
-        ? '2px solid #ff2a36'
-        : '2px solid #f1eee5')
-    : null
+  // Border priority: drag-over > selected (red ring) > default
+  let border = `1px solid ${isLocked ? '#3a3a42' : '#2a2a30'}`
+  if (isSelected) border = '2px solid #d4181f'
+  if (isOver)      border = isLocked ? '2px solid #ff2a36' : '2px solid #f1eee5'
 
   return (
     <button
       ref={setNodeRef}
       type="button"
       data-attune-day={dayId}
+      data-attune-selected={isSelected ? '1' : '0'}
+      data-attune-source={isSource ? '1' : '0'}
       onClick={handleClick}
       style={{
         position: 'relative',
         background: isRestDay ? '#0f0f12' : '#1a1a1e',
-        border: overOutline || `1px solid ${isLocked ? '#3a3a42' : '#2a2a30'}`,
+        border,
         borderRadius: 4,
         padding: tier === 'far' ? '0.5rem' : '0.6rem 0.55rem',
         textAlign: 'left',
@@ -77,9 +80,26 @@ export default function DayCell({
         cursor: isLocked ? 'default' : 'pointer',
         minHeight: tier === 'far' ? 84 : tier === 'mid' ? 132 : 200,
         display: 'flex', flexDirection: 'column', gap: '0.4rem',
+        boxShadow: isSelected ? '0 0 0 1px rgba(212,24,31,0.55)' : 'none',
         ...dimmedStyle,
       }}
     >
+      {/* Source-day star (★) — top-left corner of the source cell. */}
+      {isSource && (
+        <div
+          aria-label="source day"
+          style={{
+            position: 'absolute', top: 4, left: 6,
+            fontSize: '0.85rem',
+            color: '#d4181f',
+            lineHeight: 1,
+            textShadow: '0 1px 0 #070708',
+            pointerEvents: 'none',
+          }}
+        >
+          ★
+        </div>
+      )}
       <div
         style={{
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
@@ -96,7 +116,7 @@ export default function DayCell({
         <div
           style={{
             position: 'absolute', top: 6, right: 8,
-            fontFamily: '"FOT-Matisse Pro EB", monospace',
+            fontFamily: 'var(--font-mono, ui-monospace, "Courier New", monospace)',
             fontSize: '0.65rem',
             color: '#f1eee5',
             background: '#d4181f',

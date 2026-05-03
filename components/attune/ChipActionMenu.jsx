@@ -28,7 +28,7 @@ export default function ChipActionMenu({ chipLabel, onCopy, onDelete, onReplace,
           background: '#1a1a1e',
           borderTop: '2px solid #d4181f',
           padding: '1rem 1rem calc(1.5rem + env(safe-area-inset-bottom, 0px))',
-          fontFamily: '"FOT-Matisse Pro EB", Anton, Impact, sans-serif',
+          fontFamily: 'var(--font-display, Anton, sans-serif)',
           color: '#f1eee5',
           display: 'flex', flexDirection: 'column', gap: '0.5rem',
         }}

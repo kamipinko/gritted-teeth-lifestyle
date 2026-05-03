@@ -20,7 +20,7 @@ import { zoomTier } from '../../lib/zoomTier'
  * cycle: { id, days: ISO[], dailyPlan: Record<iso, muscleId[]> }
  * Day is a "rest day" iff dailyPlan[iso] is missing or empty.
  */
-export default function CycleCalendar({ cycle, onDayTap, onChipReplace }) {
+export default function CycleCalendar({ cycle, onDayTap, onChipReplace, selectedDayIds = [], sourceDayId = null }) {
   const [scale, setScale] = useState(0.6)
   const isChipDragging = useIsChipDragging()
   const wrapperRef = useRef(null)
@@ -29,7 +29,7 @@ export default function CycleCalendar({ cycle, onDayTap, onChipReplace }) {
     return (
       <div style={{
         flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: '#666', fontFamily: '"FOT-Matisse Pro EB", monospace',
+        color: '#666', fontFamily: 'var(--font-mono, ui-monospace, "Courier New", monospace)',
         letterSpacing: '0.2em', textTransform: 'uppercase', fontSize: '0.75rem',
       }}>
         no carved days · attune nothing
@@ -52,11 +52,12 @@ export default function CycleCalendar({ cycle, onDayTap, onChipReplace }) {
         minScale={0.4}
         maxScale={2.4}
         centerOnInit
+        centerZoomedOut
+        limitToBounds
         wheel={{ step: 0.15 }}
         pinch={{ step: 5 }}
         panning={{ disabled: isChipDragging, velocityDisabled: false }}
         onTransformed={(_, state) => setScale(state.scale)}
-        limitToBounds={false}
       >
         <TransformComponent
           wrapperStyle={{ width: '100%', height: '100%' }}
@@ -79,6 +80,8 @@ export default function CycleCalendar({ cycle, onDayTap, onChipReplace }) {
                 tier={tier}
                 onTap={onDayTap}
                 onChipReplace={onChipReplace}
+                isSelected={selectedDayIds.includes(iso)}
+                isSource={iso === sourceDayId}
               />
             ))}
           </div>
@@ -90,7 +93,7 @@ export default function CycleCalendar({ cycle, onDayTap, onChipReplace }) {
           tiering feels intentional. */}
       <div style={{
         position: 'absolute', top: 8, right: 12, zIndex: 10,
-        fontFamily: '"FOT-Matisse Pro EB", monospace',
+        fontFamily: 'var(--font-mono, ui-monospace, "Courier New", monospace)',
         fontSize: '0.6rem', letterSpacing: '0.2em', color: '#5a5a5e',
         textTransform: 'uppercase', pointerEvents: 'none',
       }}>
@@ -100,7 +103,7 @@ export default function CycleCalendar({ cycle, onDayTap, onChipReplace }) {
   )
 }
 
-function CalendarCell({ cycleId, dayId, muscles, tier, onTap, onChipReplace }) {
+function CalendarCell({ cycleId, dayId, muscles, tier, onTap, onChipReplace, isSelected, isSource }) {
   const chips = useChipsForDay(cycleId, dayId)
   const locked = isDayLocked(cycleId, dayId)
   const isRest = !muscles || muscles.length === 0
@@ -112,6 +115,8 @@ function CalendarCell({ cycleId, dayId, muscles, tier, onTap, onChipReplace }) {
       chips={chips}
       isLocked={locked}
       isRestDay={isRest}
+      isSelected={isSelected}
+      isSource={isSource}
       tier={tier}
       onTap={onTap}
       onChipReplace={onChipReplace}
