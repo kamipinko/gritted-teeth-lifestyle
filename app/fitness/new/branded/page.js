@@ -147,6 +147,60 @@ function CarveContent({ enabled }) {
   )
 }
 
+/**
+ * AttuneMovementsButton — entry point to the Attune Movements page.
+ * Visually mirrors SheetCarveButton's gold-on-dim P5/Gurren palette and
+ * skewed clip-path slash. Day-selection-gated (CARVE-button parity) but
+ * does NOT require muscle assignments — the user discovers the empty
+ * state inside the Attune page if they entered without muscles.
+ *
+ * No slash-cut animation here — this is a navigation entry, not the
+ * commit/forge moment that SheetCarveButton's blade-swing earns.
+ */
+function AttuneMovementsButton({ enabled, onTap, onHover }) {
+  const goldBg = enabled ? '#e4b022' : '#3a2f12'
+  return (
+    <button
+      type="button"
+      aria-label="Attune Movements"
+      onClick={enabled ? onTap : undefined}
+      onMouseEnter={enabled ? onHover : undefined}
+      disabled={!enabled}
+      className={`relative ${enabled ? 'cursor-pointer' : 'cursor-not-allowed'} w-full`}
+      style={{
+        transform: 'skewX(-2deg)',
+        clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+        overflow: 'hidden',
+        background: 'transparent',
+        border: 'none',
+        WebkitTapHighlightColor: 'transparent',
+        outline: 'none',
+        animation: enabled ? 'carve-pulse 3s ease-in-out infinite' : 'none',
+      }}
+    >
+      <div
+        className="relative flex items-center justify-center px-4 py-3"
+        style={{
+          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+          background: goldBg,
+        }}
+      >
+        <span
+          className="font-display leading-none tracking-wide whitespace-nowrap"
+          style={{
+            fontSize: '1.05rem',
+            fontWeight: 900,
+            color: enabled ? '#070708' : '#e4b022',
+            transform: 'skewX(2deg)',
+          }}
+        >
+          ATTUNE MOVEMENTS
+        </span>
+      </div>
+    </button>
+  )
+}
+
 function SheetCarveButton({ count, enabled, onFire, onHover, onSlash }) {
   // 0=idle, 1=slash-sweep, 2=slash-fade, 3=render-halves, 4=separate
   const [phase, setPhase] = useState(0)
@@ -709,7 +763,10 @@ export default function SchedulePage() {
                       style={{
                         fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
                         fontSize: '4rem',
-                        color: 'rgba(212, 24, 31, 0.7)',
+                        // Demoted from 0.7 → 0.12 so the month kanji reads as a
+                        // watermark behind interactive content (per the Attune
+                        // Movements entry-point spec).
+                        color: 'rgba(212, 24, 31, 0.12)',
                         fontWeight: 700,
                       }}
                       aria-hidden="true"
@@ -856,6 +913,18 @@ export default function SchedulePage() {
 
       {/* Red accent line */}
       <div className="h-[2px] bg-gtl-red shrink-0" />
+
+      {/* Attune Movements entry — always visible on the schedule page.
+          Day-selection-gated (any day selected → active), no muscle
+          prerequisite. Tapping routes to /attune. Visual mirrors the
+          CARVE button's gold/dim palette so the two share a vocabulary. */}
+      <div className="px-3 pt-2 pb-1 shrink-0">
+        <AttuneMovementsButton
+          enabled={selectedDays.size > 0}
+          onTap={() => { play('option-select'); router.push('/attune') }}
+          onHover={() => play('button-hover')}
+        />
+      </div>
 
       {/* Logo — visible when no days selected */}
       {!sheetOpen && (
