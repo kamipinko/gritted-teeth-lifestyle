@@ -140,41 +140,19 @@ function DayButton({ iso, muscles, todayIso, onClick, doneKey, cycleId }) {
         aria-hidden="true"
       />
       <div className="relative flex items-center justify-between px-6 py-5 gap-3 min-h-[56px]">
-        <div className="flex flex-col items-start min-w-0">
-          {/* Status label only on TODAY (UPCOMING/MISSED/DONE removed for clarity
-              — the active line is what tells the user which card is selected). */}
-          {isToday && (
-            <span className={`font-mono text-[9px] tracking-[0.3em] uppercase leading-none
-              ${done ? 'text-gtl-ash' : 'text-gtl-paper/80'}`}>
-              {label}
-            </span>
-          )}
-          <span className={`font-display text-3xl leading-none ${isToday ? 'mt-1' : ''} truncate tracking-tight
-            ${done ? 'text-gtl-chalk' : 'text-gtl-paper'}`}
-            style={done ? { textDecoration: 'line-through', textDecorationColor: '#7a0e14' } : undefined}>
-            {dayName} · {mon} {dayNum}
-          </span>
-          {/* Muscle text on TODAY, kanji-only on every other card. REST stays
-              "REST" label on TODAY, becomes nothing on non-TODAY (no kanji to
-              show). */}
-          {isToday ? (
-            muscles.length > 0 ? (
-              <span className="font-mono text-[9px] tracking-[0.2em] uppercase leading-none mt-1 truncate text-gtl-paper/70">
-                {muscles.map(m => MUSCLE_LABELS[m] || m).join(' · ')}
-              </span>
-            ) : (
-              <span className="font-mono text-[9px] tracking-[0.3em] uppercase leading-none mt-1 text-gtl-paper/60">
-                REST
-              </span>
-            )
-          ) : null}
-        </div>
-        {/* Right side of card: kanji on non-TODAY cards (replaces ➤︎ + muscle
-            text), arrow on TODAY (still calls "open" out as the action). */}
-        {isToday ? (
-          <span className={`font-display text-3xl leading-none shrink-0
-            ${done ? 'text-gtl-ash' : 'text-gtl-paper'}`}>➤︎</span>
-        ) : muscles.length > 0 ? (
+        {/* Single-line date — matches canonical chain-button content shape
+            (one line of text-3xl). Status label + small muscle text removed
+            so TODAY card height equals ACTIVATE / ProfileChip / MUSCLE
+            (~70px); the centered active line is what tells the user this
+            is today, no separate label needed. */}
+        <span className={`font-display text-3xl leading-none truncate tracking-tight
+          ${done ? 'text-gtl-chalk' : 'text-gtl-paper'}`}
+          style={done ? { textDecoration: 'line-through', textDecorationColor: '#7a0e14' } : undefined}>
+          {dayName} · {mon} {dayNum}
+        </span>
+        {/* Right side: kanji glyphs on every workout day (TODAY + non-TODAY,
+            unified). REST pill on no-muscles days. */}
+        {muscles.length > 0 ? (
           <div className={`flex items-center gap-1 shrink-0 leading-none
             ${done ? 'text-gtl-ash/70' : 'text-gtl-paper'}`}
             style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", serif' }}>
