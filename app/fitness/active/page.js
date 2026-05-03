@@ -15,6 +15,7 @@ import { pk } from '../../../lib/storage'
 import RetreatButton from '../../../components/RetreatButton'
 import PickerSheet from '../../../components/attune/PickerSheet'
 import { chipsForDay, addChip } from '../../../lib/attunement'
+import { consumePrefire, setInAnimation, disarmChain } from '../../../lib/predictiveTap'
 
 const MUSCLE_LABELS = {
   chest: 'CHEST', back: 'BACK', shoulders: 'SHOULDERS',
@@ -1932,6 +1933,21 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
     setPickerOpen(true)
   }, [cycleId, iso, hasWork, pickerDismissed])
 
+  // Predictive-tap chain — final hop. If the prior hit-zone tap (during
+  // the today day-focus animation) staged a 'muscle' intent, auto-fire
+  // the BEGIN HERE muscle button as if the user tapped it. Disarms the
+  // chain on success.
+  useEffect(() => {
+    if (!hasWork) return
+    if (focusMuscle) return
+    const intent = consumePrefire('muscle')
+    if (intent && muscles[0]) {
+      setFocusMuscle(muscles[0])
+      disarmChain('muscle-fired')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasWork])
+
   const [allReps, setAllReps]       = useState({})
   const [allWeights, setAllWeights] = useState({})
   const [refreshKey, setRefreshKey] = useState(0)
@@ -2513,6 +2529,10 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
               play('option-select')
               setFocusMuscle(muscles[0])
               setFocusMuscleRect(rect)
+              // End of the predictive-tap chain. Disarm whether the
+              // user got here via a real tap or via prefire — either
+              // way, this is the last hop.
+              disarmChain('muscle-fired')
             }}
             className={`
               fixed z-[9991] flex items-center justify-center
@@ -2870,7 +2890,32 @@ export default function ActiveCyclePage() {
   const handleDayClick = (iso, rect) => {
     setFocusRect(rect)
     setFocusDay(iso)
+    // Predictive-tap: TODAY is chain step 4. The day-focus animation
+    // takes ~700ms (380ms BEGIN HERE button delay + 320ms popup-rise),
+    // and a hit-zone tap during that window stages a 'muscle' prefire.
+    if (iso === todayIsoStr) {
+      setInAnimation('today', true)
+      setTimeout(() => setInAnimation('today', false), 750)
+    }
   }
+
+  // Predictive-tap consume: when the page is ready and today exists in
+  // the cycle, check for a 'today' prefire intent. If matched, auto-fire
+  // handleDayClick(todayIsoStr) as if the user tapped the TODAY hero.
+  // Synthetic rect approximates the canonical chain-button position so
+  // the day-focus zoom animation has a reasonable origin.
+  useEffect(() => {
+    if (!ready) return
+    if (!days || !days.includes(todayIsoStr)) return
+    if (focusDay) return
+    const intent = consumePrefire('today')
+    if (intent) {
+      const w = (typeof window !== 'undefined') ? window.innerWidth : 390
+      const syntheticRect = { left: 12, right: w - 12, top: 479, bottom: 549, width: w - 24, height: 70 }
+      handleDayClick(todayIsoStr, syntheticRect)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, days])
 
   const triggerXPAnimation = useCallback((closingDay) => {
     // Build particles: one per completed day, positioned at each card
