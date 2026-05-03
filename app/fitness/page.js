@@ -69,6 +69,13 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
   const swipeProgress = Math.min(1, Math.abs(dragX) / SWIPE_THRESHOLD)
 
   return (
+    /* Wrapper hosts the button + the shockwave ring. Wrapper has no
+       clip-path, so the ring (rendered as a sibling of the button) can scale
+       outward freely instead of being cropped to the button's parallelogram
+       silhouette. Wrapper carries the -mx-5 + width:calc(100%+40px) layout
+       so its bounding box matches the button's, keeping the ring's
+       calc(50% - 175px) positioning aligned with the bead positions. */
+    <div className="relative block w-full -mx-5" style={{ width: 'calc(100% + 40px)' }}>
     <button
       type="button"
       onPointerDown={handlePointerDown}
@@ -79,7 +86,7 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
       className={`
         relative group flex items-center justify-center
         font-display tracking-[0.25em] uppercase overflow-visible
-        px-24 py-5 min-h-[56px] block w-full -mx-5
+        px-24 py-5 min-h-[56px] block w-full
         text-3xl text-gtl-chalk [@media(hover:hover)]:hover:text-gtl-paper
         transition-all duration-200 ease-out
         [@media(hover:hover)]:hover:scale-[1.04] active:scale-[0.98]
@@ -92,7 +99,6 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
       style={{
         clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)',
         touchAction: 'pan-y',
-        width: 'calc(100% + 40px)',
       }}
     >
       <span className="relative inline-block leading-none tracking-tight">
@@ -149,30 +155,31 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
           </>
         )
       })()}
-      {/* Shockwave ring on successful swipe — radiates from the docked logo
-          (whichever side the swipe finished on). Uses the global @keyframes
-          shockwave so the animation matches the muscle-target ALL button. */}
-      {ringKey > 0 && (
-        <div
-          key={ringKey}
-          className="absolute pointer-events-none rounded-full"
-          style={{
-            top: '50%',
-            marginTop: '-28px',
-            ...(ringSide === 'right'
-              ? { right: 'calc(50% - 175px)' }
-              : { left:  'calc(50% - 175px)' }),
-            width: '56px',
-            height: '56px',
-            borderStyle: 'solid',
-            borderColor: '#d4181f',
-            animation: 'shockwave 900ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards',
-            zIndex: 3,
-          }}
-          aria-hidden="true"
-        />
-      )}
     </button>
+    {/* Shockwave ring on successful swipe — sibling of the button so the
+        button's clip-path doesn't crop the expanding ring. Uses the global
+        @keyframes shockwave (matches the muscle-target ALL button). */}
+    {ringKey > 0 && (
+      <div
+        key={ringKey}
+        className="absolute pointer-events-none rounded-full"
+        style={{
+          top: '50%',
+          marginTop: '-28px',
+          ...(ringSide === 'right'
+            ? { right: 'calc(50% - 175px)' }
+            : { left:  'calc(50% - 175px)' }),
+          width: '56px',
+          height: '56px',
+          borderStyle: 'solid',
+          borderColor: '#d4181f',
+          animation: 'shockwave 900ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards',
+          zIndex: 3,
+        }}
+        aria-hidden="true"
+      />
+    )}
+    </div>
   )
 }
 
