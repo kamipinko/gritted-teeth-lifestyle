@@ -3195,8 +3195,11 @@ export default function ActiveCyclePage() {
                   // ACTIVATE button's rendered height.
                   minHeight: '56px',
                   // --rolodex-t is updated by the scroll listener.
-                  // 1 at the active line, 0 at the edges.
-                  opacity: 'calc(0.45 + 0.55 * var(--rolodex-t, 0))',
+                  // 1 at the active line, 0.7 floor at the edges. Bumped
+                  // from 0.45 -> 0.7 so dates on far cards stay legible
+                  // (kanji is text-3xl + serif and reads through low
+                  // opacity, but the date text was getting hard to read).
+                  opacity: 'calc(0.7 + 0.3 * var(--rolodex-t, 0))',
                   transition: 'opacity 100ms linear',
                 }}
               >
