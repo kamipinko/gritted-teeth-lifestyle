@@ -51,7 +51,7 @@ The new feature is a **combo-driven multiplier system** that layers on top. It i
   - Only the **highest-weight region** earns stars. All other regions get 0 stars even if they cross the 30% threshold.
   - That highest region's stars come from its raw share band (60%+ → 2★, 30–59% → 1★).
   - Goal: every isolation set concentrates stars in 1 region.
-- R14. **Classification (compound vs isolation) is a curated per-exercise property**, not auto-derived. Default rule when curating: if wger weight is 100% in one region (e.g., hip thrust, calf raise, leg extension, bicep curl, tricep extension), classify as **isolation** regardless of secondary muscle count. Otherwise compound. Curator (Jordan) can override.
+- R14. **Classification (compound vs isolation) is a curated per-exercise property**, not auto-derived. Auto-classification rule (used at wger import time): if wger weight is 100% in one region (e.g., hip thrust, calf raise, leg extension, bicep curl, tricep extension, front raise), default to **isolation**. Otherwise default to compound. **Curator pass required after import** — Jordan reviews and hand-overrides exercises that the auto-rule miscategorizes. Known curator-override candidates: lateral raise (medial delt isolation, but wger 60/40 → defaults compound), reverse fly / rear delt fly (rear delt isolation, but wger 60/40), and any other exercise where wger lists a stabilizer as secondary but training intent is single-target.
 
 **Consistency / Combo Identity**
 - R4. **Consistency XP** is a new, separate counter (parallel to Total XP). It accumulates from completing planned sessions on planned days. Its level determines the **Consistency multiplier** value (R2).
@@ -152,7 +152,7 @@ The cap-and-overflow rule (R12) + concentrate rule (R13) + 100% reclassification
 - [Affects R8][User decision] Grace days / streak freezes? (Duolingo-style "1 free pass per month") or strict no-grace?
 - [Affects R9][User decision] How many sessions at OVERDRIVE before prestige is available? Auto or opt-in?
 - [Affects R12][User decision] Tie-breaking for overflow target when 2+ secondary regions have equal wger weight (squat: BACK 8 / CORE 8 — pick alphabetically? prefer narrow? prefer broad? split a fractional star?).
-- [Affects R14][User decision] Which canonical exercises beyond hip thrust + calf raise should be hand-tagged isolation despite wger listing secondary muscles? (Glute bridge? Hip abduction? Lateral raise?)
+- [Affects R14][User decision] Curator pass: full list of exercises to hand-tag isolation despite wger listing secondary muscles. Known: lateral raise, reverse fly. Probably also: glute bridge, hip abduction, hip adduction, hyperextension, cable crossover (?), pec deck, leg curl (if wger lists glute as secondary), preacher curl. Curator reviews the full library after wger import and overrides as needed.
 - [Affects R16][User decision] Which calendar holidays trigger? And what holiday_mult value(s) per holiday?
 - [Affects R18][User decision] Exact format of the per-set popup multiplier breakdown text + any per-region star "pop" animation choreography.
 - [Affects all][User decision] Where the user **views their current Consistency XP / current tier** (UI surface — settings? stats? a new dedicated panel?).
