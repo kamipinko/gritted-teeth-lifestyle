@@ -10,13 +10,13 @@
  * Locked (completed) days render dimmed with a lock badge and disable
  * chip operations via pointer-events: none on the chip stack.
  *
- * Drag-drop droppability + sortable chip lists land in Step 6 (Unit 5).
+ * useDroppable wraps the cell so chips dragged from another day land
+ * here. Drop logic (rest-day prompt, cross-muscle prompt, locked
+ * rejection) lives at the page level.
  */
+import { useDroppable } from '@dnd-kit/core'
 import SetChip from './SetChip'
 
-// Canonical 11-muscle kanji map. Sourced from
-// app/fitness/new/branded/page.js (kept inline here to avoid coupling
-// the Attune feature to the branded page's module).
 const MUSCLE_KANJI = {
   chest: '胸', shoulders: '肩', back: '背', forearms: '腕',
   quads: '腿', hamstrings: '裏', calves: '脛',
@@ -38,6 +38,11 @@ export default function DayCell({
   onTap,
   onChipReplace,
 }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `day:${dayId}`,
+    data: { dayId, muscles, isLocked, isRestDay },
+  })
+
   const handleClick = () => {
     if (isLocked) return
     if (onTap) onTap(dayId)
@@ -48,16 +53,22 @@ export default function DayCell({
     : (isRestDay ? '休' : '·')
 
   const dimmedStyle = isLocked ? { opacity: 0.42 } : {}
+  const overOutline = isOver
+    ? (isLocked
+        ? '2px solid #ff2a36'
+        : '2px solid #f1eee5')
+    : null
 
   return (
     <button
+      ref={setNodeRef}
       type="button"
       data-attune-day={dayId}
       onClick={handleClick}
       style={{
         position: 'relative',
         background: isRestDay ? '#0f0f12' : '#1a1a1e',
-        border: `1px solid ${isLocked ? '#3a3a42' : '#2a2a30'}`,
+        border: overOutline || `1px solid ${isLocked ? '#3a3a42' : '#2a2a30'}`,
         borderRadius: 4,
         padding: tier === 'far' ? '0.5rem' : '0.6rem 0.55rem',
         textAlign: 'left',
@@ -69,7 +80,6 @@ export default function DayCell({
         ...dimmedStyle,
       }}
     >
-      {/* Kanji header — always visible, scales with tier */}
       <div
         style={{
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
@@ -82,7 +92,6 @@ export default function DayCell({
         {kanjiStack}
       </div>
 
-      {/* Chip count badge (far) */}
       {tier === 'far' && chips.length > 0 && (
         <div
           style={{
@@ -100,7 +109,6 @@ export default function DayCell({
         </div>
       )}
 
-      {/* Mid tier: first 2 chips truncated + +N more */}
       {tier === 'mid' && chips.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 3, pointerEvents: isLocked ? 'none' : 'auto' }}>
           {chips.slice(0, 2).map(chip => (
@@ -121,7 +129,6 @@ export default function DayCell({
         </div>
       )}
 
-      {/* Near tier: full chip stack */}
       {tier === 'near' && chips.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, pointerEvents: isLocked ? 'none' : 'auto' }}>
           {chips.map(chip => (
@@ -136,14 +143,12 @@ export default function DayCell({
         </div>
       )}
 
-      {/* Empty state — chip-less workout day */}
       {chips.length === 0 && tier !== 'far' && !isRestDay && (
         <div style={{ fontSize: '0.6rem', color: '#666', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
           empty
         </div>
       )}
 
-      {/* Lock badge */}
       {isLocked && (
         <div
           style={{

@@ -914,17 +914,19 @@ export default function SchedulePage() {
       {/* Red accent line */}
       <div className="h-[2px] bg-gtl-red shrink-0" />
 
-      {/* Attune Movements entry — always visible on the schedule page.
-          Day-selection-gated (any day selected → active), no muscle
-          prerequisite. Tapping routes to /attune. Visual mirrors the
-          CARVE button's gold/dim palette so the two share a vocabulary. */}
-      <div className="px-3 pt-2 pb-1 shrink-0">
-        <AttuneMovementsButton
-          enabled={selectedDays.size > 0}
-          onTap={() => { play('option-select'); router.push('/attune') }}
-          onHover={() => play('button-hover')}
-        />
-      </div>
+      {/* Attune Movements entry — appears when the muscle sheet appears
+          (sheetOpen, i.e. at least one day selected). Tapping routes to
+          /attune. Visual mirrors the CARVE button's gold palette so the
+          two share a vocabulary. */}
+      {sheetOpen && (
+        <div className="px-3 pt-2 pb-1 shrink-0">
+          <AttuneMovementsButton
+            enabled
+            onTap={() => { play('option-select'); router.push('/attune') }}
+            onHover={() => play('button-hover')}
+          />
+        </div>
+      )}
 
       {/* Logo — visible when no days selected */}
       {!sheetOpen && (
