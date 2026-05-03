@@ -250,20 +250,29 @@ function CycleCard({ cycle, index, selected, onSelect }) {
       )}
 
       <div className="px-8 pt-6 pb-8">
-        {/* Cycle name — top of card, dominant. Full width now (deadline stamp
-            moved into flow below). */}
-        <h2
-          className="font-display text-gtl-chalk leading-none mb-3"
-          style={{
-            fontSize: 'clamp(2.5rem, 6vw, 5rem)',
-            textShadow: '3px 3px 0 #070708',
-            transform: 'rotate(-1deg)',
-            transformOrigin: 'left center',
-            wordBreak: 'break-word',
-          }}
+        {/* Cycle name — top of card, dominant. Wrapped in a min-h-[56px]
+            flex strip tagged data-predictive-tap-target="load-cycle" so the
+            upcoming predictive-tap module can target this row's bbox
+            instead of the full card's. The CARD remains the actual click
+            target (whole card selects on tap); this attribute marks the
+            inner strip the predictive-tap-chain hit-zone aligns with. */}
+        <div
+          data-predictive-tap-target="load-cycle"
+          className="min-h-[56px] flex items-center mb-3"
         >
-          {cycle.name}
-        </h2>
+          <h2
+            className="font-display text-gtl-chalk leading-none"
+            style={{
+              fontSize: 'clamp(2.5rem, 6vw, 5rem)',
+              textShadow: '3px 3px 0 #070708',
+              transform: 'rotate(-1deg)',
+              transformOrigin: 'left center',
+              wordBreak: 'break-word',
+            }}
+          >
+            {cycle.name}
+          </h2>
+        </div>
 
         {/* Top-meta row: FORGED date on left, CYCLE / 0X on right. */}
         <div className="flex items-center justify-between mb-3">
@@ -680,6 +689,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
     `}</style>
     <button
       type="button"
+      data-predictive-tap-target="activate"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}

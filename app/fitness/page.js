@@ -100,6 +100,7 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
     <div className="relative block w-full -mx-5" style={{ width: 'calc(100% + 40px)' }}>
     <button
       type="button"
+      data-predictive-tap-target="profile"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}

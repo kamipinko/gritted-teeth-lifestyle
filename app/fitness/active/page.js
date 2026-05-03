@@ -2502,45 +2502,45 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
           </div>
         </div>
 
-        {/* Quick-nav FIRST MUSCLE hero — sits at y=466 to continue the muscle-memory
-            chain from the day grid. Tap = open the first muscle's exercise panel.
-            Hidden once a muscle is focused (so it doesn't overlay the next zoom). */}
+        {/* Quick-nav BEGIN HERE muscle — chain step 5. Same canonical
+            geometry as ProfileChip / ActivatePopup so the predictive-tap
+            chain can use one shared hit-zone (px-24 py-5 min-h-[56px],
+            polygon(3%/97%) clipPath, 4px offset corner shadow, text-3xl).
+            Hidden once a muscle is focused (so it doesn't overlay the
+            next zoom). */}
         {hasWork && !focusMuscle && (
           <button
             type="button"
+            data-predictive-tap-target="muscle"
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect()
               play('option-select')
               setFocusMuscle(muscles[0])
               setFocusMuscleRect(rect)
             }}
-            className="fixed z-[9991] block outline-none active:scale-[0.98] transition-transform"
+            className={`
+              fixed z-[9991] flex items-center justify-center
+              font-display tracking-[0.25em] uppercase overflow-visible
+              px-24 py-5 min-h-[56px]
+              text-3xl text-gtl-paper
+              transition-all duration-200 ease-out
+              [@media(hover:hover)]:hover:scale-[1.04] active:scale-[0.98]
+              bg-gtl-red [@media(hover:hover)]:hover:bg-gtl-red-bright
+              shadow-[4px_4px_0_#070708]
+              [@media(hover:hover)]:hover:shadow-[6px_6px_0_#070708]
+              active:shadow-[2px_2px_0_#070708]
+            `}
             style={{
               top: '466px',
-              left: '32px',
-              right: '32px',
+              left: '12px',
+              right: '12px',
+              clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)',
               animation: 'activate-popup-rise 320ms cubic-bezier(0.18, 1, 0.36, 1) 380ms both',
             }}
           >
-            <div
-              className="absolute inset-0 bg-gtl-red transition-colors group-active:bg-gtl-red-bright"
-              style={{
-                clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
-                boxShadow: '0 4px 28px rgba(212, 24, 31, 0.55)',
-              }}
-              aria-hidden="true"
-            />
-            <div className="relative flex items-center justify-between px-6 py-3 gap-3">
-              <div className="flex flex-col items-start min-w-0">
-                <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-paper/80 leading-none">
-                  BEGIN HERE
-                </span>
-                <span className="font-display text-2xl text-gtl-paper leading-none mt-1 truncate">
-                  {MUSCLE_LABELS[muscles[0]] || muscles[0].toUpperCase()}
-                </span>
-              </div>
-              <span className="font-display text-2xl text-gtl-paper leading-none shrink-0">➤︎</span>
-            </div>
+            <span className="relative inline-block leading-none tracking-tight">
+              {MUSCLE_LABELS[muscles[0]] || muscles[0].toUpperCase()}
+            </span>
           </button>
         )}
 
