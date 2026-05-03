@@ -102,6 +102,7 @@ export default function AttunePage() {
         <PickerSheet
           sourceDayId={pickerDayId}
           mode="attune"
+          cycle={cycle}
           onConfirm={handleConfirm}
           onClose={() => setPickerDayId(null)}
         />
