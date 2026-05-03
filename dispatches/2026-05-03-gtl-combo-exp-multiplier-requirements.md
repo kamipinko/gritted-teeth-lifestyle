@@ -38,6 +38,7 @@ The new feature is a **combo-driven multiplier system** that layers on top. It i
 
 **Region star track (discrete, wger-driven)**
 - R10. Each exercise has a region-weight vector derived from wger primary/secondary muscle data, mapped to GTL's 5 regions. Default heuristic: primary muscles get 60% of weight (split evenly across primary muscles), secondary muscles get 40% (split evenly across secondaries). Tunable.
+- R10a. **wger → region mapping rule**: FRONT and BACK refer to the **torso only**, not the limbs. ARMS and LEGS contain all limb-attached muscles. This means **all three deltoid heads (anterior, medial/lateral, posterior) map to ARMS**, not FRONT/BACK — they sit on the upper arm. Pectorals, serratus, abs (front-of-torso) → FRONT. Lats, rhomboids, traps, erector spinae (back-of-torso) → BACK. Glutes stay in LEGS. The conceptual split is clean: torso (FRONT/BACK/CORE) vs limbs (ARMS/LEGS).
 - R11. Star bands (per region, per set):
   - `< 30%` wger weight → **0 stars**
   - `30–59%` → **1 star**
@@ -51,7 +52,7 @@ The new feature is a **combo-driven multiplier system** that layers on top. It i
   - Only the **highest-weight region** earns stars. All other regions get 0 stars even if they cross the 30% threshold.
   - That highest region's stars come from its raw share band (60%+ → 2★, 30–59% → 1★).
   - Goal: every isolation set concentrates stars in 1 region.
-- R14. **Classification (compound vs isolation) is a curated per-exercise property**, not auto-derived. Auto-classification rule (used at wger import time): if wger weight is 100% in one region (e.g., hip thrust, calf raise, leg extension, bicep curl, tricep extension, front raise), default to **isolation**. Otherwise default to compound. **Curator pass required after import** — Jordan reviews and hand-overrides exercises that the auto-rule miscategorizes. Known curator-override candidates: lateral raise (medial delt isolation, but wger 60/40 → defaults compound), reverse fly / rear delt fly (rear delt isolation, but wger 60/40), and any other exercise where wger lists a stabilizer as secondary but training intent is single-target.
+- R14. **Classification (compound vs isolation) is a curated per-exercise property**, not auto-derived. Auto-classification rule (used at wger import time, after R10a region mapping): if aggregated wger weight is 100% in one region (e.g., hip thrust, calf raise, leg extension, bicep curl, tricep extension, front raise — anterior delt isolation now lands at ARMS 100%), default to **isolation**. Otherwise default to compound. **Curator pass required after import** — Jordan reviews and hand-overrides exercises that the auto-rule miscategorizes. Known curator-override candidates: lateral raise (medial delt isolation, wger 60/40 ARMS/BACK → defaults compound), reverse fly / rear delt fly (rear delt isolation, wger 60/40 ARMS/BACK), and any other exercise where wger lists a stabilizer as secondary but training intent is single-target.
 
 **Consistency / Combo Identity**
 - R4. **Consistency XP** is a new, separate counter (parallel to Total XP). It accumulates from completing planned sessions on planned days. Its level determines the **Consistency multiplier** value (R2).
@@ -83,8 +84,8 @@ Defaults assumed: Consistency at IRON = 1.3, compound_mult = 1.5, isolation_mult
 **Example 1 — Bench press 135 × 10 (compound)**
 - Base = 135 × repMult(10) × 10 = 135 × 1.0 × 10 = **1350**
 - Total XP track: 1350 × 1.3 + 1350 × 1.5 = 1755 + 2025 = **+3780 to totalXP**
-- wger weights aggregate: FRONT 86% / ARMS 13%
-- Region star track (compound, cap+overflow): FRONT capped at 1★ (would have been 2★ at 86%); second star overflows to next-highest = ARMS. Result: **FRONT 1★ + ARMS 1★**
+- wger weights aggregate (R10a — anterior delt now ARMS): FRONT 73% (chest + serratus) / ARMS 26% (anterior delt + triceps)
+- Region star track (compound, cap+overflow): FRONT capped at 1★ (would have been 2★ at 73%); second star overflows to next-highest = ARMS (already at 26% raw, but compound rule limits to 1★ anyway). Result: **FRONT 1★ + ARMS 1★**
 
 **Example 2 — Bicep curl 60 × 5 (isolation)**
 - Base = 60 × repMult(5) × 5 = 60 × 1.0 × 5 = **300**
@@ -109,17 +110,19 @@ The cap-and-overflow rule (R12) + concentrate rule (R13) + 100% reclassification
 
 | Lift | Class | Raw weights | Stars after rules |
 |---|---|---|---|
-| Bench press | compound | FRONT 86 / ARMS 13 | FRONT 1★ + ARMS 1★ ✓ |
+| Bench press | compound | FRONT 73 / ARMS 26 | FRONT 1★ + ARMS 1★ ✓ |
 | Squat | compound | LEGS 84 / BACK 8 / CORE 8 | LEGS 1★ + BACK 1★ ✓ (or CORE on tie) |
 | Deadlift | compound | LEGS 50 / BACK 30 / ARMS 10 / CORE 10 | LEGS 1★ + BACK 1★ ✓ |
 | Pull-up | compound | BACK 50 / ARMS 50 | BACK 1★ + ARMS 1★ ✓ |
-| Overhead press | compound | FRONT 73 / ARMS 13 / BACK 13 | FRONT 1★ + (ARMS or BACK) 1★ ✓ |
-| Bent-over row | compound | BACK 84 / ARMS 8 / FRONT 8 | BACK 1★ + ARMS 1★ ✓ |
+| Overhead press | compound | ARMS 73 / BACK 13 / FRONT 13 | ARMS 1★ + (BACK or FRONT) 1★ ✓ — ARMS-dominant under R10a |
+| Bent-over row | compound | BACK 84 / ARMS 16 | BACK 1★ + ARMS 1★ ✓ |
 | Lunge | compound | LEGS 89 / CORE 13 | LEGS 1★ + CORE 1★ ✓ |
 | Hip thrust | isolation (curated) | LEGS 100 | LEGS 2★ ✓ |
 | Calf raise | isolation (curated) | LEGS 100 | LEGS 2★ ✓ |
 | Bicep curl | isolation | ARMS 100 | ARMS 2★ ✓ |
-| Lateral raise | isolation | FRONT 60 / BACK 40 | FRONT 2★ ✓ |
+| Front raise | isolation (auto) | ARMS 100 (anterior delt) | ARMS 2★ ✓ |
+| Lateral raise | isolation (curated) | ARMS 60 / BACK 40 | ARMS 2★ ✓ (curator override) |
+| Reverse fly | isolation (curated) | ARMS 60 / BACK 40 | ARMS 2★ ✓ (curator override) |
 | Leg extension | isolation | LEGS 100 | LEGS 2★ ✓ |
 
 ## Scope Boundaries
@@ -177,6 +180,7 @@ The cap-and-overflow rule (R12) + concentrate rule (R13) + 100% reclassification
 - ✅ **Cap + overflow rule** for compound stars, **concentrate rule** for isolation stars
 - ✅ **Curated classification**: 100%-one-region → isolation by default; curator can override
 - ✅ Math walkthroughs verified (bench, deadlift, bicep curl, hip thrust)
+- ✅ **wger → region map cleaned up (R10a)**: FRONT/BACK = torso only; ARMS/LEGS = limbs. All 3 deltoid heads → ARMS. Front raise auto-classifies correctly now (ARMS 100% iso). OHP becomes ARMS-dominant (was FRONT-dominant). Bench's ARMS share grows from 13% → 26%.
 - ✅ Asymmetric break: missed-set tick drop (forgiving), missed-day tier drop (harsh)
 - ✅ Build curve: layered (linear within tiers + named tiers + exponential-cap shape + prestige loop)
 
