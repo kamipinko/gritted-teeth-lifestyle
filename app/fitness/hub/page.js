@@ -22,6 +22,7 @@ import { useProfileGuard } from '../../../lib/useProfileGuard'
 import { pk } from '../../../lib/storage'
 import HeistTransition from '../../../components/HeistTransition'
 import RetreatButton from '../../../components/RetreatButton'
+import { consumePrefire, setInAnimation } from '../../../lib/predictiveTap'
 
 function CycleOption({
   number,
@@ -356,6 +357,7 @@ export default function FitnessPage() {
   const skipNow = () => {
     if (skippedRef.current) return
     skippedRef.current = true
+    setInAnimation('hub-load', false)
     router.push(hrefRef.current)
   }
 
@@ -371,6 +373,9 @@ export default function FitnessPage() {
       setTransitionConfig({ href, title: 'NEW CYCLE', intensity: 'mega' })
     } else if (href === '/fitness/load') {
       setTransitionConfig({ href, title: 'FURTHER WITH EVERY TURN', intensity: 'normal' })
+      // Predictive-tap chain: this is hub-load. Flag in-animation so the
+      // next hit-zone tap stages an 'activate' prefire intent.
+      setInAnimation('hub-load', true)
     } else if (href === '/fitness/stats') {
       setTransitionConfig({ href, title: 'WAR RECORD', intensity: 'normal' })
     } else {
@@ -379,6 +384,15 @@ export default function FitnessPage() {
     hrefRef.current = href  // sync immediately so a fast follow-up tap routes to the right place
     setTransitioning(true)
   }
+
+  // Predictive-tap consume on mount: if the prior hop's hit-zone tap
+  // staged a 'hub-load' intent (from /fitness during its HeistTransition),
+  // auto-fire the LOAD CYCLE option as if the user tapped it.
+  useEffect(() => {
+    const intent = consumePrefire('hub-load')
+    if (intent) handleSelect('/fitness/load')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Skip-the-transition: once HeistTransition is active, the next pointer/touch
   // input anywhere on the screen routes to the destination immediately.
@@ -401,6 +415,7 @@ export default function FitnessPage() {
   }, [transitioning])
 
   const handleTransitionComplete = () => {
+    setInAnimation('hub-load', false)
     if (skippedRef.current) return
     router.push(transitionConfig.href)
   }
