@@ -5,7 +5,14 @@ import CallingCard from '../components/CallingCard'
 import HeistTransition from '../components/HeistTransition'
 import GateScreen from '../components/GateScreen'
 import { useSound } from '../lib/useSound'
-import { getCurrentBgmTrack, getBgmTargetVol, getBgmGainNode, resumeBgmCtx } from '../lib/bgmTracks'
+import {
+  BGM_TRACKS,
+  getCurrentBgmTrack,
+  getBgmTargetVol,
+  getBgmGainNode,
+  resumeBgmCtx,
+  getRandomTrackId,
+} from '../lib/bgmTracks'
 
 // Pre-create the Audio element at module load with preload='auto' so it's ready
 // when the user gestures. iOS PWA standalone mode rejects audio.play() if the
@@ -242,6 +249,41 @@ function CallingCardReveal({ kind }) {
 export default function Home() {
   const router = useRouter()
   const { play } = useSound()
+
+  // bfcache restore re-roll. Browser refresh already re-rolls because the
+  // module re-evaluates and the IIFE picks fresh. But returning to / via
+  // the back button (or any path that hits the bfcache) restores the page
+  // without running scripts, so the singleton sticks with whatever track
+  // was picked on the original load. `pageshow.persisted` is the canonical
+  // signal for that case — when it fires AND random-on-launch is on, swap
+  // the singleton's src to a fresh random track. Listener is scoped to the
+  // home page (registered/cleaned in useEffect) so other routes are
+  // unaffected.
+  useEffect(() => {
+    const onPageShow = (event) => {
+      if (!event.persisted) return
+      try {
+        if (window.localStorage.getItem('gtl-bgm-random-on-launch') !== '1') return
+      } catch { return }
+      if (!window.__gtlBgMusic) return
+      const a = window.__gtlBgMusic
+      const nextId = getRandomTrackId(window.__gtlBgMusicTrackId)
+      const track = BGM_TRACKS.find(t => t.id === nextId)
+      if (!track || track.id === window.__gtlBgMusicTrackId) return
+      if (window.__gtlBgMusicFadeInterval) {
+        clearInterval(window.__gtlBgMusicFadeInterval)
+        window.__gtlBgMusicFadeInterval = null
+      }
+      try { a.pause(); a.currentTime = 0 } catch {}
+      a.src = track.src
+      try { a.load() } catch {}
+      window.__gtlBgMusicTrackId = track.id
+      // Allow startBgMusic to fire fresh on the next gate tap.
+      window.__gtlBgMusicStarted = false
+    }
+    window.addEventListener('pageshow', onPageShow)
+    return () => window.removeEventListener('pageshow', onPageShow)
+  }, [])
 
   // phase: 'gate' (default) → 'flash-fitness' | 'flash-nutrition' → route
   //   or:  'gate' → 'heist' (swipe during entrance: skip flash, play HeistTransition only)
