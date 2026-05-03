@@ -31,6 +31,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { searchExercises } from '../../lib/exerciseLibrary'
 
+// Single-character equipment indicator. Lowercase 'b' for bodyweight to
+// differentiate from barbell. Falls back to '·' when an exercise has no
+// equipment field (pre-data-pipeline fixture data).
+const EQUIPMENT_GLYPH = {
+  barbell:    'B',
+  dumbbell:   'D',
+  cable:      'C',
+  machine:    'M',
+  bodyweight: 'b',
+  kettlebell: 'K',
+  band:       'R',
+  other:      '·',
+}
+
 export default function PickerSheet({
   sourceDayId,
   selectedDayIds,
@@ -194,6 +208,7 @@ export default function PickerSheet({
           )}
           {exercises.map((ex) => {
             const selected = ex.id === selectedExerciseId
+            const glyph = EQUIPMENT_GLYPH[ex.equipment] || '·'
             return (
               <button
                 key={ex.id}
@@ -211,9 +226,32 @@ export default function PickerSheet({
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',
                   cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
                 }}
               >
-                {ex.label}
+                <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {ex.label}
+                </span>
+                <span
+                  aria-hidden="true"
+                  title={ex.equipment || ''}
+                  style={{
+                    flexShrink: 0,
+                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                    fontSize: '10px',
+                    letterSpacing: '0.05em',
+                    lineHeight: 1,
+                    padding: '3px 6px',
+                    background: selected ? 'rgba(0,0,0,0.35)' : '#2a2a30',
+                    color: selected ? '#fff' : '#9b9486',
+                    clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)',
+                  }}
+                >
+                  {glyph}
+                </span>
               </button>
             )
           })}
