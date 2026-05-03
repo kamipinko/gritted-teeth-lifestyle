@@ -2771,14 +2771,14 @@ export default function ActiveCyclePage() {
     setReady(true)
   }, [])
 
-  // ── Rolodex: scroll-driven prominence + auto-scroll today to y=466 ──
-  // Each rolodex card carries a CSS variable --rolodex-t (0 = far from
-  // center, 1 = at the y=466 active line). The listener walks every card
-  // on each scroll tick and writes its proximity to the active line. CSS
-  // in the rolodex container reads the variable to scale, brighten, and
-  // opacify the centered card. Auto-scroll today into the active spot
-  // once on mount, latched so a re-render doesn't yank the manual scroll.
-  const ACTIVE_VIEWPORT_Y = 466
+  // ── Rolodex: scroll-driven prominence + auto-scroll today to y=479 ──
+  // The "active line" matches the ACTIVATE button's exact top position
+  // (top:479 on /fitness/load). Today's card lands in the same screen
+  // slot ACTIVATE occupies — same x, same y, same width/height. Each
+  // card carries --rolodex-t (1 at the active line, 0 at the edges).
+  // Tracked by the card's TOP edge so prominence is stable across
+  // varying card heights (TODAY card is taller than non-TODAY).
+  const ACTIVE_TOP_Y = 479
   useEffect(() => {
     if (!ready) return
     const container = rolodexRef.current
@@ -2788,11 +2788,11 @@ export default function ActiveCyclePage() {
       const cards = container.querySelectorAll('[data-rolodex-iso]')
       cards.forEach((card) => {
         const rect = card.getBoundingClientRect()
-        const center = rect.top + rect.height / 2
-        const dist = Math.abs(center - ACTIVE_VIEWPORT_Y)
-        // Falloff window — within 60px of active line = full prominence,
-        // 240px out = dim, beyond that pegged at zero.
-        const t = Math.max(0, Math.min(1, 1 - Math.max(0, dist - 60) / 180))
+        // Distance from the card's top edge to the active y=479 line.
+        const dist = Math.abs(rect.top - ACTIVE_TOP_Y)
+        // Falloff window — within 30px of active line = full prominence,
+        // 200px out = dim, beyond that pegged at zero.
+        const t = Math.max(0, Math.min(1, 1 - Math.max(0, dist - 30) / 170))
         card.style.setProperty('--rolodex-t', String(t))
         // Mark the card as centered when it's clearly at the active line.
         // CSS keys off this attribute for the red prominence ring + tap gating.
@@ -2824,22 +2824,17 @@ export default function ActiveCyclePage() {
       return dI < dC ? iso : closest
     }, days[0])
     // Wait for two animation frames so the rolodex container's height is
-    // finalized (CSS layout settled) before measuring. Use the container's
-    // actual visible mid-height instead of the hardcoded ACTIVE_VIEWPORT_Y
-    // — the magic number was based on one specific viewport and didn't
-    // adapt to safe-area changes / different device sizes.
-    const center = () => {
+    // finalized (CSS layout settled) before measuring. Land today's TOP
+    // edge at viewport y=479 — the exact same y the ACTIVATE button uses.
+    const place = () => {
       const node = container.querySelector(`[data-rolodex-iso="${target}"]`)
       if (!node) return
       const rect = node.getBoundingClientRect()
-      const containerRect = container.getBoundingClientRect()
-      const containerCenterY = containerRect.top + containerRect.height / 2
-      const cardCenter = rect.top + rect.height / 2
-      const delta = cardCenter - containerCenterY
+      const delta = rect.top - ACTIVE_TOP_Y
       container.scrollBy({ top: delta, behavior: 'instant' })
       rolodexCenteredRef.current = true
     }
-    const r1 = requestAnimationFrame(() => requestAnimationFrame(center))
+    const r1 = requestAnimationFrame(() => requestAnimationFrame(place))
     return () => cancelAnimationFrame(r1)
   }, [ready, days])
 
