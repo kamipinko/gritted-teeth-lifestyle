@@ -21,8 +21,12 @@ The new feature is a **combo-driven multiplier system** that layers on top. It i
 
 ## Requirements
 
-**Base XP (existing, unchanged)**
-- R1. Base XP per set is unchanged: `base = weight × repMult(reps) × reps` using the existing `repMult` (flat 1.0× between r=5 and r=15, bell curves outside). Both new tracks build off this `base`.
+**Base XP (existing formula, with new bodyweight handling)**
+- R1. Base XP per set: `base = effective_load × repMult(reps) × reps`. The `repMult` curve is unchanged (flat 1.0× between r=5 and r=15, bell curves outside). Both new tracks build off this `base`.
+- R1a. **`effective_load` calculation**:
+  - **External-load exercises** (barbell, dumbbell, cable, machine, kettlebell, band): `effective_load = user_entered_weight` — the weight the user types in for that set. Unchanged from current behavior.
+  - **Bodyweight exercises** (wger `equipment: 'bodyweight'`): `effective_load = user_bodyweight × bw_coefficient + user_entered_weight`. Default `bw_coefficient = 1.0` (use the user's full bodyweight). Curator can override per-exercise for cases where the actual moved load is less than full BW (push-up ≈ 0.64, dip ≈ 0.85 — exact coefficient list TBD, see Outstanding Questions). The `user_entered_weight` term lets weighted-bodyweight variants (weighted pull-up, weighted dip, vest squat) work naturally — user enters the added weight (e.g., +25 lb) and the system adds it to the BW base.
+  - **Required prerequisite**: the user's bodyweight must be stored in their profile (read at workout time). If unset, fall back to prompting the user before the first BW-exercise set or use a profile-default placeholder (TBD, see Outstanding Questions).
 
 **Total XP track (continuous, additive multipliers)**
 - R2. The Total XP added per set = sum of contributions from each active multiplier:
@@ -192,6 +196,9 @@ The cap-and-overflow rule (R12) + concentrate rule (R13) + 100% reclassification
 - [Affects R12b][User decision] `king_compound_mult` value placeholder = 2.0. Tunable. Should it be much higher (3.0?) to really reward the King lifts, or roughly aligned with compound (1.7?)?
 - [Affects R12b][User decision] Final list of King-tagged variants. Default proposed: back/front/sumo/paused squat, conventional/sumo/trap-bar/stiff-leg/RDL deadlift, standard/vertical leg press, barbell/machine hack squat. Single-leg variants NOT King.
 - [Affects R12][User decision] Tiebreak rule for compound second slot when equal-weight regions tie: alphabetical (proposed default), or prefer broad / prefer narrow.
+- [Affects R1a][User decision] Curator-flagged bodyweight coefficient list. Likely candidates: push-up (~0.64), dip (~0.85), pike push-up, decline push-up. Most BW exercises stay at 1.0. Final coefficient values + which exercises need them TBD during library curation.
+- [Affects R1a][Technical] Where is `user_bodyweight` stored in the GTL profile? Existing field, or new addition? If new, what UI surface captures it (settings page? first-time onboarding? prompt on first BW set logged?). Verify against the profile schema during planning.
+- [Affects R1a][User decision] If `user_bodyweight` is unset when a BW set is logged, what's the fallback? (prompt user before first BW set / use a default placeholder like 150 lb / refuse to credit XP / treat as 0 weight).
 - [Affects R16][User decision] Which calendar holidays trigger? And what holiday_mult value(s) per holiday?
 - [Affects R18][User decision] Exact format of the per-set popup multiplier breakdown text + any per-region star "pop" animation choreography.
 - [Affects all][User decision] Where the user **views their current Consistency XP / current tier** (UI surface — settings? stats? a new dedicated panel?).
@@ -222,6 +229,7 @@ The cap-and-overflow rule (R12) + concentrate rule (R13) + 100% reclassification
 - ✅ **Amended star rules**: drop band-triggered overflow. Compound = top 2 regions × 1★. King Compound = top 3 × 1★. Isolation = top 1 × 2★. R11 bands become advisory only.
 - ✅ **Unilateral / bilateral DB rule**: bilateral-simultaneous DB exercises (DB curl, DB press, DB lateral raise) AND truly unilateral exercises (Bulgarian split squat, single-arm row, pistol squat) both get `xpMultiplier = 2` to match barbell-equivalent volume. Unilateral exercises are assumed to have both sides completed before counting one full set.
 - ✅ **Neck and rotator cuff exercises**: NOT mapped to any region — those exercises are out of the curated library scope.
+- ✅ **Bodyweight exercises (R1a)**: `effective_load = user_bodyweight × bw_coefficient + user_entered_weight`. Default coefficient 1.0 (full BW); curator-flagged exceptions (e.g., push-up ~0.64, dip ~0.85) lower it for exercises where actual moved load is less than full BW. Weighted-BW variants (weighted pull-up, weighted dip, vest squat) naturally work via the `+ user_entered_weight` term.
 - ✅ Asymmetric break: missed-set tick drop (forgiving), missed-day tier drop (harsh)
 - ✅ Build curve: layered (linear within tiers + named tiers + exponential-cap shape + prestige loop)
 
