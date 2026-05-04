@@ -303,7 +303,7 @@ export default function AttunePage() {
           <div className="relative z-10 mx-8 mb-2 h-[2px] shrink-0"
                style={{ background: '#d4181f', transform: 'skewX(-6deg)', transformOrigin: 'left center' }} />
 
-          <div style={{ position: 'relative', flex: 1, minHeight: 0 }}>
+          <div style={{ position: 'relative', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             <CycleCalendar
               cycle={cycle}
               onDayTap={handleDayTap}
