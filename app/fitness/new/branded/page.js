@@ -382,6 +382,10 @@ export default function SchedulePage() {
   const [fireActive,   setFireActive]   = useState(false)
   const [quickHeistActive, setQuickHeistActive] = useState(false)
   const [quickForgeRunning, setQuickForgeRunning] = useState(false)
+  // Measured rect (top/left/width/height) for the Attune Movements button
+  // overlay. Computed from the kanji cells' DOMRect so the button sits
+  // exactly over the watermark without claiming any grid track space.
+  const [attuneRect, setAttuneRect] = useState(null)
   const dragRef = useRef(false) // true during swipe-select
   const gridRef = useRef(null)
   const NEXT_TARGET = '/fitness/new/summary'
@@ -679,12 +683,59 @@ export default function SchedulePage() {
   const targetSlots = row1Empty.length >= 2 ? row1Empty : row5Empty
   const startOffset = Math.max(0, Math.floor((targetSlots.length - monthChars.length) / 2))
   const emptyKanji = {}
+  // The cell indices where the month kanji renders. The Attune Movements
+  // button is positioned absolutely over these same cells (out of grid
+  // flow, so calendar cells lay out exactly as production).
+  const kanjiCells = []
   monthChars.forEach((ch, ci) => {
     const slotIdx = startOffset + ci
     if (slotIdx < targetSlots.length) {
       emptyKanji[targetSlots[slotIdx]] = ch
+      kanjiCells.push(targetSlots[slotIdx])
     }
   })
+  // Stable cache key so the measurement effect only re-runs on month change.
+  const kanjiCellsKey = kanjiCells.join(',')
+
+  // Measure the kanji cells' bounding box and write the result to
+  // `attuneRect`. Position-absolute overlay below reads this; keeps the
+  // Attune button out of the CSS grid's auto-placement so the calendar
+  // cells lay out exactly as if no button existed.
+  useEffect(() => {
+    const grid = gridRef.current
+    if (!grid || kanjiCells.length === 0) {
+      setAttuneRect(null)
+      return
+    }
+    const measure = () => {
+      const cellEls = grid.children
+      const firstIdx = Math.min(...kanjiCells)
+      const lastIdx = Math.max(...kanjiCells)
+      const firstEl = cellEls[firstIdx]
+      const lastEl = cellEls[lastIdx]
+      if (!firstEl || !lastEl) {
+        setAttuneRect(null)
+        return
+      }
+      const gridRect = grid.getBoundingClientRect()
+      const firstCellRect = firstEl.getBoundingClientRect()
+      const lastCellRect = lastEl.getBoundingClientRect()
+      setAttuneRect({
+        top: firstCellRect.top - gridRect.top,
+        left: firstCellRect.left - gridRect.left,
+        width: lastCellRect.right - firstCellRect.left,
+        height: firstCellRect.height,
+      })
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(grid)
+    window.addEventListener('resize', measure)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('resize', measure)
+    }
+  }, [kanjiCellsKey])
 
   // ── Render ──────────────────────────────────────────────────────────────
   return (
@@ -758,10 +809,11 @@ export default function SchedulePage() {
           ))}
         </div>
 
-        {/* 5-row day grid — fixed 75px rows */}
+        {/* 5-row day grid — fixed 75px rows. relative positioning context
+            for the Attune Movements absolute overlay rendered below. */}
         <div
           ref={gridRef}
-          className="grid grid-cols-7 grid-rows-5 gap-1"
+          className="relative grid grid-cols-7 grid-rows-5 gap-1"
           style={{ height: `${ROW_H * 5 + 4 * 4}px` }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -923,11 +975,30 @@ export default function SchedulePage() {
             )
           })}
 
-          {/* Attune Movements button removed for troubleshooting — the
-              grid-item placement was hijacking auto-placement and
-              displacing the calendar cells. The AttuneMovementsButton
-              component definition remains; re-add via an absolute overlay
-              once we land a non-disruptive positioning approach. */}
+          {/* Attune Movements entry — absolute overlay measured to the
+              kanji cells' bounding box (see attuneRect useEffect above).
+              Out of grid flow → does not displace calendar auto-placement.
+              Always rendered when the kanji has a position; activates the
+              moment any day is selected. */}
+          {attuneRect && (
+            <div
+              style={{
+                position: 'absolute',
+                top: `${attuneRect.top}px`,
+                left: `${attuneRect.left}px`,
+                width: `${attuneRect.width}px`,
+                height: `${attuneRect.height}px`,
+                zIndex: 5,
+                pointerEvents: 'auto',
+              }}
+            >
+              <AttuneMovementsButton
+                enabled={selectedDays.size > 0}
+                onTap={() => { play('option-select'); router.push('/attune') }}
+                onHover={() => play('button-hover')}
+              />
+            </div>
+          )}
         </div>
       </section>
 
