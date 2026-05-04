@@ -56,6 +56,7 @@ export default function CycleCalendar({ cycle, onDayTap, onChipReplace, selected
         limitToBounds
         wheel={{ step: 0.15 }}
         pinch={{ step: 5 }}
+        doubleClick={{ disabled: true }}
         panning={{ disabled: isChipDragging, velocityDisabled: false }}
         onTransformed={(_, state) => setScale(state.scale)}
       >
