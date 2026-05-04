@@ -593,7 +593,11 @@ export default function SchedulePage() {
   }
   const firstWrapDay = wrapActive ? Math.min(...wrappedDays) : null
   const daysWithMuscles = Object.values(assignments).filter((s) => s.size > 0).length
-  const carveEnabled = daysWithMuscles > 0
+  // CARVE activates on any day selection — muscle assignment is no longer
+  // a prerequisite. (Used to require daysWithMuscles > 0; now mirrors the
+  // Attune button's gating so both light up together when at least one
+  // day is picked.)
+  const carveEnabled = selectedDays.size > 0
   // Total cycle days = contiguous span from first to last user-pick (inclusive of any
   // auto-rest gap days). What the carve button surfaces — "5 DAYS" of cycle, not "3
   // muscle-assigned days". 0 when no picks.
