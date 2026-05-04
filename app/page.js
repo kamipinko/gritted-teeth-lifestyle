@@ -98,8 +98,12 @@ function startBgMusic() {
   try {
     if (window.localStorage.getItem('gtl-bg-music-on') === '0') {
       try { bgMusicAudio.pause(); bgMusicAudio.currentTime = 0 } catch {}
-      const offGain = getBgmGainNode()
-      if (offGain) offGain.gain.value = 0
+      // Do NOT call getBgmGainNode() here — creating the BGM AudioContext +
+      // MediaElementSource on iOS can preempt the SFX AudioContext (iOS allows
+      // only one active audio session at a time), which silences ALL sounds
+      // on cold launch. If the gain node already exists from a prior session
+      // (BGM was on then turned off), zero it out without creating a new one.
+      if (window.__gtlBgMusicGain) window.__gtlBgMusicGain.gain.value = 0
       return
     }
   } catch {}
