@@ -236,7 +236,29 @@ The cap-and-overflow rule (R12) + concentrate rule (R13) + 100% reclassification
 - ✅ Asymmetric break: missed-set tick drop (forgiving), missed-day tier drop (harsh)
 - ✅ Build curve: layered (linear within tiers + named tiers + exponential-cap shape + prestige loop)
 
-**Next session**: pick up at the Outstanding Questions list. Biggest practical blocks: tier multiplier values (R5/R2), missed-day rule (R8), holiday list (R16), and curator pass for which exercises beyond hip-thrust/calf-raise should be hand-tagged isolation (R14).
+**Next session — resume here:**
+
+Newly settled (2026-05-04 session):
+- ✅ Completion-threshold rule (R8 refined): <50% = combo reset; 50–99% = combo preserved with consistency mult scaled linearly by completion%; 100% = full credit. Only consistency mult scales — others apply at full strength.
+- ✅ End-of-day reckoning model (R8a): per-set XP credits non-consistency contributions immediately; consistency contribution is computed at end-of-day once completion% is known.
+- ✅ Bodyweight load rule (R1a): `effective_load = user_BW × bw_coefficient + entered_weight`; default coefficient 1.0; curator-flagged exceptions for push-up/dip etc.
+- ✅ Partial-day tier advancement model (Hybrid): 100% advances, 75–99% maintains, 50–74% may drop one tier, <50% resets.
+
+**Immediate next question (paused mid-conversation 2026-05-04):**
+
+What's the underlying counter for tier progression — XP-threshold (consistency XP accumulates and crosses tier thresholds), consecutive-day streak (N consecutive 100% days for tier-up), cumulative-day count (lifetime 100%-days for tier-up, no decay), or hybrid (streak for tier, separate XP for record-keeping)? Jordan paused here wanting to clarify the mental model further.
+
+**After that, remaining priority order:**
+1. Tier multiplier values (NOVICE / IRON / STEEL / BLAZE / OVERDRIVE)
+2. `king_compound_mult` value (placeholder 2.0)
+3. Sessions per tier (pacing)
+4. Grace days / streak freezes (Duolingo-style or strict)
+5. Prestige unlock requirement + bonus magnitude
+6. Holiday list + multiplier values
+7. Where user views Consistency XP / current tier (UI surface)
+8. Per-set popup multiplier breakdown format
+9. Tiebreak rule for compound second slot
+10. Bodyweight coefficient curator list + storage / fallback for `user_bodyweight`
 
 ## Next Steps
 
