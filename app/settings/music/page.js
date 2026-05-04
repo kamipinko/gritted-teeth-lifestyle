@@ -65,6 +65,17 @@ export default function BgmMusicPage() {
     setReady(true)
   }, [])
 
+  // Defensive body-scroll unlock — clear any leftover lock from /fitness/active.
+  useEffect(() => {
+    document.body.style.position = ''
+    document.body.style.inset = ''
+    document.body.style.touchAction = ''
+    document.body.style.overflow = ''
+    document.body.style.width = ''
+    document.body.style.height = ''
+    document.documentElement.style.overflow = ''
+  }, [])
+
   const playBgmFromTop = (a) => {
     if (typeof window === 'undefined' || !a) return
     if (window.__gtlBgMusicFadeInterval) {
@@ -171,7 +182,7 @@ export default function BgmMusicPage() {
   }
 
   return (
-    <main className="relative min-h-screen bg-gtl-void flex flex-col overflow-hidden">
+    <main className="relative min-h-screen bg-gtl-void flex flex-col overflow-x-hidden">
       <div className="absolute inset-0 gtl-noise pointer-events-none" />
       <div
         className="absolute inset-0 pointer-events-none"
@@ -204,18 +215,24 @@ export default function BgmMusicPage() {
           <RetreatButton href="/settings" />
         </nav>
 
-        <section className="relative z-10 flex-1 flex flex-col px-8 pt-2 pb-12 max-w-3xl mx-auto w-full">
-          <div className="mb-8">
+        <section className="relative z-10 flex-1 flex flex-col px-8 pt-4 pb-12 max-w-3xl mx-auto w-full">
+          <div className="mb-6 md:mb-12">
             <div className="flex items-center gap-4 mb-3">
               <div className="h-px w-16 bg-gtl-red" />
               <span className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-red">
                 AUDIO / TRACK
               </span>
             </div>
-            <h1 className="font-matisse text-[5rem] md:text-[7rem] leading-[0.9] text-gtl-chalk -rotate-1">
-              BGM<br />
-              <span className="text-gtl-red inline-block rotate-1">TRACK</span>
+            <h1 className="font-matisse text-[5rem] md:text-[8rem] leading-[0.9] text-gtl-chalk -rotate-1">
+              BGM
+              <br />
+              <span className="text-gtl-red gtl-headline-shadow-soft inline-block rotate-2">
+                TRACK
+              </span>
             </h1>
+            <p className="font-matisse text-xs tracking-[0.25em] uppercase text-gtl-ash mt-6 max-w-md">
+              Pick the song that scores your sets, or let the wheel choose.
+            </p>
           </div>
 
           <p className="font-mono text-[9px] tracking-[0.3em] uppercase text-gtl-ash mb-3">
@@ -272,6 +289,15 @@ export default function BgmMusicPage() {
                 })}
               </div>
             ))}
+          </div>
+
+          {/* Decorative footer slash — same vocabulary as /fitness/hub. */}
+          <div className="mt-12 flex items-center gap-4">
+            <div className="h-px flex-1 bg-gtl-edge" />
+            <div className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
+              GRITTED TEETH LIFESTYLE / BGM
+            </div>
+            <div className="h-px flex-1 bg-gtl-edge" />
           </div>
         </section>
       </div>

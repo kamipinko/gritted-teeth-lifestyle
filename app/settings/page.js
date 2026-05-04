@@ -151,6 +151,19 @@ export default function SettingsPage() {
     setReady(true)
   }, [])
 
+  // Defensive body-scroll unlock. Same backstop as /fitness/hub — clear any
+  // leftover position:fixed / touch-action:none from /fitness/active so this
+  // page can scroll if a navigation race left them set.
+  useEffect(() => {
+    document.body.style.position = ''
+    document.body.style.inset = ''
+    document.body.style.touchAction = ''
+    document.body.style.overflow = ''
+    document.body.style.width = ''
+    document.body.style.height = ''
+    document.documentElement.style.overflow = ''
+  }, [])
+
   // Shared "play this audio element from the top with the standard fade-in"
   // helper — used by both the BGM toggle and the track picker so the audio
   // ramp shape is identical. Reads getBgmTargetVol() so the slider's value
@@ -320,7 +333,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="relative min-h-screen bg-gtl-void flex flex-col overflow-hidden">
+    <main className="relative min-h-screen bg-gtl-void flex flex-col overflow-x-hidden">
       <div className="absolute inset-0 gtl-noise pointer-events-none" />
       <div
         className="absolute inset-0 pointer-events-none"
@@ -353,20 +366,26 @@ export default function SettingsPage() {
           <RetreatButton href="/fitness/hub" />
         </nav>
 
-        <section className="relative z-10 flex-1 flex flex-col px-8 pt-2 pb-12 max-w-3xl mx-auto w-full">
-          <div className="mb-8">
+        <section className="relative z-10 flex-1 flex flex-col px-8 pt-4 pb-12 max-w-3xl mx-auto w-full">
+          <div className="mb-6 md:mb-12">
             <div className="flex items-center gap-4 mb-3">
               <div className="h-px w-16 bg-gtl-red" />
               <span className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-red">
-                CONFIG
+                ENTRY POINT / 00
               </span>
             </div>
-            <h1 className="font-matisse text-[5rem] md:text-[7rem] leading-[0.9] text-gtl-chalk -rotate-1">
-              SETT<br />
-              <span className="text-gtl-red inline-block rotate-1">INGS</span>
+            <h1 className="font-matisse text-[5rem] md:text-[8rem] leading-[0.9] text-gtl-chalk -rotate-1">
+              SETT
+              <br />
+              <span className="text-gtl-red gtl-headline-shadow-soft inline-block rotate-2">
+                INGS
+              </span>
             </h1>
+            <p className="font-matisse text-xs tracking-[0.25em] uppercase text-gtl-ash mt-6 max-w-md">
+              Tune the ritual. Audio, haptics, and the levers that hold your warrior's record.
+            </p>
             {activeProfile && (
-              <p className="font-matisse text-xs tracking-[0.25em] uppercase text-gtl-ash mt-3">
+              <p className="font-matisse text-[10px] tracking-[0.3em] uppercase text-gtl-smoke mt-3">
                 ACTIVE WARRIOR — <span className="text-gtl-chalk">{activeProfile}</span>
               </p>
             )}
@@ -502,6 +521,15 @@ export default function SettingsPage() {
                 FORGED WITH GRITTED TEETH
               </p>
             </div>
+          </div>
+
+          {/* Decorative footer slash — same vocabulary as /fitness/hub. */}
+          <div className="mt-12 flex items-center gap-4">
+            <div className="h-px flex-1 bg-gtl-edge" />
+            <div className="font-matisse text-[9px] tracking-[0.4em] uppercase text-gtl-smoke">
+              GRITTED TEETH LIFESTYLE / SETTINGS
+            </div>
+            <div className="h-px flex-1 bg-gtl-edge" />
           </div>
         </section>
       </div>
