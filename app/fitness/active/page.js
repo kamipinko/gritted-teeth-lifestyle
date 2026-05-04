@@ -16,6 +16,9 @@ import RetreatButton from '../../../components/RetreatButton'
 import PickerSheet from '../../../components/attune/PickerSheet'
 import { chipsForDay, addChip } from '../../../lib/attunement'
 import { consumePrefire, setInAnimation, disarmChain, subscribeStaged } from '../../../lib/predictiveTap'
+// (subscribeStaged is used by both DayFocus AND the page-level today consume.
+//  Page-level subscription catches taps that stage 'today' AFTER the mount-time
+//  consume already ran — race common on iOS PWA where event timing lags.)
 
 const MUSCLE_LABELS = {
   chest: 'CHEST', back: 'BACK', shoulders: 'SHOULDERS',
@@ -2928,14 +2931,28 @@ export default function ActiveCyclePage() {
           const dI = Math.abs(parseDate(iso) - parseDate(todayIsoStr))
           return dI < dC ? iso : closest
         }, days[0])
-    const intent = consumePrefire('today')
-    if (intent) {
-      const w = (typeof window !== 'undefined') ? window.innerWidth : 390
-      const syntheticRect = { left: 12, right: w - 12, top: 479, bottom: 549, width: w - 24, height: 70 }
-      handleDayClick(target, syntheticRect)
+    const tryConsume = () => {
+      if (focusDay) return
+      const intent = consumePrefire('today')
+      if (intent) {
+        const w = (typeof window !== 'undefined') ? window.innerWidth : 390
+        const syntheticRect = { left: 12, right: w - 12, top: 479, bottom: 549, width: w - 24, height: 70 }
+        handleDayClick(target, syntheticRect)
+      }
     }
+    // Mount-time attempt — covers cross-page hops where the intent was
+    // staged BEFORE this page mounted (predictive tap during the prior
+    // page's exit HeistTransition).
+    tryConsume()
+    // Subscribe for late-staging — iOS PWA event timing can land a
+    // predictive tap AFTER mount-time consume already ran. The
+    // staged-event listener re-attempts consume the moment a 'today'
+    // intent lands (mirrors DayFocus's 'muscle' subscription pattern).
+    return subscribeStaged((stepName) => {
+      if (stepName === 'today') tryConsume()
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, days])
+  }, [ready, days, focusDay])
 
   const triggerXPAnimation = useCallback((closingDay) => {
     // Build particles: one per completed day, positioned at each card
