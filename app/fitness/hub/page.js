@@ -421,7 +421,7 @@ export default function FitnessPage() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-gtl-void">
+    <main className="relative min-h-screen overflow-x-hidden bg-gtl-void">
       {/* Background atmospherics */}
       <div className="absolute inset-0 gtl-noise" />
 
