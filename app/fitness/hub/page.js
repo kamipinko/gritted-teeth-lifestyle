@@ -354,6 +354,20 @@ export default function FitnessPage() {
   const hrefRef = useRef('')
   useEffect(() => { hrefRef.current = transitionConfig.href }, [transitionConfig.href])
 
+  // Defensive body-scroll unlock. /fitness/active applies a hard scroll lock
+  // (position:fixed + touch-action:none on body). Its cleanup should restore
+  // on unmount, but if a navigation race leaves any of those props set, the
+  // hub page can't scroll. Force-clear on mount.
+  useEffect(() => {
+    document.body.style.position = ''
+    document.body.style.inset = ''
+    document.body.style.touchAction = ''
+    document.body.style.overflow = ''
+    document.body.style.width = ''
+    document.body.style.height = ''
+    document.documentElement.style.overflow = ''
+  }, [])
+
   const skipNow = () => {
     if (skippedRef.current) return
     skippedRef.current = true
