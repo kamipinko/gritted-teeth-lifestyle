@@ -122,7 +122,9 @@ function DayButton({ iso, muscles, todayIso, onClick, doneKey, cycleId }) {
       data-predictive-tap-target={isToday ? 'today' : undefined}
       onClick={(e) => {
         const rect = e.currentTarget.getBoundingClientRect()
-        play('option-select')
+        // TODAY hero is chain step 4 — committal sound to match ACTIVATE
+        // (chain step 3). Non-TODAY day cards keep the lighter option-select.
+        play(isToday ? 'card-confirm' : 'option-select')
         onClick(iso, rect)
       }}
       className="relative block w-full outline-none active:scale-[0.98] transition-transform"
@@ -2538,7 +2540,9 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
             data-predictive-tap-target="muscle"
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect()
-              play('option-select')
+              // BEGIN HERE muscle is chain step 5 — committal sound to
+              // match ACTIVATE (chain step 3) and TODAY (chain step 4).
+              play('card-confirm')
               setFocusMuscle(muscles[0])
               setFocusMuscleRect(rect)
               // End of the predictive-tap chain. Disarm whether the
