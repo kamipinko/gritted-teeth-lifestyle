@@ -61,9 +61,12 @@ The new feature is a **combo-driven multiplier system** that layers on top. It i
 - R5. The combo identity has named tiers: **NOVICE → IRON → STEEL → BLAZE → OVERDRIVE**. Each tier has an associated multiplier value (placeholder: 1.0 / 1.3 / 1.7 / 2.5 / 4.0 — tunable).
 - R6. Within a tier, Consistency XP grows via small per-session ticks (linear ramp), so multiplier increments smoothly inside the tier.
 - R7. Tier crossings get a P5/Gurren rank-up flourish (kanji, color, animation) when the user enters a new named tier.
-- R8. **Asymmetric break rules:**
-  - Missed planned **set** within a session → drop one tick **within current tier** (forgiving — accidents, form breakdown, equipment).
-  - Missed planned **day** entirely → drop a full **tier** (or full reset for top tiers — TBD).
+- R8. **Completion-threshold break and partial-credit rule** (refined 2026-05-04):
+  - **<50% of planned sets completed** for a session → combo **resets** (consistency tier drops to NOVICE, multiplier returns to 1.0×).
+  - **≥50% but <100% completed** → combo is **preserved** (tier stays where it was). The consistency multiplier credit for that day's XP is **scaled linearly by completion percentage**: at 75% completion, only 75% of the consistency contribution applies; at 50%, only 50% applies. The other multipliers in the stack (compound/isolation, holiday, prestige) apply at **full strength regardless** — they are exercise/event facts, not combo facts.
+  - **100% of planned sets completed** → full consistency multiplier credit, plus tier-advancement progress per R6.
+  - The completion percentage is computed from `sets_logged_today / sets_planned_today` (where "planned" = the attuned set count from the Attune Movements page).
+- R8a. **End-of-day reckoning model**: per-set XP that is logged in real time credits the immediate stack contributions (compound/isolation, holiday, prestige). The **consistency contribution is deferred** and computed at end-of-day once the completion percentage is known — `day_consistency_contribution = (sum_of_day_base_XP) × consistency_mult × completion_pct` (where `completion_pct = 0` if <50%). This avoids per-set-rollback complexity and lets the user see the consistency reward as a clear end-of-session payoff. UX detail (how it appears in the per-set animation vs end-of-day animation) is an open question for planning.
 
 **Prestige**
 - R9. When the user holds OVERDRIVE for N sessions, they may "ascend": multiplier resets to 1.0 / NOVICE, but they keep a permanent **Galaxy-Spiral ribbon**. Ribbons stack — each adds a small permanent baseline-XP bonus contribution (placeholder: each ribbon = +0.05× contribution under R2's prestige_mult — tunable).
