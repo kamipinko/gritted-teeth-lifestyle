@@ -2899,12 +2899,12 @@ export default function ActiveCyclePage() {
   const handleDayClick = (iso, rect) => {
     setFocusRect(rect)
     setFocusDay(iso)
-    // Predictive-tap: TODAY is chain step 4. The day-focus animation
-    // takes ~700ms (380ms BEGIN HERE button delay + 320ms popup-rise),
-    // and a hit-zone tap during that window stages a 'muscle' prefire.
+    // Predictive-tap: TODAY is chain step 4. inAnim stays open until
+    // the chain disarms (on muscle hop) — no timeout. The user can
+    // tap any time after today fires; DayFocus's subscribeStaged
+    // listener consumes 'muscle' the moment it lands.
     if (iso === todayIsoStr) {
       setInAnimation('today', true)
-      setTimeout(() => setInAnimation('today', false), 750)
     }
   }
 
@@ -2913,15 +2913,26 @@ export default function ActiveCyclePage() {
   // handleDayClick(todayIsoStr) as if the user tapped the TODAY hero.
   // Synthetic rect approximates the canonical chain-button position so
   // the day-focus zoom animation has a reasonable origin.
+  // Falls back to the closest-day hero if today isn't in the cycle's
+  // training days (e.g. cycle is Mon-Fri, today is Sunday) — mirrors
+  // the rolodex's own heroIso pick. Without this fallback the chain
+  // would silently stall here whenever today isn't a workout day.
   useEffect(() => {
     if (!ready) return
-    if (!days || !days.includes(todayIsoStr)) return
+    if (!days || days.length === 0) return
     if (focusDay) return
+    const target = days.includes(todayIsoStr)
+      ? todayIsoStr
+      : days.reduce((closest, iso) => {
+          const dC = Math.abs(parseDate(closest) - parseDate(todayIsoStr))
+          const dI = Math.abs(parseDate(iso) - parseDate(todayIsoStr))
+          return dI < dC ? iso : closest
+        }, days[0])
     const intent = consumePrefire('today')
     if (intent) {
       const w = (typeof window !== 'undefined') ? window.innerWidth : 390
       const syntheticRect = { left: 12, right: w - 12, top: 479, bottom: 549, width: w - 24, height: 70 }
-      handleDayClick(todayIsoStr, syntheticRect)
+      handleDayClick(target, syntheticRect)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, days])

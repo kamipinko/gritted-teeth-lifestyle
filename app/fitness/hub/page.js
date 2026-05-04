@@ -357,7 +357,8 @@ export default function FitnessPage() {
   const skipNow = () => {
     if (skippedRef.current) return
     skippedRef.current = true
-    setInAnimation('hub-load', false)
+    // inAnim stays open across the hop — next page's consumePrefire
+    // re-asserts it.
     router.push(hrefRef.current)
   }
 
@@ -415,7 +416,6 @@ export default function FitnessPage() {
   }, [transitioning])
 
   const handleTransitionComplete = () => {
-    setInAnimation('hub-load', false)
     if (skippedRef.current) return
     router.push(transitionConfig.href)
   }
