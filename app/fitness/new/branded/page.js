@@ -106,14 +106,14 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex flex-col items-center justify-center px-2 py-3 min-h-[82px] border transition-colors duration-150
+      className={`relative flex items-center justify-between px-3 py-1.5 min-h-[46px] border transition-colors duration-150
         ${active
           ? 'bg-gtl-red border-gtl-red-bright shadow-red-glow'
           : 'bg-gtl-ink border-gtl-edge'}`}
       style={{ clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)', transform: 'skewX(-2deg)' }}
     >
       <span
-        className={`font-mono text-[14px] tracking-[0.08em] uppercase leading-none font-bold mb-1.5
+        className={`font-mono text-[12px] tracking-[0.08em] uppercase leading-none font-bold
           ${active ? 'text-gtl-paper' : 'text-gtl-chalk'}`}
         style={{ transform: 'skewX(2deg)' }}
       >
@@ -123,7 +123,7 @@ function SheetMuscleButton({ kanji, label, active, onClick }) {
         className={`leading-none ${active ? 'text-gtl-paper' : 'text-gtl-chalk/70'}`}
         style={{
           fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-          fontSize: '2rem',
+          fontSize: '1.25rem',
           fontWeight: 400,
           textShadow: active ? '1px 1px 0 #070708' : 'none',
           transform: 'skewX(2deg)',
@@ -679,15 +679,10 @@ export default function SchedulePage() {
   const targetSlots = row1Empty.length >= 2 ? row1Empty : row5Empty
   const startOffset = Math.max(0, Math.floor((targetSlots.length - monthChars.length) / 2))
   const emptyKanji = {}
-  // Track the exact cell indices the kanji occupies — the Attune Movements
-  // button overlays these same cells so the button width matches the kanji
-  // width (2 spaces for 1-10月, 3 spaces for 11-12月).
-  const kanjiCells = []
   monthChars.forEach((ch, ci) => {
     const slotIdx = startOffset + ci
     if (slotIdx < targetSlots.length) {
       emptyKanji[targetSlots[slotIdx]] = ch
-      kanjiCells.push(targetSlots[slotIdx])
     }
   })
 
@@ -763,11 +758,10 @@ export default function SchedulePage() {
           ))}
         </div>
 
-        {/* 5-row day grid — fixed 75px rows. relative establishes the
-            positioning context for the AttuneMovementsButton overlay below. */}
+        {/* 5-row day grid — fixed 75px rows */}
         <div
           ref={gridRef}
-          className="relative grid grid-cols-7 grid-rows-5 gap-1"
+          className="grid grid-cols-7 grid-rows-5 gap-1"
           style={{ height: `${ROW_H * 5 + 4 * 4}px` }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -784,10 +778,7 @@ export default function SchedulePage() {
                       style={{
                         fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
                         fontSize: '4rem',
-                        // Demoted from 0.7 → 0.12 so the month kanji reads as a
-                        // watermark behind interactive content (per the Attune
-                        // Movements entry-point spec).
-                        color: 'rgba(212, 24, 31, 0.12)',
+                        color: 'rgba(212, 24, 31, 0.7)',
                         fontWeight: 700,
                       }}
                       aria-hidden="true"
