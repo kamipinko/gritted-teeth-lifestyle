@@ -695,9 +695,9 @@ export default function SchedulePage() {
           50%      { box-shadow: 0 0 20px rgba(228,176,34,0.8), 0 0 40px rgba(228,176,34,0.3); }
         }
         @keyframes wrap-continuity-pulse {
-          0%   { box-shadow: inset 0 0 0 0 rgba(34, 211, 238, 0); }
-          20%  { box-shadow: inset 0 0 0 3px rgba(34, 211, 238, 0.85); }
-          100% { box-shadow: inset 0 0 0 0 rgba(34, 211, 238, 0); }
+          0%   { box-shadow: inset 0 0 0 0 rgba(212, 24, 31, 0); }
+          20%  { box-shadow: inset 0 0 0 3px rgba(212, 24, 31, 0.85); }
+          100% { box-shadow: inset 0 0 0 0 rgba(212, 24, 31, 0); }
         }
         .wrap-continuity-pulse { animation: wrap-continuity-pulse 1000ms ease-out 200ms both; }
       `}</style>
@@ -819,24 +819,25 @@ export default function SchedulePage() {
                 )}
 
                 {/* Wrap-continuity cues — only on the paired flow-end / wrapped cells.
-                    Cyan (not gold) so they don't collide with today's gold border. */}
+                    GTL red (#d4181f) so they read with the rest of the palette
+                    instead of fighting today's gold border. */}
                 {isFlowEnd && (
                   <>
                     <div className="absolute top-0 right-0 bottom-0 w-[2px] pointer-events-none"
-                         style={{ background: '#22d3ee', boxShadow: '0 0 6px rgba(34,211,238,0.7)' }}
+                         style={{ background: '#d4181f', boxShadow: '0 0 6px rgba(212,24,31,0.7)' }}
                          aria-hidden="true" />
                     <span className="absolute top-1 right-1 font-mono text-[12px] font-semibold leading-none pointer-events-none select-none"
-                          style={{ color: '#22d3ee' }}
+                          style={{ color: '#d4181f' }}
                           aria-hidden="true">↗</span>
                   </>
                 )}
                 {isFirstWrap && (
                   <>
                     <div className="absolute top-0 left-0 bottom-0 w-[2px] pointer-events-none"
-                         style={{ background: '#22d3ee', boxShadow: '0 0 6px rgba(34,211,238,0.7)' }}
+                         style={{ background: '#d4181f', boxShadow: '0 0 6px rgba(212,24,31,0.7)' }}
                          aria-hidden="true" />
                     <span className="absolute bottom-1 left-1 font-mono text-[12px] font-semibold leading-none pointer-events-none select-none"
-                          style={{ color: '#22d3ee' }}
+                          style={{ color: '#d4181f' }}
                           aria-hidden="true">↙</span>
                   </>
                 )}
