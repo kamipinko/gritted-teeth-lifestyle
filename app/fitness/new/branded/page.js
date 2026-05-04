@@ -179,22 +179,37 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
       }}
     >
       <div
-        className="relative w-full h-full flex items-center justify-center px-4"
+        className="relative w-full h-full flex flex-col items-center justify-center px-1 gap-0.5"
         style={{
           clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
           background: goldBg,
         }}
       >
+        {/* Two-line label — fits the narrow 2-cell kanji-width footprint
+            without overflowing horizontally. */}
         <span
-          className="font-display leading-none tracking-wide whitespace-nowrap"
+          className="font-display leading-none whitespace-nowrap"
           style={{
-            fontSize: '1.4rem',
+            fontSize: '0.78rem',
             fontWeight: 900,
             color: enabled ? '#070708' : '#e4b022',
             transform: 'skewX(2deg)',
+            letterSpacing: '0.05em',
           }}
         >
-          ATTUNE MOVEMENTS
+          ATTUNE
+        </span>
+        <span
+          className="font-display leading-none whitespace-nowrap"
+          style={{
+            fontSize: '0.78rem',
+            fontWeight: 900,
+            color: enabled ? '#070708' : '#e4b022',
+            transform: 'skewX(2deg)',
+            letterSpacing: '0.05em',
+          }}
+        >
+          MOVEMENTS
         </span>
       </div>
     </button>
@@ -664,10 +679,15 @@ export default function SchedulePage() {
   const targetSlots = row1Empty.length >= 2 ? row1Empty : row5Empty
   const startOffset = Math.max(0, Math.floor((targetSlots.length - monthChars.length) / 2))
   const emptyKanji = {}
+  // Track the exact cell indices the kanji occupies — the Attune Movements
+  // button overlays these same cells so the button width matches the kanji
+  // width (2 spaces for 1-10月, 3 spaces for 11-12月).
+  const kanjiCells = []
   monthChars.forEach((ch, ci) => {
     const slotIdx = startOffset + ci
     if (slotIdx < targetSlots.length) {
       emptyKanji[targetSlots[slotIdx]] = ch
+      kanjiCells.push(targetSlots[slotIdx])
     }
   })
 
@@ -913,21 +933,22 @@ export default function SchedulePage() {
           })}
 
           {/* Attune Movements entry — placed as a grid item that spans
-              ONLY the empty cells in row 1 (where the demoted 五月 kanji
-              watermark renders). Day-number cells in row 1 (e.g. "1" / "2"
-              when May starts on a Friday) are left visible. The kanji
-              watermark stays behind the button; the button reads as
-              branded onto the kanji band. Always visible; activates the
-              moment any day is selected. */}
-          {row1Empty.length > 0 && (() => {
-            const lo = Math.min(...row1Empty)
-            const hi = Math.max(...row1Empty)
-            // CSS grid columns are 1-indexed; span = lo..hi inclusive.
+              ONLY the cells where the month kanji renders (typically 2
+              cells for 一月-十月, 3 cells for 十一月-十二月). Same
+              spatial slot as the kanji watermark; button reads as branded
+              onto it. Falls into row 5 on months where the kanji renders
+              there (row 1 has <2 empty cells). Always rendered; activates
+              the moment any day is selected. */}
+          {kanjiCells.length > 0 && (() => {
+            const isRow5 = kanjiCells[0] >= 28
+            const colOffset = isRow5 ? 28 : 0
+            const lo = Math.min(...kanjiCells) - colOffset
+            const hi = Math.max(...kanjiCells) - colOffset
             return (
               <div
                 style={{
                   gridColumn: `${lo + 1} / ${hi + 2}`,
-                  gridRow: 1,
+                  gridRow: isRow5 ? 5 : 1,
                   zIndex: 5,
                 }}
               >
