@@ -301,8 +301,14 @@ input, textarea {
  * Long-press / drag on a button no longer triggers text selection or the
  * iOS copy/share callout. Form fields above explicitly opt back in to
  * text selection so this rule doesn't bleed into inputs. Anchor tags
- * are NOT included so copyable links still work. */
-button, [role="button"] {
+ * are NOT included so copyable links still work.
+ *
+ * The descendant selector is required because user-select on iOS Safari
+ * doesn't reliably cascade from a button to inner <span> labels — the
+ * ACTIVATE button's inner "ACTIVATE / LIFT NOW" span was still
+ * highlightable until this rule applied directly to children. */
+button, [role="button"],
+button *, [role="button"] * {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
