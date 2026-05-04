@@ -166,7 +166,7 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
       onClick={enabled ? onTap : undefined}
       onMouseEnter={enabled ? onHover : undefined}
       disabled={!enabled}
-      className={`relative ${enabled ? 'cursor-pointer' : 'cursor-not-allowed'} w-full`}
+      className={`relative ${enabled ? 'cursor-pointer' : 'cursor-not-allowed'} w-full h-full`}
       style={{
         transform: 'skewX(-2deg)',
         clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
@@ -179,7 +179,7 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
       }}
     >
       <div
-        className="relative flex items-center justify-center px-4 py-3"
+        className="relative w-full h-full flex items-center justify-center px-4"
         style={{
           clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
           background: goldBg,
@@ -188,7 +188,7 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
         <span
           className="font-display leading-none tracking-wide whitespace-nowrap"
           style={{
-            fontSize: '1.05rem',
+            fontSize: '1.4rem',
             fontWeight: 900,
             color: enabled ? '#070708' : '#e4b022',
             transform: 'skewX(2deg)',
@@ -743,10 +743,11 @@ export default function SchedulePage() {
           ))}
         </div>
 
-        {/* 5-row day grid — fixed 99px rows */}
+        {/* 5-row day grid — fixed 75px rows. relative establishes the
+            positioning context for the AttuneMovementsButton overlay below. */}
         <div
           ref={gridRef}
-          className="grid grid-cols-7 grid-rows-5 gap-1"
+          className="relative grid grid-cols-7 grid-rows-5 gap-1"
           style={{ height: `${ROW_H * 5 + 4 * 4}px` }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -910,25 +911,29 @@ export default function SchedulePage() {
               </button>
             )
           })}
+
+          {/* Attune Movements entry — overlaid on the calendar's top row,
+              spatially occupying the same band where the bold 五月 kanji
+              used to render. The demoted kanji watermark sits behind at
+              opacity 0.12; the button reads as branded onto it.
+              Always visible; activates the moment any day is selected. */}
+          <div
+            className="absolute left-0 right-0 top-0 z-10 pointer-events-none"
+            style={{ height: `${ROW_H}px` }}
+          >
+            <div className="w-full h-full pointer-events-auto">
+              <AttuneMovementsButton
+                enabled={selectedDays.size > 0}
+                onTap={() => { play('option-select'); router.push('/attune') }}
+                onHover={() => play('button-hover')}
+              />
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Red accent line */}
       <div className="h-[2px] bg-gtl-red shrink-0" />
-
-      {/* Attune Movements entry — appears when the muscle sheet appears
-          (sheetOpen, i.e. at least one day selected). Tapping routes to
-          /attune. Visual mirrors the CARVE button's gold palette so the
-          two share a vocabulary. */}
-      {sheetOpen && (
-        <div className="px-3 pt-2 pb-1 shrink-0">
-          <AttuneMovementsButton
-            enabled
-            onTap={() => { play('option-select'); router.push('/attune') }}
-            onHover={() => play('button-hover')}
-          />
-        </div>
-      )}
 
       {/* Logo — visible when no days selected */}
       {!sheetOpen && (
@@ -946,7 +951,7 @@ export default function SchedulePage() {
           Calendar above is shrink-0 (always full 5 rows visible, never scrolls). */}
       {sheetOpen && (
         <div className="flex-1 overflow-y-auto px-3 pt-0 pb-1">
-          <div className="grid grid-cols-3 grid-rows-4 gap-1" style={{ overflow: 'visible' }}>
+          <div className="grid grid-cols-2 grid-rows-6 gap-1" style={{ overflow: 'visible' }}>
             {SHEET_MUSCLES.map((m) => (
               <SheetMuscleButton
                 key={m.id}
