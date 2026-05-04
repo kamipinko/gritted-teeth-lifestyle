@@ -912,23 +912,33 @@ export default function SchedulePage() {
             )
           })}
 
-          {/* Attune Movements entry — overlaid on the calendar's top row,
-              spatially occupying the same band where the bold 五月 kanji
-              used to render. The demoted kanji watermark sits behind at
-              opacity 0.12; the button reads as branded onto it.
-              Always visible; activates the moment any day is selected. */}
-          <div
-            className="absolute left-0 right-0 top-0 z-10 pointer-events-none"
-            style={{ height: `${ROW_H}px` }}
-          >
-            <div className="w-full h-full pointer-events-auto">
-              <AttuneMovementsButton
-                enabled={selectedDays.size > 0}
-                onTap={() => { play('option-select'); router.push('/attune') }}
-                onHover={() => play('button-hover')}
-              />
-            </div>
-          </div>
+          {/* Attune Movements entry — placed as a grid item that spans
+              ONLY the empty cells in row 1 (where the demoted 五月 kanji
+              watermark renders). Day-number cells in row 1 (e.g. "1" / "2"
+              when May starts on a Friday) are left visible. The kanji
+              watermark stays behind the button; the button reads as
+              branded onto the kanji band. Always visible; activates the
+              moment any day is selected. */}
+          {row1Empty.length > 0 && (() => {
+            const lo = Math.min(...row1Empty)
+            const hi = Math.max(...row1Empty)
+            // CSS grid columns are 1-indexed; span = lo..hi inclusive.
+            return (
+              <div
+                style={{
+                  gridColumn: `${lo + 1} / ${hi + 2}`,
+                  gridRow: 1,
+                  zIndex: 5,
+                }}
+              >
+                <AttuneMovementsButton
+                  enabled={selectedDays.size > 0}
+                  onTap={() => { play('option-select'); router.push('/attune') }}
+                  onHover={() => play('button-hover')}
+                />
+              </div>
+            )
+          })()}
         </div>
       </section>
 
