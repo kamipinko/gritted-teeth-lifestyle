@@ -29,29 +29,27 @@ The new feature is a **combo-driven multiplier system** that layers on top. It i
   ```
   total_visible_XP =
       base × consistency_mult
-    + base × (compound_mult OR isolation_mult)
+    + base × class_mult         // class_mult = isolation_mult OR compound_mult OR king_compound_mult
     + base × holiday_mult       // 0 if no holiday active
     + base × prestige_mult      // 0 if no prestige bonus
   ```
-  Inactive multipliers (no holiday today, no prestige badges) contribute 0. Compound's multiplier value is **always larger than** isolation's (so heavy compound work earns more raw total XP than equivalent isolation work).
+  Inactive multipliers (no holiday today, no prestige badges) contribute 0. The classification multiplier scales with category: **`king_compound_mult` > `compound_mult` > `isolation_mult`** (placeholders 2.0 / 1.5 / 1.2 — tunable). Heavier-category lifts earn more raw total XP per set.
 - R3. The user sees a **single visible XP number** in the per-set popup animation — equal to the sum above. That number adds to `totalXP` (the existing player-level driver). The popup briefly reveals the breakdown ("+base × 1.3 consistency + base × 1.5 compound = +visible_XP").
 
 **Region star track (discrete, wger-driven)**
 - R10. Each exercise has a region-weight vector derived from wger primary/secondary muscle data, mapped to GTL's 5 regions. Default heuristic: primary muscles get 60% of weight (split evenly across primary muscles), secondary muscles get 40% (split evenly across secondaries). Tunable.
-- R10a. **wger → region mapping rule**: FRONT and BACK refer to the **torso only**, not the limbs. ARMS and LEGS contain all limb-attached muscles. This means **all three deltoid heads (anterior, medial/lateral, posterior) map to ARMS**, not FRONT/BACK — they sit on the upper arm. Pectorals, serratus, abs (front-of-torso) → FRONT. Lats, rhomboids, traps, erector spinae (back-of-torso) → BACK. Glutes stay in LEGS. The conceptual split is clean: torso (FRONT/BACK/CORE) vs limbs (ARMS/LEGS).
-- R11. Star bands (per region, per set):
-  - `< 30%` wger weight → **0 stars**
-  - `30–59%` → **1 star**
-  - `60%+` → **2 stars**
-- R12. **Compound exercises** apply a cap-and-overflow rule:
-  - Cap each region at **1 star per set** (compound never gives 2 stars to any single region).
-  - If a region's weight share would have earned 2 stars (≥60%), the second star **overflows to the next-highest-weight region**, even if that region's raw share is below 30%.
-  - Tie-breaking for overflow target: prefer narrow zones (ARMS / LEGS) over broad zones (FRONT / BACK / CORE) — TBD, see Outstanding Questions.
-  - Goal: every compound set distributes 2 stars across exactly 2 regions (ideally 1+1).
-- R13. **Isolation exercises** apply a concentrate-on-primary rule:
-  - Only the **highest-weight region** earns stars. All other regions get 0 stars even if they cross the 30% threshold.
-  - That highest region's stars come from its raw share band (60%+ → 2★, 30–59% → 1★).
-  - Goal: every isolation set concentrates stars in 1 region.
+- R10a. **wger → region mapping uses DUAL SEMANTICS** — upper-body and lower-body muscles map differently:
+  - **Upper-body muscles** use torso-only semantics. FRONT = front of torso (chest / pectorals, serratus). BACK = back of torso (lats, rhomboids, traps, erector spinae). ARMS = all limb muscles in the upper limbs including all three deltoid heads (anterior, medial/lateral, posterior — they sit on the upper arm). CORE = abdominals.
+  - **Lower-body muscles** use position-of-leg semantics. FRONT = quads (front of leg). BACK = hamstrings (back of leg). LEGS = catch-all for the rest of the leg muscles: glutes, calves, adductors, abductors.
+  - The same region IDs (FRONT, BACK) carry dual meaning depending on the muscle's body half. A bench press grows FRONT via chest; a squat grows FRONT via quads — both are anatomically "front of body" so the dual semantics aligns with what the user feels: FRONT = front of you, BACK = back of you, regardless of upper vs lower half.
+  - Practical effect: lower-body lifts no longer dump all their XP into LEGS. Compound lower-body lifts (squat, deadlift, leg press) naturally distribute across FRONT/BACK/LEGS based on which leg muscles they target.
+- R11. Star bands (per region, per set) — **legacy / advisory**, no longer drive star awards under the amended R12/R12b/R13 rules. Retained as a quick visual reference for "what % share roughly corresponds to a star tier" when curating new exercises:
+  - `< 30%` wger weight → roughly stabilizer / not-a-real-target territory
+  - `30–59%` → meaningful secondary
+  - `60%+` → primary target
+- R12. **Compound exercises (regular)** award 1★ each to the **top 2 wger-weight regions**. Band thresholds (R11) do NOT gate this — the top 2 always earn a star regardless of raw share. Tiebreak when the second slot is contested (multiple regions with equal wger weight): alphabetical (deterministic; can be revisited). The Total XP track applies `compound_mult` (placeholder 1.5) per R2.
+- R12b. **King Compound exercises** award 1★ each to the **top 3 wger-weight regions** instead of top 2. Curator-tagged per exercise (boolean `is_king_compound`). Default King-tagged at import: back squat, front squat, sumo squat, paused squat, conventional deadlift, sumo deadlift, trap bar deadlift, stiff-leg deadlift, Romanian deadlift, standard leg press, vertical leg press, barbell hack squat, machine hack squat. Curator can opt other major variants in or out. Single-leg variants (single-leg leg press, single-leg squat) typically NOT King — they cut intensity. The Total XP track applies `king_compound_mult` (placeholder 2.0, larger than `compound_mult`) per R2.
+- R13. **Isolation exercises** concentrate on the **single highest-weight region** — that region earns 2★. All other regions earn 0★ regardless of their raw share. Band thresholds do NOT gate the 2★ award. The Total XP track applies `isolation_mult` (placeholder 1.2, smaller than `compound_mult`) per R2.
 - R14. **Classification (compound vs isolation) is a curated per-exercise property**, not auto-derived. Auto-classification rule (used at wger import time, after R10a region mapping): if aggregated wger weight is 100% in one region (e.g., hip thrust, calf raise, leg extension, bicep curl, tricep extension, front raise — anterior delt isolation now lands at ARMS 100%), default to **isolation**. Otherwise default to compound. **Curator pass required after import** — Jordan reviews and hand-overrides exercises that the auto-rule miscategorizes. Known curator-override candidates: lateral raise (medial delt isolation, wger 60/40 ARMS/BACK → defaults compound), reverse fly / rear delt fly (rear delt isolation, wger 60/40 ARMS/BACK), and any other exercise where wger lists a stabilizer as secondary but training intent is single-target.
 
 **Consistency / Combo Identity**
@@ -93,16 +91,40 @@ Defaults assumed: Consistency at IRON = 1.3, compound_mult = 1.5, isolation_mult
 - wger weights: ARMS 100%
 - Region star track (isolation, concentrate): only highest region (ARMS) earns stars. ARMS at 100% → 2★. Result: **ARMS 2★**
 
-**Example 3 — Deadlift 315 × 5 (compound, naturally splits)**
+**Example 3 — Deadlift 315 × 5 (compound, dual-semantics distribution)**
 - Base = 315 × repMult(5) × 5 = 315 × 1.0 × 5 = **1575**
 - Total XP track: 1575 × 1.3 + 1575 × 1.5 = 2048 + 2363 = **+4411 to totalXP**
-- wger weights: LEGS 50% / BACK 30% / ARMS 10% / CORE 10%
-- Region star track (compound): no region exceeds 60%, so no overflow needed. LEGS 1★ (50% in 30–59 band), BACK 1★ (30%), ARMS 0★ (<30%), CORE 0★ (<30%). Result: **LEGS 1★ + BACK 1★**
+- wger weights under R10a dual semantics:
+  - Glutes (LEGS) 20%, Hams (BACK) 20%, Erector (BACK — torso) 20% (primaries)
+  - Quads (FRONT) 10%, Traps (BACK) 10%, Forearms (ARMS) 10%, Abs (CORE) 10% (secondaries)
+- Aggregate: BACK 50%, LEGS 20%, FRONT 10%, ARMS 10%, CORE 10%
+- Region star track (compound): no region exceeds 60%, no overflow. BACK 1★ (50%), LEGS 0★ (<30%), FRONT 0★ (<30%). Wait — only BACK clears 30%. Compound rule expected 2 regions × 1★. Edge case: only one region above threshold. **Result: BACK 1★ only** (under-distribution edge case — see Outstanding Questions for the "always award at least 2 stars on a compound" question).
 
-**Example 4 — Hip thrust (curated as isolation)**
-- wger weights: LEGS 100% (all primary + secondary muscles map to LEGS)
-- Curator rule R14: 100% in one region → classify as isolation (overrides default compound assumption).
-- Region star track (isolation, concentrate): LEGS 100% → 2★. Result: **LEGS 2★**
+**Example 3b — Squat 225 × 8 (KING COMPOUND, dual-semantics distribution)**
+- Base = 225 × 1.0 × 8 = **1800**
+- Total XP track: 1800 × 1.3 (consistency) + 1800 × **2.0** (king_compound_mult, larger than regular compound_mult) = 2340 + 3600 = **+5940 to totalXP**
+- wger weights under R10a dual semantics:
+  - Quads (FRONT) 60% (primary)
+  - Glutes (LEGS) 8%, Hams (BACK) 8%, Erector (BACK) 8%, Abs (CORE) 8%, Calves (LEGS) 8%
+- Aggregate: FRONT 60% / BACK 16% / LEGS 16% / CORE 8%
+- Region star track (King Compound — top 3 regions × 1★): FRONT, BACK, LEGS (BACK and LEGS tied for slot 3, both within top 3 anyway)
+- Result: **FRONT 1★ + BACK 1★ + LEGS 1★** (3 stars total) — squat grows front-of-body, back-of-body, AND the LEGS catch-all simultaneously. King reward.
+
+**Example 3c — Deadlift 315 × 5 (KING COMPOUND, dual-semantics distribution)**
+- Base = 315 × 1.0 × 5 = **1575**
+- Total XP track: 1575 × 1.3 + 1575 × 2.0 = 2048 + 3150 = **+5198 to totalXP**
+- wger weights under R10a dual semantics:
+  - Glutes (LEGS) 20%, Hams (BACK) 20%, Erector (BACK) 20% (primaries — note hams + erector aggregate to BACK)
+  - Quads (FRONT) 10%, Traps (BACK) 10%, Forearms (ARMS) 10%, Abs (CORE) 10% (secondaries)
+- Aggregate: BACK 50% / LEGS 20% / FRONT 10% / ARMS 10% / CORE 10%
+- Region star track (King Compound — top 3 regions × 1★): BACK, LEGS, then a 3-way tie at 10% for slot 3. Alphabetical tiebreak → ARMS.
+- Result: **BACK 1★ + LEGS 1★ + ARMS 1★** (3 stars total) — deadlift grows back-of-body (hams/erector dominant), the leg catch-all (glutes), and ARMS (grip via forearms).
+
+**Example 4 — Hip thrust (curated isolation under dual semantics)**
+- wger weights under R10a dual semantics: glutes (LEGS) 60% / hams (BACK) 20% / quads (FRONT) 20%
+- Auto-classify: not 100% one region → defaults compound. Curator override per R14: hip thrust is a glute isolation; the hams/quads involvement is incidental.
+- Curator-override classification: **isolation**.
+- Region star track (isolation, concentrate on highest = LEGS at 60%): LEGS 2★. Result: **LEGS 2★**
 
 ## "Compound = 2×1 stars, Isolation = 1×2 stars" Rule Audit
 
@@ -111,19 +133,30 @@ The cap-and-overflow rule (R12) + concentrate rule (R13) + 100% reclassification
 | Lift | Class | Raw weights | Stars after rules |
 |---|---|---|---|
 | Bench press | compound | FRONT 73 / ARMS 26 | FRONT 1★ + ARMS 1★ ✓ |
-| Squat | compound | LEGS 84 / BACK 8 / CORE 8 | LEGS 1★ + BACK 1★ ✓ (or CORE on tie) |
-| Deadlift | compound | LEGS 50 / BACK 30 / ARMS 10 / CORE 10 | LEGS 1★ + BACK 1★ ✓ |
+| Squat | **KING COMPOUND** | FRONT 60 / BACK 16 / LEGS 16 / CORE 8 | FRONT 1★ + BACK 1★ + LEGS 1★ (3 stars, all top 3) |
+| Deadlift | **KING COMPOUND** | BACK 50 / LEGS 20 / FRONT 10 / ARMS 10 / CORE 10 | BACK 1★ + LEGS 1★ + ARMS 1★ (3 stars; alphabetical tiebreak for slot 3) |
 | Pull-up | compound | BACK 50 / ARMS 50 | BACK 1★ + ARMS 1★ ✓ |
-| Overhead press | compound | ARMS 73 / BACK 13 / FRONT 13 | ARMS 1★ + (BACK or FRONT) 1★ ✓ — ARMS-dominant under R10a |
+| Overhead press | compound | ARMS 73 / BACK 13 / FRONT 13 | ARMS 1★ + (BACK or FRONT) 1★ ✓ |
 | Bent-over row | compound | BACK 84 / ARMS 16 | BACK 1★ + ARMS 1★ ✓ |
-| Lunge | compound | LEGS 89 / CORE 13 | LEGS 1★ + CORE 1★ ✓ |
-| Hip thrust | isolation (curated) | LEGS 100 | LEGS 2★ ✓ |
-| Calf raise | isolation (curated) | LEGS 100 | LEGS 2★ ✓ |
+| Lunge | compound | FRONT 60 / LEGS 16 / BACK 16 / CORE 8 | FRONT 1★ + (BACK or LEGS) 1★ ✓ |
+| Romanian deadlift | **KING COMPOUND** | BACK 60 / LEGS 20 / FRONT 20 | BACK 1★ + LEGS 1★ + FRONT 1★ (3 stars) |
+| Leg press | **KING COMPOUND** | FRONT 60 / LEGS 20 / BACK 20 | FRONT 1★ + LEGS 1★ + BACK 1★ (3 stars) |
+| Hack squat | **KING COMPOUND** | FRONT 60 / LEGS 20 / BACK 20 | FRONT 1★ + LEGS 1★ + BACK 1★ (3 stars) |
+| Hip thrust | compound | LEGS 60 / BACK 20 / FRONT 20 | LEGS 1★ + BACK 1★ (or FRONT) — no longer needs curator override; natural compound result |
+| Calf raise | isolation (auto) | LEGS 100 | LEGS 2★ ✓ (calves all map to LEGS catch-all) |
+| Glute kickback | isolation (auto) | LEGS 100 | LEGS 2★ ✓ |
+| Hip abduction / adduction | isolation (auto) | LEGS 100 | LEGS 2★ ✓ |
+| Leg curl | isolation (auto) | BACK 100 (hams) | BACK 2★ ✓ — hams now route to BACK under dual semantics |
+| Leg extension | isolation (auto) | FRONT 100 (quads) | FRONT 2★ ✓ — quads now route to FRONT under dual semantics |
 | Bicep curl | isolation | ARMS 100 | ARMS 2★ ✓ |
 | Front raise | isolation (auto) | ARMS 100 (anterior delt) | ARMS 2★ ✓ |
 | Lateral raise | isolation (curated) | ARMS 60 / BACK 40 | ARMS 2★ ✓ (curator override) |
 | Reverse fly | isolation (curated) | ARMS 60 / BACK 40 | ARMS 2★ ✓ (curator override) |
-| Leg extension | isolation | LEGS 100 | LEGS 2★ ✓ |
+| Pec deck | isolation (auto) | FRONT 100 | FRONT 2★ ✓ |
+| Cable crossover | isolation (curated) | FRONT 70 / ARMS 30 | FRONT 2★ ✓ (curator override) |
+| Hyperextension | compound | BACK 60 / LEGS 40 | BACK 1★ + LEGS 1★ (stay compound per Jordan) |
+| DB pullover | compound | BACK 50 / FRONT 50 | BACK 1★ + FRONT 1★ (stay compound per Jordan) |
+| Sit-up / crunch / Russian twist / deadbug / wood chopper / ab wheel etc. | isolation (curated) | CORE-dominant w/ stabilizer secondaries | CORE 2★ ✓ (curator override — all CORE-primary moves are isolation) |
 
 ## Scope Boundaries
 
@@ -155,7 +188,10 @@ The cap-and-overflow rule (R12) + concentrate rule (R13) + 100% reclassification
 - [Affects R8][User decision] Grace days / streak freezes? (Duolingo-style "1 free pass per month") or strict no-grace?
 - [Affects R9][User decision] How many sessions at OVERDRIVE before prestige is available? Auto or opt-in?
 - [Affects R12][User decision] Tie-breaking for overflow target when 2+ secondary regions have equal wger weight (squat: BACK 8 / CORE 8 — pick alphabetically? prefer narrow? prefer broad? split a fractional star?).
-- [Affects R14][User decision] Curator pass: full list of exercises to hand-tag isolation despite wger listing secondary muscles. Known: lateral raise, reverse fly. Probably also: glute bridge, hip abduction, hip adduction, hyperextension, cable crossover (?), pec deck, leg curl (if wger lists glute as secondary), preacher curl. Curator reviews the full library after wger import and overrides as needed.
+- [Affects R14][User decision — confirmed] Curator override roster (locked 2026-05-03): lateral raise → ARMS 2★; reverse fly → ARMS 2★; cable crossover → FRONT 2★; all CORE-primary moves (sit-up, crunch, Russian twist, wood chopper, deadbug, ab wheel, hanging leg raise, cable crunch, Pallof press, bird dog) → CORE 2★. Stay compound (no override): hyperextension, pullover, hip thrust. Auto-classify correctly (no override): bicep curl, leg curl, leg extension, calf raise, hip abduction, hip adduction, glute kickback, frog pump, pec deck, front raise, concentration curl, tricep extensions, hammer curl. King Compound tagged: squat / deadlift / leg press / hack squat + major variants per R12b.
+- [Affects R12b][User decision] `king_compound_mult` value placeholder = 2.0. Tunable. Should it be much higher (3.0?) to really reward the King lifts, or roughly aligned with compound (1.7?)?
+- [Affects R12b][User decision] Final list of King-tagged variants. Default proposed: back/front/sumo/paused squat, conventional/sumo/trap-bar/stiff-leg/RDL deadlift, standard/vertical leg press, barbell/machine hack squat. Single-leg variants NOT King.
+- [Affects R12][User decision] Tiebreak rule for compound second slot when equal-weight regions tie: alphabetical (proposed default), or prefer broad / prefer narrow.
 - [Affects R16][User decision] Which calendar holidays trigger? And what holiday_mult value(s) per holiday?
 - [Affects R18][User decision] Exact format of the per-set popup multiplier breakdown text + any per-region star "pop" animation choreography.
 - [Affects all][User decision] Where the user **views their current Consistency XP / current tier** (UI surface — settings? stats? a new dedicated panel?).
@@ -180,7 +216,12 @@ The cap-and-overflow rule (R12) + concentrate rule (R13) + 100% reclassification
 - ✅ **Cap + overflow rule** for compound stars, **concentrate rule** for isolation stars
 - ✅ **Curated classification**: 100%-one-region → isolation by default; curator can override
 - ✅ Math walkthroughs verified (bench, deadlift, bicep curl, hip thrust)
-- ✅ **wger → region map cleaned up (R10a)**: FRONT/BACK = torso only; ARMS/LEGS = limbs. All 3 deltoid heads → ARMS. Front raise auto-classifies correctly now (ARMS 100% iso). OHP becomes ARMS-dominant (was FRONT-dominant). Bench's ARMS share grows from 13% → 26%.
+- ✅ **wger → region map uses dual semantics (R10a)**: upper-body uses torso-only (chest=FRONT, lats=BACK, all delts=ARMS); lower-body uses position-of-leg (quads=FRONT, hams=BACK, glutes/calves/adductors/abductors=LEGS). Same region IDs, dual interpretation. Squat now distributes FRONT 60 / BACK 16 / LEGS 16 (was LEGS 84). Deadlift now BACK-dominant (was LEGS-dominant). Leg press auto-classifies compound (was 100% LEGS iso under torso-only mapping). Front raise still auto-iso ARMS 100%.
+- ✅ **Curator override roster (final)**: lateral raise + reverse fly → ARMS 2★ isolation; cable crossover → FRONT 2★ isolation; all CORE-primary moves (sit-up, crunch, Russian twist, wood chopper, deadbug, ab wheel, hanging leg raise, cable crunch, Pallof press, bird dog) → CORE 2★ isolation. Hyperextension, pullover, hip thrust stay compound (no override). Hip thrust dropped from override list under dual semantics + amended R12.
+- ✅ **King Compound exception (R12b)**: squats / deadlifts / leg press / hack squat (and major variants — see R12b) award **3 stars** (top 3 wger-weight regions × 1★ each) AND use a bigger Total XP multiplier `king_compound_mult` > `compound_mult` (placeholder 2.0 vs 1.5).
+- ✅ **Amended star rules**: drop band-triggered overflow. Compound = top 2 regions × 1★. King Compound = top 3 × 1★. Isolation = top 1 × 2★. R11 bands become advisory only.
+- ✅ **Unilateral / bilateral DB rule**: bilateral-simultaneous DB exercises (DB curl, DB press, DB lateral raise) AND truly unilateral exercises (Bulgarian split squat, single-arm row, pistol squat) both get `xpMultiplier = 2` to match barbell-equivalent volume. Unilateral exercises are assumed to have both sides completed before counting one full set.
+- ✅ **Neck and rotator cuff exercises**: NOT mapped to any region — those exercises are out of the curated library scope.
 - ✅ Asymmetric break: missed-set tick drop (forgiving), missed-day tier drop (harsh)
 - ✅ Build curve: layered (linear within tiers + named tiers + exponential-cap shape + prestige loop)
 
