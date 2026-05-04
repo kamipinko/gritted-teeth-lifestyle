@@ -932,34 +932,11 @@ export default function SchedulePage() {
             )
           })}
 
-          {/* Attune Movements entry — placed as a grid item that spans
-              ONLY the cells where the month kanji renders (typically 2
-              cells for 一月-十月, 3 cells for 十一月-十二月). Same
-              spatial slot as the kanji watermark; button reads as branded
-              onto it. Falls into row 5 on months where the kanji renders
-              there (row 1 has <2 empty cells). Always rendered; activates
-              the moment any day is selected. */}
-          {kanjiCells.length > 0 && (() => {
-            const isRow5 = kanjiCells[0] >= 28
-            const colOffset = isRow5 ? 28 : 0
-            const lo = Math.min(...kanjiCells) - colOffset
-            const hi = Math.max(...kanjiCells) - colOffset
-            return (
-              <div
-                style={{
-                  gridColumn: `${lo + 1} / ${hi + 2}`,
-                  gridRow: isRow5 ? 5 : 1,
-                  zIndex: 5,
-                }}
-              >
-                <AttuneMovementsButton
-                  enabled={selectedDays.size > 0}
-                  onTap={() => { play('option-select'); router.push('/attune') }}
-                  onHover={() => play('button-hover')}
-                />
-              </div>
-            )
-          })()}
+          {/* Attune Movements button removed for troubleshooting — the
+              grid-item placement was hijacking auto-placement and
+              displacing the calendar cells. The AttuneMovementsButton
+              component definition remains; re-add via an absolute overlay
+              once we land a non-disruptive positioning approach. */}
         </div>
       </section>
 
