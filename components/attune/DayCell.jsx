@@ -50,13 +50,15 @@ export default function DayCell({
   if (isOver)      border = isLocked ? '2px solid #ff2a36' : '2px solid #f1eee5'
 
   return (
-    <button
+    <div
       ref={setNodeRef}
-      type="button"
+      role="button"
+      tabIndex={isLocked ? -1 : 0}
       data-attune-day={dayId}
       data-attune-selected={isSelected ? '1' : '0'}
       data-attune-source={isSource ? '1' : '0'}
       onClick={handleClick}
+      onKeyDown={(e) => { if (!isLocked && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); handleClick() } }}
       style={{
         position: 'relative',
         background: isRestDay ? '#0f0f12' : '#1a1a1e',
@@ -171,6 +173,6 @@ export default function DayCell({
           🔒
         </div>
       )}
-    </button>
+    </div>
   )
 }
