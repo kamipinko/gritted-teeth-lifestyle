@@ -955,6 +955,17 @@ export default function LoadCyclePage() {
     router.push(fireDestRef.current)
   }
 
+  // Predictive-tap chain: reset currentStep to 'hub-load' on every mount.
+  // Handles back-and-forth navigation where stale currentStep from a
+  // later hop (e.g., 'today') would cause a manual ACTIVATE tap's
+  // pointerdown to stage the wrong intent (next-after-'today'='muscle'
+  // instead of next-after-'hub-load'='activate'). With this reset, manual
+  // taps on /fitness/load always stage the correct 'activate' intent.
+  // No-op if chain isn't armed.
+  useEffect(() => {
+    setInAnimation('hub-load', true)
+  }, [])
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem(pk('cycles'))

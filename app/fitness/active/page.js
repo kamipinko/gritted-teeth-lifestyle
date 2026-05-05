@@ -2723,6 +2723,18 @@ export default function ActiveCyclePage() {
 
   useEffect(() => { barXPRef.current = barXP }, [barXP])
 
+  // Predictive-tap chain: reset currentStep to 'activate' on every mount.
+  // Handles back-and-forth navigation where stale currentStep from a
+  // later hop (e.g., 'today' or 'muscle' from a prior round in DayFocus)
+  // would cause a manual TODAY tap's pointerdown to stage the wrong
+  // intent. With this reset, manual taps on /fitness/active always stage
+  // the correct 'today' intent. No-op if chain isn't armed. The consume
+  // useEffect's eager-inAnim later overrides currentStep to 'today' if
+  // the prior hop's intent matched, which is correct.
+  useEffect(() => {
+    setInAnimation('activate', true)
+  }, [])
+
   useEffect(() => {
     // Page-level scroll lock — prevents iOS PWA viewport-pan in any direction.
     // overflow alone isn't enough on WKWebView; position:fixed + inset:0 +
