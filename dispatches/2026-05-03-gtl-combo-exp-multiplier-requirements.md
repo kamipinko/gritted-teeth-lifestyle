@@ -37,7 +37,7 @@ The new feature is a **combo-driven multiplier system** that layers on top. It i
     + base × holiday_mult       // 0 if no holiday active
     + base × prestige_mult      // 0 if no prestige bonus
   ```
-  Inactive multipliers (no holiday today, no prestige badges) contribute 0. The classification multiplier scales with category: **`king_compound_mult` > `compound_mult` > `isolation_mult`** (placeholders 2.0 / 1.5 / 1.2 — tunable). Heavier-category lifts earn more raw total XP per set.
+  Inactive multipliers (no holiday today, no prestige badges) contribute 0. The classification multiplier scales with category: **`king_compound_mult` > `compound_mult` > `isolation_mult`**. Locked values: `king_compound_mult = 1.75` (locked 2026-05-05), `compound_mult = 1.5` (operating), `isolation_mult = 1.2` (operating). Heavier-category lifts earn more raw total XP per set.
 - R3. The user sees a **single visible XP number** in the per-set popup animation — equal to the sum above. That number adds to `totalXP` (the existing player-level driver). The popup briefly reveals the breakdown ("+base × 1.3 consistency + base × 1.5 compound = +visible_XP").
 
 **Region star track (discrete, wger-driven)**
@@ -164,7 +164,7 @@ Defaults assumed: Consistency at IRON = 1.3, compound_mult = 1.5, isolation_mult
 
 **Example 3b — Squat 225 × 8 (KING COMPOUND, dual-semantics distribution)**
 - Base = 225 × 1.0 × 8 = **1800**
-- Total XP track: 1800 × 1.3 (consistency) + 1800 × **2.0** (king_compound_mult, larger than regular compound_mult) = 2340 + 3600 = **+5940 to totalXP**
+- Total XP track: 1800 × 1.3 (consistency) + 1800 × **1.75** (king_compound_mult, larger than regular compound_mult) = 2340 + 3150 = **+5490 to totalXP**
 - wger weights under R10a dual semantics:
   - Quads (FRONT) 60% (primary)
   - Glutes (LEGS) 8%, Hams (BACK) 8%, Erector (BACK) 8%, Abs (CORE) 8%, Calves (LEGS) 8%
@@ -251,7 +251,7 @@ The cap-and-overflow rule (R12) + concentrate rule (R13) + 100% reclassification
 - [Affects R9][User decision] How many sessions at OVERDRIVE before prestige is available? Auto or opt-in?
 - [Affects R12][User decision] Tie-breaking for overflow target when 2+ secondary regions have equal wger weight (squat: BACK 8 / CORE 8 — pick alphabetically? prefer narrow? prefer broad? split a fractional star?).
 - [Affects R14][User decision — confirmed] Curator override roster (locked 2026-05-03): lateral raise → ARMS 2★; reverse fly → ARMS 2★; cable crossover → FRONT 2★; all CORE-primary moves (sit-up, crunch, Russian twist, wood chopper, deadbug, ab wheel, hanging leg raise, cable crunch, Pallof press, bird dog) → CORE 2★. Stay compound (no override): hyperextension, pullover, hip thrust. Auto-classify correctly (no override): bicep curl, leg curl, leg extension, calf raise, hip abduction, hip adduction, glute kickback, frog pump, pec deck, front raise, concentration curl, tricep extensions, hammer curl. King Compound tagged: squat / deadlift / leg press / hack squat + major variants per R12b.
-- [Affects R12b][User decision] `king_compound_mult` value placeholder = 2.0. Tunable. Should it be much higher (3.0?) to really reward the King lifts, or roughly aligned with compound (1.7?)?
+- ~~[Affects R12b] `king_compound_mult` value~~ — **resolved 2026-05-05**: locked at **1.75** (modest premium over regular compound 1.5).
 - [Affects R12b][User decision] Final list of King-tagged variants. Default proposed: back/front/sumo/paused squat, conventional/sumo/trap-bar/stiff-leg/RDL deadlift, standard/vertical leg press, barbell/machine hack squat. Single-leg variants NOT King.
 - [Affects R12][User decision] Tiebreak rule for compound second slot when equal-weight regions tie: alphabetical (proposed default), or prefer broad / prefer narrow.
 - [Affects R1a][User decision] Curator-flagged bodyweight coefficient list. Likely candidates: push-up (~0.64), dip (~0.85), pike push-up, decline push-up. Most BW exercises stay at 1.0. Final coefficient values + which exercises need them TBD during library curation.
@@ -283,7 +283,7 @@ The cap-and-overflow rule (R12) + concentrate rule (R13) + 100% reclassification
 - ✅ Math walkthroughs verified (bench, deadlift, bicep curl, hip thrust)
 - ✅ **wger → region map uses dual semantics (R10a)**: upper-body uses torso-only (chest=FRONT, lats=BACK, all delts=ARMS); lower-body uses position-of-leg (quads=FRONT, hams=BACK, glutes/calves/adductors/abductors=LEGS). Same region IDs, dual interpretation. Squat now distributes FRONT 60 / BACK 16 / LEGS 16 (was LEGS 84). Deadlift now BACK-dominant (was LEGS-dominant). Leg press auto-classifies compound (was 100% LEGS iso under torso-only mapping). Front raise still auto-iso ARMS 100%.
 - ✅ **Curator override roster (final)**: lateral raise + reverse fly → ARMS 2★ isolation; cable crossover → FRONT 2★ isolation; all CORE-primary moves (sit-up, crunch, Russian twist, wood chopper, deadbug, ab wheel, hanging leg raise, cable crunch, Pallof press, bird dog) → CORE 2★ isolation. Hyperextension, pullover, hip thrust stay compound (no override). Hip thrust dropped from override list under dual semantics + amended R12.
-- ✅ **King Compound exception (R12b)**: squats / deadlifts / leg press / hack squat (and major variants — see R12b) award **3 stars** (top 3 wger-weight regions × 1★ each) AND use a bigger Total XP multiplier `king_compound_mult` > `compound_mult` (placeholder 2.0 vs 1.5).
+- ✅ **King Compound exception (R12b)**: squats / deadlifts / leg press / hack squat (and major variants — see R12b) award **3 stars** (top 3 wger-weight regions × 1★ each) AND use a bigger Total XP multiplier `king_compound_mult = 1.75` > `compound_mult = 1.5` (locked 2026-05-05).
 - ✅ **Amended star rules**: drop band-triggered overflow. Compound = top 2 regions × 1★. King Compound = top 3 × 1★. Isolation = top 1 × 2★. R11 bands become advisory only.
 - ✅ **Unilateral / bilateral DB rule**: bilateral-simultaneous DB exercises (DB curl, DB press, DB lateral raise) AND truly unilateral exercises (Bulgarian split squat, single-arm row, pistol squat) both get `xpMultiplier = 2` to match barbell-equivalent volume. Unilateral exercises are assumed to have both sides completed before counting one full set.
 - ✅ **Neck and rotator cuff exercises**: NOT mapped to any region — those exercises are out of the curated library scope.
@@ -330,13 +330,12 @@ Newly settled (2026-05-04 session):
 The tier names match the app's "Gritted Teeth" identity end-to-end — every tier reads naturally as "[verb] teeth." Vocabulary mixes physical-grip mechanics, transformation/state-of-being words (HARDENED-family), and medieval/weapon imagery (BRANDISHED, HALLOWED). Multiplier values per tier still TBD (Outstanding Question — pending tier-counter mechanic decision).
 
 **After that, remaining priority order:**
-1. `king_compound_mult` value (placeholder 2.0)
-2. Prestige unlock requirement (does it still trigger at GRITTED? sessions held at GRITTED before ascend?) + ribbon bonus magnitude
-3. Holiday list + multiplier values
-4. Where user views their tier counter / current tier (UI surface)
-5. Per-set popup multiplier breakdown format
-6. Tiebreak rule for compound second slot
-7. Bodyweight coefficient curator list + storage / fallback for `user_bodyweight`
+1. Prestige unlock requirement (does it still trigger at GRITTED? sessions held at GRITTED before ascend?) + ribbon bonus magnitude
+2. Holiday list + multiplier values
+3. Where user views their tier counter / current tier (UI surface)
+4. Per-set popup multiplier breakdown format
+5. Tiebreak rule for compound second slot
+6. Bodyweight coefficient curator list + storage / fallback for `user_bodyweight`
 
 ## Next Steps
 
