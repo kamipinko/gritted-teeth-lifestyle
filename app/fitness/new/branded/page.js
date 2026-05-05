@@ -158,7 +158,6 @@ function CarveContent({ enabled }) {
  * commit/forge moment that SheetCarveButton's blade-swing earns.
  */
 function AttuneMovementsButton({ enabled, onTap, onHover }) {
-  const goldBg = enabled ? '#e4b022' : '#3a2f12'
   return (
     <button
       type="button"
@@ -169,30 +168,44 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
       className={`relative ${enabled ? 'cursor-pointer' : 'cursor-not-allowed'} w-full h-full`}
       style={{
         transform: 'skewX(-2deg)',
-        clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
-        overflow: 'hidden',
         background: 'transparent',
         border: 'none',
         WebkitTapHighlightColor: 'transparent',
         outline: 'none',
-        animation: enabled ? 'carve-pulse 3s ease-in-out infinite' : 'none',
+        opacity: enabled ? 1 : 0.4,
+        transition: 'opacity 200ms ease-out',
       }}
     >
-      <div
-        className="relative w-full h-full flex flex-col items-center justify-center px-1 gap-0.5"
-        style={{
-          clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
-          background: goldBg,
-        }}
+      {/* Slim red outline frame — slash polygon traced as SVG stroke so the
+          inside stays transparent (kanji watermark behind shows through).
+          preserveAspectRatio='none' lets the polygon stretch to button size. */}
+      <svg
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        className="absolute inset-0 pointer-events-none"
+        aria-hidden="true"
       >
-        {/* Two-line label — fits the narrow 2-cell kanji-width footprint
-            without overflowing horizontally. */}
+        <polygon
+          points="4,0 100,0 96,100 0,100"
+          fill="none"
+          stroke="#d4181f"
+          strokeWidth="1.5"
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
+      {/* Text layer — red on void inverts to black where it crosses the
+          red kanji watermark behind. mix-blend-mode is applied to the
+          inner span (not the wrapper) so the SVG frame stays solid red.
+          This is the same "negative photo" treatment used on the home
+          page's swipe hints / GTL label. */}
+      <div className="relative w-full h-full flex flex-col items-center justify-center px-1 gap-0.5">
         <span
           className="font-display leading-none whitespace-nowrap"
           style={{
             fontSize: '0.78rem',
             fontWeight: 900,
-            color: enabled ? '#070708' : '#e4b022',
+            color: '#d4181f',
+            mixBlendMode: 'difference',
             transform: 'skewX(2deg)',
             letterSpacing: '0.05em',
           }}
@@ -204,7 +217,8 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
           style={{
             fontSize: '0.78rem',
             fontWeight: 900,
-            color: enabled ? '#070708' : '#e4b022',
+            color: '#d4181f',
+            mixBlendMode: 'difference',
             transform: 'skewX(2deg)',
             letterSpacing: '0.05em',
           }}
