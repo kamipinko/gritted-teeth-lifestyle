@@ -157,7 +157,7 @@ function CarveContent({ enabled }) {
  * No slash-cut animation here — this is a navigation entry, not the
  * commit/forge moment that SheetCarveButton's blade-swing earns.
  */
-function AttuneMovementsButton({ enabled, onTap, onHover }) {
+function AttuneMovementsButton({ enabled, igniteKey = 0, onTap, onHover }) {
   // CRITICAL: no transform, no opacity, no z-index on the button itself.
   // Each of those creates a stacking context that isolates the text's
   // mix-blend-mode from the kanji backdrop. The wrapper around this
@@ -166,6 +166,34 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
   // Inactive dimming uses an rgba color (0.4 alpha) on the text + stroke
   // instead of element opacity, since rgba color doesn't isolate.
   const textColor = enabled ? '#d4181f' : 'rgba(212, 24, 31, 0.4)'
+
+  // Per-letter ignite cascade. Fires whenever igniteKey changes — the
+  // parent bumps it on the 0→1 day-selected transition. Letters render
+  // as inline-block spans so transform: scale() in the keyframe takes;
+  // animation-delay is offset by `${index * 50}ms` for the canonical
+  // yakiire stagger. Animation only attached on the first ignite (key>0)
+  // so the initial mount doesn't fire the cascade.
+  const renderLetters = (text, indexOffset) =>
+    [...text].map((ch, i) => {
+      const total = indexOffset + i
+      return (
+        <span
+          // Keying by igniteKey forces React to remount the spans on each
+          // ignite, which restarts the CSS animation cleanly.
+          key={`${igniteKey}-${total}`}
+          style={{
+            display: 'inline-block',
+            color: textColor,
+            animation: igniteKey > 0
+              ? `attune-letter-ignite 175ms cubic-bezier(0.18, 0.9, 0.4, 1) ${total * 50}ms both`
+              : undefined,
+          }}
+        >
+          {ch}
+        </span>
+      )
+    })
+
   return (
     <button
       type="button"
@@ -200,26 +228,26 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
       </svg>
       <div className="relative w-full h-full flex flex-col items-center justify-center px-1 gap-0.5">
         <span
+          aria-label="ATTUNE"
           className="font-display leading-none whitespace-nowrap"
           style={{
             fontSize: '1.1rem',
             fontWeight: 900,
-            color: textColor,
             letterSpacing: '0.05em',
           }}
         >
-          ATTUNE
+          {renderLetters('ATTUNE', 0)}
         </span>
         <span
+          aria-label="MOVEMENTS"
           className="font-display leading-none whitespace-nowrap"
           style={{
             fontSize: '1.1rem',
             fontWeight: 900,
-            color: textColor,
             letterSpacing: '0.05em',
           }}
         >
-          MOVEMENTS
+          {renderLetters('MOVEMENTS', 6)}
         </span>
       </div>
     </button>
@@ -432,11 +460,21 @@ export default function SchedulePage() {
     return () => window.removeEventListener('keydown', handleKey)
   }, [router])
 
-  // Stamp sound on first sheet open
+  // Stamp sound + Attune button yakiire ignite on first sheet open.
+  // attuneIgniteKey bumps each time we transition from 0→positive days
+  // selected so the button's per-letter cascade restarts cleanly. Resets
+  // back to 0 once all days are deselected so the next first-pick fires
+  // a fresh ignite instead of re-running the same key.
   const prevOpenRef = useRef(false)
+  const [attuneIgniteKey, setAttuneIgniteKey] = useState(0)
   useEffect(() => {
     const open = selectedDays.size > 0
-    if (open && !prevOpenRef.current) play('stamp')
+    if (open && !prevOpenRef.current) {
+      play('stamp')
+      setAttuneIgniteKey((k) => k + 1)
+    } else if (!open && prevOpenRef.current) {
+      setAttuneIgniteKey(0)
+    }
     prevOpenRef.current = open
   }, [selectedDays.size, play])
 
@@ -1020,6 +1058,7 @@ export default function SchedulePage() {
             >
               <AttuneMovementsButton
                 enabled={selectedDays.size > 0}
+                igniteKey={attuneIgniteKey}
                 onTap={() => { play('option-select'); router.push('/attune') }}
                 onHover={() => play('button-hover')}
               />
