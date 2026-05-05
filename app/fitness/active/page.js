@@ -1952,10 +1952,7 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
       const intent = consumePrefire('muscle')
       if (intent && muscles[0]) {
         setFocusMuscle(muscles[0])
-        // Chain stays armed across runs — disarm only happens on
-        // off-chain navigation via PredictiveTapChainGuard. This lets
-        // the user run the chain multiple times without re-tapping
-        // profile to re-arm.
+        disarmChain('muscle-fired')
       }
     }
     tryConsume()
@@ -2548,9 +2545,11 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
               play('card-confirm')
               setFocusMuscle(muscles[0])
               setFocusMuscleRect(rect)
-              // Chain stays armed — disarm only happens on off-chain
-              // navigation via PredictiveTapChainGuard. Allows back-to-back
-              // chain runs without re-tapping profile.
+              // Chain ends here — disarm so subsequent taps (like a
+              // non-today day card) don't accidentally stage 'muscle'
+              // because currentStep got stuck at 'today' from this run.
+              // User re-arms by tapping a profile chip on /fitness.
+              disarmChain('muscle-fired')
             }}
             className={`
               fixed z-[9991] flex items-center justify-center
