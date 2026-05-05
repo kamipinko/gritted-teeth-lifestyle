@@ -12,6 +12,7 @@ import {
   getBgmGainNode,
   resumeBgmCtx,
   getRandomTrackId,
+  setBgmMediaSession,
 } from '../lib/bgmTracks'
 
 // Pre-create the Audio element at module load with preload='auto' so it's ready
@@ -32,15 +33,58 @@ const bgMusicAudio = (() => {
   a.volume = 0
   window.__gtlBgMusic = a
   window.__gtlBgMusicTrackId = track.id
+  // Seed Media Session metadata at creation so the lockscreen has the
+  // current track name/artwork ready the moment audio first plays.
+  setBgmMediaSession(track)
   return a
 })()
 
-// Pause + reset on page hide/unload so a backgrounded PWA tab doesn't leave a
-// zombie audio playing while a refresh creates a second instance.
+// Pause + reset on real page teardown so a refresh doesn't leave a zombie
+// audio playing while the new module evaluation creates a second instance.
+// Gate on `event.persisted === false` so bfcache transitions — including
+// iOS lock/unlock — DON'T pause; the lockscreen-continuity code below
+// depends on the audio element staying live across hidden/visible.
 if (typeof window !== 'undefined' && bgMusicAudio && !window.__gtlBgMusicHideHook) {
   window.__gtlBgMusicHideHook = true
-  window.addEventListener('pagehide', () => {
+  window.addEventListener('pagehide', (event) => {
+    if (event.persisted) return
     try { bgMusicAudio.pause(); bgMusicAudio.currentTime = 0 } catch {}
+  })
+}
+
+// Lockscreen continuity: when the page goes hidden (screen lock or
+// PWA backgrounded), iOS suspends the AudioContext silently. The
+// audio element + Media Session metadata keep the system-level audio
+// session alive on the lockscreen, but when the page becomes visible
+// again we must resume() the AudioContext or the gain chain will stay
+// muted (audio element plays into a stopped graph). Idempotent — only
+// installs once across the SPA. Also flips mediaSession.playbackState
+// so the lockscreen play/pause toggle reflects reality.
+if (typeof window !== 'undefined' && bgMusicAudio && !window.__gtlBgMusicVisHook) {
+  window.__gtlBgMusicVisHook = true
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      // Page came back — resume the audio graph if iOS suspended it.
+      try {
+        const ctx = window.__gtlBgMusicCtx
+        if (ctx && ctx.state === 'suspended') ctx.resume()
+      } catch {}
+      try {
+        if (window.__gtlBgMusic && !window.__gtlBgMusic.paused) {
+          navigator.mediaSession.playbackState = 'playing'
+        }
+      } catch {}
+    } else {
+      // Page hidden (lock, app switcher, tab change). Do NOT pause the
+      // audio element — that's the whole point of this work; we want it
+      // to keep playing through the lock. Just mark the playback state
+      // for the lockscreen UI.
+      try {
+        if (window.__gtlBgMusic && !window.__gtlBgMusic.paused) {
+          navigator.mediaSession.playbackState = 'playing'
+        }
+      } catch {}
+    }
   })
 }
 
@@ -282,6 +326,7 @@ export default function Home() {
       a.src = track.src
       try { a.load() } catch {}
       window.__gtlBgMusicTrackId = track.id
+      setBgmMediaSession(track)
       // Allow startBgMusic to fire fresh on the next gate tap.
       window.__gtlBgMusicStarted = false
     }

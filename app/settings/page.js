@@ -13,6 +13,7 @@ import {
   getBgmGainNode,
   getBgmTargetVol,
   resumeBgmCtx,
+  setBgmMediaSession,
 } from '../../lib/bgmTracks'
 
 const KEY_SFX_VOLUME   = 'gtl-sfx-volume'
@@ -286,6 +287,7 @@ export default function SettingsPage() {
       a.src = defaultTrack.src
       try { a.load() } catch {}
       window.__gtlBgMusicTrackId = defaultTrack.id
+      setBgmMediaSession(defaultTrack)
       // bgMusicOn was just reset to true; play from top.
       playBgmFromTop(a)
     } else if (window.__gtlBgMusic && !window.__gtlBgMusic.paused) {

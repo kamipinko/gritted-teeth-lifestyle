@@ -13,6 +13,7 @@ import {
   getRandomTrackId,
   getBgmGainNode,
   resumeBgmCtx,
+  setBgmMediaSession,
 } from '../../../lib/bgmTracks'
 
 function readFlag(key, fallback) {
@@ -131,6 +132,7 @@ export default function BgmMusicPage() {
       a.src = track.src
       try { a.load() } catch {}
       window.__gtlBgMusicTrackId = track.id
+      setBgmMediaSession(track)
       if (bgMusicOn) playBgmFromTop(a)
     }
     play('option-select')
@@ -178,6 +180,7 @@ export default function BgmMusicPage() {
     try { a.load() } catch {}
     window.__gtlBgMusicTrackId = track.id
     setBgmTrackId(track.id)
+    setBgmMediaSession(track)
     if (bgMusicOn) playBgmFromTop(a)
   }
 
