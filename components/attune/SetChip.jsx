@@ -1,4 +1,17 @@
 'use client'
+/**
+ * SetChip — single attuned-exercise chip rendered inside a DayCell.
+ *
+ * Behaviors:
+ *   - useDraggable from @dnd-kit/core; activation distance 8px so a
+ *     pure tap never accidentally starts a drag.
+ *   - Long-press (550ms, stationary) opens ChipActionMenu with
+ *     Copy / Delete / Replace. If the user moves >5px before 550ms,
+ *     the long-press timer cancels and dnd-kit takes the drag instead.
+ *
+ * Drag activation, drop targets, and consent prompts (rest-day,
+ * cross-muscle) are wired at the page / DndContext level.
+ */
 import { useEffect, useRef, useState } from 'react'
 import { useDraggable } from '@dnd-kit/core'
 import ChipActionMenu from './ChipActionMenu'
@@ -11,7 +24,6 @@ export default function SetChip({ chip, cycleId, dayId, compact = false, onRepla
   const [menuOpen, setMenuOpen] = useState(false)
   const timerRef = useRef(null)
   const startRef = useRef(null)
-  const movedRef = useRef(false)
   const longPressedRef = useRef(false)
 
   const interactive = !!(cycleId && dayId)
@@ -23,19 +35,22 @@ export default function SetChip({ chip, cycleId, dayId, compact = false, onRepla
   })
 
   const clearTimer = () => {
-    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null }
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
   }
+
   useEffect(() => () => clearTimer(), [])
   useEffect(() => { if (isDragging) clearTimer() }, [isDragging])
 
   if (!chip) return null
   const label = chip.exerciseId || 'untitled'
-  const display = compact && label.length > 16 ? label.slice(0, 15) + '…' : label
+  const display = compact && label.length > 14 ? label.slice(0, 13) + '…' : label
 
   const handlePointerDown = (e) => {
     if (!interactive) return
     longPressedRef.current = false
-    movedRef.current = false
     startRef.current = { x: e.clientX, y: e.clientY }
     clearTimer()
     timerRef.current = setTimeout(() => {
@@ -47,19 +62,18 @@ export default function SetChip({ chip, cycleId, dayId, compact = false, onRepla
     if (!interactive || !startRef.current) return
     const dx = e.clientX - startRef.current.x
     const dy = e.clientY - startRef.current.y
-    if (Math.hypot(dx, dy) > MOVE_CANCEL_PX) { movedRef.current = true; clearTimer() }
+    if (Math.hypot(dx, dy) > MOVE_CANCEL_PX) clearTimer()
   }
-  const handlePointerEnd = () => { clearTimer(); startRef.current = null }
+  const handlePointerEnd = () => {
+    clearTimer()
+    startRef.current = null
+  }
   const handleClick = (e) => {
-    e.stopPropagation()
     if (longPressedRef.current) {
+      e.stopPropagation()
       e.preventDefault()
       longPressedRef.current = false
-      return
     }
-    if (movedRef.current || isDragging) return
-    if (!interactive) return
-    setMenuOpen(true)
   }
 
   const dragStyle = transform
@@ -70,23 +84,6 @@ export default function SetChip({ chip, cycleId, dayId, compact = false, onRepla
         boxShadow: isDragging ? '4px 4px 0 #070708' : 'none',
       }
     : {}
-
-  const stop = (e) => { e.stopPropagation(); e.preventDefault() }
-
-  const copyHandler = (e) => { stop(e); duplicateChip(cycleId, dayId, chip.id) }
-  const deleteHandler = (e) => { stop(e); deleteChip(cycleId, dayId, chip.id) }
-  const replaceHandler = (e) => { stop(e); if (onReplace) onReplace({ dayId, chipId: chip.id, fromLabel: label }) }
-
-  const iconBtnStyle = {
-    background: 'transparent',
-    border: 'none',
-    color: '#a8a39a',
-    fontSize: '0.7rem',
-    lineHeight: 1,
-    padding: '2px 3px',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-  }
 
   return (
     <>
@@ -105,32 +102,22 @@ export default function SetChip({ chip, cycleId, dayId, compact = false, onRepla
           background: '#0f0f12',
           border: '1px solid #2a2a30',
           borderLeft: '2px solid #d4181f',
-          padding: '4px 5px 4px 7px',
-          display: 'flex', alignItems: 'center', gap: 4,
+          padding: compact ? '3px 6px' : '5px 8px',
           fontFamily: 'var(--font-mono, ui-monospace, "Courier New", monospace)',
-          fontSize: compact ? '0.6rem' : '0.7rem',
+          fontSize: compact ? '0.65rem' : '0.75rem',
           letterSpacing: '0.06em',
           color: '#d8d2c2',
           textTransform: 'uppercase',
-          cursor: interactive ? 'pointer' : 'default',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          cursor: interactive ? 'grab' : 'default',
           touchAction: interactive ? 'none' : 'manipulation',
           ...dragStyle,
         }}
         title={label}
       >
-        <span style={{
-          flex: 1, minWidth: 0,
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-        }}>
-          {display}
-        </span>
-        {interactive && (
-          <span style={{ display: 'flex', gap: 0, flexShrink: 0 }}>
-            <button type="button" aria-label="copy" title="Copy" onPointerDown={stop} onClick={copyHandler} style={iconBtnStyle}>⎘</button>
-            <button type="button" aria-label="replace" title="Replace" onPointerDown={stop} onClick={replaceHandler} style={iconBtnStyle}>⇄</button>
-            <button type="button" aria-label="delete" title="Delete" onPointerDown={stop} onClick={deleteHandler} style={iconBtnStyle}>✕</button>
-          </span>
-        )}
+        {display}
       </div>
       {menuOpen && interactive && (
         <ChipActionMenu
