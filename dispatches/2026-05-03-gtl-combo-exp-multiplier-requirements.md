@@ -86,6 +86,34 @@ The new feature is a **combo-driven multiplier system** that layers on top. It i
   | BLOODIED → **GRITTED** | **10** | **100** |
 
   Rationale: first-week users get a satisfying climb (BRUSHED at session 1, BARED at session 2). Mid-game settles into a steady 4-7 per tier. Capstone GRITTED costs 10 sessions to give it final-boss weight. Total exactly 100 sessions to peak.
+
+- R5c. **Tier multiplier values (locked 2026-05-05)** — moderate exponential, RELAXED ×1.00 → GRITTED ×3.00. Geometric curve with per-step ratio ≈ 1.0565 (i.e., 3^(1/20)). Each tier-up multiplies your consistency credit by ~5.65% over the previous tier:
+
+  | Tier | Mult |
+  |---|---:|
+  | RELAXED | ×1.00 |
+  | BRUSHED | ×1.06 |
+  | BARED | ×1.12 |
+  | BRANDISHED | ×1.18 |
+  | PRIMED | ×1.25 |
+  | PRESSED | ×1.32 |
+  | SQUEEZED | ×1.39 |
+  | LOCKED | ×1.47 |
+  | DUG | ×1.55 |
+  | DRIVEN | ×1.64 |
+  | CLASPED | ×1.73 |
+  | CLENCHED | ×1.83 |
+  | CLAMPED | ×1.93 |
+  | WRENCHED | ×2.04 |
+  | CALLOUSED | ×2.16 |
+  | HARDENED | ×2.28 |
+  | HALLOWED | ×2.41 |
+  | GNAWED | ×2.54 |
+  | GNASHED | ×2.69 |
+  | BLOODIED | ×2.84 |
+  | **GRITTED** | **×3.00** |
+
+  Rationale: smooth and predictable. Mid-tiers feel earned (×1.5-2.0). GRITTED at ×3.0 stacks meaningfully with compound (×1.5) and holiday windows for peak moments around ×4.5-6.0 — substantial but not number-inflation territory. Math is clean (true geometric, no clamp).
 - R6. Within a tier, the per-session multiplier is constant (the tier value). The "ramp" is the tier-up flourish, not a within-tier crawl.
 - R7. Tier crossings get a P5/Gurren rank-up flourish (kanji, color, animation) when the user enters a new named tier.
 - R8. **Completion-threshold partial-credit rule** (refined 2026-05-05 to reconcile with R5a no-decay):
@@ -302,14 +330,13 @@ Newly settled (2026-05-04 session):
 The tier names match the app's "Gritted Teeth" identity end-to-end — every tier reads naturally as "[verb] teeth." Vocabulary mixes physical-grip mechanics, transformation/state-of-being words (HARDENED-family), and medieval/weapon imagery (BRANDISHED, HALLOWED). Multiplier values per tier still TBD (Outstanding Question — pending tier-counter mechanic decision).
 
 **After that, remaining priority order:**
-1. Tier multiplier values (21 values from RELAXED ×1.0 → GRITTED ×?, with curve shape TBD: linear, exponential, or hand-tuned)
-2. `king_compound_mult` value (placeholder 2.0)
-3. Prestige unlock requirement (does it still trigger at GRITTED? sessions held at GRITTED before ascend?) + ribbon bonus magnitude
-4. Holiday list + multiplier values
-5. Where user views their tier counter / current tier (UI surface)
-6. Per-set popup multiplier breakdown format
-7. Tiebreak rule for compound second slot
-8. Bodyweight coefficient curator list + storage / fallback for `user_bodyweight`
+1. `king_compound_mult` value (placeholder 2.0)
+2. Prestige unlock requirement (does it still trigger at GRITTED? sessions held at GRITTED before ascend?) + ribbon bonus magnitude
+3. Holiday list + multiplier values
+4. Where user views their tier counter / current tier (UI surface)
+5. Per-set popup multiplier breakdown format
+6. Tiebreak rule for compound second slot
+7. Bodyweight coefficient curator list + storage / fallback for `user_bodyweight`
 
 ## Next Steps
 
