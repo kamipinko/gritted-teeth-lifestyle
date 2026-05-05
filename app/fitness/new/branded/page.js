@@ -205,7 +205,6 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
             fontSize: '1.1rem',
             fontWeight: 900,
             color: textColor,
-            mixBlendMode: 'difference',
             letterSpacing: '0.05em',
           }}
         >
@@ -217,7 +216,6 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
             fontSize: '1.1rem',
             fontWeight: 900,
             color: textColor,
-            mixBlendMode: 'difference',
             letterSpacing: '0.05em',
           }}
         >
@@ -1007,13 +1005,16 @@ export default function SchedulePage() {
                 left: `${attuneRect.left}px`,
                 width: `${attuneRect.width}px`,
                 height: `${attuneRect.height}px`,
-                // No z-index — z-index would create a stacking context and
-                // break the text's mix-blend-mode against the kanji backdrop.
-                // Source order (rendered after cells.map) keeps the wrapper
-                // above the day cells visually.
+                // mix-blend-mode on the wrapper (not on the inner spans) so
+                // the entire overlay layer — SVG outline + text glyphs —
+                // composites against the kanji backdrop as one operation.
+                // On a span, the blend was getting promoted into a separate
+                // compositor layer that didn't see the kanji as backdrop;
+                // the wrapper-level blend keeps everything in one pass.
+                mixBlendMode: 'difference',
                 // clipPath restricts the click area to the slash silhouette,
                 // so taps in the wrapper's bounding-box corners pass through
-                // to underlying day cells. Doesn't create a stacking context.
+                // to underlying day cells.
                 clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
               }}
             >
