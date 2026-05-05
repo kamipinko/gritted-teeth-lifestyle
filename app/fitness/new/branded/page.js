@@ -846,7 +846,7 @@ export default function SchedulePage() {
                       style={{
                         fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
                         fontSize: '4rem',
-                        color: 'rgba(212, 24, 31, 0.7)',
+                        color: '#d4181f',
                         fontWeight: 700,
                       }}
                       aria-hidden="true"

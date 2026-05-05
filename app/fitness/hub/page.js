@@ -400,6 +400,16 @@ export default function FitnessPage() {
     setTransitioning(true)
   }
 
+  // Predictive-tap chain: reset currentStep to 'profile' on every mount.
+  // Handles back-and-forth navigation where stale currentStep from a
+  // later hop (e.g., 'today') would cause a manual LOAD CYCLE tap's
+  // pointerdown to stage the wrong intent. With this reset, manual taps
+  // on /fitness/hub always stage the correct 'hub-load' intent.
+  // No-op if chain isn't armed.
+  useEffect(() => {
+    setInAnimation('profile', true)
+  }, [])
+
   // Predictive-tap consume on mount: if the prior hop's hit-zone tap
   // staged a 'hub-load' intent (from /fitness during its HeistTransition),
   // auto-fire the LOAD CYCLE option as if the user tapped it.
