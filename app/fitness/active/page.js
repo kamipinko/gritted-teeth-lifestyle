@@ -1952,7 +1952,10 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
       const intent = consumePrefire('muscle')
       if (intent && muscles[0]) {
         setFocusMuscle(muscles[0])
-        disarmChain('muscle-fired')
+        // Chain stays armed across runs — disarm only happens on
+        // off-chain navigation via PredictiveTapChainGuard. This lets
+        // the user run the chain multiple times without re-tapping
+        // profile to re-arm.
       }
     }
     tryConsume()
@@ -2545,10 +2548,9 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
               play('card-confirm')
               setFocusMuscle(muscles[0])
               setFocusMuscleRect(rect)
-              // End of the predictive-tap chain. Disarm whether the
-              // user got here via a real tap or via prefire — either
-              // way, this is the last hop.
-              disarmChain('muscle-fired')
+              // Chain stays armed — disarm only happens on off-chain
+              // navigation via PredictiveTapChainGuard. Allows back-to-back
+              // chain runs without re-tapping profile.
             }}
             className={`
               fixed z-[9991] flex items-center justify-center
