@@ -58,13 +58,14 @@ The new feature is a **combo-driven multiplier system** that layers on top. It i
 
 **Consistency / Combo Identity**
 - R4. **Consistency XP** is a new, separate counter (parallel to Total XP). It accumulates from completing planned sessions on planned days. Its level determines the **Consistency multiplier** value (R2).
-- R5. The combo identity has named tiers: **NOVICE → IRON → STEEL → BLAZE → OVERDRIVE**. Each tier has an associated multiplier value (placeholder: 1.0 / 1.3 / 1.7 / 2.5 / 4.0 — tunable).
-- R6. Within a tier, Consistency XP grows via small per-session ticks (linear ramp), so multiplier increments smoothly inside the tier.
+- R5. The combo identity has a **21-tier teeth-grip ladder** running RELAXED → BRUSHED → BARED → BRANDISHED → PRIMED → PRESSED → SQUEEZED → LOCKED → DUG → DRIVEN → CLASPED → CLENCHED → CLAMPED → WRENCHED → CALLOUSED → HARDENED → HALLOWED → GNAWED → GNASHED → BLOODIED → **GRITTED** (peak). Each tier has an associated multiplier value (TBD — pending tier-multiplier decision).
+- R5a. **Tier counter mechanic (locked 2026-05-05)**: tier is determined by the **lifetime cumulative count of 100%-completion sessions**. Each fully-completed session ticks the counter +1. Partial sessions (50–99%) do **not** tick. Sub-50% sessions do not tick either. The counter has **no decay** — it never decreases. Once a tier is unlocked, the user keeps it permanently. **Peak tier (GRITTED) is reached at 100 cumulative 100%-sessions**, distributed across 20 tier-up events from RELAXED → GRITTED. Pacing curve TBD (linear ~5 sessions/tier vs front-loaded easy / back-loaded hard).
+- R6. Within a tier, the per-session multiplier is constant (the tier value). The "ramp" is the tier-up flourish, not a within-tier crawl.
 - R7. Tier crossings get a P5/Gurren rank-up flourish (kanji, color, animation) when the user enters a new named tier.
-- R8. **Completion-threshold break and partial-credit rule** (refined 2026-05-04):
-  - **<50% of planned sets completed** for a session → combo **resets** (consistency tier drops to NOVICE, multiplier returns to 1.0×).
-  - **≥50% but <100% completed** → combo is **preserved** (tier stays where it was). The consistency multiplier credit for that day's XP is **scaled linearly by completion percentage**: at 75% completion, only 75% of the consistency contribution applies; at 50%, only 50% applies. The other multipliers in the stack (compound/isolation, holiday, prestige) apply at **full strength regardless** — they are exercise/event facts, not combo facts.
-  - **100% of planned sets completed** → full consistency multiplier credit, plus tier-advancement progress per R6.
+- R8. **Completion-threshold partial-credit rule** (refined 2026-05-05 to reconcile with R5a no-decay):
+  - **<50% of planned sets completed** for a session → consistency multiplier for that day's XP is **0×** (combo "fizzles" for the session). Counter does NOT tick. Tier does NOT drop (R5a no-decay).
+  - **≥50% but <100% completed** → consistency multiplier scales **linearly by completion percentage**: at 75% completion, 75% of the consistency contribution applies; at 50%, 50% applies. Other multipliers (compound/isolation, holiday, prestige) apply at **full strength regardless**. Counter does NOT tick. Tier does NOT drop.
+  - **100% of planned sets completed** → full consistency multiplier credit, plus counter ticks +1 (advancing toward the next tier per R5a).
   - The completion percentage is computed from `sets_logged_today / sets_planned_today` (where "planned" = the attuned set count from the Attune Movements page).
 - R8a. **End-of-day reckoning model**: per-set XP that is logged in real time credits the immediate stack contributions (compound/isolation, holiday, prestige). The **consistency contribution is deferred** and computed at end-of-day once the completion percentage is known — `day_consistency_contribution = (sum_of_day_base_XP) × consistency_mult × completion_pct` (where `completion_pct = 0` if <50%). This avoids per-set-rollback complexity and lets the user see the consistency reward as a clear end-of-session payoff. UX detail (how it appears in the per-set animation vs end-of-day animation) is an open question for planning.
 
@@ -244,9 +245,7 @@ Newly settled (2026-05-04 session):
 - ✅ Bodyweight load rule (R1a): `effective_load = user_BW × bw_coefficient + entered_weight`; default coefficient 1.0; curator-flagged exceptions for push-up/dip etc.
 - ✅ Partial-day tier advancement model (Hybrid): 100% advances, 75–99% maintains, 50–74% may drop one tier, <50% resets.
 
-**Immediate next question (paused mid-conversation 2026-05-04):**
-
-What's the underlying counter for tier progression — XP-threshold (consistency XP accumulates and crosses tier thresholds), consecutive-day streak (N consecutive 100% days for tier-up), cumulative-day count (lifetime 100%-days for tier-up, no decay), or hybrid (streak for tier, separate XP for record-keeping)? Jordan paused here wanting to clarify the mental model further.
+**Tier counter mechanic resolved (2026-05-05):** option 3 (cumulative 100%-sessions, no decay). Peak (GRITTED) at **100 cumulative 100%-sessions**. See R5a above for full rule and R8 for reconciliation with the partial-credit semantics.
 
 **Tier names locked (2026-05-05 session, third pin)** — 21-tier teeth-grip ladder, all past-tense forms, all read as "[verb] teeth":
 
@@ -277,16 +276,15 @@ What's the underlying counter for tier progression — XP-threshold (consistency
 The tier names match the app's "Gritted Teeth" identity end-to-end — every tier reads naturally as "[verb] teeth." Vocabulary mixes physical-grip mechanics, transformation/state-of-being words (HARDENED-family), and medieval/weapon imagery (BRANDISHED, HALLOWED). Multiplier values per tier still TBD (Outstanding Question — pending tier-counter mechanic decision).
 
 **After that, remaining priority order:**
-1. Tier multiplier values (NOVICE / IRON / STEEL / BLAZE / OVERDRIVE)
-2. `king_compound_mult` value (placeholder 2.0)
-3. Sessions per tier (pacing)
-4. Grace days / streak freezes (Duolingo-style or strict)
-5. Prestige unlock requirement + bonus magnitude
-6. Holiday list + multiplier values
-7. Where user views Consistency XP / current tier (UI surface)
-8. Per-set popup multiplier breakdown format
-9. Tiebreak rule for compound second slot
-10. Bodyweight coefficient curator list + storage / fallback for `user_bodyweight`
+1. **Pacing curve** for the 21 tiers across 100 sessions (linear ~5/tier vs front-loaded easy / back-loaded hard vs hybrid)
+2. Tier multiplier values (21 values from RELAXED ×1.0 → GRITTED ×?, with curve shape TBD: linear, exponential, or hand-tuned)
+3. `king_compound_mult` value (placeholder 2.0)
+4. Prestige unlock requirement (does it still trigger at GRITTED? sessions held at GRITTED before ascend?) + ribbon bonus magnitude
+5. Holiday list + multiplier values
+6. Where user views their tier counter / current tier (UI surface)
+7. Per-set popup multiplier breakdown format
+8. Tiebreak rule for compound second slot
+9. Bodyweight coefficient curator list + storage / fallback for `user_bodyweight`
 
 ## Next Steps
 
