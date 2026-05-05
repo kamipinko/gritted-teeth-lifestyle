@@ -764,7 +764,7 @@ function ActivatePopup({ cycle, onTap, onSwipe }) {
           }}
           aria-hidden="true"
         >
-          <LogoStencil size={56} />
+          <LogoStencil size={56} paused={!entranceDone || dragX !== 0} />
         </div>
 
         <div
