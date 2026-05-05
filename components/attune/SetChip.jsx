@@ -123,7 +123,8 @@ export default function SetChip({ chip, cycleId, dayId, compact = false, onRepla
         <span style={{
           flex: 1, minWidth: 0,
           whiteSpace: 'normal',
-          wordBreak: 'break-word',
+          wordBreak: 'normal',
+          overflowWrap: 'break-word',
           lineHeight: 1.2,
         }}>
           {label}
