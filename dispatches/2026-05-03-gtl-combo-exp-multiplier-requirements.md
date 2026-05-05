@@ -159,7 +159,23 @@ The new feature is a **combo-driven multiplier system** that layers on top. It i
 
 **Visibility & UI**
 - R17. The active-page nav stays clean — no constant multiplier display. The existing total XP bar is unchanged.
-- R18. After a set is logged, the **per-set XP-fly animation** reveals the multiplier stack momentarily (e.g., "base 1575 + (×1.3 IRON) + (×1.5 COMPOUND) = +4411 EXP"). Stack is a moment, not a constant.
+- R18. **Per-set cinematic reveal (locked 2026-05-05)** — when a set is logged, the XP-fly animation reveals the multiplier stack as a **sequential cinematic** (~1.2-1.5s total). Format reflects R2's additive contributions:
+
+  ```
+  +1,800 EXP                  ← base contribution flashes in
+        ↓ BRANDISHED +1.18×
+  +2,124 EXP                  ← consistency contribution adds (base × 1.18)
+        ↓ KING +1.75×
+  +3,150 EXP                  ← class contribution adds (base × 1.75)
+        ↓ RIBBONS +0.20×
+  +360 EXP                    ← prestige contribution adds (base × 0.20)
+  ────────────────────────────
+  = +7,434 EXP TOTAL  🔥
+  ```
+
+  Each line flashes in turn, running total accumulates downward. Inactive multipliers (no holiday today, no prestige badges, RELAXED tier) skip rendering — the cinematic shortens automatically. Holiday days insert a holiday line in tier 1/2/3 color.
+
+  Stack is a moment, not a constant. The cinematic completes before the next set's UI accepts input — total time tuned so high-tempo logging never feels gated.
 - R19. The user infers per-region growth via the existing transmutation-circle star chart on the stats page. The compound/isolation/multiplier dynamics surface visually over time as some star points grow faster than others. Star awards from R11–R13 fire visually on the chart per set.
 - R20. **Tier identity surface (locked 2026-05-05)** — the user's current tier name lives on the **profile page** as an identity tag directly under their display name (e.g., "Jordan H. — **BRANDISHED**"). The tag uses the tier's associated kanji + color treatment (per R7 rank-up styling). Galaxy-Spiral ribbons (R9) render as a row of icons immediately below the identity tag — earned ribbons fill in left-to-right; unearned slots are hidden until the first ribbon is claimed. The tier becomes part of the user's identity rather than a transient HUD element.
 - R20a. **Tier progress detail** — the precise progress-bar to next tier ("3/7 sessions to HARDENED"), cumulative 100%-session count, and ribbon history live on the **stats page** alongside the existing transmutation-circle chart. Profile is the identity surface; stats is the analytic surface.
@@ -357,9 +373,8 @@ Newly settled (2026-05-04 session):
 The tier names match the app's "Gritted Teeth" identity end-to-end — every tier reads naturally as "[verb] teeth." Vocabulary mixes physical-grip mechanics, transformation/state-of-being words (HARDENED-family), and medieval/weapon imagery (BRANDISHED, HALLOWED). Multiplier values per tier still TBD (Outstanding Question — pending tier-counter mechanic decision).
 
 **After that, remaining priority order:**
-1. Per-set popup multiplier breakdown format
-2. Tiebreak rule for compound second slot
-3. Bodyweight coefficient curator list + storage / fallback for `user_bodyweight`
+1. Tiebreak rule for compound second slot
+2. Bodyweight coefficient curator list + storage / fallback for `user_bodyweight`
 
 ## Next Steps
 
