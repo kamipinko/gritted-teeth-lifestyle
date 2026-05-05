@@ -248,6 +248,31 @@ Newly settled (2026-05-04 session):
 
 What's the underlying counter for tier progression — XP-threshold (consistency XP accumulates and crosses tier thresholds), consecutive-day streak (N consecutive 100% days for tier-up), cumulative-day count (lifetime 100%-days for tier-up, no decay), or hybrid (streak for tier, separate XP for record-keeping)? Jordan paused here wanting to clarify the mental model further.
 
+**Tier names locked (2026-05-04 session, second pin)** — 18-tier teeth-grip ladder, all past-tense forms, all read as "[verb] teeth":
+
+| Tier | Name | Notes |
+|---|---|---|
+| 1 | **RELAXED** | baseline — no multiplier (×1.0), combo dormant |
+| 2 | **BRUSHED** | barely contact |
+| 3 | **BARED** | display / intent |
+| 4 | **CLASPED** | firm-gentle hold |
+| 5 | **PRESSED** | sustained pressure |
+| 6 | **WORKED** | sustained labor |
+| 7 | **SQUEEZED** | compressed |
+| 8 | **HARDENED** | firmed up |
+| 9 | **LOCKED** | held fast |
+| 10 | **DUG** | engaged deeply |
+| 11 | **DRIVEN** | forced in (active force) |
+| 12 | **GNAWED** | sustained tearing motion |
+| 13 | **CLAMPED** | firm closure |
+| 14 | **CLENCHED** | committed closure |
+| 15 | **WRENCHED** | extreme twisting force |
+| 16 | **GNASHED** | struggle / anguish |
+| 17 | **BLOODIED** | battle-marked, post-fight |
+| 18 | **GRITTED** | peak — won't give |
+
+The tier names match the app's "Gritted Teeth" identity end-to-end — every tier reads naturally as "[verb] teeth." Multiplier values per tier still TBD (Outstanding Question — pending tier-counter mechanic decision).
+
 **After that, remaining priority order:**
 1. Tier multiplier values (NOVICE / IRON / STEEL / BLAZE / OVERDRIVE)
 2. `king_compound_mult` value (placeholder 2.0)
