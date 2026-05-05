@@ -132,7 +132,27 @@ The new feature is a **combo-driven multiplier system** that layers on top. It i
   - **Cycle length:** 100 sessions to GRITTED + 20 held = **120 sessions per ribbon**.
 
 **Holiday Multiplier**
-- R16. The Holiday multiplier is triggered by **real-world calendar holidays** (hard-coded list — exact list TBD). When active on a given day, it contributes to total XP per R2. User has no control; it just fires on the date.
+- R16. **Holiday list and tiered values (locked 2026-05-05)** — the `holiday_mult` contribution under R2 fires on these dates with the values shown. User has no control; the bonus auto-applies on the matching date.
+
+  **Tier 1 — major (×1.5):**
+  - User's birthday (per profile DOB)
+  - New Year's Day (Jan 1)
+  - Christmas (Dec 25)
+
+  **Tier 2 — feast (×1.0):**
+  - Independence Day (Jul 4)
+  - Thanksgiving (4th Thursday in November)
+
+  **Tier 3 — federal (×0.5):**
+  - MLK Day (3rd Monday in January)
+  - Presidents' Day (3rd Monday in February)
+  - Memorial Day (last Monday in May)
+  - Juneteenth (Jun 19)
+  - Labor Day (1st Monday in September)
+  - Columbus Day / Indigenous Peoples' Day (2nd Monday in October)
+  - Veterans Day (Nov 11)
+
+  Total: 11 federal holidays + birthday = **12 possible holiday days/yr per user**. If two holidays land on the same day (rare — e.g., birthday on Christmas), apply the higher tier only (no stacking within R2's holiday slot — though the user's higher-tier bonus is already strong).
 
 **wger Licensing**
 - R15. wger code is AGPLv3 (does not bind us — we don't use their code), data is CC-BY-SA. Compliance: a single attribution line in the **settings credits page** is sufficient. We don't redistribute the data, so ShareAlike doesn't bind.
@@ -262,7 +282,7 @@ The cap-and-overflow rule (R12) + concentrate rule (R13) + 100% reclassification
 - [Affects R1a][User decision] Curator-flagged bodyweight coefficient list. Likely candidates: push-up (~0.64), dip (~0.85), pike push-up, decline push-up. Most BW exercises stay at 1.0. Final coefficient values + which exercises need them TBD during library curation.
 - [Affects R1a][Technical] Where is `user_bodyweight` stored in the GTL profile? Existing field, or new addition? If new, what UI surface captures it (settings page? first-time onboarding? prompt on first BW set logged?). Verify against the profile schema during planning.
 - [Affects R1a][User decision] If `user_bodyweight` is unset when a BW set is logged, what's the fallback? (prompt user before first BW set / use a default placeholder like 150 lb / refuse to credit XP / treat as 0 weight).
-- [Affects R16][User decision] Which calendar holidays trigger? And what holiday_mult value(s) per holiday?
+- ~~[Affects R16] Which calendar holidays trigger? And what holiday_mult value(s)?~~ — **resolved 2026-05-05**: 11 US federal holidays + user birthday, tiered (1.5 / 1.0 / 0.5). See R16.
 - [Affects R18][User decision] Exact format of the per-set popup multiplier breakdown text + any per-region star "pop" animation choreography.
 - [Affects all][User decision] Where the user **views their current Consistency XP / current tier** (UI surface — settings? stats? a new dedicated panel?).
 
@@ -335,11 +355,10 @@ Newly settled (2026-05-04 session):
 The tier names match the app's "Gritted Teeth" identity end-to-end — every tier reads naturally as "[verb] teeth." Vocabulary mixes physical-grip mechanics, transformation/state-of-being words (HARDENED-family), and medieval/weapon imagery (BRANDISHED, HALLOWED). Multiplier values per tier still TBD (Outstanding Question — pending tier-counter mechanic decision).
 
 **After that, remaining priority order:**
-1. Holiday list + multiplier values
-2. Where user views their tier counter / current tier / ribbons (UI surface)
-3. Per-set popup multiplier breakdown format
-4. Tiebreak rule for compound second slot
-5. Bodyweight coefficient curator list + storage / fallback for `user_bodyweight`
+1. Where user views their tier counter / current tier / ribbons (UI surface)
+2. Per-set popup multiplier breakdown format
+3. Tiebreak rule for compound second slot
+4. Bodyweight coefficient curator list + storage / fallback for `user_bodyweight`
 
 ## Next Steps
 
