@@ -1,19 +1,4 @@
 'use client'
-/**
- * DayCell — single carved-day cell on the Attune calendar.
- *
- * Tiered rendering by zoomTier:
- *   far  — muscle kanji (centered) + chip-count badge in corner
- *   mid  — kanji header + first 2 chips truncated + "+N more"
- *   near — kanji header + full sortable chip stack
- *
- * Locked (completed) days render dimmed with a lock badge and disable
- * chip operations via pointer-events: none on the chip stack.
- *
- * useDroppable wraps the cell so chips dragged from another day land
- * here. Drop logic (rest-day prompt, cross-muscle prompt, locked
- * rejection) lives at the page level.
- */
 import { useDroppable } from '@dnd-kit/core'
 import SetChip from './SetChip'
 
@@ -22,21 +7,28 @@ const MUSCLE_KANJI = {
   quads: '腿', hamstrings: '裏', calves: '脛',
   biceps: '二', triceps: '三', glutes: '尻', abs: '腹',
 }
-
-function muscleKanji(muscleId) {
-  return MUSCLE_KANJI[muscleId] || '·'
+const MUSCLE_LABEL = {
+  chest: 'CHEST', shoulders: 'SHOULDERS', back: 'BACK', forearms: 'FOREARMS',
+  quads: 'QUADS', hamstrings: 'HAMSTRINGS', calves: 'CALVES',
+  biceps: 'BICEPS', triceps: 'TRICEPS', glutes: 'GLUTES', abs: 'ABS',
 }
+
+const DOW_SHORT = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+
+function muscleKanji(id) { return MUSCLE_KANJI[id] || '·' }
+function muscleLabel(id) { return MUSCLE_LABEL[id] || '' }
 
 export default function DayCell({
   cycleId,
   dayId,
+  dow,
+  dayNum,
   muscles = [],
   chips = [],
   isLocked = false,
   isRestDay = false,
   isSelected = false,
   isSource = false,
-  tier = 'far',
   onTap,
   onChipReplace,
 }) {
@@ -50,12 +42,9 @@ export default function DayCell({
     if (onTap) onTap(dayId)
   }
 
-  const kanjiStack = muscles.length > 0
-    ? muscles.map(muscleKanji).join('')
-    : (isRestDay ? '休' : '·')
+  const kanjiStack = muscles.length > 0 ? muscles.map(muscleKanji).join('') : (isRestDay ? '休' : '·')
+  const labelStack = muscles.length > 0 ? muscles.map(muscleLabel).filter(Boolean).join(' · ') : (isRestDay ? 'REST' : '')
 
-  const dimmedStyle = isLocked ? { opacity: 0.42 } : {}
-  // Border priority: drag-over > selected (red ring) > default
   let border = `1px solid ${isLocked ? '#3a3a42' : '#2a2a30'}`
   if (isSelected) border = '2px solid #d4181f'
   if (isOver)      border = isLocked ? '2px solid #ff2a36' : '2px solid #f1eee5'
@@ -73,65 +62,85 @@ export default function DayCell({
         background: isRestDay ? '#0f0f12' : '#1a1a1e',
         border,
         borderRadius: 4,
-        padding: tier === 'far' ? '0.5rem' : '0.6rem 0.55rem',
+        padding: '0.45rem 0.45rem 0.55rem 0.45rem',
         textAlign: 'left',
         color: '#f1eee5',
         fontFamily: 'inherit',
         cursor: isLocked ? 'default' : 'pointer',
-        minHeight: tier === 'far' ? 84 : tier === 'mid' ? 132 : 200,
-        display: 'flex', flexDirection: 'column', gap: '0.4rem',
+        minHeight: 140,
+        display: 'flex', flexDirection: 'column', gap: '0.25rem',
         boxShadow: isSelected ? '0 0 0 1px rgba(212,24,31,0.55)' : 'none',
-        ...dimmedStyle,
+        opacity: isLocked ? 0.42 : 1,
       }}
     >
-      {/* Source-day star (★) — top-left corner of the source cell. */}
-      {isSource && (
-        <div
-          aria-label="source day"
-          style={{
-            position: 'absolute', top: 4, left: 6,
-            fontSize: '0.85rem',
-            color: '#d4181f',
-            lineHeight: 1,
-            textShadow: '0 1px 0 #070708',
-            pointerEvents: 'none',
-          }}
-        >
-          ★
-        </div>
-      )}
+      {/* Header: DOW left (with star inline if source), day number right */}
       <div
         style={{
-          fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-          fontSize: tier === 'far' ? '1.8rem' : '1.4rem',
-          color: isRestDay ? '#5a5a5e' : '#d4181f',
-          lineHeight: 1, textAlign: tier === 'far' ? 'center' : 'left',
+          display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+          fontFamily: 'var(--font-mono, ui-monospace, "Courier New", monospace)',
+          fontSize: '0.55rem', letterSpacing: '0.16em', lineHeight: 1,
+          color: isRestDay ? '#5a5a5e' : '#a8a39a',
         }}
-        aria-hidden="true"
       >
-        {kanjiStack}
-      </div>
-
-      {tier === 'far' && chips.length > 0 && (
-        <div
+        <span>
+          {isSource && <span style={{ color: '#d4181f', marginRight: 3 }}>★</span>}
+          {DOW_SHORT[dow] || ''}
+        </span>
+        <span
           style={{
-            position: 'absolute', top: 6, right: 8,
-            fontFamily: 'var(--font-mono, ui-monospace, "Courier New", monospace)',
-            fontSize: '0.65rem',
-            color: '#f1eee5',
-            background: '#d4181f',
-            borderRadius: 2,
-            padding: '1px 5px',
-            letterSpacing: '0.05em',
+            fontFamily: 'var(--font-display, Anton, sans-serif)',
+            fontSize: '0.95rem',
+            letterSpacing: 0,
+            color: isRestDay ? '#5a5a5e' : '#f1eee5',
           }}
         >
-          {chips.length}
-        </div>
-      )}
+          {dayNum}
+        </span>
+      </div>
 
-      {tier === 'mid' && chips.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, pointerEvents: isLocked ? 'none' : 'auto' }}>
-          {chips.slice(0, 2).map(chip => (
+      {/* Kanji + English label paired */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+        <span
+          style={{
+            fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
+            fontSize: '1.4rem',
+            color: isRestDay ? '#5a5a5e' : '#d4181f',
+            lineHeight: 1,
+          }}
+          aria-hidden="true"
+        >
+          {kanjiStack}
+        </span>
+        {labelStack && (
+          <span
+            style={{
+              fontFamily: 'var(--font-mono, ui-monospace, "Courier New", monospace)',
+              fontSize: '0.5rem',
+              letterSpacing: '0.16em',
+              color: isRestDay ? '#5a5a5e' : '#a8a39a',
+              lineHeight: 1.1,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: '100%',
+            }}
+          >
+            {labelStack}
+          </span>
+        )}
+      </div>
+
+      {/* Chip stack — ALWAYS visible (no tier gating). One chip per row. */}
+      {chips.length > 0 && (
+        <div
+          style={{
+            display: 'flex', flexDirection: 'column', gap: 3,
+            pointerEvents: isLocked ? 'none' : 'auto',
+            marginTop: 2,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {chips.map(chip => (
             <SetChip
               key={chip.id}
               chip={chip}
@@ -141,31 +150,20 @@ export default function DayCell({
               compact
             />
           ))}
-          {chips.length > 2 && (
-            <div style={{ fontSize: '0.65rem', color: '#888', letterSpacing: '0.08em' }}>
-              +{chips.length - 2} more
-            </div>
-          )}
         </div>
       )}
 
-      {tier === 'near' && chips.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, pointerEvents: isLocked ? 'none' : 'auto' }}>
-          {chips.map(chip => (
-            <SetChip
-              key={chip.id}
-              chip={chip}
-              cycleId={isLocked ? null : cycleId}
-              dayId={isLocked ? null : dayId}
-              onReplace={onChipReplace}
-            />
-          ))}
-        </div>
-      )}
-
-      {chips.length === 0 && tier !== 'far' && !isRestDay && (
-        <div style={{ fontSize: '0.6rem', color: '#666', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-          empty
+      {chips.length === 0 && !isRestDay && !isLocked && (
+        <div style={{
+          fontSize: '0.55rem',
+          color: '#666',
+          letterSpacing: '0.16em',
+          textTransform: 'uppercase',
+          textAlign: 'center',
+          marginTop: 'auto',
+          paddingTop: 4,
+        }}>
+          tap to attune
         </div>
       )}
 
