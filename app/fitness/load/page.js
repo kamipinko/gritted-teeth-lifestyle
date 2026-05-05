@@ -16,7 +16,7 @@ import { pk } from '../../../lib/storage'
 import HeistTransition from '../../../components/HeistTransition'
 import RetreatButton from '../../../components/RetreatButton'
 import { LogoStencil, LogoTarget } from '../../../components/LogoHalf'
-import { consumePrefire, setInAnimation } from '../../../lib/predictiveTap'
+import { consumePrefire, setInAnimation, subscribeStaged } from '../../../lib/predictiveTap'
 
 const MUSCLE_LABELS = {
   chest: 'CHEST', back: 'BACK', shoulders: 'SHOULDERS',
@@ -1045,13 +1045,38 @@ export default function LoadCyclePage() {
   // available in state (the ActivatePopup has just rendered). If the
   // prior hop's hit-zone tap staged 'activate', auto-fire handleActivate
   // on the same cycle the user would have tapped.
+  //
+  // Mirrors the dual mount-time-consume + subscribeStaged pattern used
+  // on /fitness/active and DayFocus. Without the subscription, an
+  // 'activate' intent that arrives AFTER mount-time consume runs (e.g.,
+  // cached/fast remount on back-nav, iOS PWA event lag) sits in
+  // sessionStorage with no listener and the chain stalls on /fitness/load.
+  // This was the "activate hop is the only one that doesn't work" bug.
   useEffect(() => {
     if (!ready) return
     if (!selectedId) return
     const cycle = cycles.find((c) => c.id === selectedId)
     if (!cycle) return
-    const intent = consumePrefire('activate')
-    if (intent) handleActivate(cycle)
+    let consumed = false
+    const tryConsume = () => {
+      if (consumed) return
+      const intent = consumePrefire('activate')
+      if (intent) {
+        consumed = true
+        handleActivate(cycle)
+      }
+    }
+    tryConsume()
+    const unsub = subscribeStaged((stepName) => {
+      if (stepName === 'activate') tryConsume()
+    })
+    const retries = [60, 180, 360, 600].map((ms) =>
+      setTimeout(tryConsume, ms)
+    )
+    return () => {
+      unsub()
+      retries.forEach(clearTimeout)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, selectedId])
 
