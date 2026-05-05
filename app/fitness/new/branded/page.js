@@ -202,7 +202,7 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
         <span
           className="font-display leading-none whitespace-nowrap"
           style={{
-            fontSize: '0.78rem',
+            fontSize: '1.1rem',
             fontWeight: 900,
             color: textColor,
             mixBlendMode: 'difference',
@@ -214,7 +214,7 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
         <span
           className="font-display leading-none whitespace-nowrap"
           style={{
-            fontSize: '0.78rem',
+            fontSize: '1.1rem',
             fontWeight: 900,
             color: textColor,
             mixBlendMode: 'difference',
