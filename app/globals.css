@@ -248,6 +248,47 @@ html, body {
   100% { transform: scale(1)    translate(0,    0);    }
 }
 
+/* Per-letter yakiire ignite for the Attune Movements button. Canonical
+ * 50ms flame / 50ms zoom / 75ms cooled (175ms total) with letters
+ * staggered 50ms via inline animation-delay. Color flashes through
+ * bright thermal tones — under the wrapper's mix-blend-mode: difference,
+ * the flash reads as a green/orange thermal sweep across the red kanji
+ * before the letters settle back to red (and the standard red→black
+ * flip resumes). Text-shadow flame is visible on the dark page bg
+ * outside the kanji. */
+@keyframes attune-letter-ignite {
+  /* 0% and 100% intentionally omit `color` so the element keeps its base
+   * inline color (red / dimmed-red) before and after the animation. The
+   * bright thermal colors only land during the 29%/57% window. */
+  0% {
+    text-shadow: none;
+    transform: scale(1);
+  }
+  29% {
+    /* end of flame (50ms): catch — bright yellow-white, glow building */
+    color: #ffd060;
+    text-shadow:
+      0 0 4px #ff8030,
+      0 0 12px #ff5000,
+      0 0 22px rgba(255, 80, 0, 0.55);
+    transform: scale(1.16);
+  }
+  57% {
+    /* end of zoom (100ms): peak — orange core, widest glow */
+    color: #ff5000;
+    text-shadow:
+      0 0 6px #ff5000,
+      0 0 18px rgba(255, 80, 0, 0.65),
+      0 0 30px rgba(255, 80, 0, 0.35);
+    transform: scale(1.22);
+  }
+  100% {
+    /* end of cooled (175ms): glow fades, scale settles */
+    text-shadow: none;
+    transform: scale(1);
+  }
+}
+
 /* Body pulse — radial red bloom that fires once all muscles are lit */
 @keyframes body-pulse {
   0%   { opacity: 0;   transform: scale(0.7); }
