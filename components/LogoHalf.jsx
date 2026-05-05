@@ -21,12 +21,13 @@
  */
 
 // Coordinates anchor on the white tooth-row in the upper-middle of the
-// logo-stencil PNG (asset bounding box of the jagged biting edge measured
-// at roughly x 27-62%, y 24-34% of the square).
+// logo-stencil PNG. Nudged right + up from the previous baseline. Long
+// durations + spread-out delays so only 0–1 star is ever lit at a time
+// (intermittent twinkles, not a continuous shimmer).
 const SPARKLES = [
-  { left: '32%', top: '28%', delay: '0s',    dur: '1.8s' },
-  { left: '46%', top: '32%', delay: '0.6s',  dur: '2.3s' },
-  { left: '58%', top: '26%', delay: '1.15s', dur: '2.6s' },
+  { left: '42%', top: '22%', delay: '0s',   dur: '4s' },
+  { left: '56%', top: '26%', delay: '1.7s', dur: '5s' },
+  { left: '66%', top: '20%', delay: '3.2s', dur: '4.5s' },
 ]
 
 export function LogoStencil({ size = 44, paused = false }) {
@@ -42,9 +43,9 @@ export function LogoStencil({ size = 44, paused = false }) {
     >
       <style>{`
         @keyframes gtl-tooth-sparkle {
-          0%, 100% { transform: translate(-50%, -50%) scale(0);   opacity: 0; }
-          45%      { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
-          55%      { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+          0%, 82%, 100% { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
+          88%           { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+          94%           { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
         }
       `}</style>
       <img
