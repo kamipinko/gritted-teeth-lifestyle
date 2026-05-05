@@ -2935,10 +2935,12 @@ export default function ActiveCyclePage() {
           const dI = Math.abs(parseDate(iso) - parseDate(todayIsoStr))
           return dI < dC ? iso : closest
         }, days[0])
+    let consumed = false
     const tryConsume = () => {
-      if (focusDay) return
+      if (consumed || focusDay) return
       const intent = consumePrefire('today')
       if (intent) {
+        consumed = true
         const w = (typeof window !== 'undefined') ? window.innerWidth : 390
         const syntheticRect = { left: 12, right: w - 12, top: 479, bottom: 549, width: w - 24, height: 70 }
         handleDayClick(target, syntheticRect)
@@ -2952,9 +2954,20 @@ export default function ActiveCyclePage() {
     // predictive tap AFTER mount-time consume already ran. The
     // staged-event listener re-attempts consume the moment a 'today'
     // intent lands (mirrors DayFocus's 'muscle' subscription pattern).
-    return subscribeStaged((stepName) => {
+    const unsub = subscribeStaged((stepName) => {
       if (stepName === 'today') tryConsume()
     })
+    // Polling fallback — covers any remaining iOS PWA timing race where
+    // both mount-time consume and the staged-event subscription miss the
+    // intent (e.g., the stage happens between mount commit and useEffect
+    // attachment). Brief, bounded retries during the entrance window.
+    const retries = [60, 180, 360, 600].map((ms) =>
+      setTimeout(tryConsume, ms)
+    )
+    return () => {
+      unsub()
+      retries.forEach(clearTimeout)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, days, focusDay])
 
