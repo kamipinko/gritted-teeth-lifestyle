@@ -158,6 +158,14 @@ function CarveContent({ enabled }) {
  * commit/forge moment that SheetCarveButton's blade-swing earns.
  */
 function AttuneMovementsButton({ enabled, onTap, onHover }) {
+  // CRITICAL: no transform, no opacity, no z-index on the button itself.
+  // Each of those creates a stacking context that isolates the text's
+  // mix-blend-mode from the kanji backdrop. The wrapper around this
+  // component (in the grid render) must also avoid stacking context
+  // creators for the same reason.
+  // Inactive dimming uses an rgba color (0.4 alpha) on the text + stroke
+  // instead of element opacity, since rgba color doesn't isolate.
+  const textColor = enabled ? '#d4181f' : 'rgba(212, 24, 31, 0.4)'
   return (
     <button
       type="button"
@@ -165,48 +173,39 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
       onClick={enabled ? onTap : undefined}
       onMouseEnter={enabled ? onHover : undefined}
       disabled={!enabled}
-      className={`relative ${enabled ? 'cursor-pointer' : 'cursor-not-allowed'} w-full h-full`}
+      className={`relative ${enabled ? 'cursor-pointer' : 'cursor-not-allowed'} w-full h-full block`}
       style={{
-        transform: 'skewX(-2deg)',
         background: 'transparent',
         border: 'none',
         WebkitTapHighlightColor: 'transparent',
         outline: 'none',
-        opacity: enabled ? 1 : 0.4,
-        transition: 'opacity 200ms ease-out',
+        padding: 0,
       }}
     >
-      {/* Slim red outline frame — slash polygon traced as SVG stroke so the
-          inside stays transparent (kanji watermark behind shows through).
-          preserveAspectRatio='none' lets the polygon stretch to button size. */}
       <svg
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
+        width="100%"
+        height="100%"
         className="absolute inset-0 pointer-events-none"
         aria-hidden="true"
       >
         <polygon
           points="4,0 100,0 96,100 0,100"
           fill="none"
-          stroke="#d4181f"
+          stroke={enabled ? '#d4181f' : 'rgba(212,24,31,0.4)'}
           strokeWidth="1.5"
           vectorEffect="non-scaling-stroke"
         />
       </svg>
-      {/* Text layer — red on void inverts to black where it crosses the
-          red kanji watermark behind. mix-blend-mode is applied to the
-          inner span (not the wrapper) so the SVG frame stays solid red.
-          This is the same "negative photo" treatment used on the home
-          page's swipe hints / GTL label. */}
       <div className="relative w-full h-full flex flex-col items-center justify-center px-1 gap-0.5">
         <span
           className="font-display leading-none whitespace-nowrap"
           style={{
             fontSize: '0.78rem',
             fontWeight: 900,
-            color: '#d4181f',
+            color: textColor,
             mixBlendMode: 'difference',
-            transform: 'skewX(2deg)',
             letterSpacing: '0.05em',
           }}
         >
@@ -217,9 +216,8 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
           style={{
             fontSize: '0.78rem',
             fontWeight: 900,
-            color: '#d4181f',
+            color: textColor,
             mixBlendMode: 'difference',
-            transform: 'skewX(2deg)',
             letterSpacing: '0.05em',
           }}
         >
@@ -1006,8 +1004,14 @@ export default function SchedulePage() {
                 left: `${attuneRect.left}px`,
                 width: `${attuneRect.width}px`,
                 height: `${attuneRect.height}px`,
-                zIndex: 5,
-                pointerEvents: 'auto',
+                // No z-index — z-index would create a stacking context and
+                // break the text's mix-blend-mode against the kanji backdrop.
+                // Source order (rendered after cells.map) keeps the wrapper
+                // above the day cells visually.
+                // clipPath restricts the click area to the slash silhouette,
+                // so taps in the wrapper's bounding-box corners pass through
+                // to underlying day cells. Doesn't create a stacking context.
+                clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
               }}
             >
               <AttuneMovementsButton
