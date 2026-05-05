@@ -124,7 +124,12 @@ The new feature is a **combo-driven multiplier system** that layers on top. It i
 - R8a. **End-of-day reckoning model**: per-set XP that is logged in real time credits the immediate stack contributions (compound/isolation, holiday, prestige). The **consistency contribution is deferred** and computed at end-of-day once the completion percentage is known — `day_consistency_contribution = (sum_of_day_base_XP) × consistency_mult × completion_pct` (where `completion_pct = 0` if <50%). This avoids per-set-rollback complexity and lets the user see the consistency reward as a clear end-of-session payoff. UX detail (how it appears in the per-set animation vs end-of-day animation) is an open question for planning.
 
 **Prestige**
-- R9. When the user holds OVERDRIVE for N sessions, they may "ascend": multiplier resets to 1.0 / NOVICE, but they keep a permanent **Galaxy-Spiral ribbon**. Ribbons stack — each adds a small permanent baseline-XP bonus contribution (placeholder: each ribbon = +0.05× contribution under R2's prestige_mult — tunable).
+- R9. **Prestige loop (locked 2026-05-05)** — Galaxy-Spiral ribbon ascension:
+  - **Trigger:** user must reach **GRITTED** (counter = 100) AND hold it for **20 additional sessions** (counter ≥ 120 cumulative 100%-sessions).
+  - **Optional, not automatic:** once unlocked, the user is offered a choice on the prestige UI surface — **Ascend** (claim ribbon, reset counter to 0 / RELAXED, climb the ladder again) or **Hold** (keep GRITTED, ascend later — option remains available indefinitely). The user controls the loop pace.
+  - **Ribbon reward:** each ascension grants one permanent **Galaxy-Spiral ribbon**. Ribbons stack visually on the stats / profile surface.
+  - **Bonus magnitude:** each ribbon contributes **+0.10×** to `prestige_mult` under R2 (additive). After 5 ribbons (~600 sessions), prestige_mult = 0.5×; after 10 ribbons (~1200 sessions), prestige_mult = 1.0×. The ribbon bonus is permanent and rides on every set regardless of current tier, providing a baseline floor that grows with long-term commitment.
+  - **Cycle length:** 100 sessions to GRITTED + 20 held = **120 sessions per ribbon**.
 
 **Holiday Multiplier**
 - R16. The Holiday multiplier is triggered by **real-world calendar holidays** (hard-coded list — exact list TBD). When active on a given day, it contributes to total XP per R2. User has no control; it just fires on the date.
@@ -244,7 +249,7 @@ The cap-and-overflow rule (R12) + concentrate rule (R13) + 100% reclassification
 
 ### Resolve Before Planning
 
-- [Affects R2][User decision] Specific multiplier values: consistency_mult per tier (NOVICE 1.0 / IRON 1.3 / STEEL 1.7 / BLAZE 2.5 / OVERDRIVE 4.0 placeholder), compound_mult (1.5 placeholder), isolation_mult (1.2 placeholder), prestige_mult per ribbon (0.05 placeholder), holiday_mult per holiday (TBD per holiday).
+- ~~[Affects R2] Specific multiplier values: consistency_mult / compound_mult / isolation_mult / king_compound_mult / prestige_mult~~ — **resolved 2026-05-05**: consistency_mult is the 21-tier curve in R5c (×1.00 → ×3.00). king_compound_mult = 1.75. compound_mult = 1.5. isolation_mult = 1.2. prestige_mult = 0.10 per ribbon (additive). Only `holiday_mult` per holiday remains TBD (covered separately below).
 - [Affects R6][User decision] How many sessions per tier? (How long does it take to climb NOVICE → IRON → STEEL → BLAZE → OVERDRIVE?)
 - [Affects R8][User decision] Missed-day rule: full reset for ALL tiers, or full tier drop only (so OVERDRIVE → BLAZE on first miss, not 1.0× on first miss)?
 - [Affects R8][User decision] Grace days / streak freezes? (Duolingo-style "1 free pass per month") or strict no-grace?
@@ -330,12 +335,11 @@ Newly settled (2026-05-04 session):
 The tier names match the app's "Gritted Teeth" identity end-to-end — every tier reads naturally as "[verb] teeth." Vocabulary mixes physical-grip mechanics, transformation/state-of-being words (HARDENED-family), and medieval/weapon imagery (BRANDISHED, HALLOWED). Multiplier values per tier still TBD (Outstanding Question — pending tier-counter mechanic decision).
 
 **After that, remaining priority order:**
-1. Prestige unlock requirement (does it still trigger at GRITTED? sessions held at GRITTED before ascend?) + ribbon bonus magnitude
-2. Holiday list + multiplier values
-3. Where user views their tier counter / current tier (UI surface)
-4. Per-set popup multiplier breakdown format
-5. Tiebreak rule for compound second slot
-6. Bodyweight coefficient curator list + storage / fallback for `user_bodyweight`
+1. Holiday list + multiplier values
+2. Where user views their tier counter / current tier / ribbons (UI surface)
+3. Per-set popup multiplier breakdown format
+4. Tiebreak rule for compound second slot
+5. Bodyweight coefficient curator list + storage / fallback for `user_bodyweight`
 
 ## Next Steps
 
