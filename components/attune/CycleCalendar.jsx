@@ -50,54 +50,32 @@ export default function CycleCalendar({ cycle, onDayTap, onChipReplace, selected
 
   return (
     <div style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      {/* Sticky DOW header — sits outside the TransformWrapper so it doesn't scale with zoom. */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(7, 1fr)',
-          gap: 4,
-          padding: '0.5rem 0.75rem 0.4rem 0.75rem',
-          fontFamily: 'var(--font-mono, ui-monospace, "Courier New", monospace)',
-          fontSize: '0.6rem',
-          letterSpacing: '0.18em',
-          color: '#a8a39a',
-          textAlign: 'center',
-          textTransform: 'uppercase',
-          flexShrink: 0,
-          borderBottom: '1px solid #1f1f24',
-          background: '#0a0a0c',
-          zIndex: 5,
-        }}
-      >
-        {DOW_HEADERS.map(d => <span key={d}>{d}</span>)}
-      </div>
-
-      {/* Pan-zoom surface. At scale 1 panning still works as 1-finger vertical scroll. */}
+      {/* Pan-zoom surface. DOW labels live inside each column (added below) so
+          they scale with the content rather than living as a fixed UI band. */}
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
         <TransformWrapper
           ref={wrapperRef}
           initialScale={1}
-          minScale={1}
+          minScale={0.4}
           maxScale={3}
-          centerOnInit={false}
+          centerOnInit
           centerZoomedOut={false}
-          limitToBounds
+          limitToBounds={false}
           wheel={{ step: 0.15 }}
           pinch={{ step: 5 }}
           doubleClick={{ disabled: true }}
-          panning={{ disabled: isChipDragging, velocityDisabled: false }}
+          panning={{ disabled: isChipDragging, velocityDisabled: false, lockAxisX: false, lockAxisY: false }}
           onTransformed={(_, state) => setScale(state.scale)}
         >
           <TransformComponent
             wrapperStyle={{ width: '100%', height: '100%' }}
-            contentStyle={{ width: '100%', padding: '0.5rem 0.75rem 7rem 0.75rem' }}
+            contentStyle={{ padding: '0.5rem 0.5rem 7rem 0.5rem' }}
           >
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(7, 1fr)',
-                gap: 4,
-                width: '100%',
+                gridTemplateColumns: 'repeat(7, 110px)',
+                gap: 6,
                 alignItems: 'start',
               }}
             >
@@ -109,6 +87,20 @@ export default function CycleCalendar({ cycle, onDayTap, onChipReplace, selected
                     minHeight: 60,
                   }}
                 >
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-mono, ui-monospace, "Courier New", monospace)',
+                      fontSize: '0.7rem',
+                      letterSpacing: '0.22em',
+                      color: '#a8a39a',
+                      textAlign: 'center',
+                      textTransform: 'uppercase',
+                      padding: '0.25rem 0',
+                      borderBottom: '1px solid #2a2a30',
+                    }}
+                  >
+                    {DOW_HEADERS[dow]}
+                  </div>
                   {bucket.map(({ iso, dayNum }) => (
                     <CarvedBlock
                       key={iso}

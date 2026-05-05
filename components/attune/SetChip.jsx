@@ -108,22 +108,25 @@ export default function SetChip({ chip, cycleId, dayId, compact = false, onRepla
           padding: '3px 3px 3px 5px',
           display: 'flex', alignItems: 'center', gap: 2,
           fontFamily: 'var(--font-mono, ui-monospace, "Courier New", monospace)',
-          fontSize: '0.5rem',
+          fontSize: '0.6rem',
           letterSpacing: '0.04em',
           color: '#d8d2c2',
           textTransform: 'uppercase',
           cursor: interactive ? 'pointer' : 'default',
           touchAction: interactive ? 'none' : 'manipulation',
           minWidth: 0,
+          alignItems: 'flex-start',
           ...dragStyle,
         }}
         title={label}
       >
         <span style={{
           flex: 1, minWidth: 0,
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          whiteSpace: 'normal',
+          wordBreak: 'break-word',
+          lineHeight: 1.2,
         }}>
-          {display}
+          {label}
         </span>
         {interactive && (
           <span style={{ display: 'flex', gap: 0, flexShrink: 0 }}>
