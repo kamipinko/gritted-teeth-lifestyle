@@ -17,14 +17,19 @@ import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { disarmChain } from '../lib/predictiveTap'
 
-// Pathnames that are part of the predictive-tap chain. If pathname
-// transitions to anything NOT in this set, the chain disarms.
+// Pathnames that are part of the in-flight predictive-tap chain. If
+// pathname transitions to anything NOT in this set, the chain disarms.
+//
+// /fitness (profile selector) is INTENTIONALLY excluded — arriving
+// there means "reset / start over." Disarming on /fitness ensures
+// that retreating all the way back without tapping a profile leaves
+// the chain in a clean state. The profile-chip tap then re-arms via
+// armChain() (which clears sessionStorage + resets window state).
 //
 // Sub-routes of these pages (e.g., DayFocus on /fitness/active) don't
 // change pathname so they don't trigger disarm — correct behavior since
 // they're still on the chain page.
 const CHAIN_PATHS = new Set([
-  '/fitness',          // profile chip (chain start)
   '/fitness/hub',      // LOAD CYCLE option
   '/fitness/load',     // ACTIVATE popup
   '/fitness/active',   // TODAY hero + BEGIN HERE muscle
