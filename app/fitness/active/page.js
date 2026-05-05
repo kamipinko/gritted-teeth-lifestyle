@@ -230,7 +230,7 @@ function DayCard({ iso, muscles, index, onClick, doneKey, cycleId }) {
   const isLandscape = cardW / cardH > 1.4
 
   const handleClick = () => {
-    play('option-select')
+    play('card-confirm')
     const rect = cardRef.current?.getBoundingClientRect() ?? null
     onClick(iso, rect)
   }
