@@ -4,39 +4,64 @@
  * [prefire] decisions. Lets us read what the chain is doing on iOS PWA
  * where the dev console isn't reachable.
  *
- * Visibility: enabled when localStorage 'gtl-prefire-debug' === '1'.
- * To toggle on iOS PWA without a console, do a 4-tap pattern in the
- * very-top-left corner (top:0-40px, left:0-40px) — the corner tap zone
- * watches for 4 quick taps and flips the flag.
+ * Visibility: ON by default during this debugging period. Set
+ * localStorage 'gtl-prefire-debug' to '0' to disable. 5-tap pattern
+ * inside an 80×80 box at the top-RIGHT corner (offset below the iOS
+ * status-bar / safe-area-inset-top so taps register) toggles the flag.
  *
- * Mounted once in the root layout. Cheap when disabled (no listeners,
- * no DOM). Pointer-events:none on the panel so it never blocks taps.
+ * Mounted once in the root layout. Pointer-events:none on the panel so
+ * it never blocks taps.
  */
 import { useEffect, useRef, useState } from 'react'
 import { subscribeLogs, getRecentLogs } from '../lib/predictiveTap'
 
 const FLAG_KEY = 'gtl-prefire-debug'
-const TOGGLE_TAPS = 4
-const TOGGLE_WINDOW_MS = 1500
-const TOGGLE_CORNER_PX = 40
+const TOGGLE_TAPS = 5
+const TOGGLE_WINDOW_MS = 2000
+const TOGGLE_BOX_SIZE = 80
+// Top inset to clear the iOS status-bar / dynamic-island area where
+// taps don't reach the page. Re-checked at runtime via safe-area-inset.
+const TOGGLE_TOP_INSET_FALLBACK = 50
+
+function getSafeAreaTop() {
+  if (typeof window === 'undefined') return TOGGLE_TOP_INSET_FALLBACK
+  try {
+    const v = getComputedStyle(document.documentElement).getPropertyValue('--sat') ||
+              getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)')
+    const n = parseInt(v, 10)
+    if (Number.isFinite(n) && n > 0) return n
+  } catch (_) {}
+  return TOGGLE_TOP_INSET_FALLBACK
+}
 
 export default function PredictiveTapDebugOverlay() {
-  const [enabled, setEnabled] = useState(false)
+  // Default: enabled UNLESS the flag is explicitly '0'. So out of the box,
+  // the overlay shows up — handy during the active debug period.
+  const [enabled, setEnabled] = useState(true)
   const [, force] = useState(0)
   const tapTimesRef = useRef([])
 
-  // Read flag on mount (and whenever it changes via the corner toggle).
   useEffect(() => {
     if (typeof window === 'undefined') return
-    try { setEnabled(localStorage.getItem(FLAG_KEY) === '1') } catch (_) {}
+    try {
+      const v = localStorage.getItem(FLAG_KEY)
+      setEnabled(v !== '0')
+    } catch (_) {}
   }, [])
 
-  // 4-tap corner toggle — works whether the overlay is currently visible
-  // or not, so it's the only way to enable it from inside an iOS PWA.
+  // Top-right-corner toggle. Tap the corner box 5 times within 2s to
+  // flip the flag. Box is offset down from the very top to clear the
+  // iOS PWA status-bar / dynamic-island where taps don't register.
   useEffect(() => {
     if (typeof window === 'undefined') return
     const handler = (e) => {
-      if (e.clientX > TOGGLE_CORNER_PX || e.clientY > TOGGLE_CORNER_PX) {
+      const safeTop = getSafeAreaTop()
+      const w = window.innerWidth || 0
+      const inBox =
+        e.clientX >= w - TOGGLE_BOX_SIZE &&
+        e.clientY >= safeTop &&
+        e.clientY <= safeTop + TOGGLE_BOX_SIZE
+      if (!inBox) {
         tapTimesRef.current = []
         return
       }
