@@ -328,12 +328,12 @@ export default function ProfilePage() {
     <>
     <style>{`
       @keyframes yy-pulse-left {
-        0%, 100% { transform: translateX(0)   scale(1);    filter: drop-shadow(0 0 0    rgba(240,232,216,0)); }
-        50%      { transform: translateX(7px) scale(1.06); filter: drop-shadow(0 0 8px rgba(240,232,216,0.7)); }
+        0%, 100% { transform: translateX(0)   scale(1); }
+        50%      { transform: translateX(7px) scale(1.06); }
       }
       @keyframes yy-pulse-right {
-        0%, 100% { transform: translateX(0)    scale(1);    filter: drop-shadow(0 0 0    rgba(7,7,8,0)); }
-        50%      { transform: translateX(-7px) scale(1.06); filter: drop-shadow(0 0 8px rgba(0,0,0,0.85)); }
+        0%, 100% { transform: translateX(0)    scale(1); }
+        50%      { transform: translateX(-7px) scale(1.06); }
       }
       /* Onboarding: stencil rolls off the target on mount. translateX
          matches SWIPE_THRESHOLD (294px). */
