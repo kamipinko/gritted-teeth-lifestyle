@@ -20,10 +20,13 @@
  * a yin-yang" pattern was replaced with stencil-on-target.)
  */
 
+// Coordinates anchor on the white tooth-row in the upper-middle of the
+// logo-stencil PNG (asset bounding box of the jagged biting edge measured
+// at roughly x 27-62%, y 24-34% of the square).
 const SPARKLES = [
-  { left: '30%', top: '58%', delay: '0s',    dur: '1.8s' },
-  { left: '52%', top: '62%', delay: '0.6s',  dur: '2.3s' },
-  { left: '72%', top: '58%', delay: '1.15s', dur: '2.6s' },
+  { left: '32%', top: '28%', delay: '0s',    dur: '1.8s' },
+  { left: '46%', top: '32%', delay: '0.6s',  dur: '2.3s' },
+  { left: '58%', top: '26%', delay: '1.15s', dur: '2.6s' },
 ]
 
 export function LogoStencil({ size = 44, paused = false }) {
