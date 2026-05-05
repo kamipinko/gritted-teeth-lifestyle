@@ -86,7 +86,7 @@ function ProfileChip({ name, onSelect, onSwipeSelect }) {
       swipeFiredRef.current = false
       return
     }
-    play('option-select')
+    play('card-confirm')
     onSelect(name)
   }
   const swipeProgress = Math.min(1, Math.abs(dragX) / SWIPE_THRESHOLD)
@@ -316,7 +316,7 @@ export default function ProfilePage() {
         setProfiles(updated)
       }
     } catch (_) {}
-    play('option-select')
+    play('card-confirm')
     selectProfile(name)
   }
 
