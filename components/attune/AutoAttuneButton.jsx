@@ -1,22 +1,14 @@
 'use client'
-/**
- * AutoAttuneButton — prominent action shown while every workout day in
- * the cycle has zero attuned chips. After any chip exists anywhere,
- * dismisses (returns null).
- *
- * Calls autoAttuneAll() with the cycle's day→muscle map and a canonical
- * exercise selector (lib/exerciseLibrary.canonicalExerciseFor).
- */
 import { autoAttuneAll, useAttunement } from '../../lib/attunement'
 import { canonicalExerciseFor } from '../../lib/exerciseLibrary'
 
+/**
+ * AutoAttuneButton — always visible. Each tap fills only days that are
+ * currently empty (zero chips). Existing chips are never overwritten.
+ */
 export default function AutoAttuneButton({ cycle }) {
   const state = useAttunement(cycle?.id)
   if (!cycle || !Array.isArray(cycle.days)) return null
-
-  // Visible only while every workout day has zero chips.
-  const hasAnyChip = Object.values(state || {}).some(d => (d?.chips?.length || 0) > 0)
-  if (hasAnyChip) return null
 
   const workoutDays = cycle.days.filter(iso => (cycle.dailyPlan?.[iso] || []).length > 0)
   if (workoutDays.length === 0) return null
@@ -24,9 +16,12 @@ export default function AutoAttuneButton({ cycle }) {
   const handleClick = () => {
     const dayMuscleMap = {}
     for (const iso of workoutDays) {
+      const existing = state?.[iso]?.chips?.length || 0
+      if (existing > 0) continue  // skip already-attuned days, fill only the gaps
       const muscles = cycle.dailyPlan?.[iso] || []
       dayMuscleMap[iso] = muscles[0]
     }
+    if (Object.keys(dayMuscleMap).length === 0) return
     autoAttuneAll(cycle.id, dayMuscleMap, canonicalExerciseFor)
   }
 
