@@ -161,6 +161,8 @@ The new feature is a **combo-driven multiplier system** that layers on top. It i
 - R17. The active-page nav stays clean — no constant multiplier display. The existing total XP bar is unchanged.
 - R18. After a set is logged, the **per-set XP-fly animation** reveals the multiplier stack momentarily (e.g., "base 1575 + (×1.3 IRON) + (×1.5 COMPOUND) = +4411 EXP"). Stack is a moment, not a constant.
 - R19. The user infers per-region growth via the existing transmutation-circle star chart on the stats page. The compound/isolation/multiplier dynamics surface visually over time as some star points grow faster than others. Star awards from R11–R13 fire visually on the chart per set.
+- R20. **Tier identity surface (locked 2026-05-05)** — the user's current tier name lives on the **profile page** as an identity tag directly under their display name (e.g., "Jordan H. — **BRANDISHED**"). The tag uses the tier's associated kanji + color treatment (per R7 rank-up styling). Galaxy-Spiral ribbons (R9) render as a row of icons immediately below the identity tag — earned ribbons fill in left-to-right; unearned slots are hidden until the first ribbon is claimed. The tier becomes part of the user's identity rather than a transient HUD element.
+- R20a. **Tier progress detail** — the precise progress-bar to next tier ("3/7 sessions to HARDENED"), cumulative 100%-session count, and ribbon history live on the **stats page** alongside the existing transmutation-circle chart. Profile is the identity surface; stats is the analytic surface.
 
 ## Worked Math Examples
 
@@ -284,7 +286,7 @@ The cap-and-overflow rule (R12) + concentrate rule (R13) + 100% reclassification
 - [Affects R1a][User decision] If `user_bodyweight` is unset when a BW set is logged, what's the fallback? (prompt user before first BW set / use a default placeholder like 150 lb / refuse to credit XP / treat as 0 weight).
 - ~~[Affects R16] Which calendar holidays trigger? And what holiday_mult value(s)?~~ — **resolved 2026-05-05**: 11 US federal holidays + user birthday, tiered (1.5 / 1.0 / 0.5). See R16.
 - [Affects R18][User decision] Exact format of the per-set popup multiplier breakdown text + any per-region star "pop" animation choreography.
-- [Affects all][User decision] Where the user **views their current Consistency XP / current tier** (UI surface — settings? stats? a new dedicated panel?).
+- ~~[Affects all] Where the user views their current tier / ribbons (UI surface)~~ — **resolved 2026-05-05**: profile page hosts identity tag + ribbon row (R20). Stats page hosts progress bar + cumulative count + history (R20a).
 
 ### Deferred to Planning
 
@@ -355,10 +357,9 @@ Newly settled (2026-05-04 session):
 The tier names match the app's "Gritted Teeth" identity end-to-end — every tier reads naturally as "[verb] teeth." Vocabulary mixes physical-grip mechanics, transformation/state-of-being words (HARDENED-family), and medieval/weapon imagery (BRANDISHED, HALLOWED). Multiplier values per tier still TBD (Outstanding Question — pending tier-counter mechanic decision).
 
 **After that, remaining priority order:**
-1. Where user views their tier counter / current tier / ribbons (UI surface)
-2. Per-set popup multiplier breakdown format
-3. Tiebreak rule for compound second slot
-4. Bodyweight coefficient curator list + storage / fallback for `user_bodyweight`
+1. Per-set popup multiplier breakdown format
+2. Tiebreak rule for compound second slot
+3. Bodyweight coefficient curator list + storage / fallback for `user_bodyweight`
 
 ## Next Steps
 
