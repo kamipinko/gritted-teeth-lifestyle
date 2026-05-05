@@ -826,11 +826,14 @@ export default function SchedulePage() {
         </div>
 
         {/* 5-row day grid — fixed 75px rows. relative positioning context
-            for the Attune Movements absolute overlay rendered below. */}
+            for the Attune Movements absolute overlay rendered below.
+            isolation:isolate scopes the Attune button's mix-blend-difference
+            to this subtree (kanji backdrop + Attune text), which Safari/iOS
+            WebKit needs to apply the blend correctly. */}
         <div
           ref={gridRef}
           className="relative grid grid-cols-7 grid-rows-5 gap-1"
-          style={{ height: `${ROW_H * 5 + 4 * 4}px` }}
+          style={{ height: `${ROW_H * 5 + 4 * 4}px`, isolation: 'isolate' }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
