@@ -59,7 +59,33 @@ The new feature is a **combo-driven multiplier system** that layers on top. It i
 **Consistency / Combo Identity**
 - R4. **Consistency XP** is a new, separate counter (parallel to Total XP). It accumulates from completing planned sessions on planned days. Its level determines the **Consistency multiplier** value (R2).
 - R5. The combo identity has a **21-tier teeth-grip ladder** running RELAXED → BRUSHED → BARED → BRANDISHED → PRIMED → PRESSED → SQUEEZED → LOCKED → DUG → DRIVEN → CLASPED → CLENCHED → CLAMPED → WRENCHED → CALLOUSED → HARDENED → HALLOWED → GNAWED → GNASHED → BLOODIED → **GRITTED** (peak). Each tier has an associated multiplier value (TBD — pending tier-multiplier decision).
-- R5a. **Tier counter mechanic (locked 2026-05-05)**: tier is determined by the **lifetime cumulative count of 100%-completion sessions**. Each fully-completed session ticks the counter +1. Partial sessions (50–99%) do **not** tick. Sub-50% sessions do not tick either. The counter has **no decay** — it never decreases. Once a tier is unlocked, the user keeps it permanently. **Peak tier (GRITTED) is reached at 100 cumulative 100%-sessions**, distributed across 20 tier-up events from RELAXED → GRITTED. Pacing curve TBD (linear ~5 sessions/tier vs front-loaded easy / back-loaded hard).
+- R5a. **Tier counter mechanic (locked 2026-05-05)**: tier is determined by the **lifetime cumulative count of 100%-completion sessions**. Each fully-completed session ticks the counter +1. Partial sessions (50–99%) do **not** tick. Sub-50% sessions do not tick either. The counter has **no decay** — it never decreases. Once a tier is unlocked, the user keeps it permanently. **Peak tier (GRITTED) is reached at 100 cumulative 100%-sessions**, distributed across 20 tier-up events from RELAXED → GRITTED.
+- R5b. **Pacing curve (locked 2026-05-05)** — front-loaded easy / back-loaded hard. Sessions required to advance from each tier to the next:
+
+  | From → To | Sessions | Cumulative |
+  |---|---:|---:|
+  | RELAXED → BRUSHED | 1 | 1 |
+  | BRUSHED → BARED | 1 | 2 |
+  | BARED → BRANDISHED | 2 | 4 |
+  | BRANDISHED → PRIMED | 2 | 6 |
+  | PRIMED → PRESSED | 3 | 9 |
+  | PRESSED → SQUEEZED | 3 | 12 |
+  | SQUEEZED → LOCKED | 4 | 16 |
+  | LOCKED → DUG | 4 | 20 |
+  | DUG → DRIVEN | 5 | 25 |
+  | DRIVEN → CLASPED | 5 | 30 |
+  | CLASPED → CLENCHED | 5 | 35 |
+  | CLENCHED → CLAMPED | 6 | 41 |
+  | CLAMPED → WRENCHED | 6 | 47 |
+  | WRENCHED → CALLOUSED | 6 | 53 |
+  | CALLOUSED → HARDENED | 7 | 60 |
+  | HARDENED → HALLOWED | 7 | 67 |
+  | HALLOWED → GNAWED | 7 | 74 |
+  | GNAWED → GNASHED | 8 | 82 |
+  | GNASHED → BLOODIED | 8 | 90 |
+  | BLOODIED → **GRITTED** | **10** | **100** |
+
+  Rationale: first-week users get a satisfying climb (BRUSHED at session 1, BARED at session 2). Mid-game settles into a steady 4-7 per tier. Capstone GRITTED costs 10 sessions to give it final-boss weight. Total exactly 100 sessions to peak.
 - R6. Within a tier, the per-session multiplier is constant (the tier value). The "ramp" is the tier-up flourish, not a within-tier crawl.
 - R7. Tier crossings get a P5/Gurren rank-up flourish (kanji, color, animation) when the user enters a new named tier.
 - R8. **Completion-threshold partial-credit rule** (refined 2026-05-05 to reconcile with R5a no-decay):
@@ -276,15 +302,14 @@ Newly settled (2026-05-04 session):
 The tier names match the app's "Gritted Teeth" identity end-to-end — every tier reads naturally as "[verb] teeth." Vocabulary mixes physical-grip mechanics, transformation/state-of-being words (HARDENED-family), and medieval/weapon imagery (BRANDISHED, HALLOWED). Multiplier values per tier still TBD (Outstanding Question — pending tier-counter mechanic decision).
 
 **After that, remaining priority order:**
-1. **Pacing curve** for the 21 tiers across 100 sessions (linear ~5/tier vs front-loaded easy / back-loaded hard vs hybrid)
-2. Tier multiplier values (21 values from RELAXED ×1.0 → GRITTED ×?, with curve shape TBD: linear, exponential, or hand-tuned)
-3. `king_compound_mult` value (placeholder 2.0)
-4. Prestige unlock requirement (does it still trigger at GRITTED? sessions held at GRITTED before ascend?) + ribbon bonus magnitude
-5. Holiday list + multiplier values
-6. Where user views their tier counter / current tier (UI surface)
-7. Per-set popup multiplier breakdown format
-8. Tiebreak rule for compound second slot
-9. Bodyweight coefficient curator list + storage / fallback for `user_bodyweight`
+1. Tier multiplier values (21 values from RELAXED ×1.0 → GRITTED ×?, with curve shape TBD: linear, exponential, or hand-tuned)
+2. `king_compound_mult` value (placeholder 2.0)
+3. Prestige unlock requirement (does it still trigger at GRITTED? sessions held at GRITTED before ascend?) + ribbon bonus magnitude
+4. Holiday list + multiplier values
+5. Where user views their tier counter / current tier (UI surface)
+6. Per-set popup multiplier breakdown format
+7. Tiebreak rule for compound second slot
+8. Bodyweight coefficient curator list + storage / fallback for `user_bodyweight`
 
 ## Next Steps
 
