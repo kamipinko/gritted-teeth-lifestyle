@@ -25,9 +25,9 @@
 // almost immediately after wake-up, then a star keeps lighting roughly
 // every ~700ms in a steady cascade across the tooth row.
 const SPARKLES = [
-  { left: '42%', top: '26%', delay: '0s',   dur: '2.4s' },
-  { left: '66%', top: '38%', delay: '0.7s', dur: '2.6s' },
-  { left: '76%', top: '32%', delay: '1.4s', dur: '2.8s' },
+  { left: '42%', top: '26%', delay: '0s',   dur: '3.6s' },
+  { left: '66%', top: '38%', delay: '1.0s', dur: '4.0s' },
+  { left: '76%', top: '32%', delay: '2.0s', dur: '4.4s' },
 ]
 
 export function LogoStencil({ size = 44, paused = false }) {
@@ -44,8 +44,8 @@ export function LogoStencil({ size = 44, paused = false }) {
       <style>{`
         @keyframes gtl-tooth-sparkle {
           0%   { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
-          18%  { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
-          36%  { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
+          12%  { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+          24%  { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
           100% { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
         }
       `}</style>
@@ -68,7 +68,7 @@ export function LogoStencil({ size = 44, paused = false }) {
             // Translate-origin offset is handled inside the keyframe so the
             // ✦ stays centered on its anchor point through the scale.
             color: '#fff',
-            fontSize: `${Math.max(14, Math.round(size * 0.34))}px`,
+            fontSize: `${Math.max(10, Math.round(size * 0.22))}px`,
             lineHeight: 1,
             textShadow: '0 0 4px rgba(255,255,255,0.65)',
             pointerEvents: 'none',
