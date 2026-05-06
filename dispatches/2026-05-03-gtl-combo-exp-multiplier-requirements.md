@@ -23,10 +23,31 @@ The new feature is a **combo-driven multiplier system** that layers on top. It i
 
 **Base XP (existing formula, with new bodyweight handling)**
 - R1. Base XP per set: `base = effective_load × repMult(reps) × reps`. The `repMult` curve is unchanged (flat 1.0× between r=5 and r=15, bell curves outside). Both new tracks build off this `base`.
-- R1a. **`effective_load` calculation**:
-  - **External-load exercises** (barbell, dumbbell, cable, machine, kettlebell, band): `effective_load = user_entered_weight` — the weight the user types in for that set. Unchanged from current behavior.
-  - **Bodyweight exercises** (wger `equipment: 'bodyweight'`): `effective_load = user_bodyweight × bw_coefficient + user_entered_weight`. Default `bw_coefficient = 1.0` (use the user's full bodyweight). Curator can override per-exercise for cases where the actual moved load is less than full BW (push-up ≈ 0.64, dip ≈ 0.85 — exact coefficient list TBD, see Outstanding Questions). The `user_entered_weight` term lets weighted-bodyweight variants (weighted pull-up, weighted dip, vest squat) work naturally — user enters the added weight (e.g., +25 lb) and the system adds it to the BW base.
-  - **Required prerequisite**: the user's bodyweight must be stored in their profile (read at workout time). If unset, fall back to prompting the user before the first BW-exercise set or use a profile-default placeholder (TBD, see Outstanding Questions).
+- R1a. **`effective_load` calculation (strength-relative normalization, locked 2026-05-06)**:
+
+  All loads are normalized by `REFERENCE_BW / user_BW` so XP rewards relative effort, not absolute weight. A 100 lb person and a 300 lb person doing the same 1× BW lift earn identical XP. **`REFERENCE_BW = 180 lb`** (system-wide constant).
+
+  **External-load exercises** (barbell, dumbbell, cable, machine):
+  ```
+  effective_load = entered_weight × (REFERENCE_BW / user_BW)
+  ```
+
+  **Bodyweight exercises** (wger `equipment: 'bodyweight'`):
+  ```
+  effective_load = REFERENCE_BW × bw_coefficient + entered_weight × (REFERENCE_BW / user_BW)
+  ```
+  The BW component becomes a constant (`REFERENCE_BW × bw_coefficient`) — every user gets the same load credit for the same exercise's bodyweight portion. The added-weight component (for weighted pull-ups, weighted dips, vest squats) is normalized like external-load exercises.
+
+  **Examples:**
+  - Bench 200 lb at 100 lb BW → `200 × (180/100) = 360`
+  - Bench 200 lb at 200 lb BW → `200 × (180/200) = 180`
+  - Bench 200 lb at 300 lb BW → `200 × (180/300) = 120`
+  - 1× BW bench (100 lb at 100 lb, 200 lb at 200 lb, 300 lb at 300 lb) → all = 180. Same XP.
+  - Push-up (coef 0.65) at any BW → `180 × 0.65 + 0 = 117`. Same XP.
+  - Weighted pull-up (+25 lb) at 100 lb BW → `180 × 1.0 + 25 × (180/100) = 180 + 45 = 225`
+  - Weighted pull-up (+25 lb) at 300 lb BW → `180 × 1.0 + 25 × (180/300) = 180 + 15 = 195`
+
+  **Required prerequisite**: `user_bodyweight` must be stored in their profile, captured at first-time onboarding (per R1a-storage decision 2026-05-06). If unset when user logs a set, modal forces input before saving.
 
 **Total XP track (continuous, additive multipliers)**
 - R2. The Total XP added per set = sum of contributions from each active multiplier:
