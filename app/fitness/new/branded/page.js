@@ -324,32 +324,19 @@ function AttuneFlameLayer({ rect }) {
           </text>
         </mask>
       </defs>
-      {/* Halo layer — unmasked, soft, larger circles so the flame
-          glow extends BEYOND the letter silhouettes (the mask would
-          clip the drop-shadow halo otherwise). Lower opacity keeps
-          this from washing out the kanji/text underneath. Drawn
-          first so the masked sharp particles paint on top. */}
-      <g style={{ opacity: 0.55 }}>
-        {particles.map(p => (
-          <circle
-            key={`halo-${p.key}`}
-            className="attune-flame-particle"
-            cx={p.cx}
-            cy={p.cy}
-            r={p.r * 1.6}
-            fill="rgba(255, 80, 0, 0.45)"
-            style={{
-              animationDuration: `${p.dur}ms`,
-              animationDelay: `${p.delay}ms`,
-              filter: 'blur(3px)',
-            }}
-          />
-        ))}
-      </g>
-      {/* Masked sharp particles — clipped to letter silhouettes. The
-          part of each circle inside a letter shows as a bright flame
-          tongue; the part outside is hidden by the mask. */}
+      {/* Masked group — letters become "windows into the void with
+          flames behind." Mirror of /fitness/new/summary's inscription
+          pattern:
+            1. Dark underlay rect fills each letter silhouette with
+               near-black void, hiding the red HTML text underneath.
+            2. Orange particles flow upward inside the same mask,
+               clipped to letter shape — flames visible through the
+               letter-shaped windows.
+          Outside the mask, the flame layer is transparent: the
+          underlying button content (red ATTUNE/MOVEMENTS text + slash
+          outline) shows through, kanji watermark still visible. */}
       <g mask="url(#attune-flame-mask)">
+        <rect x="0" y="0" width={W} height={H} fill="#0a0a0a" />
         {particles.map(p => (
           <circle
             key={p.key}
