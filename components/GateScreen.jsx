@@ -313,15 +313,15 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
               <style>{`
                 @keyframes gtl-gate-tooth-sparkle {
                   0%   { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
-                  22%  { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
-                  44%  { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
+                  18%  { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+                  36%  { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
                   100% { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
                 }
               `}</style>
               {[
-                { left: '42%', top: '26%', delay: '0s',   dur: '2s' },
-                { left: '66%', top: '38%', delay: '0.6s', dur: '2.2s' },
-                { left: '76%', top: '32%', delay: '1.2s', dur: '2.4s' },
+                { left: '42%', top: '26%', delay: '0s',   dur: '2.4s' },
+                { left: '66%', top: '38%', delay: '0.7s', dur: '2.6s' },
+                { left: '76%', top: '32%', delay: '1.4s', dur: '2.8s' },
               ].map((s, i) => (
                 <span
                   key={i}
