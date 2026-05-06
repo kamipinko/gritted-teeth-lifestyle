@@ -248,34 +248,34 @@ function AttuneMovementsButton({ enabled, monthKanji = '', onTap, onHover }) {
           overflow:hidden contains the band overflow within the button
           rect (the wrapper's slash clipPath handles the slash silhouette
           itself).
-          Black base at alpha 0.75 — the in-button mix-blended kanji is
-          the primary visible copy, with a faint extra bleed of the
-          cell-rendered kanji underneath adding a subtle 'stamped'
-          texture. Less aggressive than the earlier 0.5 alpha that
-          read as a doubled kanji. */}
+          Black base + bands all carry alpha so the underlying calendar /
+          kanji watermark bleeds through the WHOLE button, not just the
+          narrow dark gap between bands. Bands stay near-solid (alpha
+          0.9) so the text's mix-blend-difference flip still reads as
+          near-black. */}
       <div
         className="absolute inset-0 overflow-hidden pointer-events-none"
-        style={{ background: 'rgba(7, 7, 8, 0.75)' }}
+        style={{ background: 'rgba(7, 7, 8, 0.4)' }}
         aria-hidden="true"
       >
-        {/* Narrow accent band — left. Solid #d4181f (matches the
-            text color exactly) so the text's mix-blend-difference
-            produces TRUE BLACK where letters cross the band. */}
+        {/* Bands at alpha 0.9 — letters/kanji still flip to near-black
+            via mix-blend-difference (close enough to pure black to read
+            as black) but a faint amount of the underlying calendar +
+            cell kanji bleeds through the band, so the entire button
+            doesn't read as a fully opaque tile. */}
         <div
           className="absolute"
           style={{
             top: '-25%', bottom: '-25%', left: '-15%', width: '22%',
-            background: GTL_RED,
+            background: 'rgba(212, 24, 31, 0.9)',
             transform: 'skewX(-12deg)',
           }}
         />
-        {/* Wide diagonal band — right. Same #d4181f for the same
-            black-on-red flip; asymmetry comes from width, not tint. */}
         <div
           className="absolute"
           style={{
             top: '-25%', bottom: '-25%', right: '-10%', width: '55%',
-            background: GTL_RED,
+            background: 'rgba(212, 24, 31, 0.9)',
             transform: 'skewX(-12deg)',
           }}
         />
