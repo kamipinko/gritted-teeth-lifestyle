@@ -942,6 +942,14 @@ export default function LoadCyclePage() {
   // Synchronous flag — set on first ACTIVATE/REVIEW so a fast follow-up tap on
   // the same button skips even if React hasn't committed `fireActive` yet.
   const fireActiveRef = useRef(false)
+  // Mount-time stamp for the iOS-leaked-click eat (150ms grace). Same
+  // pattern as /fitness/hub: when the user predictive-taps from the
+  // previous page, iOS can deliver the synthetic click AFTER navigation,
+  // landing on this page's ACTIVATE button. We reject onClick-sourced
+  // handleActivate calls within 150ms of mount; the consume's setTimeout
+  // bypasses via { fromTimer: true }.
+  const mountTimeRef = useRef(0)
+  useEffect(() => { mountTimeRef.current = performance.now() }, [])
   // Stable ref for the destination so the pointerdown listener doesn't have to
   // re-bind each time fireDest changes.
   const fireDestRef = useRef(fireDest)
@@ -1021,7 +1029,10 @@ export default function LoadCyclePage() {
     } catch (_) {}
   }
 
-  const handleActivate = (cycle, { deepLaunch = false } = {}) => {
+  const handleActivate = (cycle, { deepLaunch = false, fromTimer = false } = {}) => {
+    // iOS-leaked-click eat: reject onClick-sourced calls within 150ms
+    // of mount. fromTimer=true bypasses (consume's setTimeout still fires).
+    if (!fromTimer && performance.now() - mountTimeRef.current < 150) return
     // Already firing → this rapid second tap is a skip.
     if (fireActiveRef.current) { skipNow(); return }
     fireActiveRef.current = true
@@ -1067,7 +1078,7 @@ export default function LoadCyclePage() {
       // stage 'today'); delay the actual HT 500ms so the inbound HT
       // plays out fully first.
       setInAnimation('activate', true)
-      setTimeout(() => handleActivate(cycle), 50)
+      setTimeout(() => handleActivate(cycle, { fromTimer: true }), 50)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, selectedId])

@@ -1948,7 +1948,7 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId, onMus
     if (!hasWork) return
     const intent = consumePrefire('muscle')
     if (intent && muscles[0]) {
-      setTimeout(() => onMuscleHop(muscles[0]), 100)
+      setTimeout(() => onMuscleHop(muscles[0], { fromTimer: true }), 100)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasWork])
@@ -2693,6 +2693,11 @@ export default function ActiveDayPage() {
   const [fireMuscleHop, setFireMuscleHop] = useState(null)
   const fireMuscleHopRef = useRef(null)
   const skippedMuscleHopRef = useRef(false)
+  // iOS-leaked-click eat stamp (150ms grace). Mirror pattern from earlier
+  // chain pages — onClick-sourced handleMuscleHop calls within 150ms of
+  // mount are rejected. The consume's setTimeout bypasses via fromTimer.
+  const mountTimeRef = useRef(0)
+  useEffect(() => { mountTimeRef.current = performance.now() }, [])
 
   // Cycle loading — same as the parent /fitness/active page.
   useEffect(() => {
@@ -2719,7 +2724,9 @@ export default function ActiveDayPage() {
   // synchronous skip flag so a fast follow-up tap routes immediately rather
   // than waiting for HT to complete. 'muscle' is the chain END so we don't
   // setInAnimation for a further step.
-  const handleMuscleHop = (muscleId) => {
+  const handleMuscleHop = (muscleId, { fromTimer = false } = {}) => {
+    // iOS-leaked-click eat — see mountTimeRef comment above.
+    if (!fromTimer && performance.now() - mountTimeRef.current < 150) return
     if (skippedMuscleHopRef.current) return
     if (fireMuscleHopRef.current) {
       // Already firing → user wants to skip the slash. Route now.

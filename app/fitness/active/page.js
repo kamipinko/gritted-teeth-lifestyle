@@ -2724,6 +2724,11 @@ export default function ActiveCyclePage() {
   // routes immediately, mirroring the fast-forward behavior on /fitness/load.
   const fireDayHopRef = useRef(null)
   const skippedDayHopRef = useRef(false)
+  // iOS-leaked-click eat stamp (150ms grace). Mirror pattern from
+  // /fitness/hub and /fitness/load — onClick-sourced handleDayHop
+  // calls within 150ms of mount are rejected. The consume's setTimeout
+  // bypasses via { fromTimer: true }.
+  const mountTimeRef = useRef(0)
   const [cardRefreshKey, setCardRefreshKey] = useState(0)
   const [completedDays, setCompletedDays]   = useState(0)
   const [barXP, setBarXP]                   = useState(0)
@@ -2735,6 +2740,7 @@ export default function ActiveCyclePage() {
   const rolodexRef                          = useRef(null)
 
   useEffect(() => { barXPRef.current = barXP }, [barXP])
+  useEffect(() => { mountTimeRef.current = performance.now() }, [])
 
   // Predictive-tap chain: reset currentStep to 'activate' on every mount.
   // Handles back-and-forth navigation where stale currentStep from a
@@ -2925,7 +2931,9 @@ export default function ActiveCyclePage() {
   // to complete. setInAnimation('today', true) opens the chain window so a
   // predictive tap during the slash stages 'muscle' for DayFocus to consume
   // on mount.
-  const handleDayHop = (iso) => {
+  const handleDayHop = (iso, { fromTimer = false } = {}) => {
+    // iOS-leaked-click eat — see mountTimeRef comment above.
+    if (!fromTimer && performance.now() - mountTimeRef.current < 150) return
     if (skippedDayHopRef.current) return
     if (fireDayHopRef.current) {
       // Already firing → user wants to skip the slash. Route now.
@@ -2987,7 +2995,7 @@ export default function ActiveCyclePage() {
     const intent = consumePrefire('today')
     if (intent) {
       setInAnimation('today', true)
-      setTimeout(() => handleDayHop(target), 50)
+      setTimeout(() => handleDayHop(target, { fromTimer: true }), 50)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, days, fireDayHop])

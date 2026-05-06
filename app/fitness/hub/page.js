@@ -349,6 +349,16 @@ export default function FitnessPage() {
   // (The window pointerdown listener installs in the post-commit useEffect, so
   // there's a brief window where it isn't yet listening.)
   const transitioningRef = useRef(false)
+  // Mount-time stamp for the iOS-leaked-click eat (150ms grace). When the
+  // user predictive-taps a chain destination from the previous page, iOS
+  // can deliver the click event AFTER navigation, landing on the new
+  // page's button. We reject any handler call within 150ms of mount —
+  // a real user click can't physically happen that fast (no paint yet),
+  // so anything in that window is a leaked synthetic click. The
+  // consume's 100ms setTimeout call bypasses this since it doesn't go
+  // through onClick.
+  const mountTimeRef = useRef(0)
+  useEffect(() => { mountTimeRef.current = performance.now() }, [])
   // Stable ref to current href so the pointerdown listener doesn't have to
   // re-bind on every transitionConfig update.
   const hrefRef = useRef('')
@@ -376,7 +386,10 @@ export default function FitnessPage() {
     router.push(hrefRef.current)
   }
 
-  const handleSelect = (href) => {
+  const handleSelect = (href, { fromTimer = false } = {}) => {
+    // iOS-leaked-click eat: reject onClick-sourced calls within 150ms
+    // of mount. fromTimer=true bypasses (consume's setTimeout still fires).
+    if (!fromTimer && performance.now() - mountTimeRef.current < 150) return
     // Already transitioning → this rapid second tap is a skip.
     if (transitioningRef.current) { skipNow(); return }
     transitioningRef.current = true
@@ -421,7 +434,7 @@ export default function FitnessPage() {
     const intent = consumePrefire('hub-load')
     if (intent) {
       setInAnimation('hub-load', true)
-      setTimeout(() => handleSelect('/fitness/load'), 50)
+      setTimeout(() => handleSelect('/fitness/load', { fromTimer: true }), 50)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
