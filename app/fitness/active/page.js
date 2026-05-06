@@ -1949,6 +1949,7 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
       if (focusMuscle) return
       const intent = consumePrefire('muscle')
       if (intent && muscles[0]) {
+        play('card-confirm')
         setFocusMuscle(muscles[0])
         disarmChain('muscle-fired')
       }
@@ -2952,6 +2953,7 @@ export default function ActiveCyclePage() {
       const intent = consumePrefire('today')
       if (intent) {
         consumed = true
+        play('card-confirm')
         const w = (typeof window !== 'undefined') ? window.innerWidth : 390
         const syntheticRect = { left: 12, right: w - 12, top: 479, bottom: 549, width: w - 24, height: 70 }
         handleDayClick(target, syntheticRect)
