@@ -247,34 +247,53 @@ function AttuneFlameLayer({ rect }) {
   const ATTUNE_HALF_W = W * 0.32
   const MOVEMENTS_HALF_W = W * 0.45
 
-  const PARTS_PER_ROW = 36
+  // Per-particle randomized motion — direct port of /fitness/new/summary's
+  // weekday flame engulf, just scaled to this 102×75 viewBox. Their letters
+  // are ~45px tall and use rise=280-480, size=20-58, driftX=±90; mine are
+  // ~17.6px tall so each numeric range scales by ~0.4. Everything else
+  // (timing, hash, parameter math) is verbatim.
+  const PARTS_PER_ROW = 22
   const particles = []
   for (let i = 0; i < PARTS_PER_ROW * 2; i++) {
     const isAttune = i < PARTS_PER_ROW
     const baseY = isAttune ? ATTUNE_Y : MOVEMENTS_Y
     const halfW = isAttune ? ATTUNE_HALF_W : MOVEMENTS_HALF_W
-    const seed = i * 7 + 11
-    const tx = hash01(seed * 1)            // 0..1 across width
-    const ty = hash01(seed * 3 + 5)        // 0..1 vertical jitter
-    const td = hash01(seed * 5 + 13)       // 0..1 duration
-    const tr = hash01(seed * 7 + 19)       // 0..1 size
-    const to = hash01(seed * 11 + 23)      // 0..1 delay offset
-    const tv = hash01(seed * 13 + 29)      // 0..1 variant pick
-    // Spawn band wider than the text bounding so vertical-tongue
-    // ellipses still intersect letter shapes after the mask clips them.
-    const cx = (W / 2) + (tx - 0.5) * 2 * halfW * 1.18
-    const cy = baseY + 8 + ty * 5
-    // Wider duration range = more visual chaos (some particles flick up
-    // fast, others linger). Negative delay so field is full on frame 1.
-    const dur = 450 + td * 950             // 450-1400ms
-    // Vertical-tongue ellipses: rx narrower than ry so each particle
-    // reads as a flame tongue rather than a dot. Slight rx variance
-    // gives some thinner / fatter shapes mixed in.
-    const rx = 2.2 + tr * 1.8              // 2.2-4.0
-    const ry = 4.0 + tr * 4.5              // 4.0-8.5
-    const delay = -(to * dur)
-    const variant = tv < 0.34 ? 'a' : tv < 0.67 ? 'b' : 'c'
-    particles.push({ cx, cy, rx, ry, dur, delay, variant, key: i })
+    const k = i + (isAttune ? 0 : 1) * 23
+    const rX      = hash01(k * 1)
+    const rXj     = hash01(k * 2 + 5)
+    const rDly    = hash01(k * 3 + 11)
+    const rDur    = hash01(k * 5 + 17)
+    const rRise   = hash01(k * 7 + 19)
+    const rSize   = hash01(k * 11 + 23)
+    const rPeak   = hash01(k * 13 + 29)
+    const rDrft   = hash01(k * 17 + 31)
+    const rStartJ = hash01(k * 19 + 37)
+    const rEndR   = hash01(k * 23 + 41)
+
+    // Lateral spawn offset within the letter band (mirrors summary's
+    // (rX-0.5)*200 + (rXj-0.5)*60 — ±100 + ±30 nudge in their viewBox).
+    const xOff   = (rX - 0.5) * (halfW * 2.0) + (rXj - 0.5) * (halfW * 0.5)
+    const delay  = (rDly * 540 + (isAttune ? 0 : 1) * 131) % 600   // verbatim
+    const dur    = 130 + rDur * 150                                 // 130-280ms — verbatim, FAST
+    const rise   = 9 + rRise * 7                                    // 9-16 vb units (was 280-480)
+    // Size scaled to match summary's particle-to-letter ratio.
+    // Summary: r 20-58 over 45px letters = 0.44-1.29× letter-height.
+    // Mine: 17.6px letters → r 4-12 ≈ 0.23-0.68× — slightly smaller
+    // because we have many more particles per glyph at this scale,
+    // so big tongues would pile up and become a solid orange blob.
+    const size   = 4 + rSize * 8                                    // 4-12 r
+    const peakA  = 0.5 + rPeak * 0.5                                // 0.5-1.0 — verbatim
+    const driftX = (rDrft - 0.5) * 8                                // ±4 (was ±90)
+    const startY = 5 + (rStartJ - 0.5) * 5                          // ±2.5 jitter
+    const endR   = 0.8 + rEndR * 1.6                                // 0.8-2.4 (was 2-6)
+
+    particles.push({
+      cx: (W / 2) + xOff,
+      cy: baseY + startY,
+      r: size,
+      endR, dur, delay, peakA, driftX, rise,
+      key: i,
+    })
   }
 
   return (
@@ -342,20 +361,41 @@ function AttuneFlameLayer({ rect }) {
       <g mask="url(#attune-flame-mask)">
         <rect x="0" y="0" width={W} height={H} fill="#0a0a0a" />
         {particles.map(p => (
-          <ellipse
+          <circle
             key={p.key}
-            className={`attune-flame-particle var-${p.variant}`}
             cx={p.cx}
             cy={p.cy}
-            rx={p.rx}
-            ry={p.ry}
+            r={p.r}
             fill="#ff5000"
-            style={{
-              animationDuration: `${p.dur}ms`,
-              animationDelay: `${p.delay}ms`,
-              filter: 'drop-shadow(0 0 1.5px #ffd060)',
-            }}
-          />
+            opacity={0}
+          >
+            {/* 3-point translate path — curved rise, not straight up. */}
+            <animateTransform
+              attributeName="transform"
+              type="translate"
+              values={`0 0; ${(p.driftX * 0.4).toFixed(2)} -${(p.rise * 0.5).toFixed(2)}; ${p.driftX.toFixed(2)} -${p.rise.toFixed(2)}`}
+              dur={`${p.dur.toFixed(0)}ms`}
+              begin={`${p.delay.toFixed(0)}ms`}
+              repeatCount="indefinite"
+            />
+            {/* Trapezoidal opacity: ignite in 4%, hold peak till 75%, fade. */}
+            <animate
+              attributeName="opacity"
+              values={`0; ${p.peakA.toFixed(2)}; ${p.peakA.toFixed(2)}; 0`}
+              keyTimes="0; 0.04; 0.75; 1"
+              dur={`${p.dur.toFixed(0)}ms`}
+              begin={`${p.delay.toFixed(0)}ms`}
+              repeatCount="indefinite"
+            />
+            {/* r holds at full size for first half, shrinks to a wisp by end. */}
+            <animate
+              attributeName="r"
+              values={`${p.r.toFixed(2)}; ${p.r.toFixed(2)}; ${p.endR.toFixed(2)}`}
+              dur={`${p.dur.toFixed(0)}ms`}
+              begin={`${p.delay.toFixed(0)}ms`}
+              repeatCount="indefinite"
+            />
+          </circle>
         ))}
       </g>
     </svg>

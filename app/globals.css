@@ -248,60 +248,13 @@ html, body {
   100% { transform: scale(1)    translate(0,    0);    }
 }
 
-/* Yakiire flame engulf for the Attune Movements button — particles
- * masked to ATTUNE/MOVEMENTS letter silhouettes (matching the per-cell
- * weekday-flame-engulf pattern on /fitness/new/summary). Each particle
- * spawns near the baseline of its row, rises through the letter shape
- * with lateral sway (zig-zag) and scale wobble, then shrinks to a wisp
- * as it fades out at the top. Three keyframe variants below give each
- * particle a different sway pattern so the flame field looks erratic
- * instead of in lockstep. Negative animation-delay starts each
- * particle part-way through its cycle so the field is fully populated
- * on first paint instead of empty for the first cycle.
- *
- * transform-box: fill-box anchors transform-origin to the element's
- * own center on SVG <ellipse> / <circle> (default origin is the SVG
- * root). Without this, scale() pivots from (0,0). */
-@keyframes attune-flame-rise-a {
-  0%   { transform: translate(0,    4px)   scale(1.4, 1.0); opacity: 0; }
-  10%  { transform: translate(-1.6px, 2px) scale(1.4, 1.15); opacity: 0.85; }
-  25%  { transform: translate(2px, -2px)   scale(1.25, 1.2); opacity: 1; }
-  42%  { transform: translate(-2.4px, -7px) scale(1.0, 1.0); opacity: 0.95; }
-  60%  { transform: translate(2.2px, -12px) scale(0.7, 0.85); opacity: 0.75; }
-  78%  { transform: translate(-1.4px, -17px) scale(0.45, 0.55); opacity: 0.45; }
-  100% { transform: translate(1px, -22px)  scale(0.1, 0.1);  opacity: 0; }
-}
-@keyframes attune-flame-rise-b {
-  0%   { transform: translate(0,    5px)   scale(1.5, 1.1); opacity: 0; }
-  12%  { transform: translate(2.2px, 2px)  scale(1.4, 1.25); opacity: 1; }
-  30%  { transform: translate(-2.6px, -3px) scale(1.15, 1.0); opacity: 0.95; }
-  50%  { transform: translate(2.8px, -9px) scale(0.8, 0.9); opacity: 0.85; }
-  68%  { transform: translate(-2px, -14px) scale(0.55, 0.65); opacity: 0.55; }
-  85%  { transform: translate(1.5px, -18px) scale(0.3, 0.4); opacity: 0.25; }
-  100% { transform: translate(0, -23px)    scale(0.1, 0.1);  opacity: 0; }
-}
-@keyframes attune-flame-rise-c {
-  0%   { transform: translate(0,    4px)   scale(1.3, 1.0); opacity: 0; }
-  8%   { transform: translate(-2.4px, 1px) scale(1.5, 1.2); opacity: 0.7; }
-  22%  { transform: translate(1.4px, -1px) scale(1.6, 1.3); opacity: 1; }
-  40%  { transform: translate(-2px, -6px)  scale(1.2, 1.05); opacity: 0.9; }
-  58%  { transform: translate(2.6px, -11px) scale(0.85, 0.85); opacity: 0.7; }
-  76%  { transform: translate(-1.6px, -16px) scale(0.5, 0.55); opacity: 0.4; }
-  100% { transform: translate(0.5px, -21px) scale(0.1, 0.15); opacity: 0; }
-}
-.attune-flame-particle {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation-iteration-count: infinite;
-  animation-timing-function: cubic-bezier(0.4, 0.0, 0.6, 1);
-}
-.attune-flame-particle.var-a { animation-name: attune-flame-rise-a; }
-.attune-flame-particle.var-b { animation-name: attune-flame-rise-b; }
-.attune-flame-particle.var-c { animation-name: attune-flame-rise-c; }
-
-/* Subtle global flicker on the entire flame group — a brief opacity
- * dip at random points sells the "live fire" look. Layered with the
- * per-particle rise so individual particles still cycle independently. */
+/* Subtle flicker on the Attune flame group — brief opacity dips at
+ * random points sell the "live fire" look, layered with the per-
+ * particle SVG <animate> rises so each particle still cycles
+ * independently. The actual flame motion is driven by SMIL
+ * animations inside the SVG (see app/fitness/new/branded/page.js
+ * AttuneFlameLayer), which mirror /fitness/new/summary's weekday
+ * flame engulf pattern. */
 @keyframes attune-flame-flicker {
   0%, 100% { opacity: 1; }
   18%      { opacity: 0.85; }
