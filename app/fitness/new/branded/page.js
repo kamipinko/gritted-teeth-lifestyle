@@ -257,23 +257,24 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
         style={{ background: 'rgba(7, 7, 8, 0.82)' }}
         aria-hidden="true"
       >
-        {/* Narrow accent band — left side (was wide-right pre-flip) */}
+        {/* Narrow accent band — left. Solid #d4181f (matches the
+            text color exactly) so the text's mix-blend-difference
+            produces TRUE BLACK where letters cross the band. */}
         <div
           className="absolute"
           style={{
             top: '-25%', bottom: '-25%', left: '-15%', width: '22%',
-            background: 'rgba(212,24,31,0.55)',
+            background: GTL_RED,
             transform: 'skewX(-12deg)',
           }}
         />
-        {/* Wide diagonal band — right (was left); deeper red tone (#7a0e14)
-            anchors the right side darker so the bloom reads as a leftward
-            warm wash. */}
+        {/* Wide diagonal band — right. Same #d4181f for the same
+            black-on-red flip; asymmetry comes from width, not tint. */}
         <div
           className="absolute"
           style={{
             top: '-25%', bottom: '-25%', right: '-10%', width: '55%',
-            background: 'rgba(122,14,20,0.78)',
+            background: GTL_RED,
             transform: 'skewX(-12deg)',
           }}
         />
