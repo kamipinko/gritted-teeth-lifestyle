@@ -211,7 +211,7 @@ function AttuneTextRows({ fill, strokeColor, strokeWidth = 0.5 }) {
   )
 }
 
-function AttuneMovementsButton({ enabled, onTap, onHover }) {
+function AttuneMovementsButton({ enabled, monthKanji = '', onTap, onHover }) {
   // CRITICAL: no transform, no opacity, no z-index on the button itself.
   // Each of those creates a stacking context that isolates the text's
   // mix-blend-mode from the kanji backdrop. The wrapper around this
@@ -302,6 +302,33 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
           vectorEffect="non-scaling-stroke"
         />
       </svg>
+      {/* Kanji watermark INSIDE the button — same negative-photo
+          treatment as the ATTUNE/MOVEMENTS text. Lets the month
+          kanji read through the solid red bands as black silhouette
+          (red - red = 0,0,0) and as red over the dark center gap
+          (red - dark = red). The original cell-rendered kanji sits
+          underneath but gets covered by the bands; this in-button
+          copy is the visible one. */}
+      {monthKanji && (
+        <div
+          className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
+          style={{ mixBlendMode: 'difference' }}
+          aria-hidden="true"
+        >
+          <span
+            style={{
+              fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
+              fontSize: '3rem',
+              fontWeight: 700,
+              lineHeight: 1,
+              letterSpacing: '-0.02em',
+              color: GTL_RED,
+            }}
+          >
+            {monthKanji}
+          </span>
+        </div>
+      )}
       <svg
         width="100%"
         height="100%"
@@ -1330,6 +1357,7 @@ export default function SchedulePage() {
             >
               <AttuneMovementsButton
                 enabled={selectedDays.size > 0}
+                monthKanji={MONTH_KANJI[month]}
                 onTap={() => { play('option-select'); router.push('/attune') }}
                 onHover={() => play('button-hover')}
               />
