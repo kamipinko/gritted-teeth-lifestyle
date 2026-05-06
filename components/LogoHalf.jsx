@@ -43,9 +43,9 @@ export function LogoStencil({ size = 44, paused = false }) {
     >
       <style>{`
         @keyframes gtl-tooth-sparkle {
-          0%, 82%, 100% { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
-          88%           { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
-          94%           { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
+          0%, 82%, 100% { transform: translate(-50%, -50%) rotate(0deg)   scale(0);    opacity: 0; }
+          88%           { transform: translate(-50%, -50%) rotate(220deg) scale(1.15); opacity: 1; }
+          94%           { transform: translate(-50%, -50%) rotate(540deg) scale(0);    opacity: 0; }
         }
       `}</style>
       <img
@@ -67,7 +67,7 @@ export function LogoStencil({ size = 44, paused = false }) {
             // Translate-origin offset is handled inside the keyframe so the
             // ✦ stays centered on its anchor point through the scale.
             color: '#fff',
-            fontSize: `${Math.max(14, Math.round(size * 0.34))}px`,
+            fontSize: `${Math.max(20, Math.round(size * 0.55))}px`,
             lineHeight: 1,
             textShadow: '0 0 4px rgba(255,255,255,0.65)',
             pointerEvents: 'none',
@@ -78,7 +78,7 @@ export function LogoStencil({ size = 44, paused = false }) {
             opacity: 0,
           }}
         >
-          ✦
+          ✺
         </span>
       ))}
     </div>

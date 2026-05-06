@@ -312,9 +312,9 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
             <>
               <style>{`
                 @keyframes gtl-gate-tooth-sparkle {
-                  0%, 82%, 100% { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
-                  88%           { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
-                  94%           { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
+                  0%, 82%, 100% { transform: translate(-50%, -50%) rotate(0deg)   scale(0);    opacity: 0; }
+                  88%           { transform: translate(-50%, -50%) rotate(220deg) scale(1.15); opacity: 1; }
+                  94%           { transform: translate(-50%, -50%) rotate(540deg) scale(0);    opacity: 0; }
                 }
               `}</style>
               {[
@@ -330,16 +330,16 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
                     left: s.left,
                     top: s.top,
                     color: '#fff',
-                    fontSize: '1.4rem',
+                    fontSize: '2.4rem',
                     lineHeight: 1,
-                    textShadow: '0 0 6px rgba(255,255,255,0.7)',
+                    textShadow: '0 0 8px rgba(255,255,255,0.75)',
                     pointerEvents: 'none',
                     transformOrigin: 'center center',
                     animation: `gtl-gate-tooth-sparkle ${s.dur} ease-in-out ${s.delay} infinite`,
                     opacity: 0,
                   }}
                 >
-                  ✦
+                  ✺
                 </span>
               ))}
             </>
