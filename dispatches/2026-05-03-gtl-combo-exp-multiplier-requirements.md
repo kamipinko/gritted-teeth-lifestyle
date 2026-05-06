@@ -206,16 +206,33 @@ The new feature is a **combo-driven multiplier system** that layers on top. It i
 
   Stack is a moment, not a constant. The cinematic completes before the next set's UI accepts input — total time tuned so high-tempo logging never feels gated.
 
-- R18a. **HEAVY LIFT bonus reveal (locked 2026-05-06)** — when the user's R1a strength-relative normalization gives them extra XP (i.e., they're lighter than the REFERENCE_BW of 180 lb and are lifting at relative load > 1× BW context), the cinematic shows a dedicated `🔥 HEAVY LIFT +N EXP` line between the raw base and the multiplier stack.
+- R18a. **HEAVY LIFT bonus reveal (locked 2026-05-06)** — the cinematic shows a dedicated `🔥 HEAVY LIFT +N EXP` line between the raw base and the multiplier stack when the user's lift is heavy **relative to their bodyweight** AND/OR they benefit from R1a's strength-relative normalization. Combines two effects into one bonus line.
 
-  Computation:
+  **Computation:**
   ```
-  raw_base = entered_weight × repMult × reps   (or BW equivalent for bw exercises)
-  norm_factor = REFERENCE_BW / user_BW
-  heavy_lift_bonus = raw_base × max(0, norm_factor - 1)
+  raw_base        = entered_weight × repMult × reps      (or BW equivalent for bw exercises)
+  norm_factor     = REFERENCE_BW / user_BW                (R1a normalization)
+  relative_load   = bw_coefficient + entered_weight / user_BW
+  heavy_lift_x    = max(0, relative_load - threshold) × scale
+  combined_factor = norm_factor × (1 + heavy_lift_x)
+
+  if combined_factor > 1:
+    heavy_lift_bonus = raw_base × (combined_factor - 1)
+  else:
+    bonus = 0  (cinematic line hidden; normalization happens silently)
   ```
 
-  Line displays only when `heavy_lift_bonus > 0` (light user lifting heavy relative to their BW). For users at or above 180 lb, the line is hidden — their normalization happens silently and they see only the standard cinematic with their normalized base. This is asymmetric UI by design: lighter users feel rewarded for relatively-hard lifts; heavier users see a normal-looking cinematic without a "penalty" callout.
+  **Per-exercise thresholds and class scales (locked 2026-05-06):**
+
+  Each exercise has a `heavy_lift_threshold` (relative-load above which bonus fires) and a `heavy_lift_scale` (class-level multiplier on bonus magnitude). Calibrated to "advanced" 1RM levels per exercise family from strengthlevel.com / legionathletics.com strength standards. Stored in `lib/exerciseAliases.js` as `HEAVY_LIFT_THRESHOLDS` map (per-exercise) + `HEAVY_LIFT_CLASS_SCALES` (per-class).
+
+  Class scales (multiplier on bonus magnitude): isolation **×1.5**, compound **×1.0**, king_compound **×0.7**. Isolation gets the biggest scale because relatively-heavy isolation lifts are rarer and more notable; King Compounds get the smallest because they already get a heavier `king_compound_mult` (1.75) on the Total XP track.
+
+  Threshold examples: bench press = 1.5× BW; squat = 1.75× BW; deadlift = 2.0× BW; OHP = 1.0× BW; barbell row = 1.2× BW; pull-up (incl BW component) = 1.5× BW; leg press = 2.5× BW; DB curl = 0.45× BW; lateral raise = 0.4× BW; calf raise = 1.5× BW.
+
+  **Symmetric across body weights:** a 200 lb user deadlifting 700 lb (3.5× BW) and a 100 lb user deadlifting 350 lb (3.5× BW) earn the same HEAVY LIFT bonus. Lighter users are not the only ones who can trigger it — what matters is the lift's relative load compared to the user's own bodyweight.
+
+  **UI semantics:** the line displays only when `combined_factor > 1`. For users at/above 180 lb who don't hit their threshold, the line is hidden — their R1a normalization happens silently. Asymmetric UI by design: positive feedback when earned; no "penalty" callout for normalization-down.
 - R19. The user infers per-region growth via the existing transmutation-circle star chart on the stats page. The compound/isolation/multiplier dynamics surface visually over time as some star points grow faster than others. Star awards from R11–R13 fire visually on the chart per set.
 - R20. **Tier identity surface (locked 2026-05-05)** — the user's current tier name lives on the **profile page** as an identity tag directly under their display name (e.g., "Jordan H. — **BRANDISHED**"). The tag uses the tier's associated kanji + color treatment (per R7 rank-up styling). Galaxy-Spiral ribbons (R9) render as a row of icons immediately below the identity tag — earned ribbons fill in left-to-right; unearned slots are hidden until the first ribbon is claimed. The tier becomes part of the user's identity rather than a transient HUD element.
 - R20a. **Tier progress detail** — the precise progress-bar to next tier ("3/7 sessions to HARDENED"), cumulative 100%-session count, and ribbon history live on the **stats page** alongside the existing transmutation-circle chart. Profile is the identity surface; stats is the analytic surface.

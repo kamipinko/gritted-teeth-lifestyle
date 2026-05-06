@@ -27,6 +27,9 @@ import {
   BW_COEFFICIENT,
   KING_COMPOUNDS,
   ISOLATION_OVERRIDE,
+  HEAVY_LIFT_THRESHOLDS,
+  HEAVY_LIFT_CLASS_SCALES,
+  HEAVY_LIFT_CLASS_DEFAULTS,
 } from '../lib/exerciseAliases.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -180,6 +183,22 @@ function transform(wgerEntries) {
     if (ISOLATION_OVERRIDE.has(id)) {
       entry.is_isolation_override = true
     }
+    // Heavy-lift threshold + scale (R18a) — used by the cinematic to compute
+    // the HEAVY LIFT bonus when entered_weight / user_BW exceeds threshold.
+    let cls
+    if (KING_COMPOUNDS.has(id)) cls = 'king_compound'
+    else if (ISOLATION_OVERRIDE.has(id)) cls = 'isolation'
+    else {
+      // auto-classify: 100% one region -> isolation, else compound
+      const allMuscles = [...primaryMuscles, ...secondaryMuscles]
+      const REGION = { chest:'FRONT', quads:'FRONT', back:'BACK', hamstrings:'BACK',
+        shoulders:'ARMS', biceps:'ARMS', triceps:'ARMS', forearms:'ARMS',
+        abs:'CORE', glutes:'LEGS', calves:'LEGS' }
+      const regions = new Set(allMuscles.map(m => REGION[m]).filter(Boolean))
+      cls = regions.size === 1 ? 'isolation' : 'compound'
+    }
+    entry.heavy_lift_threshold = HEAVY_LIFT_THRESHOLDS[id] ?? HEAVY_LIFT_CLASS_DEFAULTS[cls]
+    entry.heavy_lift_scale = HEAVY_LIFT_CLASS_SCALES[cls]
     out.push(entry)
   }
 
