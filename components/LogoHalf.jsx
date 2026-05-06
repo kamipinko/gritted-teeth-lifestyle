@@ -21,13 +21,13 @@
  */
 
 // Coordinates anchor on the white tooth-row in the logo-stencil PNG.
-// Nudged further right + further down from the previous baseline. Long
-// durations + spread-out delays so only 0–1 star is ever lit at a time
-// (intermittent twinkles, not a continuous shimmer).
+// Short cycles with small staggered delays so the first twinkle fires
+// almost immediately after wake-up, then a star keeps lighting roughly
+// every ~700ms in a steady cascade across the tooth row.
 const SPARKLES = [
-  { left: '52%', top: '34%', delay: '0s',   dur: '4s' },
-  { left: '66%', top: '38%', delay: '1.7s', dur: '5s' },
-  { left: '76%', top: '32%', delay: '3.2s', dur: '4.5s' },
+  { left: '52%', top: '34%', delay: '0s',   dur: '2s' },
+  { left: '66%', top: '38%', delay: '0.6s', dur: '2.2s' },
+  { left: '76%', top: '32%', delay: '1.2s', dur: '2.4s' },
 ]
 
 export function LogoStencil({ size = 44, paused = false }) {
@@ -43,9 +43,10 @@ export function LogoStencil({ size = 44, paused = false }) {
     >
       <style>{`
         @keyframes gtl-tooth-sparkle {
-          0%, 82%, 100% { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
-          88%           { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
-          94%           { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
+          0%   { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
+          22%  { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+          44%  { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
+          100% { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
         }
       `}</style>
       <img
