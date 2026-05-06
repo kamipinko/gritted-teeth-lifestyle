@@ -180,7 +180,7 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
   // verticals — feels more like flame licking through a calligraphic
   // form. Single weight (400). The mask <text> below uses the same
   // family/weight so the flame window aligns with the visible text.
-  const FONT_FAMILY = '"Yuji Boku", "Yuji Syuku", "Shippori Mincho", serif'
+  const FONT_FAMILY = '"Yuji Syuku", "Shippori Mincho", serif'
   return (
     <button
       type="button"
@@ -216,13 +216,37 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
       <div className="relative w-full h-full flex flex-col items-center justify-center px-1 gap-0.5">
         <span
           className="leading-none whitespace-nowrap"
-          style={{ fontFamily: FONT_FAMILY, fontSize: '0.85rem', fontWeight: FONT_WEIGHT, color: TEXT_COLOR, letterSpacing: '0.04em' }}
+          style={{
+            fontFamily: FONT_FAMILY,
+            fontSize: '0.85rem',
+            fontWeight: FONT_WEIGHT,
+            color: TEXT_COLOR,
+            letterSpacing: '0.04em',
+            // Yuji Syuku is single-weight; fake-bold via text-stroke
+            // adds a same-color outline that fattens every stroke
+            // uniformly. Cleaner than font-weight: bold (which the
+            // browser would have to synthesize and tends to mangle
+            // calligraphic fonts).
+            WebkitTextStroke: `0.5px ${TEXT_COLOR}`,
+          }}
         >
           ATTUNE
         </span>
         <span
           className="leading-none whitespace-nowrap"
-          style={{ fontFamily: FONT_FAMILY, fontSize: '0.85rem', fontWeight: FONT_WEIGHT, color: TEXT_COLOR, letterSpacing: '0.04em' }}
+          style={{
+            fontFamily: FONT_FAMILY,
+            fontSize: '0.85rem',
+            fontWeight: FONT_WEIGHT,
+            color: TEXT_COLOR,
+            letterSpacing: '0.04em',
+            // Yuji Syuku is single-weight; fake-bold via text-stroke
+            // adds a same-color outline that fattens every stroke
+            // uniformly. Cleaner than font-weight: bold (which the
+            // browser would have to synthesize and tends to mangle
+            // calligraphic fonts).
+            WebkitTextStroke: `0.5px ${TEXT_COLOR}`,
+          }}
         >
           MOVEMENTS
         </span>
@@ -336,11 +360,17 @@ function AttuneFlameLayer({ rect }) {
             textAnchor="middle"
             dominantBaseline="central"
             style={{
-              fontFamily: '"Yuji Boku", "Yuji Syuku", "Shippori Mincho", serif',
+              fontFamily: '"Yuji Syuku", "Shippori Mincho", serif',
               fontSize: '0.85rem',
               fontWeight: 400,
               letterSpacing: '0.04em',
               fill: 'white',
+              // Match the HTML text's fake-bold: white stroke fattens
+              // the mask shape so the flame window stays aligned with
+              // the visibly-thicker letters above.
+              stroke: 'white',
+              strokeWidth: '0.5',
+              paintOrder: 'stroke fill',
             }}
           >
             ATTUNE
@@ -351,11 +381,17 @@ function AttuneFlameLayer({ rect }) {
             textAnchor="middle"
             dominantBaseline="central"
             style={{
-              fontFamily: '"Yuji Boku", "Yuji Syuku", "Shippori Mincho", serif',
+              fontFamily: '"Yuji Syuku", "Shippori Mincho", serif',
               fontSize: '0.85rem',
               fontWeight: 400,
               letterSpacing: '0.04em',
               fill: 'white',
+              // Match the HTML text's fake-bold: white stroke fattens
+              // the mask shape so the flame window stays aligned with
+              // the visibly-thicker letters above.
+              stroke: 'white',
+              strokeWidth: '0.5',
+              paintOrder: 'stroke fill',
             }}
           >
             MOVEMENTS
