@@ -319,7 +319,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
                 }
               `}</style>
               {[
-                { left: '52%', top: '34%', delay: '0s',   dur: '2s' },
+                { left: '42%', top: '26%', delay: '0s',   dur: '2s' },
                 { left: '66%', top: '38%', delay: '0.6s', dur: '2.2s' },
                 { left: '76%', top: '32%', delay: '1.2s', dur: '2.4s' },
               ].map((s, i) => (
