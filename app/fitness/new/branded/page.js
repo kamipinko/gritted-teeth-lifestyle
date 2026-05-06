@@ -247,10 +247,14 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
           atmospheric stack so the button reads as a mini-homescreen tile.
           overflow:hidden contains the band overflow within the button
           rect (the wrapper's slash clipPath handles the slash silhouette
-          itself). */}
+          itself).
+          Black base uses rgba alpha ~0.82 so the kanji watermark behind
+          peeks through subtly in the dark gaps between bands — same
+          color logic as the homescreen, where the dark base lets the
+          atmosphere bloom register through it. */}
       <div
         className="absolute inset-0 overflow-hidden pointer-events-none"
-        style={{ background: GTL_BG_BLACK }}
+        style={{ background: 'rgba(7, 7, 8, 0.82)' }}
         aria-hidden="true"
       >
         {/* Radial red atmosphere bloom */}
