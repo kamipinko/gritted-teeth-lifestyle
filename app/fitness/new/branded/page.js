@@ -247,7 +247,7 @@ function AttuneFlameLayer({ rect }) {
   const ATTUNE_HALF_W = W * 0.32
   const MOVEMENTS_HALF_W = W * 0.45
 
-  const PARTS_PER_ROW = 28
+  const PARTS_PER_ROW = 36
   const particles = []
   for (let i = 0; i < PARTS_PER_ROW * 2; i++) {
     const isAttune = i < PARTS_PER_ROW
@@ -259,18 +259,22 @@ function AttuneFlameLayer({ rect }) {
     const td = hash01(seed * 5 + 13)       // 0..1 duration
     const tr = hash01(seed * 7 + 19)       // 0..1 size
     const to = hash01(seed * 11 + 23)      // 0..1 delay offset
-    // Spawn band wider than the text bounding so big particles still
-    // intersect letter shapes after the mask clips them.
-    const cx = (W / 2) + (tx - 0.5) * 2 * halfW * 1.15
-    const cy = baseY + 7 + ty * 5
-    const dur = 600 + td * 700             // 600-1300ms
-    // Larger particles so each one looks like a flame tongue rather
-    // than a speck. Mask clips them to letter shape — only the part
-    // inside the letter is visible, but the tongue is big enough that
-    // partial intersections still read as fire.
-    const r = 4 + tr * 5                   // 4-9
-    const delay = -(to * dur)              // negative delay so field is full on first frame
-    particles.push({ cx, cy, r, dur, delay, key: i })
+    const tv = hash01(seed * 13 + 29)      // 0..1 variant pick
+    // Spawn band wider than the text bounding so vertical-tongue
+    // ellipses still intersect letter shapes after the mask clips them.
+    const cx = (W / 2) + (tx - 0.5) * 2 * halfW * 1.18
+    const cy = baseY + 8 + ty * 5
+    // Wider duration range = more visual chaos (some particles flick up
+    // fast, others linger). Negative delay so field is full on frame 1.
+    const dur = 450 + td * 950             // 450-1400ms
+    // Vertical-tongue ellipses: rx narrower than ry so each particle
+    // reads as a flame tongue rather than a dot. Slight rx variance
+    // gives some thinner / fatter shapes mixed in.
+    const rx = 2.2 + tr * 1.8              // 2.2-4.0
+    const ry = 4.0 + tr * 4.5              // 4.0-8.5
+    const delay = -(to * dur)
+    const variant = tv < 0.34 ? 'a' : tv < 0.67 ? 'b' : 'c'
+    particles.push({ cx, cy, rx, ry, dur, delay, variant, key: i })
   }
 
   return (
@@ -338,17 +342,18 @@ function AttuneFlameLayer({ rect }) {
       <g mask="url(#attune-flame-mask)">
         <rect x="0" y="0" width={W} height={H} fill="#0a0a0a" />
         {particles.map(p => (
-          <circle
+          <ellipse
             key={p.key}
-            className="attune-flame-particle"
+            className={`attune-flame-particle var-${p.variant}`}
             cx={p.cx}
             cy={p.cy}
-            r={p.r}
+            rx={p.rx}
+            ry={p.ry}
             fill="#ff5000"
             style={{
               animationDuration: `${p.dur}ms`,
               animationDelay: `${p.delay}ms`,
-              filter: 'drop-shadow(0 0 2px #ffb060)',
+              filter: 'drop-shadow(0 0 1.5px #ffd060)',
             }}
           />
         ))}
