@@ -170,7 +170,14 @@ const ATTUNE_TEXT_LETTER_SPACING = '0.04em'
 // flexbox-equivalent layout would center the rows.
 const ATTUNE_Y_FRAC = 0.40
 const MOVEMENTS_Y_FRAC = 0.60
-const ATTUNE_TEXT_COLOR = '#d4181f'
+// Homescreen GateScreen palette — copied so the button reads as a
+// mini-homescreen tile.
+const GTL_BG_BLACK   = '#070708'
+const GTL_RED        = '#d4181f'
+const GTL_RED_BRIGHT = '#ff2a36'
+const GTL_RED_DEEP   = '#7a0e14'
+const GTL_PAPER      = '#f1eee5'
+const ATTUNE_TEXT_COLOR  = GTL_PAPER  // cream like the "GTL" headline
 
 // Renders both ATTUNE and MOVEMENTS as SVG <text> at percentage-based
 // (50% x) positions. Reused by the visible button text (fill=red,
@@ -231,6 +238,45 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
         padding: 0,
       }}
     >
+      {/* Homescreen-palette background — black base + radial red bloom +
+          two skewed diagonal red bands + noise grain. Mirrors GateScreen's
+          atmospheric stack so the button reads as a mini-homescreen tile.
+          overflow:hidden contains the band overflow within the button
+          rect (the wrapper's slash clipPath handles the slash silhouette
+          itself). */}
+      <div
+        className="absolute inset-0 overflow-hidden pointer-events-none"
+        style={{ background: GTL_BG_BLACK }}
+        aria-hidden="true"
+      >
+        {/* Radial red atmosphere bloom */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `radial-gradient(ellipse at 50% 55%, rgba(212,24,31,0.45) 0%, transparent 70%)`,
+          }}
+        />
+        {/* Wide diagonal band — left */}
+        <div
+          className="absolute"
+          style={{
+            top: '-25%', bottom: '-25%', left: '-10%', width: '55%',
+            background: 'rgba(212,24,31,0.75)',
+            transform: 'skewX(-12deg)',
+          }}
+        />
+        {/* Narrow accent band — right */}
+        <div
+          className="absolute"
+          style={{
+            top: '-25%', bottom: '-25%', right: '-15%', width: '22%',
+            background: 'rgba(212,24,31,0.55)',
+            transform: 'skewX(-12deg)',
+          }}
+        />
+        {/* Noise grain — same gtl-noise texture the homescreen uses */}
+        <div className="absolute inset-0 gtl-noise" />
+      </div>
       <svg
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
@@ -242,7 +288,7 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
         <polygon
           points="4,0 100,0 96,100 0,100"
           fill="none"
-          stroke={ATTUNE_TEXT_COLOR}
+          stroke={GTL_RED}
           strokeWidth="1.5"
           vectorEffect="non-scaling-stroke"
         />
@@ -1223,16 +1269,10 @@ export default function SchedulePage() {
                 left: `${attuneRect.left}px`,
                 width: `${attuneRect.width}px`,
                 height: `${attuneRect.height}px`,
-                // mix-blend-mode on the wrapper (not on the inner spans) so
-                // the entire overlay layer — SVG outline + text glyphs —
-                // composites against the kanji backdrop as one operation.
-                // On a span, the blend was getting promoted into a separate
-                // compositor layer that didn't see the kanji as backdrop;
-                // the wrapper-level blend keeps everything in one pass.
-                mixBlendMode: 'difference',
                 // clipPath restricts the click area to the slash silhouette,
                 // so taps in the wrapper's bounding-box corners pass through
-                // to underlying day cells.
+                // to underlying day cells. Also clips the homescreen-style
+                // background inside the button to the slash shape.
                 clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
               }}
             >
