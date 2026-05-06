@@ -1,14 +1,17 @@
 ---
 date: 2026-05-03
 topic: gtl-combo-exp-multiplier
-status: draft (mid-brainstorm — resume to finish)
+status: locked (ready for ce:plan)
+last-updated: 2026-05-06
 ---
 
 # GTL Combo EXP Multiplier System
 
-> **Status note**: This is a snapshot of the brainstorm in progress. Many decisions are locked in; some open questions remain. Resume by re-reading this doc, surfacing the **Outstanding Questions** below, and continuing from where we left off.
+> **Status (2026-05-06)**: All product/algo decisions resolved. Brainstorm is ready for `/ce:plan`. The Outstanding Questions section below is now historical — every entry is struck-through with its resolution date.
 >
-> **2026-05-03 update**: replaced the earlier "M_high/M_low per-region multipliers" model with a two-track model (continuous total XP via additive multipliers + discrete star awards per region). See Requirements R2–R3 and R10–R14.
+> **2026-05-03 update**: replaced the earlier "M_high/M_low per-region multipliers" model with a two-track model (continuous total XP via additive multipliers + discrete star awards per region). See R2–R3 and R10–R14.
+>
+> **2026-05-06 update**: completed full algo lockdown — IPF GL Points normalization (R1a), per-exercise heavy-lift thresholds (R18a), star-earning floor (R12c), and full muscle-curation pass on all 263 exercises. See R1a, R5–R5c, R8, R9, R10–R14, R12c, R16, R17–R20a.
 
 ## Problem Frame
 
@@ -79,7 +82,7 @@ The new feature is a **combo-driven multiplier system** that layers on top. It i
 **Region star track (discrete, wger-driven)**
 - R10. Each exercise has a region-weight vector derived from a hand-curated `primaryMuscles` / `secondaryMuscles` split (stored in `lib/exerciseAliases.js` `MUSCLE_FIXUP`, written into each library entry). Heuristic: primary muscles get 60% of total weight (split evenly across primary muscles), secondary muscles get 40% (split evenly across secondaries). When a muscle list is single (no secondaries), the primary owns 100%. Tunable.
 
-  Curation (locked 2026-05-06): all 266 library exercises have hand-tuned primary/secondary splits. R10's 60/40 model produces zero region ties under this curation — every exercise has a unambiguous winner for each star slot.
+  Curation (locked 2026-05-06): all 263 library exercises have hand-tuned primary/secondary splits. R10's 60/40 model produces zero region ties under this curation — every exercise has an unambiguous winner for each star slot.
 - R10a. **wger → region mapping uses DUAL SEMANTICS** — upper-body and lower-body muscles map differently:
   - **Upper-body muscles** use torso-only semantics. FRONT = front of torso (chest / pectorals, serratus). BACK = back of torso (lats, rhomboids, traps, erector spinae). ARMS = all limb muscles in the upper limbs including all three deltoid heads (anterior, medial/lateral, posterior — they sit on the upper arm). CORE = abdominals.
   - **Lower-body muscles** use position-of-leg semantics. FRONT = quads (front of leg). BACK = hamstrings (back of leg). LEGS = catch-all for the rest of the leg muscles: glutes, calves, adductors, abductors.
@@ -89,13 +92,13 @@ The new feature is a **combo-driven multiplier system** that layers on top. It i
   - `< 30%` wger weight → roughly stabilizer / not-a-real-target territory
   - `30–59%` → meaningful secondary
   - `60%+` → primary target
-- R12. **Compound exercises (regular)** award 1★ each to the **top 2 wger-weight regions**. Band thresholds (R11) do NOT gate this — the top 2 always earn a star regardless of raw share. **Tiebreak resolved 2026-05-06**: hand-curated primary/secondary splits eliminate ties at the design level (R10 curation produces zero ties across 266 library entries). For exercises added in the future where ties might emerge, default tiebreak is **alphabetical** (deterministic, easy to debug). The Total XP track applies `compound_mult` (placeholder 1.5) per R2.
+- R12. **Compound exercises (regular)** award 1★ each to the **top 2 wger-weight regions** (subject to the R12c star-floor gate). Band thresholds (R11, retired) do NOT gate this — the top 2 always earn a star regardless of raw region share when the set qualifies under R12c. **Tiebreak (locked 2026-05-06)**: hand-curated primary/secondary splits eliminate ties at the design level (R10 curation produces zero ties across the 263-entry library). For future-added exercises where ties might emerge, default tiebreak is **alphabetical** (deterministic, easy to debug). The Total XP track applies `compound_mult = 1.5` per R2.
 - R12b. **King Compound exercises** award 1★ each to the **top 3 wger-weight regions** instead of top 2. Curator-tagged via `is_king_compound: true` on the library entry (driven by `KING_COMPOUNDS` set in `lib/exerciseAliases.js`). Single-leg variants are NOT King — they cut intensity. The Total XP track applies `king_compound_mult = 1.75` (locked) instead of `compound_mult = 1.5`.
 
   **King list (locked 2026-05-06, 18 entries):** Squats — BARBELL SQUAT, FRONT SQUATS, SUMO SQUATS, BOX SQUAT, BELT SQUAT, HACK SQUATS, TRAP BAR SQUAT, SMITH MACHINE SQUAT, PENDULUM SQUAT. Deadlifts — DEADLIFTS, SUMO DEADLIFT, BARBELL ROMANIAN DEADLIFT (RDL), STIFF-LEGGED DEADLIFTS, DEFICIT DEADLIFT, RACK DEADLIFT. Leg press — LEG PRESS, LEG PRESSES (NARROW), LEG PRESSES (WIDE).
 
   Each King's `MUSCLE_FIXUP` entry has been deliberately curated so that 3 distinct regions emerge from R10's 60/40 split — e.g., BARBELL SQUAT primary `[quads]` secondary `[glutes, back]` produces FRONT 60% / LEGS 20% / BACK 20% → FRONT 1★ + LEGS 1★ + BACK 1★. Without the third-region curation, most Kings would only span 2 regions and award just 2 stars (defeating the King purpose).
-- R13. **Isolation exercises** concentrate on the **single highest-weight region** — that region earns 2★. All other regions earn 0★ regardless of their raw share. Band thresholds do NOT gate the 2★ award. The Total XP track applies `isolation_mult` (placeholder 1.2, smaller than `compound_mult`) per R2.
+- R13. **Isolation exercises** concentrate on the **single highest-weight region** — that region earns 2★ (subject to R12c star-floor). All other regions earn 0★ regardless of their raw share. The Total XP track applies `isolation_mult = 1.2` (smaller than `compound_mult`) per R2.
 
 - R12c. **Star-earning floor (locked 2026-05-06)** — region stars (R12 / R12b / R13) are awarded only when the set's relative load is at least **0.75 ×** the exercise's `heavy_lift_threshold`. Below the floor, the set logs XP normally but earns **zero stars**. Filters warm-ups and light rep-out work from the region-star track; only genuine working sets contribute.
 
@@ -121,7 +124,7 @@ The new feature is a **combo-driven multiplier system** that layers on top. It i
 
 **Consistency / Combo Identity**
 - R4. **Consistency XP** is a new, separate counter (parallel to Total XP). It accumulates from completing planned sessions on planned days. Its level determines the **Consistency multiplier** value (R2).
-- R5. The combo identity has a **21-tier teeth-grip ladder** running RELAXED → BRUSHED → BARED → BRANDISHED → PRIMED → PRESSED → SQUEEZED → LOCKED → DUG → DRIVEN → CLASPED → CLENCHED → CLAMPED → WRENCHED → CALLOUSED → HARDENED → HALLOWED → GNAWED → GNASHED → BLOODIED → **GRITTED** (peak). Each tier has an associated multiplier value (TBD — pending tier-multiplier decision).
+- R5. The combo identity has a **21-tier teeth-grip ladder** running RELAXED → BRUSHED → BARED → BRANDISHED → PRIMED → PRESSED → SQUEEZED → LOCKED → DUG → DRIVEN → CLASPED → CLENCHED → CLAMPED → WRENCHED → CALLOUSED → HARDENED → HALLOWED → GNAWED → GNASHED → BLOODIED → **GRITTED** (peak). Multiplier values per tier are locked in **R5c** (geometric curve from ×1.00 → ×3.00).
 - R5a. **Tier counter mechanic (locked 2026-05-05)**: tier is determined by the **lifetime cumulative count of 100%-completion sessions**. Each fully-completed session ticks the counter +1. Partial sessions (50–99%) do **not** tick. Sub-50% sessions do not tick either. The counter has **no decay** — it never decreases. Once a tier is unlocked, the user keeps it permanently. **Peak tier (GRITTED) is reached at 100 cumulative 100%-sessions**, distributed across 20 tier-up events from RELAXED → GRITTED.
 - R5b. **Pacing curve (locked 2026-05-05)** — front-loaded easy / back-loaded hard. Sessions required to advance from each tier to the next:
 
@@ -289,14 +292,12 @@ Defaults assumed: Consistency at IRON = 1.3, compound_mult = 1.5, isolation_mult
 - wger weights: ARMS 100%
 - Region star track (isolation, concentrate): only highest region (ARMS) earns stars. ARMS at 100% → 2★. Result: **ARMS 2★**
 
-**Example 3 — Deadlift 315 × 5 (compound, dual-semantics distribution)**
+**Example 3 — Deadlift 315 × 5 (KING COMPOUND, current curated splits)**
 - Base = 315 × repMult(5) × 5 = 315 × 1.0 × 5 = **1575**
-- Total XP track: 1575 × 1.3 + 1575 × 1.5 = 2048 + 2363 = **+4411 to totalXP**
-- wger weights under R10a dual semantics:
-  - Glutes (LEGS) 20%, Hams (BACK) 20%, Erector (BACK — torso) 20% (primaries)
-  - Quads (FRONT) 10%, Traps (BACK) 10%, Forearms (ARMS) 10%, Abs (CORE) 10% (secondaries)
-- Aggregate: BACK 50%, LEGS 20%, FRONT 10%, ARMS 10%, CORE 10%
-- Region star track (compound): no region exceeds 60%, no overflow. BACK 1★ (50%), LEGS 0★ (<30%), FRONT 0★ (<30%). Wait — only BACK clears 30%. Compound rule expected 2 regions × 1★. Edge case: only one region above threshold. **Result: BACK 1★ only** (under-distribution edge case — see Outstanding Questions for the "always award at least 2 stars on a compound" question).
+- DEADLIFTS muscle split (locked): primary `[back]`, secondary `[glutes, hamstrings, abs]`. Per R10a region map: BACK 0.6 + 0.4/3 (hams) = 0.733 / LEGS 0.4/3 (glutes) = 0.133 / CORE 0.4/3 (abs) = 0.133.
+- Region weights: BACK 73% / LEGS 13% / CORE 13%.
+- Region star track (KING, top 3 regions × 1★): **BACK 1★ + LEGS 1★ + CORE 1★** (subject to R12c star floor).
+- Total XP track at 200 lb user_BW with HARDENED tier (×2.28), 5 ribbons (0.50), no holiday: norm_factor = 0.952 (IPF GL); relative_load = 315/200 = 1.575× BW (above DL threshold 2.0? no — below). heavy_lift_x = 0. combined = 0.952. effective_base = 1500. Apply multipliers: 1500 × (1 + 2.28 + 1.75 + 0.50) = 1500 × 5.53 = **+8,295 EXP**.
 
 **Example 3b — Squat 225 × 8 (KING COMPOUND, dual-semantics distribution)**
 - Base = 225 × 1.0 × 8 = **1800**
@@ -376,11 +377,14 @@ The cap-and-overflow rule (R12) + concentrate rule (R13) + 100% reclassification
 - **wger attribution in settings credits page — sufficient for license compliance.**
 - **Visibility is moment-bound** — per-set popup animation reveals the breakdown briefly. No constant multiplier UI in the nav.
 
-## Outstanding Questions
+## Resolved Questions (historical record)
+
+> All entries below are struck-through with the date and the resolution.
+> No open questions remain as of 2026-05-06.
 
 ### Resolve Before Planning
 
-- ~~[Affects R2] Specific multiplier values: consistency_mult / compound_mult / isolation_mult / king_compound_mult / prestige_mult~~ — **resolved 2026-05-05**: consistency_mult is the 21-tier curve in R5c (×1.00 → ×3.00). king_compound_mult = 1.75. compound_mult = 1.5. isolation_mult = 1.2. prestige_mult = 0.10 per ribbon (additive). Only `holiday_mult` per holiday remains TBD (covered separately below).
+- ~~[Affects R2] Specific multiplier values: consistency_mult / compound_mult / isolation_mult / king_compound_mult / prestige_mult / holiday_mult~~ — **resolved 2026-05-05/06**: consistency_mult is the 21-tier curve in R5c (×1.00 → ×3.00). king_compound_mult = 1.75. compound_mult = 1.5. isolation_mult = 1.2. prestige_mult = 0.10 per ribbon (additive). holiday_mult tiers locked in R16 (1.5 / 1.0 / 0.5).
 - [Affects R6][User decision] How many sessions per tier? (How long does it take to climb NOVICE → IRON → STEEL → BLAZE → OVERDRIVE?)
 - [Affects R8][User decision] Missed-day rule: full reset for ALL tiers, or full tier drop only (so OVERDRIVE → BLAZE on first miss, not 1.0× on first miss)?
 - [Affects R8][User decision] Grace days / streak freezes? (Duolingo-style "1 free pass per month") or strict no-grace?
@@ -399,7 +403,7 @@ The cap-and-overflow rule (R12) + concentrate rule (R13) + 100% reclassification
 
 ### Deferred to Planning
 
-- [Affects R10][Technical] wger primary/secondary 60/40 weight split is a placeholder. Real fitness science may suggest different ratios. Worth a quick research pass when planning.
+- ~~[Affects R10] wger primary/secondary 60/40 weight split~~ — **resolved 2026-05-06**: 60/40 split is locked. Hand-curated primary/secondary lists per exercise (in `MUSCLE_FIXUP`) ensure the split produces unambiguous region weights. Curation overrode wger's default tagging entirely; the 60/40 ratio is now load-bearing design, not a placeholder.
 - [Affects R10][Technical] Does wger expose compound/isolation classification directly, or do we need to compute? (Classification is curated per R14 anyway, but wger may give a useful default.)
 - [Affects R13][Technical] Storage shape for per-exercise region weights and classification — bake into `lib/exerciseLibrary.js` at import time, or compute lazily?
 - [Affects R12][Technical] When a compound's overflow target is itself <30% — does the overflow STILL fire and award 1 star to that low-weight region, or is the second star forfeited? (Current spec: overflow fires regardless of receiver's raw share. Confirm.)
@@ -463,10 +467,10 @@ Newly settled (2026-05-04 session):
 | 20 | **BLOODIED** | battle-marked, post-fight |
 | 21 | **GRITTED** | peak — won't give |
 
-The tier names match the app's "Gritted Teeth" identity end-to-end — every tier reads naturally as "[verb] teeth." Vocabulary mixes physical-grip mechanics, transformation/state-of-being words (HARDENED-family), and medieval/weapon imagery (BRANDISHED, HALLOWED). Multiplier values per tier still TBD (Outstanding Question — pending tier-counter mechanic decision).
+The tier names match the app's "Gritted Teeth" identity end-to-end — every tier reads naturally as "[verb] teeth." Vocabulary mixes physical-grip mechanics, transformation/state-of-being words (HARDENED-family), and medieval/weapon imagery (BRANDISHED, HALLOWED). Multiplier values per tier are locked in **R5c** (geometric ×1.00 → ×3.00 curve).
 
 **All product/algo decisions resolved as of 2026-05-06.** Brainstorm is ready for `/ce:plan`.
 
 ## Next Steps
 
-→ Resume `ce:brainstorm` with this doc as context. Walk the Outstanding Questions one at a time. Then `ce:plan` once Resolve Before Planning is empty.
+→ Brainstorm is locked. Run `/ce:plan` to turn this into a step-by-step implementation plan.
