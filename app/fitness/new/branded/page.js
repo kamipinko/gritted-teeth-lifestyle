@@ -163,9 +163,15 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
   // mix-blend-mode from the kanji backdrop. The wrapper around this
   // component (in the grid render) must also avoid stacking context
   // creators for the same reason.
-  // Inactive dimming uses an rgba color (0.4 alpha) on the text + stroke
-  // instead of element opacity, since rgba color doesn't isolate.
-  const textColor = enabled ? '#d4181f' : 'rgba(212, 24, 31, 0.4)'
+  //
+  // Border + text color stay constant regardless of `enabled`. The
+  // flame layer is the only visual indicator that a day is selected
+  // — the button itself doesn't shift between dim/bright. Thinner
+  // font weight (400 instead of 900) so flame particles get clipped
+  // tightly by the letter strokes; bolder weights leave visible
+  // round particle silhouettes in the thicker glyph fills.
+  const TEXT_COLOR = '#d4181f'
+  const FONT_WEIGHT = 400
   return (
     <button
       type="button"
@@ -193,7 +199,7 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
         <polygon
           points="4,0 100,0 96,100 0,100"
           fill="none"
-          stroke={enabled ? '#d4181f' : 'rgba(212,24,31,0.4)'}
+          stroke={TEXT_COLOR}
           strokeWidth="1.5"
           vectorEffect="non-scaling-stroke"
         />
@@ -201,13 +207,13 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
       <div className="relative w-full h-full flex flex-col items-center justify-center px-1 gap-0.5">
         <span
           className="font-display leading-none whitespace-nowrap"
-          style={{ fontSize: '1.1rem', fontWeight: 900, color: textColor, letterSpacing: '0.05em' }}
+          style={{ fontSize: '1.1rem', fontWeight: FONT_WEIGHT, color: TEXT_COLOR, letterSpacing: '0.05em' }}
         >
           ATTUNE
         </span>
         <span
           className="font-display leading-none whitespace-nowrap"
-          style={{ fontSize: '1.1rem', fontWeight: 900, color: textColor, letterSpacing: '0.05em' }}
+          style={{ fontSize: '1.1rem', fontWeight: FONT_WEIGHT, color: TEXT_COLOR, letterSpacing: '0.05em' }}
         >
           MOVEMENTS
         </span>
@@ -321,7 +327,7 @@ function AttuneFlameLayer({ rect }) {
             style={{
               fontFamily: 'Anton, Impact, sans-serif',
               fontSize: '1.1rem',
-              fontWeight: 900,
+              fontWeight: 400,
               letterSpacing: '0.05em',
               fill: 'white',
             }}
@@ -336,7 +342,7 @@ function AttuneFlameLayer({ rect }) {
             style={{
               fontFamily: 'Anton, Impact, sans-serif',
               fontSize: '1.1rem',
-              fontWeight: 900,
+              fontWeight: 400,
               letterSpacing: '0.05em',
               fill: 'white',
             }}
