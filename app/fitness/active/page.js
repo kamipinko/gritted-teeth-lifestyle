@@ -2724,6 +2724,12 @@ export default function ActiveCyclePage() {
   // routes immediately, mirroring the fast-forward behavior on /fitness/load.
   const fireDayHopRef = useRef(null)
   const skippedDayHopRef = useRef(false)
+  // Timestamp of the original handleDayHop call. Lets us distinguish
+  // "second call from the same physical tap" (pointerdown stages →
+  // tryConsume fires handleDayHop, then click on touchend fires it
+  // again) from a deliberate user skip (a real second tap several
+  // hundred ms later). Same-tap second call is ignored.
+  const fireDayHopAtRef = useRef(0)
   const [cardRefreshKey, setCardRefreshKey] = useState(0)
   const [completedDays, setCompletedDays]   = useState(0)
   const [barXP, setBarXP]                   = useState(0)
@@ -2928,12 +2934,17 @@ export default function ActiveCyclePage() {
   const handleDayHop = (iso) => {
     if (skippedDayHopRef.current) return
     if (fireDayHopRef.current) {
-      // Already firing → skip to destination immediately.
+      // Already firing — but if this call is from the SAME physical tap
+      // as the first one (within 300ms), it's the redundant click event
+      // following the pointerdown, not a deliberate skip request. Ignore.
+      if (performance.now() - fireDayHopAtRef.current < 300) return
+      // True second tap → user wants to skip the slash. Route now.
       skippedDayHopRef.current = true
       router.push('/fitness/active/' + fireDayHopRef.current)
       return
     }
     fireDayHopRef.current = iso
+    fireDayHopAtRef.current = performance.now()
     setInAnimation('today', true)
     setFireDayHop(iso)
   }
