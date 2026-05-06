@@ -180,7 +180,7 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
   // verticals — feels more like flame licking through a calligraphic
   // form. Single weight (400). The mask <text> below uses the same
   // family/weight so the flame window aligns with the visible text.
-  const FONT_FAMILY = '"Yuji Syuku", "Shippori Mincho", serif'
+  const FONT_FAMILY = '"Yuji Boku", "Yuji Syuku", "Shippori Mincho", serif'
   return (
     <button
       type="button"
@@ -336,7 +336,7 @@ function AttuneFlameLayer({ rect }) {
             textAnchor="middle"
             dominantBaseline="central"
             style={{
-              fontFamily: '"Yuji Syuku", "Shippori Mincho", serif',
+              fontFamily: '"Yuji Boku", "Yuji Syuku", "Shippori Mincho", serif',
               fontSize: '0.85rem',
               fontWeight: 400,
               letterSpacing: '0.04em',
@@ -351,7 +351,7 @@ function AttuneFlameLayer({ rect }) {
             textAnchor="middle"
             dominantBaseline="central"
             style={{
-              fontFamily: '"Yuji Syuku", "Shippori Mincho", serif',
+              fontFamily: '"Yuji Boku", "Yuji Syuku", "Shippori Mincho", serif',
               fontSize: '0.85rem',
               fontWeight: 400,
               letterSpacing: '0.04em',
