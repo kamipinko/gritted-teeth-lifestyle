@@ -72,13 +72,30 @@ function normalizeName(raw) {
     .toUpperCase()
 }
 
+// Name-based equipment fallback for wger entries where the equipment field
+// is missing or maps to 'other'. Pattern order matters — earlier patterns
+// win. The library is curated so that every exercise lands in one of
+// {machine, cable, dumbbell, barbell, bodyweight}; entries that still
+// return 'other' after this fallback are dropped by the import filter.
+const NAME_EQUIPMENT_PATTERNS = [
+  ['cable',     /\b(?:CABLE|PULLEY|PULLDOWN|PULL\sDOWN|FACEPULL|FACE\sPULL|BAYESIAN|ROPE\s|PUSHDOWN|PALLOF|SHOTGUN\sROW|ROWING\sSEATED)\b/i],
+  ['machine',   /\b(?:SMITH|LEVERAGE|MACHINE|HACKENSCHMITT|HAMMERSTRENGTH|HAMMER\sSTRENGTH|BUTTERFLY|PEC\s?DECK|GLUTE\sDRIVE|HACK\sSQUAT(?:S)?|LEG\sPRESS(?:ES)?|LEG\sCURL(?:S)?|LEG\sEXTENSION(?:S)?|HYPEREXTENSION(?:S)?|HYPER\b|REVERSE\sHYPER|PULLOVER\sMACHINE|GHR|GLUTE.HAM|REAR\sDELT\sFLY|BACK\sEXTENSION|45.DEGREE|T.BAR|GLUTE\sKICKBACK|BELT\sSQUAT|CHEST\sPRESS|HIGH\sROW|LOW\sROW|MULTIPRESS|MULTI\sPRESS|LEGEND|HIP\sADDUCTION|HIP\sABDUCTION|SEATED\sHIP|CALF\sRAISE(?:S)?|STANDING\sCALF|SITTING\sCALF|SEATED\sCALF|NECK\sEXTENSION)\b/i],
+  ['barbell',   /\b(?:BARBELL|EZ[- ]?BAR|SZ[- ]?BAR|TRAP\sBAR|GOOD\sMORNING(?:S)?|FLOOR\sSKULL\sCRUSHER|SKULLCRUSHER|SKULL\sCRUSH|BB|PUSH\sPRESS|RACK\sDEADLIFT|SUMO\sDEADLIFT|REVERSE\sBAR\sCURL|PREACHER\sCURL(?:S)?|REVERSE\sPREACHER)\b/i],
+  ['dumbbell',  /\b(?:DUMBBELL|DUMBBELLS|KROC\sROW|FRONT\sPLATE\sRAISE|RAISE(?:S)?\sWITH\sPLATE(?:S)?|PLATE\sRAISE|OVERHEAD\sTRICEPS\sEXTENSION|SEATED\sTRICEPS\sPRESS|ROWING,?\sLYING)\b/i],
+  ['bodyweight',/\b(?:BODYWEIGHT|PUSH[- ]?UP(?:S)?|PULL[- ]?UP(?:S)?|CHIN[- ]?UP(?:S)?|DIP(?:S)?|SIT[- ]?UP(?:S)?|CRUNCH(?:ES)?|FLUTTER|GLUTE\sBRIDGE|LEG\sRAISE(?:S)?|KNEE\sRAISE(?:S)?|HANGING\sLEG\sRAISE(?:S)?|COMMANDO|HINDU|COSSACK|REVERSE\sCRUNCH|V.UP|JACKKNIFE|TUCK|MOUNTAIN|BICYCLE\sCRUNCH|TOE\sTOUCH|AIR\sSQUAT|AB\sWHEEL|ROLLOUT|SUPERMAN|BIRD\sDOG|DRAGON\sFLAG|TYPEWRITER|ARCHER|SCAPULAR?|INVERTED|AUSTRALIAN|MUSCLE\sUP|NORDIC|WALL\sANGEL(?:S)?|SCISSORS|BRACED\sSQUAT)\b/i],
+]
+
 function inferEquipment(wgerEquipmentArr, exerciseId) {
   // Manual override takes precedence (cable / kettlebell / band).
   if (EQUIPMENT_OVERRIDE[exerciseId]) return EQUIPMENT_OVERRIDE[exerciseId]
   // First wger equipment that maps wins.
   for (const eq of wgerEquipmentArr || []) {
     const mapped = WGER_EQUIPMENT_MAP[eq.id ?? eq]
-    if (mapped) return mapped
+    if (mapped && mapped !== 'other') return mapped
+  }
+  // Name-based fallback for entries that wger left unclassified.
+  for (const [eq, pat] of NAME_EQUIPMENT_PATTERNS) {
+    if (pat.test(exerciseId)) return eq
   }
   return 'other'
 }
@@ -118,6 +135,7 @@ function transform(wgerEntries) {
     if (muscles.length === 0) continue   // no GTL muscles attributed → skip
 
     const equipment = inferEquipment(w.equipment, id)
+    if (equipment === 'other') continue   // drop entries that resist classification
     const aliases = EXERCISE_ALIASES[id] || []
 
     out.push({ id, label: id, muscles, equipment, aliases })
