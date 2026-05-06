@@ -397,7 +397,7 @@ export default function FitnessPage() {
       // Clear any in-progress edit so ETCH CYCLE creates a fresh entry
       try { localStorage.removeItem(pk('editing-cycle-id')) } catch (_) {}
       try { localStorage.removeItem('gtl-back-to-edit') } catch (_) {}
-      setTransitionConfig({ href, title: 'NEW CYCLE', intensity: 'mega' })
+      setTransitionConfig({ href, title: 'WHAT YOU GOT', intensity: 'mega' })
     } else if (href === '/fitness/load') {
       setTransitionConfig({ href, title: 'YOU', intensity: 'normal' })
       // Predictive-tap chain: this is hub-load. Flag in-animation so the

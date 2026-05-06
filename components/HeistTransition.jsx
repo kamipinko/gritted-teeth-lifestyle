@@ -146,7 +146,7 @@ export default function HeistTransition({
         >
           {isMega ? (
             <div className="text-[14vw] tracking-[0.2em] text-gtl-paper">
-              PIERCE THROUGH THE HEAVENS
+              {title}
             </div>
           ) : (
             title
