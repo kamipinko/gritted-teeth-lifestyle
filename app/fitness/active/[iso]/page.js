@@ -433,6 +433,95 @@ function MuscleSlab({ id, rot, delay, onClick }) {
   )
 }
 
+/* ── isMuscleComplete: a muscle is "complete" when at least one logged rep
+ *  exists in its `ex-${cycleId}-${iso}-${muscleId}` storage payload. The
+ *  muscle rolodex auto-centers on the FIRST uncomplete muscle so the user
+ *  is dropped on what they should work on next. Mirrors the data shape
+ *  read by the parent's DayCard "lifts summary" + DayFocus's allReps. */
+function isMuscleComplete(cycleId, iso, muscleId) {
+  if (typeof window === 'undefined') return false
+  try {
+    const raw = localStorage.getItem(pk(`ex-${cycleId}-${iso}-${muscleId}`))
+    if (!raw) return false
+    const data = JSON.parse(raw)
+    if (!data || typeof data !== 'object') return false
+    for (const name of Object.keys(data)) {
+      const v = data[name]
+      if (Array.isArray(v) ? v.some(r => r > 0) : v > 0) return true
+    }
+    return false
+  } catch (_) { return false }
+}
+
+/* ── Muscle button — mirrors DayButton's red-clip-path style verbatim.
+ *  Used in the muscle rolodex to make every muscle visually consistent
+ *  with the day-rolodex hero. ONLY the hero card carries the predictive-
+ *  tap chain target attribute (matches the day rolodex's TODAY-only
+ *  attribute). Done muscles dim to a dark surface bg with a strikethrough
+ *  label so they read as past-completed. */
+function MuscleButton({ muscleId, isHero, onClick, doneKey, cycleId, iso }) {
+  const { play } = useSound()
+  const [done, setDone] = useState(false)
+
+  useEffect(() => {
+    setDone(isMuscleComplete(cycleId, iso, muscleId))
+  }, [cycleId, iso, muscleId, doneKey])
+
+  const label = MUSCLE_LABELS[muscleId] || muscleId.toUpperCase()
+  const kanji = MUSCLE_KANJI[muscleId] || ''
+
+  return (
+    <button
+      type="button"
+      // Predictive-tap chain marker: ONLY the hero card carries this
+      // attribute (other muscles in the rolodex are not the chain target).
+      // Mirrors DayButton's TODAY-only `data-predictive-tap-target='today'`
+      // pattern — the canonical y=479 hit-zone is shared by all chain hops.
+      data-predictive-tap-target={isHero ? 'muscle' : undefined}
+      onClick={() => {
+        // Predictive-tap chain step 5 — onClick stages the muscle hop.
+        // The page-level wrapper kicks off HeistTransition (TEETH slash)
+        // and pushes /fitness/active/[iso]/[muscleId] on completion.
+        onClick(muscleId)
+      }}
+      className="relative block w-full outline-none active:scale-[0.98] transition-transform"
+      style={{ touchAction: 'pan-y' }}
+      aria-label={`View exercises for ${label}`}
+    >
+      <div
+        className={`absolute inset-0 transition-colors ${done ? 'bg-gtl-surface' : 'bg-gtl-red'}`}
+        style={{
+          // Match the ACTIVATE / DayButton clip-path slash exactly.
+          clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)',
+          // Match the ACTIVATE / DayButton offset-block shadow.
+          boxShadow: done
+            ? '2px 2px 0 #070708'
+            : '4px 4px 0 #070708',
+          border: done ? '1px solid #2a2a30' : 'none',
+        }}
+        aria-hidden="true"
+      />
+      <div className="relative flex items-center justify-between px-6 py-5 gap-3 min-h-[56px]">
+        {/* Single-line label — matches canonical chain-button content shape
+            (one line of text-3xl). Mirrors DayButton's date rendering. */}
+        <span className={`font-display text-3xl leading-none whitespace-nowrap shrink-0 tracking-tight
+          ${done ? 'text-gtl-chalk' : 'text-gtl-paper'}`}
+          style={done ? { textDecoration: 'line-through', textDecorationColor: '#7a0e14' } : undefined}>
+          {label}
+        </span>
+        {/* Right side: kanji glyph (analogue of REST pill on DayButton) */}
+        {kanji && (
+          <span className={`font-display text-2xl leading-none whitespace-nowrap shrink-0
+            ${done ? 'text-gtl-smoke/60' : 'text-gtl-paper/70'}`}
+            style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", serif' }}>
+            {kanji}
+          </span>
+        )}
+      </div>
+    </button>
+  )
+}
+
 /* ── Reps counter popup ── */
 function RepsPopup({ exerciseName, initialReps, rowRect, onClose, onSave }) {
   const { play } = useSound()
@@ -2019,6 +2108,86 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId, onMus
     setAllWeights(loadedWeights)
   }, [iso, muscles, refreshKey])
 
+  // ── MUSCLE ROLODEX ──
+  // Mirrors the day rolodex on /fitness/active. Hero muscle = first
+  // uncomplete muscle in the day's plan (fallback muscles[0]). The hero
+  // card carries data-predictive-tap-target='muscle' and is the auto-
+  // centered target on mount. Each card carries --rolodex-t (1 at the
+  // active line y=479, 0 at the edges), driven by the scroll listener
+  // below. ACTIVE_TOP_Y matches the parent's value verbatim.
+  const rolodexRef = useRef(null)
+  const ACTIVE_TOP_Y = 479
+  const heroMuscle = (() => {
+    if (!hasWork) return null
+    for (const id of muscles) {
+      if (!isMuscleComplete(cycleId, iso, id)) return id
+    }
+    return muscles[0]
+  })()
+
+  // Scroll-driven prominence — assigns each card --rolodex-t and toggles
+  // data-rolodex-centered when within 30px of the active line. Mirrors
+  // the parent /fitness/active rolodex falloff math verbatim.
+  useEffect(() => {
+    if (!hasWork) return
+    const container = rolodexRef.current
+    if (!container) return
+
+    const update = () => {
+      const cards = container.querySelectorAll('[data-rolodex-muscle]')
+      cards.forEach((card) => {
+        const rect = card.getBoundingClientRect()
+        const dist = Math.abs(rect.top - ACTIVE_TOP_Y)
+        const t = Math.max(0, Math.min(1, 1 - Math.max(0, dist - 30) / 170))
+        card.style.setProperty('--rolodex-t', String(t))
+        if (t >= 0.9) card.setAttribute('data-rolodex-centered', '')
+        else card.removeAttribute('data-rolodex-centered')
+      })
+    }
+    update()
+    container.addEventListener('scroll', update, { passive: true })
+    const ro = new ResizeObserver(update)
+    ro.observe(container)
+    return () => {
+      container.removeEventListener('scroll', update)
+      ro.disconnect()
+    }
+  }, [hasWork, muscles])
+
+  // Auto-center the hero muscle to viewport y=479 on mount + on hero
+  // change. Direct scrollTop assignment with retries — mirrors the
+  // parent's day-rolodex auto-center pattern verbatim. iOS PWA WebKit
+  // intermittently no-ops scrollBy on a flex+overflow container, and
+  // the retries cover the case where the first frame measures before
+  // paddingTop:60vh has laid out fully.
+  useEffect(() => {
+    if (!hasWork) return
+    const container = rolodexRef.current
+    if (!container || !heroMuscle) return
+    let cancelled = false
+    const place = () => {
+      if (cancelled) return false
+      const node = container.querySelector(`[data-rolodex-muscle="${heroMuscle}"]`)
+      if (!node) return false
+      const rect = node.getBoundingClientRect()
+      const delta = rect.top - ACTIVE_TOP_Y
+      if (Math.abs(delta) < 1) return true
+      container.scrollTop = container.scrollTop + delta
+      return true
+    }
+    const handles = []
+    handles.push(requestAnimationFrame(() => {
+      handles.push(requestAnimationFrame(place))
+    }))
+    handles.push(setTimeout(place, 60))
+    handles.push(setTimeout(place, 160))
+    handles.push(setTimeout(place, 320))
+    return () => {
+      cancelled = true
+      handles.forEach(h => { try { cancelAnimationFrame(h) } catch (_) {} ; try { clearTimeout(h) } catch (_) {} })
+    }
+  }, [hasWork, heroMuscle])
+
   // Compute transform-origin from the card rect (center of the clicked card)
   const originX = originRect
     ? `${originRect.left + originRect.width / 2}px`
@@ -2265,8 +2434,11 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId, onMus
             )}
           </div>
 
-          {/* Vertical layout: compact date header + muscle slabs + exercise log */}
-          <div className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-5 py-2" style={{ touchAction: 'pan-y', overscrollBehaviorY: 'contain' }}>
+          {/* Vertical layout: compact date header + muscle rolodex + exercise log.
+              Outer wrapper uses overflow-hidden + flex column so the rolodex
+              child can own its scroll behavior (mirrors /fitness/active where
+              the rolodex is the only scroll surface in the page body). */}
+          <div className="flex-1 overflow-hidden min-h-0 flex flex-col gap-5 py-2" style={{ touchAction: 'pan-y', overscrollBehaviorY: 'contain' }}>
 
             {/* Compact date header */}
             <div>
@@ -2303,37 +2475,83 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId, onMus
               style={{ transform: 'skewX(-6deg)', transformOrigin: 'left center' }}
             />
 
-            {/* Muscle slabs or REST. muscles[0] is rendered separately as the
-                BEGIN HERE quick-nav hero at y=466, so skip index 0 here. */}
+            {/* ── MUSCLE ROLODEX ──
+                Vertical free-scroll list of all the day's muscles. Mirrors
+                the day rolodex on /fitness/active verbatim — same paddingTop/
+                Bottom 60vh phantom space, same onClickCapture gating non-
+                centered taps, same auto-center to y=479 driving the hero
+                muscle into the canonical chain hit-zone. ONLY label text
+                differs from the day rolodex (per user spec). The hero
+                muscle is the first uncomplete one. */}
             {hasWork ? (
-              <div className="flex flex-wrap gap-x-4 gap-y-3">
-                {muscles.slice(1).map((id, i) => {
-                  const rot = SLAB_ROTATIONS[i % SLAB_ROTATIONS.length]
-                  return (
-                    <MuscleSlab
-                      key={id}
-                      id={id}
-                      rot={rot}
-                      delay={320 + i * 60}
-                      onClick={() => onMuscleHop(id)}
-                    />
-                  )
-                })}
-              </div>
-            ) : (
               <div
-                className="font-display text-gtl-smoke leading-none"
-                style={{ fontSize: 'clamp(3rem, 7vw, 6rem)', transform: 'rotate(-1deg)' }}
+                ref={rolodexRef}
+                data-rolodex-container
+                data-scroll-passthrough
+                style={{
+                  flex: '1 1 0%',
+                  minHeight: 0,
+                  height: '100%',
+                  overflowY: 'auto',
+                  overflowX: 'hidden',
+                  WebkitOverflowScrolling: 'touch',
+                  overscrollBehaviorY: 'contain',
+                  touchAction: 'pan-y',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                  // Phantom space above + below so the first/last card can
+                  // be scrolled to the active line. Mirrors the day-rolodex
+                  // 60vh values verbatim.
+                  paddingTop: '60vh',
+                  paddingBottom: '60vh',
+                }}
               >
-                REST DAY
-              </div>
-            )}
+                {muscles.map((id) => (
+                  <div
+                    key={id}
+                    data-rolodex-muscle={id}
+                    onClickCapture={(e) => {
+                      // Tap-to-select-then-open behavior:
+                      //   centered card → click bubbles → MuscleButton.onClick fires
+                      //   non-centered card → block, scroll to center it
+                      const wrapper = e.currentTarget
+                      if (!wrapper.hasAttribute('data-rolodex-centered')) {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                      }
+                    }}
+                    style={{
+                      flexShrink: 0,
+                      minHeight: '56px',
+                      // --rolodex-t is updated by the scroll listener.
+                      // 1 at the active line, 0.7 floor at the edges.
+                      // Mirrors the day-rolodex falloff verbatim.
+                      opacity: 'calc(0.7 + 0.3 * var(--rolodex-t, 0))',
+                      transition: 'opacity 100ms linear',
+                    }}
+                  >
+                    <MuscleButton
+                      muscleId={id}
+                      isHero={id === heroMuscle}
+                      onClick={onMuscleHop}
+                      doneKey={refreshKey}
+                      cycleId={cycleId}
+                      iso={iso}
+                    />
+                  </div>
+                ))}
 
-            {/* Exercise log — full width, one block per muscle group */}
-            {hasWork && (
-              <div style={{ animation: 'focus-content-in 350ms 400ms ease-out both' }}>
-                {muscles.every(id => !Object.values(allReps[id] || {}).some(v => Array.isArray(v) ? v.some(r => r > 0) : v > 0)) ? (
-                  <div style={{ transform: 'rotate(-1deg)' }}>
+                {/* Exercise log nested inside the rolodex's scroll content
+                    so scrolling past the last card reveals already-logged
+                    sets without competing with the rolodex for vertical
+                    space. Placed BEFORE paddingBottom phantom so the last
+                    card can still center at y=479. */}
+                {hasWork && (
+                  <div style={{ animation: 'focus-content-in 350ms 400ms ease-out both', marginTop: '24px' }}>
+                    {muscles.every(id => !Object.values(allReps[id] || {}).some(v => Array.isArray(v) ? v.some(r => r > 0) : v > 0)) ? (
+                      <div style={{ transform: 'rotate(-1deg)' }}>
                     <div
                       className="font-display text-gtl-smoke/20 leading-none"
                       style={{ fontSize: 'clamp(2rem, 4vw, 3.5rem)', textShadow: '3px 3px 0 #070708' }}
@@ -2463,6 +2681,15 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId, onMus
                 )}
               </div>
             )}
+              </div>
+            ) : (
+              <div
+                className="font-display text-gtl-smoke leading-none"
+                style={{ fontSize: 'clamp(3rem, 7vw, 6rem)', transform: 'rotate(-1deg)' }}
+              >
+                REST DAY
+              </div>
+            )}
           </div>
 
           {/* Bottom row: breadcrumb + stamp button */}
@@ -2506,56 +2733,17 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId, onMus
           </div>
         </div>
 
-        {/* Quick-nav BEGIN HERE muscle — chain step 5. Same canonical
-            geometry as ProfileChip / ActivatePopup so the predictive-tap
-            chain can use one shared hit-zone (px-24 py-5 min-h-[56px],
-            polygon(3%/97%) clipPath, 4px offset corner shadow, text-3xl).
-            Tapping triggers HeistTransition + router.push to the
-            [iso]/[muscleId] route via onMuscleHop. */}
-        {hasWork && (
-          <button
-            type="button"
-            data-predictive-tap-target="muscle"
-            onClick={() => {
-              // BEGIN HERE muscle is chain step 5 — final hop. Parent
-              // page (ActiveDayPage) handles HT + router.push. Disarm
-              // here so subsequent taps don't accidentally stage 'muscle'
-              // because currentStep got stuck at 'today' from this run.
-              // User re-arms by tapping a profile chip on /fitness.
-              disarmChain('muscle-fired')
-              onMuscleHop(muscles[0])
-            }}
-            className={`
-              fixed z-[9991] flex items-center justify-center
-              font-display tracking-[0.25em] uppercase overflow-visible
-              px-24 py-5 min-h-[56px]
-              text-3xl text-gtl-paper
-              transition-all duration-200 ease-out
-              [@media(hover:hover)]:hover:scale-[1.04] active:scale-[0.98]
-              bg-gtl-red [@media(hover:hover)]:hover:bg-gtl-red-bright
-              shadow-[4px_4px_0_#070708]
-              [@media(hover:hover)]:hover:shadow-[6px_6px_0_#070708]
-              active:shadow-[2px_2px_0_#070708]
-            `}
-            style={{
-              top: '466px',
-              left: '12px',
-              right: '12px',
-              clipPath: 'polygon(3% 0%, 100% 0%, 97% 100%, 0% 100%)',
-              animation: 'activate-popup-rise 320ms cubic-bezier(0.18, 1, 0.36, 1) 380ms both',
-            }}
-          >
-            <span className="relative inline-block leading-none tracking-tight">
-              {MUSCLE_LABELS[muscles[0]] || muscles[0].toUpperCase()}
-            </span>
-          </button>
-        )}
+        {/* BEGIN HERE muscle button removed — replaced by the muscle
+            rolodex above. The hero card (first uncomplete muscle) carries
+            data-predictive-tap-target='muscle' and lives inside the
+            rolodex, occupying the canonical y=479 hit-zone. Direct taps
+            on the hero card and predictive-tap during the inbound 'today'
+            HT both converge on onMuscleHop. */}
 
         {/* Exercise panel now lives at /fitness/active/[iso]/[muscleId] —
-            tapping a muscle (BEGIN HERE, secondary slab, or name chip)
-            calls onMuscleHop, which fires HeistTransition + router.push.
-            Returning from that route remounts DayFocus with fresh
-            localStorage reads. */}
+            tapping a muscle (rolodex card or name chip) calls onMuscleHop,
+            which fires HeistTransition + router.push. Returning from that
+            route remounts DayFocus with fresh localStorage reads. */}
 
         {/* PickerSheet moved to /fitness/active/[iso]/[muscleId]. */}
       </div>
