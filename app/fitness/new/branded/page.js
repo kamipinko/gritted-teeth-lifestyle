@@ -177,7 +177,11 @@ const GTL_RED        = '#d4181f'
 const GTL_RED_BRIGHT = '#ff2a36'
 const GTL_RED_DEEP   = '#7a0e14'
 const GTL_PAPER      = '#f1eee5'
-const ATTUNE_TEXT_COLOR  = GTL_PAPER  // cream like the "GTL" headline
+// Red text + mix-blend-mode: difference (applied at the text SVG)
+// gives the same negative-photo flip the homescreen uses on its
+// "GRITTED TEETH LIFESTYLE" / "PRESS START" labels — red on the
+// black base, flipping to black where it crosses the red bands.
+const ATTUNE_TEXT_COLOR  = GTL_RED
 
 // Renders both ATTUNE and MOVEMENTS as SVG <text> at percentage-based
 // (50% x) positions. Reused by the visible button text (fill=red,
@@ -297,6 +301,7 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
         width="100%"
         height="100%"
         className="absolute inset-0 pointer-events-none"
+        style={{ mixBlendMode: 'difference' }}
         aria-hidden="true"
       >
         <AttuneTextRows
