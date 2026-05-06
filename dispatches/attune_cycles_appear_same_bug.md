@@ -6,6 +6,14 @@
 
 Jordan reports: on the page where multiple saved cycles are listed (likely `/fitness/load` — REVIEW / EDIT path — or possibly `/attune`'s active-cycle render when switching cycles), **every cycle row/preview displays the same data** even though the cycles in `localStorage` have different `days`, `dailyPlan`, and chip stacks.
 
+**Updated symptom (more specific):** every cycle reads as "one week of glutes" regardless of what the user actually carved on the schedule page. So this isn't just "rows look identical" — they all look identical to a specific *default-glutes* state. That points strongly to one of:
+
+- A default cycle (perhaps a test seed) is being loaded instead of the user's saved cycle. Look for any code that constructs a cycle with `days = [1 week]` and `dailyPlan = { ...all 'glutes' }` — possibly a stub/placeholder that's overriding the real read.
+- `loadActiveCycle()` (or whatever reads `pk('active-cycle-id')` + `pk('cycles')`) is short-circuiting and returning a hardcoded fallback instead of indexing into the array.
+- The schedule page's commit (CARVE) is writing only `glutes` regardless of what muscle the user picked — could be a write-side bug, not a read-side bug. Verify by inspecting `localStorage.getItem('gtl-KING-cycles')` directly in DevTools after a carve and check the `dailyPlan` entries match what was selected.
+
+If the localStorage data is correct but the UI shows glutes everywhere → read-path bug. If the localStorage data itself is `{day1: ['glutes'], day2: ['glutes'], …}` regardless of selection → write-path bug on the schedule page.
+
 ## INVESTIGATE
 
 1. Identify the page Jordan is referring to. Most likely `/fitness/load/page.js` (the cycle list — see line 1144 mapping `cycles.map((cycle, i) => ...)`). If it's a different page, find it via grep:
