@@ -258,7 +258,7 @@ function AttuneFlameLayer({ rect }) {
   // are ~45px tall and use rise=280-480, size=20-58, driftX=±90; mine are
   // ~17.6px tall so each numeric range scales by ~0.4. Everything else
   // (timing, hash, parameter math) is verbatim.
-  const PARTS_PER_ROW = 10
+  const PARTS_PER_ROW = 16
   const particles = []
   for (let i = 0; i < PARTS_PER_ROW * 2; i++) {
     const isAttune = i < PARTS_PER_ROW
@@ -276,9 +276,11 @@ function AttuneFlameLayer({ rect }) {
     const rStartJ = hash01(k * 19 + 37)
     const rEndR   = hash01(k * 23 + 41)
 
-    // Lateral spawn offset within the letter band (mirrors summary's
-    // (rX-0.5)*200 + (rXj-0.5)*60 — ±100 + ±30 nudge in their viewBox).
-    const xOff   = (rX - 0.5) * (halfW * 2.0) + (rXj - 0.5) * (halfW * 0.5)
+    // Lateral spawn — mostly uniform across the letter band so every
+    // letter gets roughly equal coverage instead of the U/V at the
+    // center hogging the bulk of the particles. Small jitter keeps
+    // the spawn positions from clustering on a regular grid.
+    const xOff   = (rX - 0.5) * (halfW * 2.1) + (rXj - 0.5) * (halfW * 0.18)
     const delay  = (rDly * 540 + (isAttune ? 0 : 1) * 131) % 600   // verbatim
     const dur    = 130 + rDur * 150                                 // 130-280ms — verbatim, FAST
     const rise   = 9 + rRise * 7                                    // 9-16 vb units (was 280-480)
