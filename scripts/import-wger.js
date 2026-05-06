@@ -23,6 +23,7 @@ import {
   EXERCISE_DENYLIST_PATTERNS,
   EXERCISE_DENYLIST_EXACT,
   EQUIPMENT_FIXUP,
+  MUSCLE_FIXUP,
 } from '../lib/exerciseAliases.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -121,19 +122,27 @@ function transform(wgerEntries) {
     seen.set(id, count + 1)
     if (count > 0) id = `${id} (${w.id})`  // disambiguate with wger ID
 
-    const muscles = []
-    const wmIds = [
-      ...(w.muscles || []),
-      ...(w.muscles_secondary || []),
-    ].map(m => m.id ?? m)
+    let muscles = []
+    if (MUSCLE_FIXUP[id]) {
+      // Hand-curated muscle list — use as-is, ignore wger.
+      muscles = [...MUSCLE_FIXUP[id]]
+    } else {
+      const wmIds = [
+        ...(w.muscles || []),
+        ...(w.muscles_secondary || []),
+      ].map(m => m.id ?? m)
 
-    for (const wm of wmIds) {
-      const gtl = WGER_MUSCLE_MAP[wm]
-      if (gtl && !muscles.includes(gtl)) muscles.push(gtl)
+      for (const wm of wmIds) {
+        const gtl = WGER_MUSCLE_MAP[wm]
+        if (gtl && !muscles.includes(gtl)) muscles.push(gtl)
+      }
     }
 
-    // Forearms overlay: add 'forearms' if this exercise is in the overlay list
-    if (FOREARMS_OVERLAY.includes(id) && !muscles.includes('forearms')) {
+    // Forearms overlay: add 'forearms' if any FOREARMS_OVERLAY substring
+    // appears in the exercise ID. Catches all wrist-curl / hammer-curl /
+    // farmer-carry variants regardless of specific wger naming.
+    const needsForearms = FOREARMS_OVERLAY.some(s => id.includes(s))
+    if (needsForearms && !muscles.includes('forearms')) {
       muscles.push('forearms')
     }
 
