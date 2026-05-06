@@ -9,19 +9,16 @@
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useSound } from '../../../lib/useSound'
 import { useProfileGuard } from '../../../lib/useProfileGuard'
 import { pk } from '../../../lib/storage'
 import RetreatButton from '../../../components/RetreatButton'
-import HeistTransition from '../../../components/HeistTransition'
 import PickerSheet from '../../../components/attune/PickerSheet'
 import { chipsForDay, addChip } from '../../../lib/attunement'
 import { consumePrefire, setInAnimation, disarmChain, subscribeStaged } from '../../../lib/predictiveTap'
-// Day-hop and BEGIN HERE muscle-hop now navigate to /fitness/active/[iso]
-// (Stage 1 of App Router refactor) so HeistTransition fires naturally and
-// plays transition-slash — matching the sound profile of the chain's first
-// three hops (profile → LOAD CYCLE → ACTIVATE).
+// (subscribeStaged is used by both DayFocus AND the page-level today consume.
+//  Page-level subscription catches taps that stage 'today' AFTER the mount-time
+//  consume already ran — race common on iOS PWA where event timing lags.)
 
 const MUSCLE_LABELS = {
   chest: 'CHEST', back: 'BACK', shoulders: 'SHOULDERS',
@@ -123,13 +120,10 @@ function DayButton({ iso, muscles, todayIso, onClick, doneKey, cycleId }) {
       // screen rect on /fitness/load — predictive-tap module reads bbox
       // from this element to match the chain hop.
       data-predictive-tap-target={isToday ? 'today' : undefined}
-      onClick={() => {
-        // Predictive-tap chain step 4 — onClick stages the day hop. The
-        // parent kicks off HeistTransition (transition-slash sound) and
-        // pushes /fitness/active/[iso] on completion. No rect needed —
-        // the new route mounts DayFocus full-screen, so no zoom-from-rect
-        // animation. Card-confirm sound is replaced by HT's slash sound.
-        onClick(iso)
+      onClick={(e) => {
+        const rect = e.currentTarget.getBoundingClientRect()
+        play('card-confirm')
+        onClick(iso, rect)
       }}
       className="relative block w-full outline-none active:scale-[0.98] transition-transform"
       style={{ touchAction: 'pan-y' }}
@@ -236,9 +230,9 @@ function DayCard({ iso, muscles, index, onClick, doneKey, cycleId }) {
   const isLandscape = cardW / cardH > 1.4
 
   const handleClick = () => {
-    // Day-hop now goes via /fitness/active/[iso] — HT slash plays in the
-    // parent on navigation. See DayButton for the same pattern.
-    onClick(iso)
+    play('card-confirm')
+    const rect = cardRef.current?.getBoundingClientRect() ?? null
+    onClick(iso, rect)
   }
 
   return (
@@ -2707,7 +2701,6 @@ function computeTotalXP() {
 
 export default function ActiveCyclePage() {
   useProfileGuard()
-  const router = useRouter()
   const { play } = useSound()
 
   const [cycleId,    setCycleId]    = useState('')
@@ -2716,14 +2709,8 @@ export default function ActiveCyclePage() {
   const [days,       setDays]       = useState([])
   const [dailyPlan,  setDailyPlan]  = useState({})
   const [ready,      setReady]      = useState(false)
-  // Day-hop transition: holds the target ISO while HeistTransition runs.
-  // null = idle. When set, <HeistTransition active onComplete=push> mounts;
-  // on cover phase, router.push('/fitness/active/' + iso) navigates.
-  const [fireDayHop, setFireDayHop] = useState(null)
-  // Synchronous skip flag — first pointer/touch during the day-hop slash
-  // routes immediately, mirroring the fast-forward behavior on /fitness/load.
-  const fireDayHopRef = useRef(null)
-  const skippedDayHopRef = useRef(false)
+  const [focusDay,   setFocusDay]   = useState(null)   // ISO string | null
+  const [focusRect,  setFocusRect]  = useState(null)   // DOMRect | null
   const [cardRefreshKey, setCardRefreshKey] = useState(0)
   const [completedDays, setCompletedDays]   = useState(0)
   const [barXP, setBarXP]                   = useState(0)
@@ -2841,10 +2828,11 @@ export default function ActiveCyclePage() {
   }, [ready, days])
 
   useEffect(() => {
-    // Re-center on every "page open" — initial mount, plus every remount
-    // after a router.back() from /fitness/active/[iso]. The day-focus is
-    // a separate route now, so we don't need to gate on a focusDay flag.
-    if (!ready) return
+    // Re-center on every "page open" — initial mount, AND every time the
+    // user closes DayFocus (focusDay transitions back to null). Skip when
+    // DayFocus is currently shown so we don't yank the rolodex around
+    // behind the overlay.
+    if (!ready || focusDay) return
     const container = rolodexRef.current
     if (!container || days.length === 0) return
     const todayD = new Date()
@@ -2884,7 +2872,7 @@ export default function ActiveCyclePage() {
       cancelled = true
       handles.forEach(h => { try { cancelAnimationFrame(h) } catch (_) {} ; try { clearTimeout(h) } catch (_) {} })
     }
-  }, [ready, days])
+  }, [ready, days, focusDay])
 
   useEffect(() => {
     if (!days.length) return
@@ -2896,15 +2884,16 @@ export default function ActiveCyclePage() {
   }, [days, cardRefreshKey])
 
   // Deep-launch: when the user came from ACTIVATE on /fitness/load, skip the
-  // schedule view and jump straight into today's day-focus route. DayFocus
-  // then continues the auto-progression into ExercisePanel, which auto-opens
-  // the first set's weight popup. The 'gtl-deep-launch' flag is consumed
-  // inside DayFocus (so it survives the cross-page hop).
+  // schedule view and jump straight into today's day-focus. DayFocus then
+  // continues the auto-progression into ExercisePanel, which auto-opens the
+  // first set's weight popup. Flag is consumed in DayFocus (so it survives the
+  // mount chain).
   useEffect(() => {
     if (!days.length) return
     let isDeepLaunch = false
     try { isDeepLaunch = localStorage.getItem('gtl-deep-launch') === '1' } catch (_) {}
     if (!isDeepLaunch) return
+    // Compute hero day inline (heroIso identifier is defined later in render).
     const todayD = new Date()
     const todayStr = `${todayD.getFullYear()}-${String(todayD.getMonth()+1).padStart(2,'0')}-${String(todayD.getDate()).padStart(2,'0')}`
     const target = days.reduce((closest, iso) => {
@@ -2912,60 +2901,45 @@ export default function ActiveCyclePage() {
       const dI = Math.abs(parseDate(iso) - parseDate(todayStr))
       return dI < dC ? iso : closest
     }, days[0])
+    // Center-of-viewport synthetic rect for the zoom-in origin.
+    const syntheticRect = {
+      left: window.innerWidth / 2 - 100, top: 466,
+      width: 200, height: 60,
+      right: window.innerWidth / 2 + 100, bottom: 526,
+    }
     const t = setTimeout(() => {
-      router.push('/fitness/active/' + target)
+      setFocusRect(syntheticRect)
+      setFocusDay(target)
     }, 100)
     return () => clearTimeout(t)
-  }, [days, router])
+  }, [days])
 
 
-  // Day-hop dispatch: fires HeistTransition then router.push to the day
-  // route. Mirrors handleActivate on /fitness/load — synchronous skip flag
-  // so a fast follow-up tap routes immediately rather than waiting for HT
-  // to complete. setInAnimation('today', true) opens the chain window so a
-  // predictive tap during the slash stages 'muscle' for DayFocus to consume
-  // on mount.
-  const handleDayHop = (iso) => {
-    if (skippedDayHopRef.current) return
-    if (fireDayHopRef.current) {
-      // Already firing → skip to destination immediately.
-      skippedDayHopRef.current = true
-      router.push('/fitness/active/' + fireDayHopRef.current)
-      return
+  const handleDayClick = (iso, rect) => {
+    setFocusRect(rect)
+    setFocusDay(iso)
+    // Predictive-tap: TODAY is chain step 4. inAnim stays open until
+    // the chain disarms (on muscle hop) — no timeout. The user can
+    // tap any time after today fires; DayFocus's subscribeStaged
+    // listener consumes 'muscle' the moment it lands.
+    if (iso === todayIsoStr) {
+      setInAnimation('today', true)
     }
-    fireDayHopRef.current = iso
-    setInAnimation('today', true)
-    setFireDayHop(iso)
   }
 
-  // Skip-the-fire-transition: once the day-hop HT is running, the next
-  // pointer/touch anywhere routes immediately. Mirrors the same listener
-  // on /fitness/load (RetreatButton excluded so back-nav still works).
-  useEffect(() => {
-    if (!fireDayHop) return
-    const handler = (e) => {
-      if (e.target?.closest?.('[data-retreat]')) return
-      if (skippedDayHopRef.current) return
-      skippedDayHopRef.current = true
-      router.push('/fitness/active/' + fireDayHopRef.current)
-    }
-    window.addEventListener('pointerdown', handler, { capture: true })
-    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
-    return () => {
-      window.removeEventListener('pointerdown', handler, { capture: true })
-      window.removeEventListener('touchstart',  handler, { capture: true })
-    }
-  }, [fireDayHop, router])
-
-  // Predictive-tap consume: when the page is ready, check for a 'today'
-  // prefire intent staged on the prior page's HT (e.g., user tapped during
-  // ACTIVATE's slash). If matched, auto-fire handleDayHop(target) as if the
-  // user tapped the TODAY card. Falls back to the closest-day hero if
-  // today isn't in the cycle's training days.
+  // Predictive-tap consume: when the page is ready and today exists in
+  // the cycle, check for a 'today' prefire intent. If matched, auto-fire
+  // handleDayClick(todayIsoStr) as if the user tapped the TODAY hero.
+  // Synthetic rect approximates the canonical chain-button position so
+  // the day-focus zoom animation has a reasonable origin.
+  // Falls back to the closest-day hero if today isn't in the cycle's
+  // training days (e.g. cycle is Mon-Fri, today is Sunday) — mirrors
+  // the rolodex's own heroIso pick. Without this fallback the chain
+  // would silently stall here whenever today isn't a workout day.
   useEffect(() => {
     if (!ready) return
     if (!days || days.length === 0) return
-    if (fireDayHop) return
+    if (focusDay) return
     const target = days.includes(todayIsoStr)
       ? todayIsoStr
       : days.reduce((closest, iso) => {
@@ -2975,17 +2949,31 @@ export default function ActiveCyclePage() {
         }, days[0])
     let consumed = false
     const tryConsume = () => {
-      if (consumed || fireDayHop) return
+      if (consumed || focusDay) return
       const intent = consumePrefire('today')
       if (intent) {
         consumed = true
-        handleDayHop(target)
+        play('card-confirm')
+        const w = (typeof window !== 'undefined') ? window.innerWidth : 390
+        const syntheticRect = { left: 12, right: w - 12, top: 479, bottom: 549, width: w - 24, height: 70 }
+        handleDayClick(target, syntheticRect)
       }
     }
+    // Mount-time attempt — covers cross-page hops where the intent was
+    // staged BEFORE this page mounted (predictive tap during the prior
+    // page's exit HeistTransition).
     tryConsume()
+    // Subscribe for late-staging — iOS PWA event timing can land a
+    // predictive tap AFTER mount-time consume already ran. The
+    // staged-event listener re-attempts consume the moment a 'today'
+    // intent lands (mirrors DayFocus's 'muscle' subscription pattern).
     const unsub = subscribeStaged((stepName) => {
       if (stepName === 'today') tryConsume()
     })
+    // Polling fallback — covers any remaining iOS PWA timing race where
+    // both mount-time consume and the staged-event subscription miss the
+    // intent (e.g., the stage happens between mount commit and useEffect
+    // attachment). Brief, bounded retries during the entrance window.
     const retries = [60, 180, 360, 600].map((ms) =>
       setTimeout(tryConsume, ms)
     )
@@ -2994,7 +2982,7 @@ export default function ActiveCyclePage() {
       retries.forEach(clearTimeout)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, days, fireDayHop])
+  }, [ready, days, focusDay])
 
   const triggerXPAnimation = useCallback((closingDay) => {
     // Build particles: one per completed day, positioned at each card
@@ -3074,11 +3062,20 @@ export default function ActiveCyclePage() {
     setTimeout(() => setXpAnim(null), 5000)
   }, [days, dailyPlan, play])
 
-  // handleCloseFocus removed — DayFocus is now its own route, so closing
-  // it is router.back() rather than a state reset on this page. The
-  // last-day XP-celebration animation is deferred to Stage 2 (needs to be
-  // triggered on /fitness/active mount when localStorage shows the last
-  // day was just completed).
+  const handleCloseFocus = () => {
+    const lastDay = days.length > 0 ? [...days].sort()[days.length - 1] : null
+    const wasLastDay = focusDay === lastDay
+    setFocusDay(null)
+    setFocusRect(null)
+    setCardRefreshKey((k) => k + 1)
+    if (wasLastDay) {
+      try {
+        if (localStorage.getItem(pk(`done-${cycleId}-${lastDay}`)) === 'true') {
+          setTimeout(() => triggerXPAnimation(lastDay), 500)
+        }
+      } catch (_) {}
+    }
+  }
 
   const plannedSessions = days.filter((iso) => (dailyPlan[iso] || []).length > 0).length
 
@@ -3326,7 +3323,7 @@ export default function ActiveCyclePage() {
                   iso={iso}
                   muscles={dailyPlan[iso] || []}
                   todayIso={todayIsoStr}
-                  onClick={handleDayHop}
+                  onClick={handleDayClick}
                   doneKey={cardRefreshKey}
                   cycleId={cycleId}
                 />
@@ -3336,16 +3333,23 @@ export default function ActiveCyclePage() {
         )}
       </section>
 
-      {/* Day-hop transition — fires on TODAY/day-card tap. HT plays
-          transition-slash, then router.push lands on /fitness/active/[iso]
-          which mounts DayFocus on its own route. */}
-      <HeistTransition
-        active={!!fireDayHop}
-        onComplete={() => {
-          if (skippedDayHopRef.current) return
-          if (fireDayHopRef.current) router.push('/fitness/active/' + fireDayHopRef.current)
-        }}
-      />
+      {/* ── DAY FOCUS OVERLAY ── */}
+      {focusDay && (
+        <DayFocus
+          key={focusDay}
+          iso={focusDay}
+          muscles={dailyPlan[focusDay] || []}
+          cycleId={cycleId}
+          isLastDay={(() => {
+            const undoneDays = days.filter(d => {
+              try { return localStorage.getItem(pk(`done-${cycleId}-${d}`)) !== 'true' } catch { return true }
+            })
+            return undoneDays.length === 1 && undoneDays[0] === focusDay
+          })()}
+          originRect={focusRect}
+          onClose={handleCloseFocus}
+        />
+      )}
 
       {/* ── XP ANIMATION OVERLAY ── */}
       {xpAnim && (() => {
