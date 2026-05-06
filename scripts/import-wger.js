@@ -25,6 +25,8 @@ import {
   EQUIPMENT_FIXUP,
   MUSCLE_FIXUP,
   BW_COEFFICIENT,
+  KING_COMPOUNDS,
+  ISOLATION_OVERRIDE,
 } from '../lib/exerciseAliases.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -167,6 +169,16 @@ function transform(wgerEntries) {
     // Defaults to 1.00 (full BW load) when not in BW_COEFFICIENT.
     if (equipment === 'bodyweight') {
       entry.bw_coefficient = BW_COEFFICIENT[id] ?? 1.00
+    }
+    // King Compound flag (R12b) — read by the algo to apply top-3 region star
+    // rule and king_compound_mult on the Total XP track.
+    if (KING_COMPOUNDS.has(id)) {
+      entry.is_king_compound = true
+    }
+    // Isolation override flag (R14) — read by the algo to force isolation
+    // classification regardless of region distribution.
+    if (ISOLATION_OVERRIDE.has(id)) {
+      entry.is_isolation_override = true
     }
     out.push(entry)
   }
