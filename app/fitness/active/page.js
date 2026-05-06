@@ -3345,7 +3345,7 @@ export default function ActiveCyclePage() {
           which mounts DayFocus on its own route. */}
       <HeistTransition
         active={!!fireDayHop}
-        title="those"
+        title="THOSE"
         onComplete={() => {
           if (skippedDayHopRef.current) return
           if (fireDayHopRef.current) router.push('/fitness/active/' + fireDayHopRef.current)

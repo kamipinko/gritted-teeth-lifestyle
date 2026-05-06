@@ -2784,7 +2784,7 @@ export default function ActiveDayPage() {
           its own route. */}
       <HeistTransition
         active={!!fireMuscleHop}
-        title="teeth"
+        title="TEETH"
         onComplete={() => {
           if (skippedMuscleHopRef.current) return
           if (fireMuscleHopRef.current) router.push('/fitness/active/' + iso + '/' + fireMuscleHopRef.current)
