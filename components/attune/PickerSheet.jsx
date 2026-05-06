@@ -108,11 +108,23 @@ export default function PickerSheet({
         pointerEvents: 'none',
       }}
     >
+      <style>{`
+        .gtl-picker-sheet {
+          width: 100%;
+          max-width: 430px;
+          max-height: 70vh;
+        }
+        @media (orientation: landscape) and (max-height: 500px) {
+          .gtl-picker-sheet {
+            max-width: 100%;
+            max-height: 75vh;
+          }
+        }
+      `}</style>
       <div
+        className="gtl-picker-sheet"
         style={{
           pointerEvents: 'auto',
-          width: '100%', maxWidth: 430,
-          maxHeight: '70vh',
           background: '#1a1a1e',
           borderTop: '2px solid #d4181f',
           padding: '1rem 1rem calc(1.5rem + env(safe-area-inset-bottom, 0px))',
