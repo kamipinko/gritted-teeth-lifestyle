@@ -1067,7 +1067,7 @@ export default function LoadCyclePage() {
       // stage 'today'); delay the actual HT 500ms so the inbound HT
       // plays out fully first.
       setInAnimation('activate', true)
-      setTimeout(() => handleActivate(cycle), 500)
+      setTimeout(() => handleActivate(cycle), 250)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, selectedId])
