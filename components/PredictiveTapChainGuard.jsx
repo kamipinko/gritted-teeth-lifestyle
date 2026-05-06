@@ -17,29 +17,33 @@ import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { disarmChain } from '../lib/predictiveTap'
 
-// Pathnames that are part of the in-flight predictive-tap chain. If
-// pathname transitions to anything NOT in this set, the chain disarms.
+// Pathnames that are part of the in-flight predictive-tap chain. Sub-routes
+// of these (e.g., /fitness/active/[iso] for the day route, or
+// /fitness/active/[iso]/[muscleId] for the muscle exercise route) are also
+// considered on-chain via prefix match below.
 //
 // /fitness (profile selector) is INTENTIONALLY excluded — arriving
 // there means "reset / start over." Disarming on /fitness ensures
 // that retreating all the way back without tapping a profile leaves
 // the chain in a clean state. The profile-chip tap then re-arms via
 // armChain() (which clears sessionStorage + resets window state).
-//
-// Sub-routes of these pages (e.g., DayFocus on /fitness/active) don't
-// change pathname so they don't trigger disarm — correct behavior since
-// they're still on the chain page.
-const CHAIN_PATHS = new Set([
+const CHAIN_PATH_PREFIXES = [
   '/fitness/hub',      // LOAD CYCLE option
   '/fitness/load',     // ACTIVATE popup
-  '/fitness/active',   // TODAY hero + BEGIN HERE muscle
-])
+  '/fitness/active',   // TODAY hero + day-route + muscle-route subtree
+]
+
+function isOnChain(pathname) {
+  return CHAIN_PATH_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(p + '/')
+  )
+}
 
 export default function PredictiveTapChainGuard() {
   const pathname = usePathname()
   useEffect(() => {
     if (!pathname) return
-    if (CHAIN_PATHS.has(pathname)) return
+    if (isOnChain(pathname)) return
     disarmChain('left-chain-route')
   }, [pathname])
   return null
