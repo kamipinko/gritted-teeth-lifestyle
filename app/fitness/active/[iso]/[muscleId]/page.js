@@ -2683,15 +2683,24 @@ export default function ActiveMuscleExercisePage() {
   const iso = decodeURIComponent(params.iso)
   const muscleId = decodeURIComponent(params.muscleId)
 
-  const [cycleId, setCycleId] = useState('')
-  const [ready,   setReady]   = useState(false)
+  const [cycleId, setCycleId]     = useState('')
+  const [dailyPlan, setDailyPlan] = useState({})
+  const [ready,   setReady]       = useState(false)
 
-  // Cycle id loading — only thing this route needs from localStorage.
-  // ExercisePanel does its own per-set reps/weights reads internally.
+  // R17/R18 in-the-moment picker — moved here from the day route so the
+  // day overview stays uncluttered. Auto-opens on mount when the day has
+  // muscles assigned but zero attuned chips.
+  const [pickerOpen, setPickerOpen]           = useState(false)
+  const [pickerDismissed, setPickerDismissed] = useState(false)
+
+  // Cycle id + daily plan loading. ExercisePanel does its own per-set
+  // reps/weights reads internally. dailyPlan is needed for the picker.
   useEffect(() => {
     try {
-      const cid = localStorage.getItem(pk('active-cycle-id'))
-      if (cid) setCycleId(cid)
+      const cid  = localStorage.getItem(pk('active-cycle-id'))
+      const rawP = localStorage.getItem(pk('daily-plan'))
+      if (cid)  setCycleId(cid)
+      if (rawP) setDailyPlan(JSON.parse(rawP))
     } catch (_) {}
     setReady(true)
   }, [])
@@ -2703,15 +2712,44 @@ export default function ActiveMuscleExercisePage() {
     setInAnimation('muscle', true)
   }, [])
 
+  // Auto-open the picker if the day has no chips yet. Skipped if the
+  // user dismissed it on this visit; remount (back+forward) re-evaluates.
+  useEffect(() => {
+    if (!ready) return
+    if (pickerDismissed) return
+    if (!cycleId) return
+    if (chipsForDay(cycleId, iso).length > 0) return
+    setPickerOpen(true)
+  }, [ready, cycleId, iso, pickerDismissed])
+
   if (!ready) return null
 
+  const muscles = dailyPlan[iso] || []
+
   return (
-    <ExercisePanel
-      muscleId={muscleId}
-      dayIso={iso}
-      originRect={null}
-      cycleId={cycleId}
-      onClose={() => router.back()}
-    />
+    <>
+      <ExercisePanel
+        muscleId={muscleId}
+        dayIso={iso}
+        originRect={null}
+        cycleId={cycleId}
+        onClose={() => router.back()}
+      />
+      {pickerOpen && (
+        <PickerSheet
+          sourceDayId={iso}
+          mode="in-the-moment"
+          cycle={{ id: cycleId, dailyPlan: { [iso]: muscles } }}
+          onConfirm={(_targetDayIds, exerciseId) => {
+            addChip(cycleId, iso, exerciseId)
+            setPickerOpen(false)
+          }}
+          onClose={() => {
+            setPickerDismissed(true)
+            setPickerOpen(false)
+          }}
+        />
+      )}
+    </>
   )
 }

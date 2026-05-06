@@ -1924,17 +1924,10 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId, onMus
   const year    = date.getFullYear()
   const hasWork = muscles.length > 0
 
-  // R17/R18 mount-check: open the in-the-moment picker if this day has
-  // muscles assigned but no chips attuned yet. Skipped if the user
-  // already dismissed the picker on this visit, or if the day has no
-  // muscles (fall back to existing empty-state UI), or if chips already
-  // exist for this day.
-  useEffect(() => {
-    if (pickerDismissed) return
-    if (!hasWork) return
-    if (chipsForDay(cycleId, iso).length > 0) return
-    setPickerOpen(true)
-  }, [cycleId, iso, hasWork, pickerDismissed])
+  // R17/R18 picker auto-open MOVED to /fitness/active/[iso]/[muscleId].
+  // The day page no longer prompts; the prompt now lives on the muscle
+  // exercise page (after tapping the muscle button), so the day overview
+  // stays uncluttered.
 
   // Predictive-tap chain — final hop. Mount-time consume only: catches
   // the cross-page hop where the user predictive-tapped 'muscle' during
@@ -2564,27 +2557,7 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId, onMus
             Returning from that route remounts DayFocus with fresh
             localStorage reads. */}
 
-        {/* R17/R18 — empty-day in-the-moment picker. Opens automatically on
-            mount when the day has muscles assigned but zero attuned chips.
-            Picking confirms a single chip via attunementStore.addChip and
-            closes; dismissing without picking sets the visit-local flag so
-            it doesn't re-summon. Read-only consumer of attunementStore +
-            PickerSheet — neither module is modified here. */}
-        {pickerOpen && (
-          <PickerSheet
-            sourceDayId={iso}
-            mode="in-the-moment"
-            cycle={{ id: cycleId, dailyPlan: { [iso]: muscles } }}
-            onConfirm={(_targetDayIds, exerciseId) => {
-              addChip(cycleId, iso, exerciseId)
-              setPickerOpen(false)
-            }}
-            onClose={() => {
-              setPickerDismissed(true)
-              setPickerOpen(false)
-            }}
-          />
-        )}
+        {/* PickerSheet moved to /fitness/active/[iso]/[muscleId]. */}
       </div>
     </>
   )
