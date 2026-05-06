@@ -248,13 +248,14 @@ function AttuneMovementsButton({ enabled, monthKanji = '', onTap, onHover }) {
           overflow:hidden contains the band overflow within the button
           rect (the wrapper's slash clipPath handles the slash silhouette
           itself).
-          Black base is fully opaque — the in-button kanji watermark
-          (mix-blended below) is the single source of kanji visibility.
-          Letting the cell-rendered kanji bleed through the base
-          produced a doubled / offset kanji image. */}
+          Black base at alpha 0.75 — the in-button mix-blended kanji is
+          the primary visible copy, with a faint extra bleed of the
+          cell-rendered kanji underneath adding a subtle 'stamped'
+          texture. Less aggressive than the earlier 0.5 alpha that
+          read as a doubled kanji. */}
       <div
         className="absolute inset-0 overflow-hidden pointer-events-none"
-        style={{ background: GTL_BG_BLACK }}
+        style={{ background: 'rgba(7, 7, 8, 0.75)' }}
         aria-hidden="true"
       >
         {/* Narrow accent band — left. Solid #d4181f (matches the
