@@ -122,29 +122,38 @@ function transform(wgerEntries) {
     seen.set(id, count + 1)
     if (count > 0) id = `${id} (${w.id})`  // disambiguate with wger ID
 
-    let muscles = []
+    let primaryMuscles = []
+    let secondaryMuscles = []
     if (MUSCLE_FIXUP[id]) {
-      // Hand-curated muscle list — use as-is, ignore wger.
-      muscles = [...MUSCLE_FIXUP[id]]
+      // Hand-curated split — use as-is, ignore wger.
+      primaryMuscles = [...MUSCLE_FIXUP[id].primary]
+      secondaryMuscles = [...MUSCLE_FIXUP[id].secondary]
     } else {
-      const wmIds = [
-        ...(w.muscles || []),
-        ...(w.muscles_secondary || []),
-      ].map(m => m.id ?? m)
-
-      for (const wm of wmIds) {
+      // Fall back to wger primary/secondary distinction.
+      const primaryWger = (w.muscles || []).map(m => m.id ?? m)
+      const secondaryWger = (w.muscles_secondary || []).map(m => m.id ?? m)
+      for (const wm of primaryWger) {
         const gtl = WGER_MUSCLE_MAP[wm]
-        if (gtl && !muscles.includes(gtl)) muscles.push(gtl)
+        if (gtl && !primaryMuscles.includes(gtl)) primaryMuscles.push(gtl)
+      }
+      for (const wm of secondaryWger) {
+        const gtl = WGER_MUSCLE_MAP[wm]
+        if (gtl && !primaryMuscles.includes(gtl) && !secondaryMuscles.includes(gtl)) {
+          secondaryMuscles.push(gtl)
+        }
       }
     }
 
-    // Forearms overlay: add 'forearms' if any FOREARMS_OVERLAY substring
-    // appears in the exercise ID. Catches all wrist-curl / hammer-curl /
-    // farmer-carry variants regardless of specific wger naming.
+    // Forearms overlay: add 'forearms' to secondary if any FOREARMS_OVERLAY
+    // substring appears in the exercise ID. Catches all wrist-curl /
+    // hammer-curl / farmer-carry variants regardless of specific wger naming.
     const needsForearms = FOREARMS_OVERLAY.some(s => id.includes(s))
-    if (needsForearms && !muscles.includes('forearms')) {
-      muscles.push('forearms')
+    if (needsForearms && !primaryMuscles.includes('forearms') && !secondaryMuscles.includes('forearms')) {
+      secondaryMuscles.push('forearms')
     }
+
+    // Flat muscles[] = union of primary + secondary (backward compat).
+    const muscles = [...primaryMuscles, ...secondaryMuscles.filter(m => !primaryMuscles.includes(m))]
 
     if (muscles.length === 0) continue   // no GTL muscles attributed → skip
 
@@ -152,7 +161,7 @@ function transform(wgerEntries) {
     if (equipment === 'other') continue   // drop entries that resist classification
     const aliases = EXERCISE_ALIASES[id] || []
 
-    out.push({ id, label: id, muscles, equipment, aliases })
+    out.push({ id, label: id, muscles, primaryMuscles, secondaryMuscles, equipment, aliases })
   }
 
   // Validate: every Exercise has at least one muscle, equipment is in enum, ID is non-empty
@@ -160,6 +169,8 @@ function transform(wgerEntries) {
   for (const e of out) {
     if (!e.id || !e.label) throw new Error(`Empty id/label: ${JSON.stringify(e)}`)
     if (e.muscles.length === 0) throw new Error(`No muscles: ${e.id}`)
+    if (!Array.isArray(e.primaryMuscles)) throw new Error(`Missing primaryMuscles: ${e.id}`)
+    if (!Array.isArray(e.secondaryMuscles)) throw new Error(`Missing secondaryMuscles: ${e.id}`)
     if (!VALID_EQUIPMENT.has(e.equipment)) throw new Error(`Invalid equipment '${e.equipment}': ${e.id}`)
   }
 
