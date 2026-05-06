@@ -20,6 +20,7 @@ import {
   EXERCISE_ALIASES,
   FOREARMS_OVERLAY,
   EQUIPMENT_OVERRIDE,
+  EXERCISE_DENYLIST_PATTERNS,
 } from '../lib/exerciseAliases.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -93,6 +94,7 @@ function transform(wgerEntries) {
 
     let id = normalizeName(pickName(w))
     if (!id) continue
+    if (EXERCISE_DENYLIST_PATTERNS.some(p => p.test(id))) continue  // bands / isos
     const count = seen.get(id) || 0
     seen.set(id, count + 1)
     if (count > 0) id = `${id} (${w.id})`  // disambiguate with wger ID
