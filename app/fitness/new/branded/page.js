@@ -252,7 +252,7 @@ function AttuneFlameLayer({ rect }) {
   // are ~45px tall and use rise=280-480, size=20-58, driftX=±90; mine are
   // ~17.6px tall so each numeric range scales by ~0.4. Everything else
   // (timing, hash, parameter math) is verbatim.
-  const PARTS_PER_ROW = 22
+  const PARTS_PER_ROW = 10
   const particles = []
   for (let i = 0; i < PARTS_PER_ROW * 2; i++) {
     const isAttune = i < PARTS_PER_ROW
@@ -276,16 +276,14 @@ function AttuneFlameLayer({ rect }) {
     const delay  = (rDly * 540 + (isAttune ? 0 : 1) * 131) % 600   // verbatim
     const dur    = 130 + rDur * 150                                 // 130-280ms — verbatim, FAST
     const rise   = 9 + rRise * 7                                    // 9-16 vb units (was 280-480)
-    // Size scaled to match summary's particle-to-letter ratio.
-    // Summary: r 20-58 over 45px letters = 0.44-1.29× letter-height.
-    // Mine: 17.6px letters → r 4-12 ≈ 0.23-0.68× — slightly smaller
-    // because we have many more particles per glyph at this scale,
-    // so big tongues would pile up and become a solid orange blob.
-    const size   = 4 + rSize * 8                                    // 4-12 r
+    // Smaller, sparser tongues so dark void is visible between flames —
+    // reads as the TOPS of flames flickering, not the middle of a fire.
+    // Tongue shape: rx ~ size*0.55, ry ~ size (taller than wide).
+    const size   = 2.2 + rSize * 3.5                                // 2.2-5.7 r
     const peakA  = 0.5 + rPeak * 0.5                                // 0.5-1.0 — verbatim
-    const driftX = (rDrft - 0.5) * 8                                // ±4 (was ±90)
-    const startY = 5 + (rStartJ - 0.5) * 5                          // ±2.5 jitter
-    const endR   = 0.8 + rEndR * 1.6                                // 0.8-2.4 (was 2-6)
+    const driftX = (rDrft - 0.5) * 8                                // ±4
+    const startY = 6 + (rStartJ - 0.5) * 5                          // ±2.5 jitter
+    const endR   = 0.5 + rEndR * 1.0                                // 0.5-1.5
 
     particles.push({
       cx: (W / 2) + xOff,
