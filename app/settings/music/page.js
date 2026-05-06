@@ -11,8 +11,6 @@ import {
   getBgmTracksByGenre,
   getBgmTargetVol,
   getRandomTrackId,
-  getBgmGainNode,
-  resumeBgmCtx,
   setBgmMediaSession,
 } from '../../../lib/bgmTracks'
 
@@ -83,10 +81,7 @@ export default function BgmMusicPage() {
       clearInterval(window.__gtlBgMusicFadeInterval)
       window.__gtlBgMusicFadeInterval = null
     }
-    const gain = getBgmGainNode()
-    if (gain) gain.gain.value = 0
-    else a.volume = 0
-    resumeBgmCtx()
+    a.volume = 0
     const p = a.play()
     if (p && typeof p.catch === 'function') {
       p.catch(() => {
@@ -99,10 +94,8 @@ export default function BgmMusicPage() {
     const steps = FADE_MS / 50
     const increment = TARGET_VOL / steps
     window.__gtlBgMusicFadeInterval = setInterval(() => {
-      const cur = gain ? gain.gain.value : a.volume
-      const v = Math.min(TARGET_VOL, cur + increment)
-      if (gain) gain.gain.value = v
-      else a.volume = v
+      const v = Math.min(TARGET_VOL, a.volume + increment)
+      a.volume = v
       if (v >= TARGET_VOL) {
         clearInterval(window.__gtlBgMusicFadeInterval)
         window.__gtlBgMusicFadeInterval = null

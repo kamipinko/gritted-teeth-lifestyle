@@ -9,8 +9,6 @@ import {
   BGM_TRACKS,
   getCurrentBgmTrack,
   getBgmTargetVol,
-  getBgmGainNode,
-  resumeBgmCtx,
   getRandomTrackId,
   setBgmMediaSession,
 } from '../lib/bgmTracks'
@@ -52,39 +50,20 @@ if (typeof window !== 'undefined' && bgMusicAudio && !window.__gtlBgMusicHideHoo
   })
 }
 
-// Lockscreen continuity: when the page goes hidden (screen lock or
-// PWA backgrounded), iOS suspends the AudioContext silently. The
-// audio element + Media Session metadata keep the system-level audio
-// session alive on the lockscreen, but when the page becomes visible
-// again we must resume() the AudioContext or the gain chain will stay
-// muted (audio element plays into a stopped graph). Idempotent — only
-// installs once across the SPA. Also flips mediaSession.playbackState
-// so the lockscreen play/pause toggle reflects reality.
+// Lockscreen continuity: keep mediaSession.playbackState in sync with
+// the audio element's actual state on visibility changes so the
+// lockscreen card reflects reality. The audio session category itself
+// stays in "media playback" because we no longer route through Web
+// Audio (see lib/bgmTracks.js getBgmGainNode for the why) — that's
+// what lets playback survive lock. Idempotent: installs once.
 if (typeof window !== 'undefined' && bgMusicAudio && !window.__gtlBgMusicVisHook) {
   window.__gtlBgMusicVisHook = true
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-      // Page came back — resume the audio graph if iOS suspended it.
-      try {
-        const ctx = window.__gtlBgMusicCtx
-        if (ctx && ctx.state === 'suspended') ctx.resume()
-      } catch {}
-      try {
-        if (window.__gtlBgMusic && !window.__gtlBgMusic.paused) {
-          navigator.mediaSession.playbackState = 'playing'
-        }
-      } catch {}
-    } else {
-      // Page hidden (lock, app switcher, tab change). Do NOT pause the
-      // audio element — that's the whole point of this work; we want it
-      // to keep playing through the lock. Just mark the playback state
-      // for the lockscreen UI.
-      try {
-        if (window.__gtlBgMusic && !window.__gtlBgMusic.paused) {
-          navigator.mediaSession.playbackState = 'playing'
-        }
-      } catch {}
-    }
+    try {
+      if (window.__gtlBgMusic && !window.__gtlBgMusic.paused) {
+        navigator.mediaSession.playbackState = 'playing'
+      }
+    } catch {}
   })
 }
 
@@ -141,13 +120,7 @@ function startBgMusic() {
   // don't leak audible BGM after a fresh launch with the flag off.
   try {
     if (window.localStorage.getItem('gtl-bg-music-on') === '0') {
-      try { bgMusicAudio.pause(); bgMusicAudio.currentTime = 0 } catch {}
-      // Do NOT call getBgmGainNode() here — creating the BGM AudioContext +
-      // MediaElementSource on iOS can preempt the SFX AudioContext (iOS allows
-      // only one active audio session at a time), which silences ALL sounds
-      // on cold launch. If the gain node already exists from a prior session
-      // (BGM was on then turned off), zero it out without creating a new one.
-      if (window.__gtlBgMusicGain) window.__gtlBgMusicGain.gain.value = 0
+      try { bgMusicAudio.pause(); bgMusicAudio.currentTime = 0; bgMusicAudio.volume = 0 } catch {}
       return
     }
   } catch {}
@@ -165,24 +138,10 @@ function startBgMusic() {
   // Restore mute in case prime left it silenced. The prime may still be
   // mid-flight — its .then() will see the flag above and skip cleanup.
   bgMusicAudio.muted = false
+  bgMusicAudio.volume = 0
 
-  // Bind the audio element to the Web Audio graph (creates the gain node on
-  // first call) and zero the gain so we ramp up cleanly. Resume the context
-  // — this call must happen inside a user gesture, which it is (caller is
-  // GateScreen.handleClick / handleTouchEnd, both synchronous to the tap).
-  const gain = getBgmGainNode()
-  if (gain) {
-    gain.gain.value = 0
-    // Gain owns the volume from here on; element volume must be at 1.
-    bgMusicAudio.volume = 1
-  } else {
-    // No Web Audio support — element volume is the only knob, fade it up.
-    bgMusicAudio.volume = 0
-  }
-  resumeBgmCtx()
-
-  // Only call play() if paused — if prime is currently playing (muted), the
-  // gain-node binding above re-routes its output and we just need to fade up.
+  // Only call play() if paused — if prime is currently playing (muted),
+  // we just unmute and fade up.
   if (bgMusicAudio.paused) {
     const playPromise = bgMusicAudio.play()
     if (playPromise && typeof playPromise.catch === 'function') {
@@ -193,16 +152,17 @@ function startBgMusic() {
     }
   }
 
-  // Fade gain (or audio.volume as fallback) up to user-configured target.
+  // Fade audio.volume up to the user-configured target. iOS PWA standalone
+  // hardware-locks audio.volume so this is effectively a 0→1 binary on
+  // that platform — but we accept the tradeoff because the audio session
+  // now stays in "media playback" category and survives screen lock.
   const TARGET_VOL = getBgmTargetVol()
   const FADE_MS = 1500
   const steps = FADE_MS / 50
   const increment = (TARGET_VOL || 0.0001) / steps
   const interval = setInterval(() => {
-    const cur = gain ? gain.gain.value : bgMusicAudio.volume
-    const next = Math.min(TARGET_VOL, cur + increment)
-    if (gain) gain.gain.value = next
-    else bgMusicAudio.volume = next
+    const next = Math.min(TARGET_VOL, bgMusicAudio.volume + increment)
+    bgMusicAudio.volume = next
     if (next >= TARGET_VOL) clearInterval(interval)
   }, 50)
 }
