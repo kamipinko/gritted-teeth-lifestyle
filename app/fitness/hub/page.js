@@ -399,7 +399,7 @@ export default function FitnessPage() {
       try { localStorage.removeItem('gtl-back-to-edit') } catch (_) {}
       setTransitionConfig({ href, title: 'NEW CYCLE', intensity: 'mega' })
     } else if (href === '/fitness/load') {
-      setTransitionConfig({ href, title: 'FURTHER WITH EVERY TURN', intensity: 'normal' })
+      setTransitionConfig({ href, title: 'you', intensity: 'normal' })
       // Predictive-tap chain: this is hub-load. Flag in-animation so the
       // next hit-zone tap stages an 'activate' prefire intent.
       setInAnimation('hub-load', true)

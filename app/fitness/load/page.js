@@ -1218,6 +1218,7 @@ export default function LoadCyclePage() {
           (matches the home-page exit cascade) instead of the fire-wall FireTransition. */}
       <HeistTransition
         active={fireActive}
+        title="grit"
         onComplete={() => {
           if (skippedRef.current) return
           router.push(fireDest)

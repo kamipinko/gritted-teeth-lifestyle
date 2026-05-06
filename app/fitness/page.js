@@ -497,6 +497,7 @@ export default function ProfilePage() {
 
     <HeistTransition
       active={transitioning}
+      title="let's see"
       onComplete={handleTransitionComplete}
     />
     </>
