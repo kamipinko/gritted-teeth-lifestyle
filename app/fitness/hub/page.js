@@ -421,7 +421,7 @@ export default function FitnessPage() {
     const intent = consumePrefire('hub-load')
     if (intent) {
       setInAnimation('hub-load', true)
-      setTimeout(() => handleSelect('/fitness/load'), 250)
+      setTimeout(() => handleSelect('/fitness/load'), 100)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

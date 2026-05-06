@@ -2988,7 +2988,7 @@ export default function ActiveCyclePage() {
         // stage 'muscle'); delay the actual day-hop HT 500ms so the
         // inbound HT plays out fully first.
         setInAnimation('today', true)
-        setTimeout(() => handleDayHop(target), 250)
+        setTimeout(() => handleDayHop(target), 100)
       }
     }
     tryConsume()
