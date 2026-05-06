@@ -21,6 +21,8 @@ import {
   FOREARMS_OVERLAY,
   EQUIPMENT_OVERRIDE,
   EXERCISE_DENYLIST_PATTERNS,
+  EXERCISE_DENYLIST_EXACT,
+  EQUIPMENT_FIXUP,
 } from '../lib/exerciseAliases.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -88,6 +90,8 @@ const NAME_EQUIPMENT_PATTERNS = [
 function inferEquipment(wgerEquipmentArr, exerciseId) {
   // Manual override takes precedence (cable / kettlebell / band).
   if (EQUIPMENT_OVERRIDE[exerciseId]) return EQUIPMENT_OVERRIDE[exerciseId]
+  // Hand-curated fixup for entries wger tags wrong (e.g., CABLE CURLS as machine).
+  if (EQUIPMENT_FIXUP[exerciseId]) return EQUIPMENT_FIXUP[exerciseId]
   // First wger equipment that maps wins.
   for (const eq of wgerEquipmentArr || []) {
     const mapped = WGER_EQUIPMENT_MAP[eq.id ?? eq]
@@ -111,7 +115,8 @@ function transform(wgerEntries) {
 
     let id = normalizeName(pickName(w))
     if (!id) continue
-    if (EXERCISE_DENYLIST_PATTERNS.some(p => p.test(id))) continue  // bands / isos
+    if (EXERCISE_DENYLIST_PATTERNS.some(p => p.test(id))) continue  // bands / isos / etc
+    if (EXERCISE_DENYLIST_EXACT.has(id)) continue                    // hand-curated exact drops
     const count = seen.get(id) || 0
     seen.set(id, count + 1)
     if (count > 0) id = `${id} (${w.id})`  // disambiguate with wger ID
