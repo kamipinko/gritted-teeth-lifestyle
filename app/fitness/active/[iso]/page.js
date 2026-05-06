@@ -1946,24 +1946,19 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
   useEffect(() => {
     if (!hasWork) return
     if (focusMuscle) return
-    const tryConsume = () => {
-      if (focusMuscle) return
-      const intent = consumePrefire('muscle')
-      if (intent && muscles[0]) {
-        // Delay 50ms so the inbound today-hop HT plays out fully
-        // before the muscle modal opens. Muscle is the chain end so
-        // no further predictive window needs opening here.
-        setTimeout(() => {
-          play('card-confirm')
-          setFocusMuscle(muscles[0])
-          disarmChain('muscle-fired')
-        }, 50)
-      }
+    // Mount-time consume only — catches the cross-page hop where the
+    // user predictive-tapped 'muscle' during the previous page's HT
+    // (intent staged before this route mounted). Direct taps on the
+    // BEGIN HERE button are handled by its onClick. No subscribeStaged:
+    // it caught direct-tap pointerdowns and double-fired with the click.
+    const intent = consumePrefire('muscle')
+    if (intent && muscles[0]) {
+      setTimeout(() => {
+        play('card-confirm')
+        setFocusMuscle(muscles[0])
+        disarmChain('muscle-fired')
+      }, 50)
     }
-    tryConsume()
-    return subscribeStaged((stepName) => {
-      if (stepName === 'muscle') tryConsume()
-    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasWork, focusMuscle])
 

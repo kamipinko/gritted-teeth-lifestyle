@@ -2724,12 +2724,6 @@ export default function ActiveCyclePage() {
   // routes immediately, mirroring the fast-forward behavior on /fitness/load.
   const fireDayHopRef = useRef(null)
   const skippedDayHopRef = useRef(false)
-  // Timestamp of the original handleDayHop call. Lets us distinguish
-  // "second call from the same physical tap" (pointerdown stages →
-  // tryConsume fires handleDayHop, then click on touchend fires it
-  // again) from a deliberate user skip (a real second tap several
-  // hundred ms later). Same-tap second call is ignored.
-  const fireDayHopAtRef = useRef(0)
   const [cardRefreshKey, setCardRefreshKey] = useState(0)
   const [completedDays, setCompletedDays]   = useState(0)
   const [barXP, setBarXP]                   = useState(0)
@@ -2934,17 +2928,12 @@ export default function ActiveCyclePage() {
   const handleDayHop = (iso) => {
     if (skippedDayHopRef.current) return
     if (fireDayHopRef.current) {
-      // Already firing — but if this call is from the SAME physical tap
-      // as the first one (within 300ms), it's the redundant click event
-      // following the pointerdown, not a deliberate skip request. Ignore.
-      if (performance.now() - fireDayHopAtRef.current < 300) return
-      // True second tap → user wants to skip the slash. Route now.
+      // Already firing → user wants to skip the slash. Route now.
       skippedDayHopRef.current = true
       router.push('/fitness/active/' + fireDayHopRef.current)
       return
     }
     fireDayHopRef.current = iso
-    fireDayHopAtRef.current = performance.now()
     setInAnimation('today', true)
     setFireDayHop(iso)
   }
@@ -2989,29 +2978,16 @@ export default function ActiveCyclePage() {
           const dI = Math.abs(parseDate(iso) - parseDate(todayIsoStr))
           return dI < dC ? iso : closest
         }, days[0])
-    let consumed = false
-    const tryConsume = () => {
-      if (consumed || fireDayHop) return
-      const intent = consumePrefire('today')
-      if (intent) {
-        consumed = true
-        // Open predictive window immediately (so taps during the wait
-        // stage 'muscle'); delay the actual day-hop HT 500ms so the
-        // inbound HT plays out fully first.
-        setInAnimation('today', true)
-        setTimeout(() => handleDayHop(target), 50)
-      }
-    }
-    tryConsume()
-    const unsub = subscribeStaged((stepName) => {
-      if (stepName === 'today') tryConsume()
-    })
-    const retries = [60, 180, 360, 600].map((ms) =>
-      setTimeout(tryConsume, ms)
-    )
-    return () => {
-      unsub()
-      retries.forEach(clearTimeout)
+    // Mount-time consume only — catches the cross-page hop where the
+    // user predictive-tapped 'today' during the previous page's HT
+    // (intent staged before this page mounted). Direct taps on the
+    // TODAY card are handled by DayButton's onClick → handleDayHop.
+    // No subscribeStaged or polling: those caught direct-tap pointerdowns
+    // and double-fired with the click event for the same physical tap.
+    const intent = consumePrefire('today')
+    if (intent) {
+      setInAnimation('today', true)
+      setTimeout(() => handleDayHop(target), 50)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, days, fireDayHop])
