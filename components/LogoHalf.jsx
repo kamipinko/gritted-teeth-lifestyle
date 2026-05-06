@@ -20,14 +20,14 @@
  * a yin-yang" pattern was replaced with stencil-on-target.)
  */
 
-// Coordinates anchor on the white tooth-row in the upper-middle of the
-// logo-stencil PNG. Nudged right + up from the previous baseline. Long
+// Coordinates anchor on the white tooth-row in the logo-stencil PNG.
+// Nudged further right + further down from the previous baseline. Long
 // durations + spread-out delays so only 0–1 star is ever lit at a time
 // (intermittent twinkles, not a continuous shimmer).
 const SPARKLES = [
-  { left: '42%', top: '22%', delay: '0s',   dur: '4s' },
-  { left: '56%', top: '26%', delay: '1.7s', dur: '5s' },
-  { left: '66%', top: '20%', delay: '3.2s', dur: '4.5s' },
+  { left: '52%', top: '34%', delay: '0s',   dur: '4s' },
+  { left: '66%', top: '38%', delay: '1.7s', dur: '5s' },
+  { left: '76%', top: '32%', delay: '3.2s', dur: '4.5s' },
 ]
 
 export function LogoStencil({ size = 44, paused = false }) {
@@ -67,7 +67,7 @@ export function LogoStencil({ size = 44, paused = false }) {
             // Translate-origin offset is handled inside the keyframe so the
             // ✦ stays centered on its anchor point through the scale.
             color: '#fff',
-            fontSize: `${Math.max(8, Math.round(size * 0.18))}px`,
+            fontSize: `${Math.max(14, Math.round(size * 0.34))}px`,
             lineHeight: 1,
             textShadow: '0 0 4px rgba(255,255,255,0.65)',
             pointerEvents: 'none',
