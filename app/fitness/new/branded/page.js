@@ -248,13 +248,14 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
           overflow:hidden contains the band overflow within the button
           rect (the wrapper's slash clipPath handles the slash silhouette
           itself).
-          Black base uses rgba alpha ~0.82 so the kanji watermark behind
-          peeks through subtly in the dark gaps between bands — same
-          color logic as the homescreen, where the dark base lets the
-          atmosphere bloom register through it. */}
+          Black base uses rgba alpha ~0.5 so the kanji watermark behind
+          shows through clearly in the dark gaps between bands — bands
+          themselves stay solid red and cover their portion of the
+          kanji, but the central dark band reads as 'kanji over dark
+          smoke' rather than near-opaque void. */}
       <div
         className="absolute inset-0 overflow-hidden pointer-events-none"
-        style={{ background: 'rgba(7, 7, 8, 0.82)' }}
+        style={{ background: 'rgba(7, 7, 8, 0.5)' }}
         aria-hidden="true"
       >
         {/* Narrow accent band — left. Solid #d4181f (matches the

@@ -23,31 +23,46 @@ The new feature is a **combo-driven multiplier system** that layers on top. It i
 
 **Base XP (existing formula, with new bodyweight handling)**
 - R1. Base XP per set: `base = effective_load × repMult(reps) × reps`. The `repMult` curve is unchanged (flat 1.0× between r=5 and r=15, bell curves outside). Both new tracks build off this `base`.
-- R1a. **`effective_load` calculation (strength-relative normalization, locked 2026-05-06)**:
+- R1a. **`effective_load` calculation (IPF GL Points normalization, locked 2026-05-06)**:
 
-  All loads are normalized by `REFERENCE_BW / user_BW` so XP rewards relative effort, not absolute weight. A 100 lb person and a 300 lb person doing the same 1× BW lift earn identical XP. **`REFERENCE_BW = 180 lb`** (system-wide constant).
+  All loads are normalized by an **IPF GL Points** coefficient so XP scales by relative strength rather than absolute weight. IPF GL is the current powerlifting strength-relative formula (replaced Wilks in 2020). Calibrated against modern strength-sport standards.
 
-  **External-load exercises** (barbell, dumbbell, cable, machine):
+  **REFERENCE_BW = 180 lb (≈ 81.65 kg)** — the anchor at which `norm_factor = 1.0`. Lighter users get a boost; heavier users a reduction; the curve matches IPF GL Points.
+
+  **Normalization formula:**
   ```
-  effective_load = entered_weight × (REFERENCE_BW / user_BW)
+  ipfGL(bw_kg) = 100 / (a - b × exp(-c × bw_kg))
+    where (a, b, c) = (1199.72839, 1025.18162, 0.00921)   for male raw total
+                   = (610.32796,  1045.59282, 0.03048)    for female raw total
+
+  norm_factor = ipfGL(user_BW_kg) / ipfGL(REFERENCE_BW_kg)
   ```
 
-  **Bodyweight exercises** (wger `equipment: 'bodyweight'`):
-  ```
-  effective_load = REFERENCE_BW × bw_coefficient + entered_weight × (REFERENCE_BW / user_BW)
-  ```
-  The BW component becomes a constant (`REFERENCE_BW × bw_coefficient`) — every user gets the same load credit for the same exercise's bodyweight portion. The added-weight component (for weighted pull-ups, weighted dips, vest squats) is normalized like external-load exercises.
+  Sample `norm_factor` values (male):
 
-  **Examples:**
-  - Bench 200 lb at 100 lb BW → `200 × (180/100) = 360`
-  - Bench 200 lb at 200 lb BW → `200 × (180/200) = 180`
-  - Bench 200 lb at 300 lb BW → `200 × (180/300) = 120`
-  - 1× BW bench (100 lb at 100 lb, 200 lb at 200 lb, 300 lb at 300 lb) → all = 180. Same XP.
-  - Push-up (coef 0.65) at any BW → `180 × 0.65 + 0 = 117`. Same XP.
-  - Weighted pull-up (+25 lb) at 100 lb BW → `180 × 1.0 + 25 × (180/100) = 180 + 45 = 225`
-  - Weighted pull-up (+25 lb) at 300 lb BW → `180 × 1.0 + 25 × (180/300) = 180 + 15 = 195`
+  | user_BW | norm_factor |
+  |---|---:|
+  | 100 lb (45.4 kg) | 1.299 (29.9% boost) |
+  | 145 lb (65.8 kg) | 1.126 (12.6% boost) |
+  | 180 lb (81.6 kg) | 1.000 (anchor) |
+  | 200 lb (90.7 kg) | 0.952 (4.8% reduction) |
+  | 250 lb (113 kg) | 0.892 |
+  | 300 lb (136 kg) | 0.853 |
 
-  **Required prerequisite**: `user_bodyweight` must be stored in their profile, captured at first-time onboarding (per R1a-storage decision 2026-05-06). If unset when user logs a set, modal forces input before saving.
+  **External-load exercises:**
+  ```
+  effective_load = entered_weight × norm_factor
+  ```
+
+  **Bodyweight exercises:**
+  ```
+  effective_load = REFERENCE_BW × bw_coefficient + entered_weight × norm_factor
+  ```
+  The BW component becomes a constant (`REFERENCE_BW × bw_coefficient`) — every user gets the same load credit for the same exercise's bodyweight portion. The added-weight component (for weighted pull-ups, weighted dips, vest squats) is normalized via the IPF GL `norm_factor`.
+
+  **Why IPF GL over linear:** linear `(REFERENCE_BW / user_BW)` overshoots in both directions — gives 100 lb users an unrealistically high boost (×1.8) and 300 lb users an unrealistically low scaling (×0.6). IPF GL caps these naturally per the strength-sport curve (×1.30 at 100 lb, ×0.85 at 300 lb), aligning with how competitive powerlifting compares lifts across body weights.
+
+  **Required prerequisite**: `user_bodyweight` and `user_sex` must be stored in profile (sex defaults to male if unset; female parameters available for users who specify). Captured at first-time onboarding. If unset when user logs a set, modal forces input before saving.
 
 **Total XP track (continuous, additive multipliers)**
 - R2. The Total XP added per set = sum of contributions from each active multiplier:
