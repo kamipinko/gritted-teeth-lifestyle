@@ -413,9 +413,16 @@ export default function FitnessPage() {
   // Predictive-tap consume on mount: if the prior hop's hit-zone tap
   // staged a 'hub-load' intent (from /fitness during its HeistTransition),
   // auto-fire the LOAD CYCLE option as if the user tapped it.
+  // Delay the HT trigger by 500ms so the inbound HT plays out fully
+  // before this one starts — clean back-to-back animation cascade.
+  // setInAnimation runs IMMEDIATELY so taps during the 500ms window
+  // still stage the next step ('activate').
   useEffect(() => {
     const intent = consumePrefire('hub-load')
-    if (intent) handleSelect('/fitness/load')
+    if (intent) {
+      setInAnimation('hub-load', true)
+      setTimeout(() => handleSelect('/fitness/load'), 500)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

@@ -1062,7 +1062,13 @@ export default function LoadCyclePage() {
     const cycle = cycles.find((c) => c.id === selectedId)
     if (!cycle) return
     const intent = consumePrefire('activate')
-    if (intent) handleActivate(cycle)
+    if (intent) {
+      // Open predictive window immediately (so taps during the wait
+      // stage 'today'); delay the actual HT 500ms so the inbound HT
+      // plays out fully first.
+      setInAnimation('activate', true)
+      setTimeout(() => handleActivate(cycle), 500)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, selectedId])
 

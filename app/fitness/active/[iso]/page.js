@@ -1950,9 +1950,14 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId }) {
       if (focusMuscle) return
       const intent = consumePrefire('muscle')
       if (intent && muscles[0]) {
-        play('card-confirm')
-        setFocusMuscle(muscles[0])
-        disarmChain('muscle-fired')
+        // Delay 500ms so the inbound today-hop HT plays out fully
+        // before the muscle modal opens. Muscle is the chain end so
+        // no further predictive window needs opening here.
+        setTimeout(() => {
+          play('card-confirm')
+          setFocusMuscle(muscles[0])
+          disarmChain('muscle-fired')
+        }, 500)
       }
     }
     tryConsume()

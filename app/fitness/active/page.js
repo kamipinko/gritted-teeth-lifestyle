@@ -2984,7 +2984,11 @@ export default function ActiveCyclePage() {
       const intent = consumePrefire('today')
       if (intent) {
         consumed = true
-        handleDayHop(target)
+        // Open predictive window immediately (so taps during the wait
+        // stage 'muscle'); delay the actual day-hop HT 500ms so the
+        // inbound HT plays out fully first.
+        setInAnimation('today', true)
+        setTimeout(() => handleDayHop(target), 500)
       }
     }
     tryConsume()
