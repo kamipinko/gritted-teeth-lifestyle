@@ -248,14 +248,12 @@ function AttuneMovementsButton({ enabled, monthKanji = '', onTap, onHover }) {
           overflow:hidden contains the band overflow within the button
           rect (the wrapper's slash clipPath handles the slash silhouette
           itself).
-          Black base + bands all carry alpha so the underlying calendar /
-          kanji watermark bleeds through the WHOLE button, not just the
-          narrow dark gap between bands. Bands stay near-solid (alpha
-          0.9) so the text's mix-blend-difference flip still reads as
-          near-black. */}
+          Dark base = #280609 (the same dark-red-tinted shade the
+          page main bg uses). Reads as 'reddish black' to match the
+          rest of the button + page chrome instead of pure-cold-black. */}
       <div
         className="absolute inset-0 overflow-hidden pointer-events-none"
-        style={{ background: 'rgba(7, 7, 8, 0.4)' }}
+        style={{ background: '#280609' }}
         aria-hidden="true"
       >
         {/* Bands at alpha 0.9 — letters/kanji still flip to near-black
