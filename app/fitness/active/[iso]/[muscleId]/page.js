@@ -1,26 +1,27 @@
 'use client'
 /*
- * /fitness/active/[iso] — Day-focus route (Stage 1 of App Router refactor).
+ * /fitness/active/[iso]/[muscleId] — Muscle exercise route (Stage 2 of
+ * App Router refactor).
  *
- * The DayFocus modal that used to live as conditional state on
- * /fitness/active is now a real route. Mounting this page shows the day-
- * focus panel for `iso`; closing routes back. By moving the day-hop
- * onto a real route, HeistTransition runs naturally between /fitness/active
- * and the day view — so the chain's TODAY hop now plays `transition-slash`
- * and matches the sound profile of profile/LOAD CYCLE/ACTIVATE.
+ * The ExercisePanel that used to live as conditional state on the
+ * day-focus view is now a real route. Mounting this page shows the
+ * exercise panel for (iso, muscleId); closing routes back to the day
+ * view. By moving the muscle hop onto a real route, HeistTransition
+ * fires naturally between /fitness/active/[iso] and the muscle view —
+ * making the 5th and final chain hop consistent with steps 1–4.
  *
- * Helpers below (DayFocus, ExercisePanel, etc.) are duplicated from the
- * parent page verbatim. Stage 2 will dedup them into shared modules.
+ * Helpers below (ExercisePanel, popups, etc.) are duplicated from the
+ * day route verbatim. Stage 3 will dedup them into shared modules.
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useSound } from '../../../../lib/useSound'
-import { useProfileGuard } from '../../../../lib/useProfileGuard'
-import { pk } from '../../../../lib/storage'
-import PickerSheet from '../../../../components/attune/PickerSheet'
-import HeistTransition from '../../../../components/HeistTransition'
-import { chipsForDay, addChip } from '../../../../lib/attunement'
-import { consumePrefire, setInAnimation, disarmChain, subscribeStaged } from '../../../../lib/predictiveTap'
+import { useSound } from '../../../../../lib/useSound'
+import { useProfileGuard } from '../../../../../lib/useProfileGuard'
+import { pk } from '../../../../../lib/storage'
+import PickerSheet from '../../../../../components/attune/PickerSheet'
+import HeistTransition from '../../../../../components/HeistTransition'
+import { chipsForDay, addChip } from '../../../../../lib/attunement'
+import { consumePrefire, setInAnimation, disarmChain, subscribeStaged } from '../../../../../lib/predictiveTap'
 
 const MUSCLE_LABELS = {
   chest: 'CHEST', back: 'BACK', shoulders: 'SHOULDERS',
@@ -2675,113 +2676,42 @@ function computeTotalXP() {
   } catch (_) { return { xp: 0, totalDays: 0 } }
 }
 
-export default function ActiveDayPage() {
+export default function ActiveMuscleExercisePage() {
   useProfileGuard()
   const params = useParams()
   const router = useRouter()
   const iso = decodeURIComponent(params.iso)
+  const muscleId = decodeURIComponent(params.muscleId)
 
-  const [cycleId, setCycleId]     = useState('')
-  const [days,    setDays]        = useState([])
-  const [dailyPlan, setDailyPlan] = useState({})
-  const [ready, setReady]         = useState(false)
+  const [cycleId, setCycleId] = useState('')
+  const [ready,   setReady]   = useState(false)
 
-  // Muscle-hop transition: holds target muscleId while HeistTransition runs.
-  // null = idle. When set, <HeistTransition active onComplete=push> mounts;
-  // on cover phase, router.push('/fitness/active/[iso]/[muscleId]') navigates.
-  // Mirrors the day-hop pattern on the parent /fitness/active page.
-  const [fireMuscleHop, setFireMuscleHop] = useState(null)
-  const fireMuscleHopRef = useRef(null)
-  const skippedMuscleHopRef = useRef(false)
-
-  // Cycle loading — same as the parent /fitness/active page.
+  // Cycle id loading — only thing this route needs from localStorage.
+  // ExercisePanel does its own per-set reps/weights reads internally.
   useEffect(() => {
     try {
-      const cid  = localStorage.getItem(pk('active-cycle-id'))
-      const rawD = localStorage.getItem(pk('training-days'))
-      const rawP = localStorage.getItem(pk('daily-plan'))
-      if (cid)  setCycleId(cid)
-      if (rawD) setDays(JSON.parse(rawD).sort())
-      if (rawP) setDailyPlan(JSON.parse(rawP))
+      const cid = localStorage.getItem(pk('active-cycle-id'))
+      if (cid) setCycleId(cid)
     } catch (_) {}
     setReady(true)
   }, [])
 
-  // Predictive-tap chain: this route is the destination of the 'today' hop.
-  // Mark the chain step so DayFocus's mount-time consume can fire 'muscle'
-  // for the predictive tap that arrived during the inbound HeistTransition.
+  // Predictive-tap chain: this is the chain END. Mark the step so the
+  // chain disarm flow happens naturally if the user backs out (matches
+  // the chain-window pattern at hub-load / activate / today).
   useEffect(() => {
-    setInAnimation('today', true)
+    setInAnimation('muscle', true)
   }, [])
-
-  // Muscle-hop dispatch: fires HeistTransition then router.push to the
-  // muscle exercise route. Mirrors handleDayHop on the parent active page —
-  // synchronous skip flag so a fast follow-up tap routes immediately rather
-  // than waiting for HT to complete. 'muscle' is the chain END so we don't
-  // setInAnimation for a further step.
-  const handleMuscleHop = (muscleId) => {
-    if (skippedMuscleHopRef.current) return
-    if (fireMuscleHopRef.current) {
-      // Already firing → user wants to skip the slash. Route now.
-      skippedMuscleHopRef.current = true
-      router.push('/fitness/active/' + iso + '/' + fireMuscleHopRef.current)
-      return
-    }
-    fireMuscleHopRef.current = muscleId
-    setFireMuscleHop(muscleId)
-  }
-
-  // Skip-the-fire-transition: once the muscle-hop HT is running, the next
-  // pointer/touch anywhere routes immediately. Mirrors the same listener on
-  // the parent active page (RetreatButton excluded so back-nav still works).
-  // 150ms grace window — iOS PWA can fire a follow-up touchstart/pointerdown
-  // for the SAME physical tap that triggered the hop.
-  useEffect(() => {
-    if (!fireMuscleHop) return
-    const armedAt = performance.now()
-    const handler = (e) => {
-      if (performance.now() - armedAt < 150) return
-      if (e.target?.closest?.('[data-retreat]')) return
-      if (skippedMuscleHopRef.current) return
-      skippedMuscleHopRef.current = true
-      router.push('/fitness/active/' + iso + '/' + fireMuscleHopRef.current)
-    }
-    window.addEventListener('pointerdown', handler, { capture: true })
-    window.addEventListener('touchstart',  handler, { capture: true, passive: true })
-    return () => {
-      window.removeEventListener('pointerdown', handler, { capture: true })
-      window.removeEventListener('touchstart',  handler, { capture: true })
-    }
-  }, [fireMuscleHop, iso, router])
 
   if (!ready) return null
 
-  const sortedDays = [...days].sort()
-  const muscles    = dailyPlan[iso] || []
-  const isLastDay  = sortedDays.length > 0 && iso === sortedDays[sortedDays.length - 1]
-
   return (
-    <>
-      <DayFocus
-        iso={iso}
-        muscles={muscles}
-        isLastDay={isLastDay}
-        originRect={null}
-        onClose={() => router.back()}
-        cycleId={cycleId}
-        onMuscleHop={handleMuscleHop}
-      />
-      {/* Muscle-hop transition — fires on BEGIN HERE / muscle slab tap.
-          HT plays transition-slash, then router.push lands on
-          /fitness/active/[iso]/[muscleId] which mounts ExercisePanel on
-          its own route. */}
-      <HeistTransition
-        active={!!fireMuscleHop}
-        onComplete={() => {
-          if (skippedMuscleHopRef.current) return
-          if (fireMuscleHopRef.current) router.push('/fitness/active/' + iso + '/' + fireMuscleHopRef.current)
-        }}
-      />
-    </>
+    <ExercisePanel
+      muscleId={muscleId}
+      dayIso={iso}
+      originRect={null}
+      cycleId={cycleId}
+      onClose={() => router.back()}
+    />
   )
 }
