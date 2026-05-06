@@ -171,7 +171,12 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
   // tightly by the letter strokes; bolder weights leave visible
   // round particle silhouettes in the thicker glyph fills.
   const TEXT_COLOR = '#d4181f'
-  const FONT_WEIGHT = 400
+  const FONT_WEIGHT = 300
+  // Space Grotesk light (300) — thinner than Anton's single weight,
+  // so the flame particles inside each glyph get clipped to even
+  // narrower vertical slivers. The mask <text> below uses the same
+  // family + weight so the flame window aligns with the visible text.
+  const FONT_FAMILY = '"Space Grotesk", system-ui, sans-serif'
   return (
     <button
       type="button"
@@ -206,14 +211,14 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
       </svg>
       <div className="relative w-full h-full flex flex-col items-center justify-center px-1 gap-0.5">
         <span
-          className="font-display leading-none whitespace-nowrap"
-          style={{ fontSize: '1.1rem', fontWeight: FONT_WEIGHT, color: TEXT_COLOR, letterSpacing: '0.05em' }}
+          className="leading-none whitespace-nowrap"
+          style={{ fontFamily: FONT_FAMILY, fontSize: '1.1rem', fontWeight: FONT_WEIGHT, color: TEXT_COLOR, letterSpacing: '0.05em' }}
         >
           ATTUNE
         </span>
         <span
-          className="font-display leading-none whitespace-nowrap"
-          style={{ fontSize: '1.1rem', fontWeight: FONT_WEIGHT, color: TEXT_COLOR, letterSpacing: '0.05em' }}
+          className="leading-none whitespace-nowrap"
+          style={{ fontFamily: FONT_FAMILY, fontSize: '1.1rem', fontWeight: FONT_WEIGHT, color: TEXT_COLOR, letterSpacing: '0.05em' }}
         >
           MOVEMENTS
         </span>
@@ -258,7 +263,7 @@ function AttuneFlameLayer({ rect }) {
   // are ~45px tall and use rise=280-480, size=20-58, driftX=±90; mine are
   // ~17.6px tall so each numeric range scales by ~0.4. Everything else
   // (timing, hash, parameter math) is verbatim.
-  const PARTS_PER_ROW = 16
+  const PARTS_PER_ROW = 24
   const particles = []
   for (let i = 0; i < PARTS_PER_ROW * 2; i++) {
     const isAttune = i < PARTS_PER_ROW
@@ -327,9 +332,9 @@ function AttuneFlameLayer({ rect }) {
             textAnchor="middle"
             dominantBaseline="central"
             style={{
-              fontFamily: 'Anton, Impact, sans-serif',
+              fontFamily: '"Space Grotesk", system-ui, sans-serif',
               fontSize: '1.1rem',
-              fontWeight: 400,
+              fontWeight: 300,
               letterSpacing: '0.05em',
               fill: 'white',
             }}
@@ -342,9 +347,9 @@ function AttuneFlameLayer({ rect }) {
             textAnchor="middle"
             dominantBaseline="central"
             style={{
-              fontFamily: 'Anton, Impact, sans-serif',
+              fontFamily: '"Space Grotesk", system-ui, sans-serif',
               fontSize: '1.1rem',
-              fontWeight: 400,
+              fontWeight: 300,
               letterSpacing: '0.05em',
               fill: 'white',
             }}
