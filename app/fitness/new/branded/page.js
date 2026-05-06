@@ -171,12 +171,16 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
   // tightly by the letter strokes; bolder weights leave visible
   // round particle silhouettes in the thicker glyph fills.
   const TEXT_COLOR = '#d4181f'
-  const FONT_WEIGHT = 300
-  // Space Grotesk light (300) — thinner than Anton's single weight,
-  // so the flame particles inside each glyph get clipped to even
-  // narrower vertical slivers. The mask <text> below uses the same
-  // family + weight so the flame window aligns with the visible text.
-  const FONT_FAMILY = '"Space Grotesk", system-ui, sans-serif'
+  const FONT_WEIGHT = 400
+  // Yuji Syuku — Google's brush-calligraphy Latin font designed in
+  // the style of Japanese kanji strokes (sumi brush vibe). Reads as
+  // "absurdly Japanese English." Variable stroke thickness means
+  // flame particles inside each glyph get clipped to organic-shaped
+  // slivers (varying widths along the stroke) instead of uniform
+  // verticals — feels more like flame licking through a calligraphic
+  // form. Single weight (400). The mask <text> below uses the same
+  // family/weight so the flame window aligns with the visible text.
+  const FONT_FAMILY = '"Yuji Syuku", "Shippori Mincho", serif'
   return (
     <button
       type="button"
@@ -212,13 +216,13 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
       <div className="relative w-full h-full flex flex-col items-center justify-center px-1 gap-0.5">
         <span
           className="leading-none whitespace-nowrap"
-          style={{ fontFamily: FONT_FAMILY, fontSize: '1.1rem', fontWeight: FONT_WEIGHT, color: TEXT_COLOR, letterSpacing: '0.05em' }}
+          style={{ fontFamily: FONT_FAMILY, fontSize: '0.85rem', fontWeight: FONT_WEIGHT, color: TEXT_COLOR, letterSpacing: '0.04em' }}
         >
           ATTUNE
         </span>
         <span
           className="leading-none whitespace-nowrap"
-          style={{ fontFamily: FONT_FAMILY, fontSize: '1.1rem', fontWeight: FONT_WEIGHT, color: TEXT_COLOR, letterSpacing: '0.05em' }}
+          style={{ fontFamily: FONT_FAMILY, fontSize: '0.85rem', fontWeight: FONT_WEIGHT, color: TEXT_COLOR, letterSpacing: '0.04em' }}
         >
           MOVEMENTS
         </span>
@@ -332,10 +336,10 @@ function AttuneFlameLayer({ rect }) {
             textAnchor="middle"
             dominantBaseline="central"
             style={{
-              fontFamily: '"Space Grotesk", system-ui, sans-serif',
-              fontSize: '1.1rem',
-              fontWeight: 300,
-              letterSpacing: '0.05em',
+              fontFamily: '"Yuji Syuku", "Shippori Mincho", serif',
+              fontSize: '0.85rem',
+              fontWeight: 400,
+              letterSpacing: '0.04em',
               fill: 'white',
             }}
           >
@@ -347,10 +351,10 @@ function AttuneFlameLayer({ rect }) {
             textAnchor="middle"
             dominantBaseline="central"
             style={{
-              fontFamily: '"Space Grotesk", system-ui, sans-serif',
-              fontSize: '1.1rem',
-              fontWeight: 300,
-              letterSpacing: '0.05em',
+              fontFamily: '"Yuji Syuku", "Shippori Mincho", serif',
+              fontSize: '0.85rem',
+              fontWeight: 400,
+              letterSpacing: '0.04em',
               fill: 'white',
             }}
           >
