@@ -96,6 +96,27 @@ The new feature is a **combo-driven multiplier system** that layers on top. It i
 
   Each King's `MUSCLE_FIXUP` entry has been deliberately curated so that 3 distinct regions emerge from R10's 60/40 split — e.g., BARBELL SQUAT primary `[quads]` secondary `[glutes, back]` produces FRONT 60% / LEGS 20% / BACK 20% → FRONT 1★ + LEGS 1★ + BACK 1★. Without the third-region curation, most Kings would only span 2 regions and award just 2 stars (defeating the King purpose).
 - R13. **Isolation exercises** concentrate on the **single highest-weight region** — that region earns 2★. All other regions earn 0★ regardless of their raw share. Band thresholds do NOT gate the 2★ award. The Total XP track applies `isolation_mult` (placeholder 1.2, smaller than `compound_mult`) per R2.
+
+- R12c. **Star-earning floor (locked 2026-05-06)** — region stars (R12 / R12b / R13) are awarded only when the set's relative load is at least **0.75 ×** the exercise's `heavy_lift_threshold`. Below the floor, the set logs XP normally but earns **zero stars**. Filters warm-ups and light rep-out work from the region-star track; only genuine working sets contribute.
+
+  ```
+  star_floor    = 0.75 × heavy_lift_threshold
+  relative_load = bw_coefficient + entered_weight / user_BW
+  earn_stars    = (relative_load >= star_floor)
+  ```
+
+  XP is unaffected — a sub-floor set still rolls through R2's multiplier stack (consistency, class, prestige, holiday, heavy_lift). Only the region-star award is gated. Constant `STAR_FLOOR_FRACTION = 0.75` lives in `lib/exerciseAliases.js`.
+
+  **Examples (BENCH PRESS, heavy_lift_threshold = 1.5× BW → star_floor = 1.125× BW):**
+
+  | User | Lift | Relative load | Stars? |
+  |---|---:|---:|---|
+  | 200 lb | 135 lb (warm-up) | 0.68× BW | ❌ |
+  | 200 lb | 200 lb | 1.00× BW | ❌ |
+  | 200 lb | 225 lb | 1.125× BW | ✅ at floor |
+  | 200 lb | 275 lb | 1.375× BW | ✅ |
+  | 200 lb | 315 lb | 1.575× BW | ✅ + HEAVY LIFT bonus |
+  | 145 lb | 225 lb | 1.55× BW | ✅ + HEAVY LIFT bonus |
 - R14. **Classification (compound vs isolation) is a curated per-exercise property**, not auto-derived. Auto-classification rule (used at wger import time, after R10a region mapping): if aggregated wger weight is 100% in one region (e.g., hip thrust, calf raise, leg extension, bicep curl, tricep extension, front raise — anterior delt isolation now lands at ARMS 100%), default to **isolation**. Otherwise default to compound. **Curator pass required after import** — Jordan reviews and hand-overrides exercises that the auto-rule miscategorizes. Known curator-override candidates: lateral raise (medial delt isolation, wger 60/40 ARMS/BACK → defaults compound), reverse fly / rear delt fly (rear delt isolation, wger 60/40 ARMS/BACK), and any other exercise where wger lists a stabilizer as secondary but training intent is single-target.
 
 **Consistency / Combo Identity**
