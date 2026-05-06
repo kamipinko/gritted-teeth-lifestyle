@@ -2029,8 +2029,16 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId, onMus
   useEffect(() => {
     if (!hasWork) return
     const intent = consumePrefire('muscle')
-    if (intent && muscles[0]) {
-      setTimeout(() => onMuscleHop(muscles[0], { fromTimer: true }), 100)
+    if (intent) {
+      // Use heroMuscle (first uncomplete) to match what the rolodex
+      // auto-centers on. Falls back to muscles[0] if all are complete.
+      const target = (() => {
+        for (const id of muscles) {
+          if (!isMuscleComplete(cycleId, iso, id)) return id
+        }
+        return muscles[0]
+      })()
+      if (target) setTimeout(() => onMuscleHop(target, { fromTimer: true }), 100)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasWork])
