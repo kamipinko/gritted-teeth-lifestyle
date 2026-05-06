@@ -257,15 +257,6 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
         style={{ background: 'rgba(7, 7, 8, 0.82)' }}
         aria-hidden="true"
       >
-        {/* Radial red atmosphere bloom — shifted off-center to break
-            symmetry and pull focus toward the slash silhouette's
-            tilted axis. */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `radial-gradient(ellipse at 35% 65%, rgba(212,24,31,0.5) 0%, transparent 75%)`,
-          }}
-        />
         {/* Narrow accent band — left side (was wide-right pre-flip) */}
         <div
           className="absolute"
