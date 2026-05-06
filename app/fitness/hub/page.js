@@ -40,7 +40,6 @@ function CycleOption({
   const handleLeave = () => setHovered(false)
   const handleClick = (e) => {
     e.preventDefault()
-    play('card-confirm')
     if (onClick) onClick(href)
   }
 

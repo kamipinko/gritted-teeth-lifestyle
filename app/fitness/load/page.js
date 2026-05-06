@@ -1199,8 +1199,8 @@ export default function LoadCyclePage() {
           <ActivatePopup
             key={selectedCycle.id}
             cycle={selectedCycle}
-            onTap={(c) => { play('card-confirm'); handleActivate(c) }}
-            onSwipe={(c) => { play('card-confirm'); handleActivate(c, { deepLaunch: true }) }}
+            onTap={(c) => handleActivate(c)}
+            onSwipe={(c) => handleActivate(c, { deepLaunch: true })}
           />
         </>
       )}
