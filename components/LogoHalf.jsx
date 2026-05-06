@@ -68,7 +68,7 @@ export function LogoStencil({ size = 44, paused = false }) {
             // Translate-origin offset is handled inside the keyframe so the
             // ✦ stays centered on its anchor point through the scale.
             color: '#fff',
-            fontSize: `${Math.max(21, Math.round(size * 0.51))}px`,
+            fontSize: `${Math.max(12, Math.round(size * 0.26))}px`,
             lineHeight: 1,
             textShadow: '0 0 4px rgba(255,255,255,0.65)',
             pointerEvents: 'none',
