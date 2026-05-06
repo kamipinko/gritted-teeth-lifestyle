@@ -330,7 +330,7 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
                     left: s.left,
                     top: s.top,
                     color: '#fff',
-                    fontSize: '1.4rem',
+                    fontSize: '2.1rem',
                     lineHeight: 1,
                     textShadow: '0 0 6px rgba(255,255,255,0.7)',
                     pointerEvents: 'none',
