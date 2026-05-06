@@ -2941,9 +2941,14 @@ export default function ActiveCyclePage() {
   // Skip-the-fire-transition: once the day-hop HT is running, the next
   // pointer/touch anywhere routes immediately. Mirrors the same listener
   // on /fitness/load (RetreatButton excluded so back-nav still works).
+  // Guard with a 150ms grace window — iOS PWA can fire a follow-up
+  // touchstart/pointerdown for the SAME physical tap that triggered the
+  // hop, which would otherwise short-circuit HT before it renders.
   useEffect(() => {
     if (!fireDayHop) return
+    const armedAt = performance.now()
     const handler = (e) => {
+      if (performance.now() - armedAt < 150) return
       if (e.target?.closest?.('[data-retreat]')) return
       if (skippedDayHopRef.current) return
       skippedDayHopRef.current = true
