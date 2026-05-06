@@ -59,6 +59,34 @@ export default function PickerSheet({
   }
   const inputRef = useRef(null)
 
+  // Drag-resize: user can grab the top border (16px hit area, grey pill
+  // affordance) to make the sheet taller or shorter. userHeight overrides
+  // the CSS-class max-height when set; resets on sourceDayId change so each
+  // re-open starts at the default size.
+  const [userHeight, setUserHeight] = useState(null)
+  const dragStartRef = useRef(null)
+  useEffect(() => { setUserHeight(null) }, [sourceDayId])
+
+  const onGrabberPointerDown = (e) => {
+    e.preventDefault()
+    const sheet = e.currentTarget.parentElement
+    if (!sheet) return
+    const startY = e.clientY
+    const startH = sheet.getBoundingClientRect().height
+    dragStartRef.current = { startY, startH }
+    try { e.currentTarget.setPointerCapture(e.pointerId) } catch (_) {}
+  }
+  const onGrabberPointerMove = (e) => {
+    if (!dragStartRef.current) return
+    const dy = e.clientY - dragStartRef.current.startY
+    const next = Math.max(180, Math.min(window.innerHeight * 0.92, dragStartRef.current.startH - dy))
+    setUserHeight(next)
+  }
+  const onGrabberPointerUp = (e) => {
+    dragStartRef.current = null
+    try { e.currentTarget.releasePointerCapture(e.pointerId) } catch (_) {}
+  }
+
   const sourceMuscle = useMemo(() => {
     if (!cycle || !sourceDayId) return null
     const m = cycle?.dailyPlan?.[sourceDayId] || []
@@ -131,15 +159,41 @@ export default function PickerSheet({
         className="gtl-picker-sheet"
         style={{
           pointerEvents: 'auto',
+          position: 'relative',
           background: '#1a1a1e',
           borderTop: '2px solid #d4181f',
-          padding: '1rem 1rem calc(1.5rem + env(safe-area-inset-bottom, 0px))',
+          padding: '1.5rem 1rem calc(1.5rem + env(safe-area-inset-bottom, 0px))',
           fontFamily: 'var(--font-display, Anton, sans-serif)',
           color: '#f1eee5',
           display: 'flex', flexDirection: 'column', gap: '0.6rem',
           boxShadow: '0 -8px 24px rgba(0,0,0,0.6)',
+          height: userHeight ? `${userHeight}px` : undefined,
+          maxHeight: userHeight ? `${userHeight}px` : undefined,
         }}
       >
+        {/* Drag-resize grabber — 16px hit area at top edge, grey pill affordance. */}
+        <div
+          onPointerDown={onGrabberPointerDown}
+          onPointerMove={onGrabberPointerMove}
+          onPointerUp={onGrabberPointerUp}
+          onPointerCancel={onGrabberPointerUp}
+          style={{
+            position: 'absolute', top: 0, left: 0, right: 0,
+            height: 16,
+            cursor: 'ns-resize',
+            touchAction: 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 5,
+          }}
+          aria-label="resize picker"
+          role="separator"
+        >
+          <span style={{
+            width: 36, height: 4,
+            background: '#3a3a40',
+            borderRadius: 2,
+          }} />
+        </div>
         {/* Minimal header — muscle name + close ×. Mode/lock/count prefix
             and the calendar-tap subtext both removed. */}
         <div style={{

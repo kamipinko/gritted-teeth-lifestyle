@@ -80,7 +80,7 @@ export default function CycleCalendar({ cycle, onDayTap, onChipReplace, selected
         >
           <TransformComponent
             wrapperStyle={{ width: '100%', height: '100%' }}
-            contentStyle={{ padding: '0.5rem 0.5rem 7rem 0.5rem' }}
+            contentStyle={{ padding: '0.5rem 0.5rem 9rem 0.5rem' }}
           >
             <div
               style={{

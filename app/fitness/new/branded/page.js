@@ -201,20 +201,11 @@ function AttuneTextRows({ fill, strokeColor, strokeWidth = 0.5 }) {
 }
 
 function AttuneMovementsButton({ enabled, onTap, onHover }) {
-  // CRITICAL: no transform, no opacity, no z-index on the button itself.
-  // Each of those creates a stacking context that isolates the text's
-  // mix-blend-mode from the kanji backdrop. The wrapper around this
-  // component (in the grid render) must also avoid stacking context
-  // creators for the same reason.
-  //
-  // Border + text color stay constant regardless of `enabled`. The
-  // flame layer is the only visual indicator that a day is selected
-  // — the button itself doesn't shift between dim/bright.
-  //
-  // Visible text is rendered as SVG <text> (not HTML span) so it
-  // shares the AttuneFlameLayer mask's coordinate system exactly,
-  // eliminating any HTML-vs-SVG layout drift between the visible
-  // letters and the flame windows.
+  // Solid red-bordered tile against page-void background — reads as a
+  // discrete CTA in any orientation. Replaces the prior SVG-text +
+  // mix-blend-difference technique that was unreadable in landscape
+  // when the kanji watermark dominated the backdrop. Two-line label
+  // (ATTUNE / MOVEMENTS) so the text fits the slash-clipped tile.
   return (
     <button
       type="button"
@@ -222,42 +213,27 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
       onClick={enabled ? onTap : undefined}
       onMouseEnter={enabled ? onHover : undefined}
       disabled={!enabled}
-      className={`relative ${enabled ? 'cursor-pointer' : 'cursor-not-allowed'} w-full h-full block`}
+      className={`${enabled ? 'cursor-pointer' : 'cursor-not-allowed'} w-full h-full flex flex-col items-center justify-center`}
       style={{
-        background: 'transparent',
-        border: 'none',
+        background: '#0a0a0c',
+        color: enabled ? '#f1eee5' : '#5a5a5e',
+        border: `2px solid ${enabled ? '#d4181f' : '#3a3a40'}`,
+        padding: '0.4rem 0.7rem',
+        fontFamily: 'var(--font-display, Anton, sans-serif)',
+        fontSize: '0.7rem',
+        letterSpacing: '0.2em',
+        textTransform: 'uppercase',
+        fontWeight: 900,
+        lineHeight: 1.1,
+        clipPath: 'polygon(2% 0%, 100% 0%, 98% 100%, 0% 100%)',
+        boxShadow: enabled ? '3px 3px 0 #070708' : 'none',
         WebkitTapHighlightColor: 'transparent',
         outline: 'none',
-        padding: 0,
+        pointerEvents: enabled ? 'auto' : 'none',
       }}
     >
-      <svg
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
-        width="100%"
-        height="100%"
-        className="absolute inset-0 pointer-events-none"
-        aria-hidden="true"
-      >
-        <polygon
-          points="4,0 100,0 96,100 0,100"
-          fill="none"
-          stroke={ATTUNE_TEXT_COLOR}
-          strokeWidth="1.5"
-          vectorEffect="non-scaling-stroke"
-        />
-      </svg>
-      <svg
-        width="100%"
-        height="100%"
-        className="absolute inset-0 pointer-events-none"
-        aria-hidden="true"
-      >
-        <AttuneTextRows
-          fill={ATTUNE_TEXT_COLOR}
-          strokeColor={ATTUNE_TEXT_COLOR}
-        />
-      </svg>
+      <span>ATTUNE</span>
+      <span>MOVEMENTS</span>
     </button>
   )
 }
@@ -1223,17 +1199,10 @@ export default function SchedulePage() {
                 left: `${attuneRect.left}px`,
                 width: `${attuneRect.width}px`,
                 height: `${attuneRect.height}px`,
-                // mix-blend-mode on the wrapper (not on the inner spans) so
-                // the entire overlay layer — SVG outline + text glyphs —
-                // composites against the kanji backdrop as one operation.
-                // On a span, the blend was getting promoted into a separate
-                // compositor layer that didn't see the kanji as backdrop;
-                // the wrapper-level blend keeps everything in one pass.
-                mixBlendMode: 'difference',
-                // clipPath restricts the click area to the slash silhouette,
-                // so taps in the wrapper's bounding-box corners pass through
-                // to underlying day cells.
-                clipPath: 'polygon(4% 0%, 100% 0%, 96% 100%, 0% 100%)',
+                // Wrapper is now positioning-only. The button itself is a
+                // self-contained tile (solid bg + red border + clip-path)
+                // — mix-blend-difference + slash clipPath dropped because
+                // the new tile reads cleanly against the kanji backdrop.
               }}
             >
               <AttuneMovementsButton

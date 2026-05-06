@@ -28,7 +28,7 @@ export default function AutoAttuneButton({ cycle }) {
   return (
     <div style={{
       position: 'absolute', left: 0, right: 0,
-      bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)',
+      bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)',
       display: 'flex', justifyContent: 'center', zIndex: 20,
       pointerEvents: 'none',
     }}>
