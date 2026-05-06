@@ -157,6 +157,49 @@ function CarveContent({ enabled }) {
  * No slash-cut animation here — this is a navigation entry, not the
  * commit/forge moment that SheetCarveButton's blade-swing earns.
  */
+// Single SVG-text spec shared by the visible button text and the
+// AttuneFlameLayer mask. Centralizing here means both elements use
+// identical font/size/position/stroke — pixel-perfect alignment
+// between the visible letters and the flame windows.
+const ATTUNE_TEXT_FONT = '"Yuji Syuku", "Shippori Mincho", serif'
+const ATTUNE_TEXT_SIZE = '0.85rem'
+const ATTUNE_TEXT_WEIGHT = 400
+const ATTUNE_TEXT_LETTER_SPACING = '0.04em'
+// Y position of each row's text-anchor point (dominantBaseline=central),
+// expressed as a fraction of the button's height. Matches where the
+// flexbox-equivalent layout would center the rows.
+const ATTUNE_Y_FRAC = 0.40
+const MOVEMENTS_Y_FRAC = 0.60
+const ATTUNE_TEXT_COLOR = '#d4181f'
+
+// Renders both ATTUNE and MOVEMENTS as SVG <text> at percentage-based
+// (50% x) positions. Reused by the visible button text (fill=red,
+// stroke=red for fake-bold) and the flame mask (fill=white,
+// stroke=white). Same element type + coords in both places guarantees
+// alignment.
+function AttuneTextRows({ fill, strokeColor, strokeWidth = 0.5 }) {
+  const sharedProps = {
+    textAnchor: 'middle',
+    dominantBaseline: 'central',
+    style: {
+      fontFamily: ATTUNE_TEXT_FONT,
+      fontSize: ATTUNE_TEXT_SIZE,
+      fontWeight: ATTUNE_TEXT_WEIGHT,
+      letterSpacing: ATTUNE_TEXT_LETTER_SPACING,
+      fill,
+      stroke: strokeColor,
+      strokeWidth,
+      paintOrder: 'stroke fill',
+    },
+  }
+  return (
+    <>
+      <text x="50%" y={`${ATTUNE_Y_FRAC * 100}%`} {...sharedProps}>ATTUNE</text>
+      <text x="50%" y={`${MOVEMENTS_Y_FRAC * 100}%`} {...sharedProps}>MOVEMENTS</text>
+    </>
+  )
+}
+
 function AttuneMovementsButton({ enabled, onTap, onHover }) {
   // CRITICAL: no transform, no opacity, no z-index on the button itself.
   // Each of those creates a stacking context that isolates the text's
@@ -166,21 +209,12 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
   //
   // Border + text color stay constant regardless of `enabled`. The
   // flame layer is the only visual indicator that a day is selected
-  // — the button itself doesn't shift between dim/bright. Thinner
-  // font weight (400 instead of 900) so flame particles get clipped
-  // tightly by the letter strokes; bolder weights leave visible
-  // round particle silhouettes in the thicker glyph fills.
-  const TEXT_COLOR = '#d4181f'
-  const FONT_WEIGHT = 400
-  // Yuji Syuku — Google's brush-calligraphy Latin font designed in
-  // the style of Japanese kanji strokes (sumi brush vibe). Reads as
-  // "absurdly Japanese English." Variable stroke thickness means
-  // flame particles inside each glyph get clipped to organic-shaped
-  // slivers (varying widths along the stroke) instead of uniform
-  // verticals — feels more like flame licking through a calligraphic
-  // form. Single weight (400). The mask <text> below uses the same
-  // family/weight so the flame window aligns with the visible text.
-  const FONT_FAMILY = '"Yuji Syuku", "Shippori Mincho", serif'
+  // — the button itself doesn't shift between dim/bright.
+  //
+  // Visible text is rendered as SVG <text> (not HTML span) so it
+  // shares the AttuneFlameLayer mask's coordinate system exactly,
+  // eliminating any HTML-vs-SVG layout drift between the visible
+  // letters and the flame windows.
   return (
     <button
       type="button"
@@ -208,49 +242,22 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
         <polygon
           points="4,0 100,0 96,100 0,100"
           fill="none"
-          stroke={TEXT_COLOR}
+          stroke={ATTUNE_TEXT_COLOR}
           strokeWidth="1.5"
           vectorEffect="non-scaling-stroke"
         />
       </svg>
-      <div className="relative w-full h-full flex flex-col items-center justify-center px-1 gap-0.5">
-        <span
-          className="leading-none whitespace-nowrap"
-          style={{
-            fontFamily: FONT_FAMILY,
-            fontSize: '0.85rem',
-            fontWeight: FONT_WEIGHT,
-            color: TEXT_COLOR,
-            letterSpacing: '0.04em',
-            // Yuji Syuku is single-weight; fake-bold via text-stroke
-            // adds a same-color outline that fattens every stroke
-            // uniformly. Cleaner than font-weight: bold (which the
-            // browser would have to synthesize and tends to mangle
-            // calligraphic fonts).
-            WebkitTextStroke: `0.5px ${TEXT_COLOR}`,
-          }}
-        >
-          ATTUNE
-        </span>
-        <span
-          className="leading-none whitespace-nowrap"
-          style={{
-            fontFamily: FONT_FAMILY,
-            fontSize: '0.85rem',
-            fontWeight: FONT_WEIGHT,
-            color: TEXT_COLOR,
-            letterSpacing: '0.04em',
-            // Yuji Syuku is single-weight; fake-bold via text-stroke
-            // adds a same-color outline that fattens every stroke
-            // uniformly. Cleaner than font-weight: bold (which the
-            // browser would have to synthesize and tends to mangle
-            // calligraphic fonts).
-            WebkitTextStroke: `0.5px ${TEXT_COLOR}`,
-          }}
-        >
-          MOVEMENTS
-        </span>
-      </div>
+      <svg
+        width="100%"
+        height="100%"
+        className="absolute inset-0 pointer-events-none"
+        aria-hidden="true"
+      >
+        <AttuneTextRows
+          fill={ATTUNE_TEXT_COLOR}
+          strokeColor={ATTUNE_TEXT_COLOR}
+        />
+      </svg>
     </button>
   )
 }
@@ -278,8 +285,14 @@ function AttuneFlameLayer({ rect }) {
     return x - Math.floor(x)
   }
 
-  const ATTUNE_Y = H * 0.36
-  const MOVEMENTS_Y = H * 0.64
+  // Y positions match the HTML flex-col layout: container H, two
+  // 0.85rem rows (~13.6px each) with leading-none + 2px gap, centered
+  // → row centers land at ~H*0.40 and H*0.60 (was 0.36/0.64, which
+  // pushed the flame mask further from center than the visible text
+  // and caused a vertical misalignment between the windows and the
+  // letters).
+  const ATTUNE_Y = H * 0.40
+  const MOVEMENTS_Y = H * 0.60
   // Approx text widths so particle spawn x's stay within the letter
   // band (mask clips the rest, but tighter spread = fewer wasted
   // particles). MOVEMENTS is ~1.5× the ATTUNE width.
@@ -352,50 +365,12 @@ function AttuneFlameLayer({ rect }) {
       aria-hidden="true"
     >
       <defs>
+        {/* Mask shares its <text> coords with the visible button text
+            via AttuneTextRows. White on black = reveal only inside
+            letter shapes. */}
         <mask id="attune-flame-mask" maskUnits="userSpaceOnUse" x="0" y="0" width={W} height={H}>
           <rect x="0" y="0" width={W} height={H} fill="black" />
-          <text
-            x={W / 2}
-            y={ATTUNE_Y}
-            textAnchor="middle"
-            dominantBaseline="central"
-            style={{
-              fontFamily: '"Yuji Syuku", "Shippori Mincho", serif',
-              fontSize: '0.85rem',
-              fontWeight: 400,
-              letterSpacing: '0.04em',
-              fill: 'white',
-              // Match the HTML text's fake-bold: white stroke fattens
-              // the mask shape so the flame window stays aligned with
-              // the visibly-thicker letters above.
-              stroke: 'white',
-              strokeWidth: '0.5',
-              paintOrder: 'stroke fill',
-            }}
-          >
-            ATTUNE
-          </text>
-          <text
-            x={W / 2}
-            y={MOVEMENTS_Y}
-            textAnchor="middle"
-            dominantBaseline="central"
-            style={{
-              fontFamily: '"Yuji Syuku", "Shippori Mincho", serif',
-              fontSize: '0.85rem',
-              fontWeight: 400,
-              letterSpacing: '0.04em',
-              fill: 'white',
-              // Match the HTML text's fake-bold: white stroke fattens
-              // the mask shape so the flame window stays aligned with
-              // the visibly-thicker letters above.
-              stroke: 'white',
-              strokeWidth: '0.5',
-              paintOrder: 'stroke fill',
-            }}
-          >
-            MOVEMENTS
-          </text>
+          <AttuneTextRows fill="white" strokeColor="white" />
         </mask>
       </defs>
       {/* Masked group — letters become "windows into the void with
