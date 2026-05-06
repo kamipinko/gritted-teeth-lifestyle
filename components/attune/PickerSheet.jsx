@@ -36,6 +36,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { searchExercises } from '../../lib/exerciseLibrary'
 
+const MUSCLE_KANJI = {
+  chest: '胸', shoulders: '肩', back: '背', forearms: '腕',
+  quads: '腿', hamstrings: '裏', calves: '脛',
+  biceps: '二', triceps: '三', glutes: '尻', abs: '腹',
+}
+
 export default function PickerSheet({
   sourceDayId,
   selectedDayIds,
@@ -117,7 +123,7 @@ export default function PickerSheet({
         @media (orientation: landscape) and (max-height: 500px) {
           .gtl-picker-sheet {
             max-width: 100%;
-            max-height: 75vh;
+            max-height: 60vh;
           }
         }
       `}</style>
@@ -148,7 +154,19 @@ export default function PickerSheet({
           color: '#d4181f',
           borderBottom: '1px solid #2a2a30',
         }}>
-          <span>{(sourceMuscle || '').toUpperCase()}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8 }}>
+            {sourceMuscle && MUSCLE_KANJI[sourceMuscle] && (
+              <span style={{
+                fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
+                fontSize: '1.2rem',
+                lineHeight: 1,
+                color: '#d4181f',
+              }}>
+                {MUSCLE_KANJI[sourceMuscle]}
+              </span>
+            )}
+            <span>{(sourceMuscle || '').toUpperCase()}</span>
+          </span>
           <button
             type="button"
             aria-label="close"

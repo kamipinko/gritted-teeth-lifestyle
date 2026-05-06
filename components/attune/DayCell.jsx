@@ -16,6 +16,24 @@ const MUSCLE_LABEL = {
 function muscleKanji(id) { return MUSCLE_KANJI[id] || '·' }
 function muscleLabel(id) { return MUSCLE_LABEL[id] || '' }
 
+const ALL_MUSCLES = ['chest', 'shoulders', 'back', 'forearms', 'quads', 'hamstrings', 'calves', 'biceps', 'triceps', 'glutes', 'abs']
+const UPPER_MUSCLES = ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'forearms']
+const LOWER_MUSCLES = ['quads', 'hamstrings', 'calves', 'glutes']
+
+function setEquals(a, b) {
+  if (a.length !== b.length) return false
+  const s = new Set(a)
+  return b.every((x) => s.has(x))
+}
+
+function muscleGroupLabel(muscles) {
+  if (!muscles || muscles.length < 2) return null
+  if (setEquals(muscles, ALL_MUSCLES))   return { kanji: '全', label: 'FULL BODY' }
+  if (setEquals(muscles, UPPER_MUSCLES)) return { kanji: '上', label: 'UPPER' }
+  if (setEquals(muscles, LOWER_MUSCLES)) return { kanji: '下', label: 'LOWER' }
+  return null
+}
+
 export default function DayCell({
   cycleId,
   dayId,
@@ -40,10 +58,15 @@ export default function DayCell({
     if (onTap) onTap(dayId)
   }
 
-  const kanjiStack = muscles.length > 0 ? muscles.map(muscleKanji).join('') : (isRestDay ? '休' : '·')
-  const labelStack = muscles.length > 0
-    ? muscles.map(muscleLabel).filter(Boolean).join(' · ')
-    : (isRestDay ? 'REST' : '')
+  const group = muscleGroupLabel(muscles)
+  const kanjiStack = group
+    ? group.kanji
+    : (muscles.length > 0 ? muscles.map(muscleKanji).join('') : (isRestDay ? '休' : '·'))
+  const labelStack = group
+    ? group.label
+    : (muscles.length > 0
+        ? muscles.map(muscleLabel).filter(Boolean).join(' · ')
+        : (isRestDay ? 'REST' : ''))
 
   // Same red border for source AND multi-target — uniform "selected" treatment.
   let border = `1px solid ${isLocked ? '#3a3a42' : '#2a2a30'}`
