@@ -266,8 +266,8 @@ function AttuneMovementsButton({ enabled, monthKanji = '', onTap, onHover }) {
         <div
           className="absolute"
           style={{
-            top: '-25%', bottom: '-25%', left: '-15%', width: '22%',
-            background: 'rgba(212, 24, 31, 0.9)',
+            top: '-25%', bottom: '-25%', left: '-15%', width: '32%',
+            background: 'rgba(212, 24, 31, 0.85)',
             transform: 'skewX(-12deg)',
           }}
         />
@@ -1184,20 +1184,12 @@ export default function SchedulePage() {
               const ch = emptyKanji[i]
               return (
                 <div key={`pad-${i}`} className="relative overflow-hidden border border-transparent" style={{ clipPath: CELL_CLIP, height: `${ROW_H}px` }}>
-                  {ch && (
-                    <span
-                      className="absolute inset-0 flex items-center justify-center select-none pointer-events-none"
-                      style={{
-                        fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-                        fontSize: '3rem',
-                        color: '#d4181f',
-                        fontWeight: 700,
-                      }}
-                      aria-hidden="true"
-                    >
-                      {ch}
-                    </span>
-                  )}
+                  {/* Cell-rendered kanji intentionally omitted — the
+                      AttuneMovementsButton overlay renders its own
+                      mix-blend-difference copy of the month kanji.
+                      Letting both render produced a doubled image
+                      visible through the wrapper's semi-transparent
+                      background. */}
                 </div>
               )
             }
