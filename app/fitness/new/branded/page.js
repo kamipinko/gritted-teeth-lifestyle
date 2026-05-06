@@ -257,28 +257,32 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
         style={{ background: 'rgba(7, 7, 8, 0.82)' }}
         aria-hidden="true"
       >
-        {/* Radial red atmosphere bloom */}
+        {/* Radial red atmosphere bloom — shifted off-center to break
+            symmetry and pull focus toward the slash silhouette's
+            tilted axis. */}
         <div
           className="absolute inset-0"
           style={{
-            background: `radial-gradient(ellipse at 50% 55%, rgba(212,24,31,0.45) 0%, transparent 70%)`,
+            background: `radial-gradient(ellipse at 35% 65%, rgba(212,24,31,0.5) 0%, transparent 75%)`,
           }}
         />
-        {/* Wide diagonal band — left */}
+        {/* Narrow accent band — left side (was wide-right pre-flip) */}
         <div
           className="absolute"
           style={{
-            top: '-25%', bottom: '-25%', left: '-10%', width: '55%',
-            background: 'rgba(212,24,31,0.75)',
+            top: '-25%', bottom: '-25%', left: '-15%', width: '22%',
+            background: 'rgba(212,24,31,0.55)',
             transform: 'skewX(-12deg)',
           }}
         />
-        {/* Narrow accent band — right */}
+        {/* Wide diagonal band — right (was left); deeper red tone (#7a0e14)
+            anchors the right side darker so the bloom reads as a leftward
+            warm wash. */}
         <div
           className="absolute"
           style={{
-            top: '-25%', bottom: '-25%', right: '-15%', width: '22%',
-            background: 'rgba(212,24,31,0.55)',
+            top: '-25%', bottom: '-25%', right: '-10%', width: '55%',
+            background: 'rgba(122,14,20,0.78)',
             transform: 'skewX(-12deg)',
           }}
         />
@@ -292,12 +296,16 @@ function AttuneMovementsButton({ enabled, onTap, onHover }) {
         height="100%"
         className="absolute inset-0 pointer-events-none"
         aria-hidden="true"
+        style={{ filter: 'drop-shadow(0 0 1.5px rgba(212,24,31,0.45))' }}
       >
+        {/* Softened slash border: semi-transparent red + drop-shadow
+            outer glow so the edge fades into the bg instead of sitting
+            as a hard line. */}
         <polygon
           points="4,0 100,0 96,100 0,100"
           fill="none"
-          stroke={GTL_RED}
-          strokeWidth="1.5"
+          stroke="rgba(212,24,31,0.55)"
+          strokeWidth="1"
           vectorEffect="non-scaling-stroke"
         />
       </svg>
@@ -1161,7 +1169,7 @@ export default function SchedulePage() {
                       className="absolute inset-0 flex items-center justify-center select-none pointer-events-none"
                       style={{
                         fontFamily: '"Noto Serif JP", "Yu Mincho", serif',
-                        fontSize: '4rem',
+                        fontSize: '3rem',
                         color: '#d4181f',
                         fontWeight: 700,
                       }}
