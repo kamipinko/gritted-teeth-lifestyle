@@ -24,6 +24,7 @@ import {
   EXERCISE_DENYLIST_EXACT,
   EQUIPMENT_FIXUP,
   MUSCLE_FIXUP,
+  BW_COEFFICIENT,
 } from '../lib/exerciseAliases.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -161,7 +162,13 @@ function transform(wgerEntries) {
     if (equipment === 'other') continue   // drop entries that resist classification
     const aliases = EXERCISE_ALIASES[id] || []
 
-    out.push({ id, label: id, muscles, primaryMuscles, secondaryMuscles, equipment, aliases })
+    const entry = { id, label: id, muscles, primaryMuscles, secondaryMuscles, equipment, aliases }
+    // Bodyweight coefficient (R1a): only attached for equipment === 'bodyweight'.
+    // Defaults to 1.00 (full BW load) when not in BW_COEFFICIENT.
+    if (equipment === 'bodyweight') {
+      entry.bw_coefficient = BW_COEFFICIENT[id] ?? 1.00
+    }
+    out.push(entry)
   }
 
   // Validate: every Exercise has at least one muscle, equipment is in enum, ID is non-empty

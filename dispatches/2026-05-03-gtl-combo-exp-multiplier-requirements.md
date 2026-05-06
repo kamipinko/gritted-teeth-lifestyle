@@ -299,9 +299,9 @@ The cap-and-overflow rule (R12) + concentrate rule (R13) + 100% reclassification
 - ~~[Affects R12b] `king_compound_mult` value~~ — **resolved 2026-05-05**: locked at **1.75** (modest premium over regular compound 1.5).
 - [Affects R12b][User decision] Final list of King-tagged variants. Default proposed: back/front/sumo/paused squat, conventional/sumo/trap-bar/stiff-leg/RDL deadlift, standard/vertical leg press, barbell/machine hack squat. Single-leg variants NOT King.
 - ~~[Affects R12] Tiebreak rule for compound second slot~~ — **resolved 2026-05-06**: hand-curated primary/secondary splits in MUSCLE_FIXUP eliminate ties; alphabetical fallback for any future-added exercises that re-introduce ties.
-- [Affects R1a][User decision] Curator-flagged bodyweight coefficient list. Likely candidates: push-up (~0.64), dip (~0.85), pike push-up, decline push-up. Most BW exercises stay at 1.0. Final coefficient values + which exercises need them TBD during library curation.
-- [Affects R1a][Technical] Where is `user_bodyweight` stored in the GTL profile? Existing field, or new addition? If new, what UI surface captures it (settings page? first-time onboarding? prompt on first BW set logged?). Verify against the profile schema during planning.
-- [Affects R1a][User decision] If `user_bodyweight` is unset when a BW set is logged, what's the fallback? (prompt user before first BW set / use a default placeholder like 150 lb / refuse to credit XP / treat as 0 weight).
+- ~~[Affects R1a] Curator-flagged bodyweight coefficient list~~ — **resolved 2026-05-06**: locked in `lib/exerciseAliases.js` `BW_COEFFICIENT` map across 38 of 41 bodyweight exercises (3 dropped as oddities). Pull-ups/dips = 1.00, standard push-ups = 0.65, decline = 0.75, incline/knee = 0.50, inverted row = 0.55, hanging ab = 0.50, floor ab work = 0.35, walking lunge = 0.85, Nordic curl = 0.90, etc. Default 1.00 for any unmapped BW entry. See R1a.
+- ~~[Affects R1a] Where is `user_bodyweight` stored~~ — **resolved 2026-05-06**: capture at first-time onboarding flow; user can edit later in settings page. Field added to profile schema (verify exact field name during planning).
+- ~~[Affects R1a] BW unset fallback~~ — **resolved 2026-05-06**: block logging — modal forces user to enter bodyweight before they can save the first BW-coefficient set. Guarantees correct XP from set #1.
 - ~~[Affects R16] Which calendar holidays trigger? And what holiday_mult value(s)?~~ — **resolved 2026-05-05**: 11 US federal holidays + user birthday, tiered (1.5 / 1.0 / 0.5). See R16.
 - [Affects R18][User decision] Exact format of the per-set popup multiplier breakdown text + any per-region star "pop" animation choreography.
 - ~~[Affects all] Where the user views their current tier / ribbons (UI surface)~~ — **resolved 2026-05-05**: profile page hosts identity tag + ribbon row (R20). Stats page hosts progress bar + cumulative count + history (R20a).
@@ -374,8 +374,7 @@ Newly settled (2026-05-04 session):
 
 The tier names match the app's "Gritted Teeth" identity end-to-end — every tier reads naturally as "[verb] teeth." Vocabulary mixes physical-grip mechanics, transformation/state-of-being words (HARDENED-family), and medieval/weapon imagery (BRANDISHED, HALLOWED). Multiplier values per tier still TBD (Outstanding Question — pending tier-counter mechanic decision).
 
-**After that, remaining priority order:**
-1. Bodyweight coefficient curator list + storage / fallback for `user_bodyweight`
+**All product/algo decisions resolved as of 2026-05-06.** Brainstorm is ready for `/ce:plan`.
 
 ## Next Steps
 
