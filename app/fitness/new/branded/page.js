@@ -157,7 +157,7 @@ function CarveContent({ enabled }) {
  * No slash-cut animation here — this is a navigation entry, not the
  * commit/forge moment that SheetCarveButton's blade-swing earns.
  */
-function AttuneMovementsButton({ enabled, igniteKey = 0, onTap, onHover }) {
+function AttuneMovementsButton({ enabled, onTap, onHover }) {
   // CRITICAL: no transform, no opacity, no z-index on the button itself.
   // Each of those creates a stacking context that isolates the text's
   // mix-blend-mode from the kanji backdrop. The wrapper around this
@@ -166,34 +166,6 @@ function AttuneMovementsButton({ enabled, igniteKey = 0, onTap, onHover }) {
   // Inactive dimming uses an rgba color (0.4 alpha) on the text + stroke
   // instead of element opacity, since rgba color doesn't isolate.
   const textColor = enabled ? '#d4181f' : 'rgba(212, 24, 31, 0.4)'
-
-  // Per-letter ignite cascade. Fires whenever igniteKey changes — the
-  // parent bumps it on the 0→1 day-selected transition. Letters render
-  // as inline-block spans so transform: scale() in the keyframe takes;
-  // animation-delay is offset by `${index * 50}ms` for the canonical
-  // yakiire stagger. Animation only attached on the first ignite (key>0)
-  // so the initial mount doesn't fire the cascade.
-  const renderLetters = (text, indexOffset) =>
-    [...text].map((ch, i) => {
-      const total = indexOffset + i
-      return (
-        <span
-          // Keying by igniteKey forces React to remount the spans on each
-          // ignite, which restarts the CSS animation cleanly.
-          key={`${igniteKey}-${total}`}
-          style={{
-            display: 'inline-block',
-            color: textColor,
-            animation: igniteKey > 0
-              ? `attune-letter-ignite 175ms cubic-bezier(0.18, 0.9, 0.4, 1) ${total * 50}ms both`
-              : undefined,
-          }}
-        >
-          {ch}
-        </span>
-      )
-    })
-
   return (
     <button
       type="button"
@@ -228,29 +200,173 @@ function AttuneMovementsButton({ enabled, igniteKey = 0, onTap, onHover }) {
       </svg>
       <div className="relative w-full h-full flex flex-col items-center justify-center px-1 gap-0.5">
         <span
-          aria-label="ATTUNE"
           className="font-display leading-none whitespace-nowrap"
-          style={{
-            fontSize: '1.1rem',
-            fontWeight: 900,
-            letterSpacing: '0.05em',
-          }}
+          style={{ fontSize: '1.1rem', fontWeight: 900, color: textColor, letterSpacing: '0.05em' }}
         >
-          {renderLetters('ATTUNE', 0)}
+          ATTUNE
         </span>
         <span
-          aria-label="MOVEMENTS"
           className="font-display leading-none whitespace-nowrap"
-          style={{
-            fontSize: '1.1rem',
-            fontWeight: 900,
-            letterSpacing: '0.05em',
-          }}
+          style={{ fontSize: '1.1rem', fontWeight: 900, color: textColor, letterSpacing: '0.05em' }}
         >
-          {renderLetters('MOVEMENTS', 6)}
+          MOVEMENTS
         </span>
       </div>
     </button>
+  )
+}
+
+// Yakiire flame engulf overlay for the Attune button. Sibling layer to
+// the mix-blend wrapper (NOT mix-blended itself) so flames render in
+// their natural orange color over the kanji + button. Particles are
+// clipped to ATTUNE/MOVEMENTS letter silhouettes via SVG mask — the
+// same pattern as weekday-flame-engulf on /fitness/new/summary.
+//
+// Mounts whenever the button is enabled (any day selected); unmounts
+// when all days deselected. Animation loops infinitely; the flames
+// keep burning until the user navigates away (CARVE press cuts to the
+// next page) or clears their selection.
+function AttuneFlameLayer({ rect }) {
+  if (!rect) return null
+  const W = rect.width
+  const H = rect.height
+
+  // Deterministic per-particle pseudorandom: sin-fract hash means
+  // adjacent seeds produce uncorrelated values without server/client
+  // mismatch. Same seed → same value across SSR → CSR.
+  const hash01 = (n) => {
+    const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453
+    return x - Math.floor(x)
+  }
+
+  const ATTUNE_Y = H * 0.36
+  const MOVEMENTS_Y = H * 0.64
+  // Approx text widths so particle spawn x's stay within the letter
+  // band (mask clips the rest, but tighter spread = fewer wasted
+  // particles). MOVEMENTS is ~1.5× the ATTUNE width.
+  const ATTUNE_HALF_W = W * 0.32
+  const MOVEMENTS_HALF_W = W * 0.45
+
+  const PARTS_PER_ROW = 28
+  const particles = []
+  for (let i = 0; i < PARTS_PER_ROW * 2; i++) {
+    const isAttune = i < PARTS_PER_ROW
+    const baseY = isAttune ? ATTUNE_Y : MOVEMENTS_Y
+    const halfW = isAttune ? ATTUNE_HALF_W : MOVEMENTS_HALF_W
+    const seed = i * 7 + 11
+    const tx = hash01(seed * 1)            // 0..1 across width
+    const ty = hash01(seed * 3 + 5)        // 0..1 vertical jitter
+    const td = hash01(seed * 5 + 13)       // 0..1 duration
+    const tr = hash01(seed * 7 + 19)       // 0..1 size
+    const to = hash01(seed * 11 + 23)      // 0..1 delay offset
+    // Spawn band wider than the text bounding so big particles still
+    // intersect letter shapes after the mask clips them.
+    const cx = (W / 2) + (tx - 0.5) * 2 * halfW * 1.15
+    const cy = baseY + 7 + ty * 5
+    const dur = 600 + td * 700             // 600-1300ms
+    // Larger particles so each one looks like a flame tongue rather
+    // than a speck. Mask clips them to letter shape — only the part
+    // inside the letter is visible, but the tongue is big enough that
+    // partial intersections still read as fire.
+    const r = 4 + tr * 5                   // 4-9
+    const delay = -(to * dur)              // negative delay so field is full on first frame
+    particles.push({ cx, cy, r, dur, delay, key: i })
+  }
+
+  return (
+    <svg
+      style={{
+        position: 'absolute',
+        top: `${rect.top}px`,
+        left: `${rect.left}px`,
+        width: `${W}px`,
+        height: `${H}px`,
+        pointerEvents: 'none',
+        overflow: 'visible',
+        animation: 'attune-flame-flicker 1100ms ease-in-out infinite',
+      }}
+      viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <defs>
+        <mask id="attune-flame-mask" maskUnits="userSpaceOnUse" x="0" y="0" width={W} height={H}>
+          <rect x="0" y="0" width={W} height={H} fill="black" />
+          <text
+            x={W / 2}
+            y={ATTUNE_Y}
+            textAnchor="middle"
+            dominantBaseline="central"
+            style={{
+              fontFamily: 'Anton, Impact, sans-serif',
+              fontSize: '1.1rem',
+              fontWeight: 900,
+              letterSpacing: '0.05em',
+              fill: 'white',
+            }}
+          >
+            ATTUNE
+          </text>
+          <text
+            x={W / 2}
+            y={MOVEMENTS_Y}
+            textAnchor="middle"
+            dominantBaseline="central"
+            style={{
+              fontFamily: 'Anton, Impact, sans-serif',
+              fontSize: '1.1rem',
+              fontWeight: 900,
+              letterSpacing: '0.05em',
+              fill: 'white',
+            }}
+          >
+            MOVEMENTS
+          </text>
+        </mask>
+      </defs>
+      {/* Halo layer — unmasked, soft, larger circles so the flame
+          glow extends BEYOND the letter silhouettes (the mask would
+          clip the drop-shadow halo otherwise). Lower opacity keeps
+          this from washing out the kanji/text underneath. Drawn
+          first so the masked sharp particles paint on top. */}
+      <g style={{ opacity: 0.55 }}>
+        {particles.map(p => (
+          <circle
+            key={`halo-${p.key}`}
+            className="attune-flame-particle"
+            cx={p.cx}
+            cy={p.cy}
+            r={p.r * 1.6}
+            fill="rgba(255, 80, 0, 0.45)"
+            style={{
+              animationDuration: `${p.dur}ms`,
+              animationDelay: `${p.delay}ms`,
+              filter: 'blur(3px)',
+            }}
+          />
+        ))}
+      </g>
+      {/* Masked sharp particles — clipped to letter silhouettes. The
+          part of each circle inside a letter shows as a bright flame
+          tongue; the part outside is hidden by the mask. */}
+      <g mask="url(#attune-flame-mask)">
+        {particles.map(p => (
+          <circle
+            key={p.key}
+            className="attune-flame-particle"
+            cx={p.cx}
+            cy={p.cy}
+            r={p.r}
+            fill="#ff5000"
+            style={{
+              animationDuration: `${p.dur}ms`,
+              animationDelay: `${p.delay}ms`,
+              filter: 'drop-shadow(0 0 2px #ffb060)',
+            }}
+          />
+        ))}
+      </g>
+    </svg>
   )
 }
 
@@ -1058,11 +1174,17 @@ export default function SchedulePage() {
             >
               <AttuneMovementsButton
                 enabled={selectedDays.size > 0}
-                igniteKey={attuneIgniteKey}
                 onTap={() => { play('option-select'); router.push('/attune') }}
                 onHover={() => play('button-hover')}
               />
             </div>
+          )}
+          {/* Yakiire flame overlay — sibling of the mix-blend wrapper so
+              flames stay their natural orange (not difference-blended).
+              Mounts whenever any day is selected and burns continuously
+              until the selection is cleared or CARVE navigates away. */}
+          {attuneRect && attuneIgniteKey > 0 && (
+            <AttuneFlameLayer rect={attuneRect} />
           )}
         </div>
       </section>
