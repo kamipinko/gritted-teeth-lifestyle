@@ -81,11 +81,13 @@ export default function SetChip({ chip, cycleId, dayId, compact = false, onRepla
     background: 'transparent',
     border: 'none',
     color: '#a8a39a',
-    fontSize: '0.6rem',
+    fontSize: '1rem',
     lineHeight: 1,
-    padding: '1px 2px',
+    padding: '4px 8px',
     cursor: 'pointer',
     fontFamily: 'inherit',
+    minWidth: 28,
+    minHeight: 28,
   }
 
   return (
@@ -105,23 +107,23 @@ export default function SetChip({ chip, cycleId, dayId, compact = false, onRepla
           background: '#0f0f12',
           border: '1px solid #2a2a30',
           borderLeft: '2px solid #d4181f',
-          padding: '3px 3px 3px 5px',
-          display: 'flex', alignItems: 'center', gap: 2,
+          padding: '5px 6px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 0,
           fontFamily: 'var(--font-mono, ui-monospace, "Courier New", monospace)',
-          fontSize: '0.6rem',
+          fontSize: '0.7rem',
           letterSpacing: '0.04em',
           color: '#d8d2c2',
           textTransform: 'uppercase',
           cursor: interactive ? 'pointer' : 'default',
           touchAction: interactive ? 'none' : 'manipulation',
           minWidth: 0,
-          alignItems: 'flex-start',
           ...dragStyle,
         }}
         title={label}
       >
         <span style={{
-          flex: 1, minWidth: 0,
           whiteSpace: 'normal',
           wordBreak: 'normal',
           overflowWrap: 'break-word',
@@ -130,7 +132,14 @@ export default function SetChip({ chip, cycleId, dayId, compact = false, onRepla
           {label}
         </span>
         {interactive && (
-          <span style={{ display: 'flex', gap: 0, flexShrink: 0 }}>
+          <span style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 8,
+            marginTop: 5,
+            paddingTop: 4,
+            borderTop: '1px solid #1f1f24',
+          }}>
             <button type="button" aria-label="copy" title="Copy" onPointerDown={stop} onClick={copyHandler} style={iconBtnStyle}>⎘</button>
             <button type="button" aria-label="replace" title="Replace" onPointerDown={stop} onClick={replaceHandler} style={iconBtnStyle}>⇄</button>
             <button type="button" aria-label="delete" title="Delete" onPointerDown={stop} onClick={deleteHandler} style={iconBtnStyle}>✕</button>

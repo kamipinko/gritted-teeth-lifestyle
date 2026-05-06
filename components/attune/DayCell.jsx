@@ -26,6 +26,7 @@ export default function DayCell({
   isRestDay = false,
   isSelected = false,
   isSource = false,
+  isToday = false,
   onTap,
   onChipReplace,
 }) {
@@ -75,21 +76,24 @@ export default function DayCell({
         minWidth: 0,
       }}
     >
-      {/* Header: day number (right), source-star inline (left) */}
+      {/* Header: day number on the right. Today's day-number renders red
+          (#d4181f) so users can spot today at a glance without a separate
+          highlight ring. Source-day star removed — selected days are
+          distinguished by their red border. */}
       <div
         style={{
-          display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+          display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end',
           fontFamily: 'var(--font-display, Anton, sans-serif)',
           fontSize: '0.95rem',
           lineHeight: 1,
-          color: isRestDay ? '#5a5a5e' : '#f1eee5',
           minHeight: '0.95rem',
         }}
       >
-        <span style={{ color: '#d4181f', fontFamily: 'inherit', fontSize: '0.75rem' }}>
-          {isSource ? '★' : ''}
+        <span style={{
+          color: isRestDay ? '#5a5a5e' : (isToday ? '#d4181f' : '#f1eee5'),
+        }}>
+          {dayNum}
         </span>
-        <span>{dayNum}</span>
       </div>
 
       {/* Kanji + English label paired, centered */}

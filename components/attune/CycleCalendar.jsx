@@ -13,6 +13,12 @@ function isoToLocalDate(iso) {
   return new Date(y, m - 1, d)
 }
 
+function localTodayIso() {
+  const d = new Date()
+  const y = d.getFullYear(), m = d.getMonth() + 1, day = d.getDate()
+  return `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`
+}
+
 /**
  * Bucket carved days by weekday (0=Sun .. 6=Sat). Each bucket is sorted
  * chronologically. Skipped weeks within a column collapse — no placeholders.
@@ -47,18 +53,23 @@ export default function CycleCalendar({ cycle, onDayTap, onChipReplace, selected
   }
 
   const buckets = bucketByWeekday(cycle)
+  const todayIso = localTodayIso()
 
   return (
     <div style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       {/* Pan-zoom surface. DOW labels live inside each column (added below) so
-          they scale with the content rather than living as a fixed UI band. */}
+          they scale with the content rather than living as a fixed UI band.
+          Page lands at scale 1 with SUN/MON at the left edge — user pans
+          right to reach the rest, or pinches out (down to 0.4) to see all 7. */}
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
         <TransformWrapper
           ref={wrapperRef}
           initialScale={1}
+          initialPositionX={0}
+          initialPositionY={0}
           minScale={0.4}
           maxScale={3}
-          centerOnInit
+          centerOnInit={false}
           centerZoomedOut={false}
           limitToBounds={false}
           wheel={{ step: 0.15 }}
@@ -74,7 +85,7 @@ export default function CycleCalendar({ cycle, onDayTap, onChipReplace, selected
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(7, 110px)',
+                gridTemplateColumns: 'repeat(7, 160px)',
                 gap: 6,
                 alignItems: 'start',
               }}
@@ -112,6 +123,7 @@ export default function CycleCalendar({ cycle, onDayTap, onChipReplace, selected
                       onChipReplace={onChipReplace}
                       isSelected={selectedDayIds.includes(iso)}
                       isSource={iso === sourceDayId}
+                      isToday={iso === todayIso}
                     />
                   ))}
                 </div>
@@ -133,7 +145,7 @@ export default function CycleCalendar({ cycle, onDayTap, onChipReplace, selected
   )
 }
 
-function CarvedBlock({ cycleId, dayId, dayNum, muscles, onTap, onChipReplace, isSelected, isSource }) {
+function CarvedBlock({ cycleId, dayId, dayNum, muscles, onTap, onChipReplace, isSelected, isSource, isToday }) {
   const chips = useChipsForDay(cycleId, dayId)
   const locked = isDayLocked(cycleId, dayId)
   const isRest = !muscles || muscles.length === 0
@@ -148,6 +160,7 @@ function CarvedBlock({ cycleId, dayId, dayNum, muscles, onTap, onChipReplace, is
       isRestDay={isRest}
       isSelected={isSelected}
       isSource={isSource}
+      isToday={isToday}
       onTap={onTap}
       onChipReplace={onChipReplace}
     />

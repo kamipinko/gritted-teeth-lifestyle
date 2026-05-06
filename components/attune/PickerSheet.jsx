@@ -19,31 +19,22 @@
  * interactive so the user can tap days to add/remove targets while the
  * picker stays open.
  *
+ * Multi-select: the user can pick multiple exercises in one open. On
+ * Confirm the picker calls `onConfirm(exerciseId)` once per selected
+ * exercise, in selection order. The parent fans each call across every
+ * selected day, so N exercises × M days = N×M chips placed total.
+ *
  * Props:
  *   sourceDayId      - the source (first) selected day; used for muscle lock
  *   selectedDayIds   - all currently-selected days (attune mode); the
  *                      sheet shows the count + applies confirm to all
  *   mode             - 'attune' | 'in-the-moment' | 'replace'
  *   cycle            - { id, days, dailyPlan } — needed for muscle lookup
- *   onConfirm        - (exerciseId) => void
+ *   onConfirm        - (exerciseId) => void  (called once per selected exercise)
  *   onClose          - () => void
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { searchExercises } from '../../lib/exerciseLibrary'
-
-// Single-character equipment indicator. Lowercase 'b' for bodyweight to
-// differentiate from barbell. Falls back to '·' when an exercise has no
-// equipment field (pre-data-pipeline fixture data).
-const EQUIPMENT_GLYPH = {
-  barbell:    'B',
-  dumbbell:   'D',
-  cable:      'C',
-  machine:    'M',
-  bodyweight: 'b',
-  kettlebell: 'K',
-  band:       'R',
-  other:      '·',
-}
 
 export default function PickerSheet({
   sourceDayId,
@@ -54,7 +45,12 @@ export default function PickerSheet({
   onClose,
 }) {
   const [query, setQuery] = useState('')
-  const [selectedExerciseId, setSelectedExerciseId] = useState(null)
+  const [selectedExerciseIds, setSelectedExerciseIds] = useState([])
+  const toggleExercise = (id) => {
+    setSelectedExerciseIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    )
+  }
   const inputRef = useRef(null)
 
   const sourceMuscle = useMemo(() => {
@@ -84,11 +80,17 @@ export default function PickerSheet({
   const targetCount = mode === 'attune'
     ? (selectedDayIds?.length || (sourceDayId ? 1 : 0))
     : (sourceDayId ? 1 : 0)
-  const canConfirm = selectedExerciseId != null && targetCount > 0
+  const exerciseCount = selectedExerciseIds.length
+  const canConfirm = exerciseCount > 0 && targetCount > 0
 
   const commit = () => {
     if (!canConfirm) return
-    if (onConfirm) onConfirm(selectedExerciseId)
+    if (onConfirm) {
+      // Place every selected exercise. Parent's onConfirm fans across
+      // every selected day, so N exercises × M days = N×M chips total.
+      for (const id of selectedExerciseIds) onConfirm(id)
+    }
+    setSelectedExerciseIds([])
   }
 
   return (
@@ -187,13 +189,14 @@ export default function PickerSheet({
           />
         </form>
 
-        {/* Exercise list */}
+        {/* Exercise list — capped at ~5 rows tall; rest reachable via scroll. */}
         <div
           style={{
-            flex: 1,
+            flex: '0 0 auto',
             overflowY: 'auto',
             display: 'flex', flexDirection: 'column', gap: 4,
-            minHeight: 80, maxHeight: '38vh',
+            minHeight: 80,
+            maxHeight: 220,
           }}
         >
           {!sourceMuscle && (
@@ -207,13 +210,12 @@ export default function PickerSheet({
             </div>
           )}
           {exercises.map((ex) => {
-            const selected = ex.id === selectedExerciseId
-            const glyph = EQUIPMENT_GLYPH[ex.equipment] || '·'
+            const selected = selectedExerciseIds.includes(ex.id)
             return (
               <button
                 key={ex.id}
                 type="button"
-                onClick={() => setSelectedExerciseId(ex.id)}
+                onClick={() => toggleExercise(ex.id)}
                 style={{
                   textAlign: 'left',
                   background: selected ? '#d4181f' : '#0f0f12',
@@ -228,29 +230,11 @@ export default function PickerSheet({
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
                   gap: '0.5rem',
                 }}
               >
                 <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {ex.label}
-                </span>
-                <span
-                  aria-hidden="true"
-                  title={ex.equipment || ''}
-                  style={{
-                    flexShrink: 0,
-                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-                    fontSize: '10px',
-                    letterSpacing: '0.05em',
-                    lineHeight: 1,
-                    padding: '3px 6px',
-                    background: selected ? 'rgba(0,0,0,0.35)' : '#2a2a30',
-                    color: selected ? '#fff' : '#9b9486',
-                    clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)',
-                  }}
-                >
-                  {glyph}
                 </span>
               </button>
             )
@@ -276,8 +260,10 @@ export default function PickerSheet({
           }}
         >
           {canConfirm
-            ? `Attune ${targetCount > 1 ? `× ${targetCount} days` : ''}`
-            : 'Pick an exercise'}
+            ? `Confirm (${exerciseCount} exercise${exerciseCount === 1 ? '' : 's'} × ${targetCount} day${targetCount === 1 ? '' : 's'})`
+            : exerciseCount === 0
+              ? 'Pick exercises'
+              : 'Pick days'}
         </button>
       </div>
     </div>
