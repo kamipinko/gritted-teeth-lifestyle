@@ -648,6 +648,48 @@ export default function SchedulePage() {
 
   const [selectedDays, setSelectedDays] = useState(new Set())
   const [assignments,  setAssignments]  = useState({})
+
+  // Hydrate from the cycle's persisted state when entering via the edit
+  // hub. /fitness/load's handleReview wrote training-days + daily-plan +
+  // editing-cycle-id before routing here. Without this hydration, the
+  // schedule starts blank and any user edits never line up with the
+  // cycle being edited. Read-only; new-cycle flow (no editing-cycle-id)
+  // continues to start blank.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    let editing = false
+    try { editing = localStorage.getItem(pk('editing-cycle-id')) != null } catch (_) {}
+    if (!editing) return
+
+    try {
+      const rawDays = localStorage.getItem(pk('training-days'))
+      const rawPlan = localStorage.getItem(pk('daily-plan'))
+      if (rawDays) {
+        const arr = JSON.parse(rawDays)
+        if (Array.isArray(arr) && arr.length > 0) {
+          setSelectedDays(new Set(arr))
+          // Position the displayed month so the cycle's first day is
+          // visible on mount instead of whatever month "today" lands in.
+          const first = arr[0]
+          if (typeof first === 'string') {
+            const [y, m] = first.split('-').map(Number)
+            if (y && m) setDisplayDate(new Date(y, m - 1, 1))
+          }
+        }
+      }
+      if (rawPlan) {
+        const plan = JSON.parse(rawPlan)
+        if (plan && typeof plan === 'object') {
+          const next = {}
+          for (const [iso, arr] of Object.entries(plan)) {
+            if (Array.isArray(arr)) next[iso] = new Set(arr)
+          }
+          setAssignments(next)
+        }
+      }
+    } catch (_) {}
+  }, [])
+
   const [fireActive,   setFireActive]   = useState(false)
   const [quickHeistActive, setQuickHeistActive] = useState(false)
   const [quickForgeRunning, setQuickForgeRunning] = useState(false)
