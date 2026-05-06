@@ -30,9 +30,15 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
   // active=false so the direction-pick re-render pops instantly off-screen
   // (both -180vw and +180vw are far off-viewport, no visible jump).
   const [rollDir, setRollDir] = useState('left')
+  // Sparkles wake up only after the logo has finished rolling in. Entrance
+  // schedule: phase='in' at +60ms, transform transition is 200ms delay +
+  // 1400ms duration = lands at +1660ms. Bump a bit past that for safety.
+  const [logoEntranceDone, setLogoEntranceDone] = useState(false)
 
   useEffect(() => {
     setRollDir(Math.random() < 0.5 ? 'left' : 'right')
+    const t = setTimeout(() => setLogoEntranceDone(true), 1800)
+    return () => clearTimeout(t)
   }, [])
 
   useEffect(() => {
@@ -277,24 +283,68 @@ export default function GateScreen({ onEnter, onCommit, onMusicStart, onSkip, on
       {/* ── Center content ── */}
       <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
 
-        {/* Logo — forge-slam from above */}
-        <img
-          src="/logo.png"
-          alt="GTL"
+        {/* Logo — forge-slam from above. Wrapper hosts the post-roll sparkle
+            overlay (3 ✦ glints anchored to the white tooth row, twinkling
+            on/off at staggered offsets once the roll-in completes). */}
+        <div
           style={{
+            position: 'relative',
             width: 'clamp(128px, 24vw, 200px)',
             height: 'clamp(128px, 24vw, 200px)',
-            borderRadius: '50%',
-            objectFit: 'cover',
             transform: active
               ? `translateX(0) rotate(${rollDir === 'left' ? 720 : -720}deg)`
               : `translateX(${rollDir === 'left' ? '-180vw' : '180vw'}) rotate(0deg)`,
-            // Transition only enabled once active=true so the post-mount
-            // rollDir randomization pops instantly off-screen instead of
-            // animating the logo across the visible area.
             transition: active ? transOf('transform 1400ms cubic-bezier(0.2, 0.8, 0.3, 1) 200ms') : 'none',
           }}
-        />
+        >
+          <img
+            src="/logo.png"
+            alt="GTL"
+            style={{
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              objectFit: 'cover',
+              display: 'block',
+            }}
+          />
+          {logoEntranceDone && (
+            <>
+              <style>{`
+                @keyframes gtl-gate-tooth-sparkle {
+                  0%, 82%, 100% { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
+                  88%           { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+                  94%           { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
+                }
+              `}</style>
+              {[
+                { left: '52%', top: '34%', delay: '0s',   dur: '4s' },
+                { left: '66%', top: '38%', delay: '1.7s', dur: '5s' },
+                { left: '76%', top: '32%', delay: '3.2s', dur: '4.5s' },
+              ].map((s, i) => (
+                <span
+                  key={i}
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute',
+                    left: s.left,
+                    top: s.top,
+                    color: '#fff',
+                    fontSize: '1.4rem',
+                    lineHeight: 1,
+                    textShadow: '0 0 6px rgba(255,255,255,0.7)',
+                    pointerEvents: 'none',
+                    transformOrigin: 'center center',
+                    animation: `gtl-gate-tooth-sparkle ${s.dur} ease-in-out ${s.delay} infinite`,
+                    opacity: 0,
+                  }}
+                >
+                  ✦
+                </span>
+              ))}
+            </>
+          )}
+        </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.7rem' }}>
 
