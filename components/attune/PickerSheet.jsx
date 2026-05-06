@@ -122,37 +122,39 @@ export default function PickerSheet({
           boxShadow: '0 -8px 24px rgba(0,0,0,0.6)',
         }}
       >
-        {/* Header — mode + muscle lock + selected-day count */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: '0.62rem', letterSpacing: '0.3em', color: '#d4181f' }}>
-            PICKER · {mode.toUpperCase()}
-            {sourceMuscle && <> · LOCKED: {sourceMuscle.toUpperCase()}</>}
-            {mode === 'attune' && targetCount > 0 && (
-              <> · {targetCount} DAY{targetCount === 1 ? '' : 'S'}</>
-            )}
-          </div>
+        {/* Minimal header — muscle name + close ×. Mode/lock/count prefix
+            and the calendar-tap subtext both removed. */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0.6rem 0.75rem',
+          fontFamily: 'var(--font-display, Anton, sans-serif)',
+          fontSize: '1rem',
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+          color: '#d4181f',
+          borderBottom: '1px solid #2a2a30',
+        }}>
+          <span>{(sourceMuscle || '').toUpperCase()}</span>
           <button
             type="button"
+            aria-label="close"
             onClick={() => onClose && onClose()}
             style={{
-              background: 'none', border: 'none', color: '#888',
-              fontFamily: 'inherit', fontSize: '0.85rem', cursor: 'pointer',
-              padding: '0 0.25rem', letterSpacing: '0.1em',
+              background: 'transparent',
+              border: 'none',
+              color: '#a8a39a',
+              fontSize: '1.2rem',
+              lineHeight: 1,
+              padding: '0 0.4rem',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
             }}
-            aria-label="close picker"
           >
-            ✕
+            ×
           </button>
         </div>
-
-        {mode === 'attune' && (
-          <div style={{
-            fontSize: '0.55rem', letterSpacing: '0.25em', color: '#888',
-            textTransform: 'uppercase',
-          }}>
-            tap days on the calendar to add or remove targets
-          </div>
-        )}
 
         {/* Search input — iOS PWA keyboard recipe */}
         <form
@@ -196,7 +198,7 @@ export default function PickerSheet({
             overflowY: 'auto',
             display: 'flex', flexDirection: 'column', gap: 4,
             minHeight: 80,
-            maxHeight: 220,
+            maxHeight: 132,
           }}
         >
           {!sourceMuscle && (

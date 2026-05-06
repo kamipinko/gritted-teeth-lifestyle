@@ -1,32 +1,21 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useRef } from 'react'
 import { useDraggable } from '@dnd-kit/core'
-import ChipActionMenu from './ChipActionMenu'
 import { duplicateChip, deleteChip } from '../../lib/attunement'
 
-const LONG_PRESS_MS = 550
 const MOVE_CANCEL_PX = 5
 
 export default function SetChip({ chip, cycleId, dayId, compact = false, onReplace }) {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const timerRef = useRef(null)
   const startRef = useRef(null)
   const movedRef = useRef(false)
-  const longPressedRef = useRef(false)
 
   const interactive = !!(cycleId && dayId)
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: chip?.id || 'chip-noop',
     data: { fromDayId: dayId, exerciseId: chip?.exerciseId },
-    disabled: !interactive || menuOpen,
+    disabled: !interactive,
   })
-
-  const clearTimer = () => {
-    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null }
-  }
-  useEffect(() => () => clearTimer(), [])
-  useEffect(() => { if (isDragging) clearTimer() }, [isDragging])
 
   if (!chip) return null
   const label = chip.exerciseId || 'untitled'
@@ -34,32 +23,20 @@ export default function SetChip({ chip, cycleId, dayId, compact = false, onRepla
 
   const handlePointerDown = (e) => {
     if (!interactive) return
-    longPressedRef.current = false
     movedRef.current = false
     startRef.current = { x: e.clientX, y: e.clientY }
-    clearTimer()
-    timerRef.current = setTimeout(() => {
-      longPressedRef.current = true
-      setMenuOpen(true)
-    }, LONG_PRESS_MS)
   }
   const handlePointerMove = (e) => {
     if (!interactive || !startRef.current) return
     const dx = e.clientX - startRef.current.x
     const dy = e.clientY - startRef.current.y
-    if (Math.hypot(dx, dy) > MOVE_CANCEL_PX) { movedRef.current = true; clearTimer() }
+    if (Math.hypot(dx, dy) > MOVE_CANCEL_PX) { movedRef.current = true }
   }
-  const handlePointerEnd = () => { clearTimer(); startRef.current = null }
+  const handlePointerEnd = () => { startRef.current = null }
   const handleClick = (e) => {
+    // Stop propagation so a chip tap doesn't bubble up to the day-cell.
+    // No menu opens — inline ⎘ ⇄ ✕ icons handle Copy / Replace / Delete.
     e.stopPropagation()
-    if (longPressedRef.current) {
-      e.preventDefault()
-      longPressedRef.current = false
-      return
-    }
-    if (movedRef.current || isDragging) return
-    if (!interactive) return
-    setMenuOpen(true)
   }
 
   const dragStyle = transform
@@ -146,15 +123,6 @@ export default function SetChip({ chip, cycleId, dayId, compact = false, onRepla
           </span>
         )}
       </div>
-      {menuOpen && interactive && (
-        <ChipActionMenu
-          chipLabel={label}
-          onCopy={() => duplicateChip(cycleId, dayId, chip.id)}
-          onDelete={() => deleteChip(cycleId, dayId, chip.id)}
-          onReplace={() => { if (onReplace) onReplace({ dayId, chipId: chip.id, fromLabel: label }) }}
-          onClose={() => setMenuOpen(false)}
-        />
-      )}
     </>
   )
 }

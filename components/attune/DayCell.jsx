@@ -84,9 +84,10 @@ export default function DayCell({
         style={{
           display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end',
           fontFamily: 'var(--font-display, Anton, sans-serif)',
-          fontSize: '0.95rem',
+          fontSize: '1.4rem',
+          fontWeight: 900,
           lineHeight: 1,
-          minHeight: '0.95rem',
+          minHeight: '1.4rem',
         }}
       >
         <span style={{
@@ -113,9 +114,10 @@ export default function DayCell({
           <span
             style={{
               fontFamily: 'var(--font-mono, ui-monospace, "Courier New", monospace)',
-              fontSize: '0.45rem',
+              fontSize: '0.7rem',
+              fontWeight: 700,
               letterSpacing: '0.14em',
-              color: isRestDay ? '#5a5a5e' : '#a8a39a',
+              color: isRestDay ? '#5a5a5e' : '#f1eee5',
               lineHeight: 1.1,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
