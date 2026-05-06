@@ -299,53 +299,59 @@ function AttuneFlameLayer({ rect }) {
   const ATTUNE_HALF_W = W * 0.32
   const MOVEMENTS_HALF_W = W * 0.45
 
-  // Per-particle randomized motion — direct port of /fitness/new/summary's
-  // weekday flame engulf, just scaled to this 102×75 viewBox. Their letters
-  // are ~45px tall and use rise=280-480, size=20-58, driftX=±90; mine are
-  // ~17.6px tall so each numeric range scales by ~0.4. Everything else
-  // (timing, hash, parameter math) is verbatim.
-  const PARTS_PER_ROW = 24
+  // Per-letter particle distribution. Each row's letter band is
+  // divided into N_LETTERS evenly-spaced slots, and PARTS_PER_LETTER
+  // particles spawn within each slot's x-range (with jitter). The
+  // mask clips final positions to actual glyph shapes — slot widths
+  // are an approximation of glyph advance, so every letter gets ≥1
+  // particle landing inside its silhouette regardless of glyph
+  // width variation. Avoids the previous random-uniform distribution
+  // where some letters lucked into 0-1 particles by chance.
+  const PARTS_PER_LETTER = 4
+  const ROWS = [
+    { letters: 6, baseY: ATTUNE_Y,    halfW: ATTUNE_HALF_W,    seedBase: 0 },
+    { letters: 9, baseY: MOVEMENTS_Y, halfW: MOVEMENTS_HALF_W, seedBase: 100 },
+  ]
   const particles = []
-  for (let i = 0; i < PARTS_PER_ROW * 2; i++) {
-    const isAttune = i < PARTS_PER_ROW
-    const baseY = isAttune ? ATTUNE_Y : MOVEMENTS_Y
-    const halfW = isAttune ? ATTUNE_HALF_W : MOVEMENTS_HALF_W
-    const k = i + (isAttune ? 0 : 1) * 23
-    const rX      = hash01(k * 1)
-    const rXj     = hash01(k * 2 + 5)
-    const rDly    = hash01(k * 3 + 11)
-    const rDur    = hash01(k * 5 + 17)
-    const rRise   = hash01(k * 7 + 19)
-    const rSize   = hash01(k * 11 + 23)
-    const rPeak   = hash01(k * 13 + 29)
-    const rDrft   = hash01(k * 17 + 31)
-    const rStartJ = hash01(k * 19 + 37)
-    const rEndR   = hash01(k * 23 + 41)
+  let pkey = 0
+  for (const row of ROWS) {
+    const slotWidth = (row.halfW * 2) / row.letters
+    for (let L = 0; L < row.letters; L++) {
+      const slotCenterX = (W / 2) - row.halfW + (L + 0.5) * slotWidth
+      for (let i = 0; i < PARTS_PER_LETTER; i++) {
+        const k = row.seedBase + L * 11 + i + 1
+        const rX      = hash01(k * 1)
+        const rDly    = hash01(k * 3 + 11)
+        const rDur    = hash01(k * 5 + 17)
+        const rRise   = hash01(k * 7 + 19)
+        const rSize   = hash01(k * 11 + 23)
+        const rPeak   = hash01(k * 13 + 29)
+        const rDrft   = hash01(k * 17 + 31)
+        const rStartJ = hash01(k * 19 + 37)
+        const rEndR   = hash01(k * 23 + 41)
 
-    // Lateral spawn — mostly uniform across the letter band so every
-    // letter gets roughly equal coverage instead of the U/V at the
-    // center hogging the bulk of the particles. Small jitter keeps
-    // the spawn positions from clustering on a regular grid.
-    const xOff   = (rX - 0.5) * (halfW * 2.1) + (rXj - 0.5) * (halfW * 0.18)
-    const delay  = (rDly * 540 + (isAttune ? 0 : 1) * 131) % 600   // verbatim
-    const dur    = 130 + rDur * 150                                 // 130-280ms — verbatim, FAST
-    const rise   = 9 + rRise * 7                                    // 9-16 vb units (was 280-480)
-    // Smaller, sparser tongues so dark void is visible between flames —
-    // reads as the TOPS of flames flickering, not the middle of a fire.
-    // Tongue shape: rx ~ size*0.55, ry ~ size (taller than wide).
-    const size   = 2.2 + rSize * 3.5                                // 2.2-5.7 r
-    const peakA  = 0.5 + rPeak * 0.5                                // 0.5-1.0 — verbatim
-    const driftX = (rDrft - 0.5) * 8                                // ±4
-    const startY = 6 + (rStartJ - 0.5) * 5                          // ±2.5 jitter
-    const endR   = 0.5 + rEndR * 1.0                                // 0.5-1.5
+        // Spawn x: anywhere within the slot, slight expansion so
+        // particles can spill into neighbouring slot edges (mask
+        // clips to actual letter shape regardless).
+        const cx     = slotCenterX + (rX - 0.5) * slotWidth * 1.15
+        const delay  = (rDly * 540 + row.seedBase) % 600
+        const dur    = 130 + rDur * 150                     // 130-280ms
+        const rise   = 9 + rRise * 7                        // 9-16
+        const size   = 2.2 + rSize * 3.5                    // 2.2-5.7
+        const peakA  = 0.5 + rPeak * 0.5                    // 0.5-1.0
+        const driftX = (rDrft - 0.5) * 8                    // ±4
+        const startY = 6 + (rStartJ - 0.5) * 5              // ±2.5
+        const endR   = 0.5 + rEndR * 1.0                    // 0.5-1.5
 
-    particles.push({
-      cx: (W / 2) + xOff,
-      cy: baseY + startY,
-      r: size,
-      endR, dur, delay, peakA, driftX, rise,
-      key: i,
-    })
+        particles.push({
+          cx,
+          cy: row.baseY + startY,
+          r: size,
+          endR, dur, delay, peakA, driftX, rise,
+          key: pkey++,
+        })
+      }
+    }
   }
 
   return (
