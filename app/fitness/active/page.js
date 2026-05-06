@@ -2826,23 +2826,48 @@ export default function ActiveCyclePage() {
         const rect = card.getBoundingClientRect()
         // Distance from the card's top edge to the active y=479 line.
         const dist = Math.abs(rect.top - ACTIVE_TOP_Y)
-        // Falloff window — within 30px of active line = full prominence,
-        // 200px out = dim, beyond that pegged at zero.
-        const t = Math.max(0, Math.min(1, 1 - Math.max(0, dist - 30) / 170))
+        // Tight falloff — within 4px of active line = full prominence,
+        // 100px out = dim, beyond that pegged at zero. Sharp dropoff so
+        // neighbor cards dim quickly and only ONE card reads as centered.
+        const t = Math.max(0, Math.min(1, 1 - Math.max(0, dist - 4) / 96))
         card.style.setProperty('--rolodex-t', String(t))
-        // Mark the card as centered when it's clearly at the active line.
-        // CSS keys off this attribute for the red prominence ring + tap gating.
-        if (t >= 0.9) card.setAttribute('data-rolodex-centered', '')
+        // Centered window is now ~6px wide (t >= 0.94 ≈ within 10px of
+        // active line). No more ambiguous "two cards both highlighted".
+        if (t >= 0.94) card.setAttribute('data-rolodex-centered', '')
         else card.removeAttribute('data-rolodex-centered')
       })
     }
+    // Snap-on-scroll-end: after the user stops scrolling, snap the
+    // closest card precisely to y=479. Aggressive snap so the rolodex
+    // never settles between cards. 80ms debounce — long enough for
+    // momentum to subside, short enough to feel snappy.
+    let snapTimer = null
+    const snapToNearest = () => {
+      const cards = container.querySelectorAll('[data-rolodex-iso]')
+      let bestNode = null
+      let bestDist = Infinity
+      cards.forEach((card) => {
+        const dist = Math.abs(card.getBoundingClientRect().top - ACTIVE_TOP_Y)
+        if (dist < bestDist) { bestDist = dist; bestNode = card }
+      })
+      if (!bestNode) return
+      const delta = bestNode.getBoundingClientRect().top - ACTIVE_TOP_Y
+      if (Math.abs(delta) < 1) return
+      container.scrollTo({ top: container.scrollTop + delta, behavior: 'smooth' })
+    }
+    const onScroll = () => {
+      update()
+      if (snapTimer) clearTimeout(snapTimer)
+      snapTimer = setTimeout(snapToNearest, 80)
+    }
     update()
-    container.addEventListener('scroll', update, { passive: true })
+    container.addEventListener('scroll', onScroll, { passive: true })
     const ro = new ResizeObserver(update)
     ro.observe(container)
     return () => {
-      container.removeEventListener('scroll', update)
+      container.removeEventListener('scroll', onScroll)
       ro.disconnect()
+      if (snapTimer) clearTimeout(snapTimer)
     }
   }, [ready, days])
 

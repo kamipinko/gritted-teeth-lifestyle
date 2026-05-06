@@ -2133,9 +2133,11 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId, onMus
     return muscles[0]
   })()
 
-  // Scroll-driven prominence — assigns each card --rolodex-t and toggles
-  // data-rolodex-centered when within 30px of the active line. Mirrors
-  // the parent /fitness/active rolodex falloff math verbatim.
+  // Scroll-driven prominence + aggressive snap-on-scroll-end. Tight
+  // falloff (within 4px = full, 100px = zero) so only ONE card reads
+  // as centered at any time. Snap-on-end kicks 80ms after the last
+  // scroll event, pulling the closest card to y=479 — no settling
+  // between cards. Mirrors the parent /fitness/active rolodex.
   useEffect(() => {
     if (!hasWork) return
     const container = rolodexRef.current
@@ -2146,19 +2148,39 @@ function DayFocus({ iso, muscles, isLastDay, originRect, onClose, cycleId, onMus
       cards.forEach((card) => {
         const rect = card.getBoundingClientRect()
         const dist = Math.abs(rect.top - ACTIVE_TOP_Y)
-        const t = Math.max(0, Math.min(1, 1 - Math.max(0, dist - 30) / 170))
+        const t = Math.max(0, Math.min(1, 1 - Math.max(0, dist - 4) / 96))
         card.style.setProperty('--rolodex-t', String(t))
-        if (t >= 0.9) card.setAttribute('data-rolodex-centered', '')
+        if (t >= 0.94) card.setAttribute('data-rolodex-centered', '')
         else card.removeAttribute('data-rolodex-centered')
       })
     }
+    let snapTimer = null
+    const snapToNearest = () => {
+      const cards = container.querySelectorAll('[data-rolodex-muscle]')
+      let bestNode = null
+      let bestDist = Infinity
+      cards.forEach((card) => {
+        const dist = Math.abs(card.getBoundingClientRect().top - ACTIVE_TOP_Y)
+        if (dist < bestDist) { bestDist = dist; bestNode = card }
+      })
+      if (!bestNode) return
+      const delta = bestNode.getBoundingClientRect().top - ACTIVE_TOP_Y
+      if (Math.abs(delta) < 1) return
+      container.scrollTo({ top: container.scrollTop + delta, behavior: 'smooth' })
+    }
+    const onScroll = () => {
+      update()
+      if (snapTimer) clearTimeout(snapTimer)
+      snapTimer = setTimeout(snapToNearest, 80)
+    }
     update()
-    container.addEventListener('scroll', update, { passive: true })
+    container.addEventListener('scroll', onScroll, { passive: true })
     const ro = new ResizeObserver(update)
     ro.observe(container)
     return () => {
-      container.removeEventListener('scroll', update)
+      container.removeEventListener('scroll', onScroll)
       ro.disconnect()
+      if (snapTimer) clearTimeout(snapTimer)
     }
   }, [hasWork, muscles])
 
